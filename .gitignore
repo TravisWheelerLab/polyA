@@ -1,0 +1,11 @@
+# Python
+*.pyc
+Pipfile.lock
+
+# Mac
+.DS_Store
+
+# Editors
+*~
+*.swp
+
