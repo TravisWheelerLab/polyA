@@ -47,6 +47,6 @@ pytest
 [Wheeler Lab](http://wheelerlab.org) at the University of Montana.
 
   - Travis Wheeler
-  - Kaitlyn Carey
+  - Kaitlin Carey
   - George Lesica
 
