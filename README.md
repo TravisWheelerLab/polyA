@@ -5,11 +5,11 @@ Adjoin Abutting Alignments, And Also Amputate Anything Amiss.
 
 ## About
 
-TODO: Kaitlyn
+TODO: Kaitlin
 
 ## Using
 
-TODO: Kaitlyn, George
+TODO: Kaitlin, George
 
 ## Development
 
