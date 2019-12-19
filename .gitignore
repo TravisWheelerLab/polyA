@@ -1,6 +1,8 @@
 # Python
 *.pyc
 Pipfile.lock
+.mypy_cache
+*.egg-info/
 
 # Mac
 .DS_Store
