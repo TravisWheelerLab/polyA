@@ -1,20 +1,25 @@
 import math
 from typing import Any
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from .constants import CHUNK_SIZE, LOGGED_CHANGE_PROB, LOGGED_SAME_PROB
+from .origin_matrix import OriginMatrix
+from .prob_matrix import ProbMatrix
+from .support_matrix import SupportMatrix
 
 
 def fill_prob_matrix(
-    supports: Dict[Tuple[int, int], float], columns: List[int], rowCount: int
-) -> Tuple[Any, Any]:
+    support_matrix: SupportMatrix, columns: List[int], rowCount: int
+) -> Tuple[ProbMatrix, OriginMatrix]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
-    the origin matrix for convenience.
+    the origin matrix for convenience. Returns a tuple that contains the
+    probability matrix and the origin matrix, in that order..
 
-    supports -- a column-major nested list (matrix) of support scores
-    columns  -- the list of sequence column indices, treated as left-most
-                edges of the chunk window, that should be included
+    support_matrix -- a column-major nested list (matrix) of support scores
+    columns        -- the list of sequence column indices, treated as
+                      left-most edges of the chunk window, that should be
+                      included
 
     We skip the first column because we want its probabilities to be zero
     anyway.
@@ -28,8 +33,8 @@ def fill_prob_matrix(
         else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
      return max
     """
-    probabilities: Dict[Tuple[int, int], float] = {}
-    origins: Dict[Tuple[int, int], int] = {}
+    probabilities: ProbMatrix = {}
+    origins: OriginMatrix = {}
 
     colCount = len(columns) + CHUNK_SIZE - 1
     for colIndex in range(1, colCount):
@@ -48,7 +53,7 @@ def fill_prob_matrix(
 
                     # Omitting check on line 841 to verify its necessity
                     cellValue = probabilities.get(
-                        (innerRowIndex, columns[colIndex - 1]), default=None
+                        (innerRowIndex, columns[colIndex - 1]), None
                     )
                     if cellValue is not None:
                         score = supportLog + cellValue
