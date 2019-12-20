@@ -1,11 +1,26 @@
+.PHONY: check
+check: check-fast check-slow check-format
+
 .PHONY: check-fast
 check-fast:
-	python -m pytest
+	pipenv run python -m pytest
 
 .PHONY: check-format
 check-format:
-	python -m black --check .
+	pipenv run python -m black --check polyA/ tests/
+
+.PHONY: check-slow
+check-slow:
+	@echo TODO
 
 .PHONY: format
 format:
-	python -m black .
+	pipenv run python -m black polyA/ tests/
+
+.PHONY: setup
+setup:
+	pipenv install
+
+.PHONY: setup-dev
+setup-dev:
+	pipenv install --dev
