@@ -9,6 +9,7 @@ pylint = "*"
 ipython = "*"
 mypy = "*"
 black = "*"
+rope = "*"
 
 [packages]
 numpy = "*"
