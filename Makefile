@@ -3,7 +3,7 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	pipenv run python -m pytest
+	pipenv run python -m pytest -m 'not slow'
 
 .PHONY: check-format
 check-format:
@@ -11,7 +11,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	@echo TODO
+	pipenv run python -m pytest -m slow
 
 .PHONY: format
 format:

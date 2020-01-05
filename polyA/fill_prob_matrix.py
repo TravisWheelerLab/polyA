@@ -1,6 +1,7 @@
+from logging import Logger, getLogger, root
 import math
-from typing import Any
-from typing import List, Tuple
+from timeit import default_timer as timer
+from typing import List, Optional, Tuple
 
 from .constants import CHUNK_SIZE, LOGGED_CHANGE_PROB, LOGGED_SAME_PROB
 from .origin_matrix import OriginMatrix
@@ -9,7 +10,10 @@ from .support_matrix import SupportMatrix
 
 
 def fill_prob_matrix(
-    support_matrix: SupportMatrix, columns: List[int], rowCount: int
+    support_matrix: SupportMatrix,
+    columns: Optional[List[int]] = None,
+    row_count: Optional[int] = None,
+    benchmark: bool = False,
 ) -> Tuple[ProbMatrix, OriginMatrix]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
@@ -20,9 +24,13 @@ def fill_prob_matrix(
     columns        -- the list of sequence column indices, treated as
                       left-most edges of the chunk window, that should be
                       included
+    row_count      -- the total number of rows that will be processed, will
+                      be computed from the other arguments if omitted
+    benchmark .    -- whether or not to collect and output benchmarking data
+                      to the logger
 
-    We skip the first column because we want its probabilities to be zero
-    anyway.
+    We omit filling the first column because we want its probabilities to be
+    zero anyway.
 
     The basic algorithm is described below. All calculations happen in log
     space.
@@ -33,39 +41,77 @@ def fill_prob_matrix(
         else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
      return max
     """
-    probabilities: ProbMatrix = {}
+    if benchmark:
+        start = timer()
+
     origins: OriginMatrix = {}
+    probabilities: ProbMatrix = {}
 
-    colCount = len(columns) + CHUNK_SIZE - 1
-    for colIndex in range(1, colCount):
-        # Omitting lines 819-823 here so we can verify their necessity
+    if columns is None or row_count is None:
+        maxCol = 0
+        maxRow = 0
+        for (row, col) in support_matrix:
+            if col > maxCol:
+                maxCol = col
+            if row > maxRow:
+                maxRow = row
 
-        for rowIndex in range(rowCount):
+    if columns is None:
+        columns = list(range(maxCol + 1))
+
+    if row_count is None:
+        row_count = maxRow + 1
+
+    for rowIndex in range(row_count):
+        origins[(rowIndex, 0)] = -1
+        probabilities[(rowIndex, 0)] = 0.0
+
+    # colIndex is j in the Perl version
+    colIndex = 1
+
+    # Skip the first column because we already filled it above.
+    # We need to run off the end of the last column by CHUNK_SIZE since we
+    # slide the window along one column at a time. So we augment the selected
+    # columns with the necessary additional columns.
+    # colIndexIndex is col in the Perl version
+    for colIndexIndex in range(1, len(columns) + CHUNK_SIZE - 1):
+        inProvidedColumns = colIndexIndex < len(columns)
+
+        # Matches behavior on lines 819-823
+        if inProvidedColumns:
+            colIndex = columns[colIndexIndex]
+        else:
+            colIndex += 1
+
+        for rowIndex in range(row_count):
             maxScore = -math.inf
             maxScoreIndex = 0
 
-            supportLog = -math.inf  # Not sure what this is for (line 832)
+            # Mapped from line 831
+            support = support_matrix.get((rowIndex, colIndex), None)
+            if support is not None and support != 0:
+                supportLog = math.log(support)
 
-            if True:  # Figure out how we will map these (line 831)
-                for innerRowIndex in range(rowCount):
-                    score = 0.0  # Initial value doesn't matter
-                    exists = False
+                for innerRowIndex in range(row_count):
+                    # Omitting check on line 841 because we expanded columns
+                    if inProvidedColumns:
+                        probValue = probabilities.get(
+                            (innerRowIndex, columns[colIndexIndex - 1]), None
+                        )
+                    else:
+                        probValue = probabilities.get(
+                            (innerRowIndex, colIndex - 1), None
+                        )
 
-                    # Omitting check on line 841 to verify its necessity
-                    cellValue = probabilities.get(
-                        (innerRowIndex, columns[colIndex - 1]), None
-                    )
-                    if cellValue is not None:
-                        score = supportLog + cellValue
-                        exists = True
+                    if probValue is not None:
+                        score = supportLog + probValue
 
-                    if exists:
                         if rowIndex == innerRowIndex:
                             # Same sequence (higher probability)
-                            score = score + LOGGED_SAME_PROB
+                            score += LOGGED_SAME_PROB
                         else:
                             # Different sequence (lower probability)
-                            score = score + LOGGED_CHANGE_PROB
+                            score += LOGGED_CHANGE_PROB
 
                         # Update our current max score
                         if score > maxScore:
@@ -74,5 +120,10 @@ def fill_prob_matrix(
 
                 probabilities[(rowIndex, colIndex)] = maxScore
                 origins[(rowIndex, colIndex)] = maxScoreIndex
+
+    if benchmark:
+        end = timer()
+        logger = getLogger(__name__)
+        logger.info(f"benchmark: {end - start}s")
 
     return (probabilities, origins)

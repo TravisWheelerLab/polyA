@@ -1,7 +1,10 @@
-from typing import Dict, List, Tuple
+import sys
+
+from typing import Any, Callable, Dict, List, Tuple
 
 """
-A sparse support matrix implemented as a dictionary (for now).
+Typedef to represent a sparse support matrix implemented as a
+dictionary (for now).
 """
 SupportMatrix = Dict[Tuple[int, int], float]
 
@@ -34,13 +37,45 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
     if headers != ["key", "support_value"]:
         raise ValueError(headers)
 
-    matrix = {}
+    supportMatrix: SupportMatrix = {}
 
     # Populate the actual matrix values
     for line in matrix_lines:
+        # Skip empty lines
+        if len(line) == 0:
+            continue
+
         [key, value] = line.split()
         [row, col] = key.split(".")
         cellPos = (int(row), int(col))
-        matrix[cellPos] = float(value)
+        supportMatrix[cellPos] = float(value)
 
-    return matrix
+    return supportMatrix
+
+
+def serialize_support_matrix(
+    support_matrix: SupportMatrix, output: Callable[[str], Any] = sys.stdout.write,
+) -> None:
+    """
+    Serialize the support matrix in a manner that is compatible with the
+    serialization implemented in the Perl prototype.
+
+    Use `output` to capture output for testing, otherwise the default value
+    should be sufficient.
+
+    >>> import io
+    >>> s = {(0, 0): 1.0, (0, 1): 2.0}
+    >>> r = io.StringIO()
+    >>> serialize_support_matrix(s, r.write)
+    >>> print(r.getvalue())
+    key support_value
+    0.0 1.0
+    0.1 2.0
+    <BLANKLINE>
+    """
+    output("key support_value")
+    for cellPos in support_matrix:
+        supportValue = support_matrix[cellPos]
+        line = "\n%s.%s %s" % (cellPos[0], cellPos[1], supportValue)
+        output(line)
+    output("\n")
