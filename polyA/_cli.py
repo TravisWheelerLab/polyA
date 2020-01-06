@@ -7,10 +7,10 @@ from .prob_matrix import serialize_prob_matrix
 
 
 def _configure_logging(options: Options) -> None:
-    if options.log_target is not None:
+    if options.log_file is not None:
         formatter = Formatter(fmt="{levelname} ({name}) - {message}", style="{")
 
-        handler = StreamHandler(options.log_target)
+        handler = StreamHandler(options.log_file)
         handler.setFormatter(formatter)
 
         logger = getLogger(__package__)
@@ -28,6 +28,10 @@ def run(args: List[str]) -> None:
     # matrix because that's all we've ported to Python so far.
 
     probMatrix, originMatrix = fill_prob_matrix(
-        options.support_matrix, columns=options.columns, benchmark=options.benchmark,
+        options.support_matrix,
+        columns=options.columns,
+        benchmark=options.benchmark,
+        change_prob=options.change_prob,
+        chunk_size=options.chunk_size,
     )
     serialize_prob_matrix(probMatrix, originMatrix)

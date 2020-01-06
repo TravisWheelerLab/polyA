@@ -1,9 +1,11 @@
+import math
+
 from logging import Logger, getLogger, root
 import math
 from timeit import default_timer as timer
 from typing import List, Optional, Tuple
 
-from .constants import CHUNK_SIZE, LOGGED_CHANGE_PROB, LOGGED_SAME_PROB
+from .constants import DEFAULT_CHANGE_PROB, DEFAULT_CHUNK_SIZE
 from .origin_matrix import OriginMatrix
 from .prob_matrix import ProbMatrix
 from .support_matrix import SupportMatrix
@@ -14,6 +16,8 @@ def fill_prob_matrix(
     columns: Optional[List[int]] = None,
     row_count: Optional[int] = None,
     benchmark: bool = False,
+    change_prob: float = DEFAULT_CHANGE_PROB,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> Tuple[ProbMatrix, OriginMatrix]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
@@ -26,8 +30,10 @@ def fill_prob_matrix(
                       included
     row_count      -- the total number of rows that will be processed, will
                       be computed from the other arguments if omitted
-    benchmark .    -- whether or not to collect and output benchmarking data
+    benchmark      -- whether or not to collect and output benchmarking data
                       to the logger
+    change_prob    -- probability of changing sequence
+    chunk_size     -- the width of the "window" analyzed at one time
 
     We omit filling the first column because we want its probabilities to be
     zero anyway.
@@ -41,6 +47,11 @@ def fill_prob_matrix(
         else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
      return max
     """
+    same_prob = 1.0 - change_prob
+
+    logged_change_prob = math.log(change_prob)
+    logged_same_prob = math.log(same_prob)
+
     if benchmark:
         start = timer()
 
@@ -70,11 +81,11 @@ def fill_prob_matrix(
     colIndex = 1
 
     # Skip the first column because we already filled it above.
-    # We need to run off the end of the last column by CHUNK_SIZE since we
+    # We need to run off the end of the last column by `chunk_size` since we
     # slide the window along one column at a time. So we augment the selected
     # columns with the necessary additional columns.
     # colIndexIndex is col in the Perl version
-    for colIndexIndex in range(1, len(columns) + CHUNK_SIZE - 1):
+    for colIndexIndex in range(1, len(columns) + chunk_size - 1):
         inProvidedColumns = colIndexIndex < len(columns)
 
         # Matches behavior on lines 819-823
@@ -108,10 +119,10 @@ def fill_prob_matrix(
 
                         if rowIndex == innerRowIndex:
                             # Same sequence (higher probability)
-                            score += LOGGED_SAME_PROB
+                            score += logged_same_prob
                         else:
                             # Different sequence (lower probability)
-                            score += LOGGED_CHANGE_PROB
+                            score += logged_change_prob
 
                         # Update our current max score
                         if score > maxScore:

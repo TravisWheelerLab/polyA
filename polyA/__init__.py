@@ -1,10 +1,8 @@
 from .constants import (
-    CHANGE_PROB,
-    CHUNK_SIZE,
-    LOGGED_CHANGE_PROB,
-    LOGGED_SAME_PROB,
+    DEFAULT_CHANGE_PROB,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_SAME_PROB,
     NAN_STRING,
-    SAME_PROB,
 )
 from .fill_prob_matrix import fill_prob_matrix
 from .origin_matrix import OriginMatrix
