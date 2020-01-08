@@ -1,4 +1,6 @@
 from functools import lru_cache
+from os import listdir
+from os.path import isfile
 from polyA import (
     OriginMatrix,
     ProbMatrix,
@@ -65,10 +67,13 @@ def load_example(id: int) -> Example:
 # +------------+
 
 
-# This is the number of "exN.in" and "exN.out" file pairs we have in
-# the fixtures/ directory. If you add one, increment this.
-# TODO: Determine this value automatically
-EXAMPLE_COUNT = 6
+# This is the number of "exN.in" and "exN.out" file pairs we have in the
+# fixtures/ directory. This is kind of a stupid thing to do, but it is better
+# than having to keep track manually.
+EXAMPLE_COUNT = 0
+for name in listdir("fixtures/"):
+    if name.startswith("ex") and name.endswith(".in"):
+        EXAMPLE_COUNT += 1
 
 
 @mark.slow
