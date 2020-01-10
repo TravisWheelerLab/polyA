@@ -1,15 +1,20 @@
-# AAAAAAAAAAAAAAAA (polyA)
+# AAAAAAAAAAAAAAAA (PolyA)
 
-> Automatically Adjudicate Any And All Arbitrary Annotations, Astutely
-> Adjoin Abutting Alignments, And Also Amputate Anything Amiss.
+> **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
+> **A**nnotations, **A**stutely > **A**djoin **A**butting **A**lignments,
+> **A**nd **A**lso **A**mputate **A**nything **A**miss.
 
 ## About
 
-TODO: Kaitlin
+**TODO:** Kaitlin
+
+### The Algorithm
+
+**TODO:** Kaitlin - we can also link to whatever paper(s) are published
 
 ## Using
 
-TODO: Kaitlin, George
+**TODO:** Kaitlin, George
 
 ## Development
 
@@ -60,6 +65,7 @@ Documentation tests are also fine for simple cases.
 ```
 # Run tests
 pipenv run python -m pytest
+
 # or
 make check-fast check-slow
 ```
@@ -75,4 +81,3 @@ MIT license. See `LICENSE`.
   - Travis Wheeler
   - Kaitlin Carey
   - George Lesica
-
