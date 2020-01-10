@@ -53,6 +53,10 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
     return supportMatrix
 
 
+def fill_support_matrix() -> SupportMatrix:
+    pass
+
+
 def serialize_support_matrix(
     support_matrix: SupportMatrix, output: Callable[[str], Any] = sys.stdout.write,
 ) -> None:

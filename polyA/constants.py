@@ -9,6 +9,16 @@ Measured in base pairs.
 DEFAULT_CHUNK_SIZE = 30
 
 """
+TODO: Explanation (Kaitlin)
+"""
+DEFAULT_GAP_EXT = -5
+
+"""
+TODO: Explanation (Kaitlin)
+"""
+DEFAULT_GAP_INIT = -25
+
+"""
 The string used to represent "not a number" for serialization and
 deserialization.
 """

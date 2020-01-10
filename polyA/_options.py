@@ -13,6 +13,8 @@ from .support_matrix import SupportMatrix, deserialize_support_matrix
 # TODO: Columns should be a list of columns to exclude for clarity
 # TODO: Read options from a file by default or with a different script?
 # TODO: Accept input from a pipe
+# TODO: Add gap-ext and gap-init options and use defaults in constants
+
 class Options:
     benchmark: bool
     change_prob: float
