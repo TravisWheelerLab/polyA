@@ -8,6 +8,11 @@ from .constants import (
 from .fill_prob_matrix import fill_prob_matrix
 from .origin_matrix import OriginMatrix
 from .prob_matrix import ProbMatrix, deserialize_prob_matrix, serialize_prob_matrix
+from .substitution_matrix import (
+    CharacterPositions,
+    SubstitutionMatrix,
+    load_substitution_matrix,
+)
 from .support_matrix import (
     SupportMatrix,
     deserialize_support_matrix,
