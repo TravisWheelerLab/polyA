@@ -10,4 +10,5 @@ Pipfile.lock
 # Editors
 *~
 *.swp
+.vstags
 

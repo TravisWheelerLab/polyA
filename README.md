@@ -18,26 +18,20 @@
 
 ## Development
 
+This project uses [Pipenv](https://pipenv.readthedocs.io/en/latest/). It must be installed before
+any of the Makefile targets or the commands described later in this section will work.
+
 ### Makefile
 
-The following make targets are available if you prefer:
-
-  - `check` - run all tests and verifications
-  - `check-fast` - run the fast unit tests
-  - `check-slow` - run the slow unit tests as well as the functional tests
-  - `check-format` - check code formatting
-  - `format` - format code
-  - `setup` - install runtime dependencies
-  - `setup-dev` - install runtime and development dependencies
+A Makefile is available, run `make` or `make help` in the project root to see the available targets.
 
 ### Dependencies
 
-If you prefer not to use the Makefile, the following commands will allow you
-to manage dependencies. This project uses
-[Pipenv](https://pipenv.readthedocs.io/en/latest/).
+If you prefer not to use the Makefile, the following commands will allow you to manage dependencies.
 
 ```
 # Get to work (from within project directory)
+# This drops you into a shell inside the project virtual environment
 pipenv shell
 
 # Fetch runtime dependencies
@@ -81,3 +75,4 @@ MIT license. See `LICENSE`.
   - Travis Wheeler
   - Kaitlin Carey
   - George Lesica
+
