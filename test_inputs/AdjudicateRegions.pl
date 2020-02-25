@@ -198,6 +198,14 @@ while(my $region = <$in>){
 }
 close $in;
 
+#FIXME? - maybe? - if the input alignment file only has 1 seq that's aligned 
+#just print out the single subfam and don't run rest of script 
+#several of the align files for artificial seqs to test for recombinant 
+#false positives only had 1 seq aligned
+if($numseqs == 1){
+	print STDERR "1\t$Subfams[1]\n";
+	exit;
+}
 
 $changeProbLog = log($changeProb/($numseqs-1));
 
@@ -300,7 +308,7 @@ for(my $j = 0; $j < $cols; $j++){
 	my $max = 0;
 	my $maxrow;
 	for(my $i = 1; $i < $rows; $i++){
-		if(exists $ConsensusHash{$i.'.'.$j}){	
+		if(exists $SupportHash{$i.'.'.$j}){	
 			
 			$ConsensusHash_collapse{$Subfams[$i].'.'.$j} = $ConsensusHash{$i.'.'.$j};
 			$StrandHash_collapse{$Subfams[$i].'.'.$j} = $Strands[$i];
@@ -355,6 +363,7 @@ for(my $i = 0; $i < $rows; $i++){
 #update number of rows after collapse 
 $rows = scalar keys %Subfams_collapse;
 
+# PrintMatrixHashCollapse($cols, %SupportHash_collapse);
 # PrintMatrixHashCollapse($cols, %ConsensusHash_collapse);
 # PrintMatrixHashCollapse($cols, %StrandHash_collapse);
 
@@ -1246,8 +1255,7 @@ sub FillProbMatrix{
 		}else{
 			$j++;
 		}
-		
-		
+			
 		foreach my $i (@{$ActiveCells_collapse{$j}}){
 			
 			my $max = -inf;
@@ -1547,14 +1555,14 @@ sub FillPathGraph{
 # 					adds in edge if the subfam of the sink is at the source node and if it's 
 # 					confidence >= 1%, and if the source is before the sink in the consensus sequence 
 					if($sinkStrand eq '+' and $sinkStrand eq $sourceStrand){
-						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .01){
+						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .5){
  							#FIXME- not sure what this overlap should be .. just allowed 50 for now
  							if($sourceSubfamStop <= $sinkSubfamStart+50){
 								@$pathgraph[$i*$numnodes+$j] = 1;	
 							}
 						}
 					}elsif($sinkStrand eq '-' and $sinkStrand eq $sourceStrand){
-						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .01){
+						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .5){
  							#FIXME- not sure what this overlap should be .. just allowed 50 for now
  							if($sourceSubfamStop >= $sinkSubfamStart+50){
 								@$pathgraph[$i*$numnodes+$j] = 1;	
@@ -1566,7 +1574,6 @@ sub FillPathGraph{
 				
 			}
 		}
-# 		print STDERR "\n\n";
 	}
 	
 # 	PrintPathGraph();
