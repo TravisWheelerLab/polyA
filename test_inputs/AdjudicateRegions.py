@@ -101,8 +101,8 @@ ChromSeqs: List[str] = []
 AlignHash: Dict[Tuple[int, int], int] = {}
 ConfHash: Dict[Tuple[int, int], float] = {}
 SupportHash: Dict[Tuple[int, int], float] = {}
-ProbHash: Dict[Tuple[int, int], float] = {}
-OriginHash: Dict[Tuple[int, int], int] = {}
+ProbHash: Dict[Tuple[str, int], float] = {}
+OriginHash: Dict[Tuple[str, int], str] = {}
 ConsensusHash: Dict[Tuple[int, int], int] = {}
 
 subfampath: List[int] = []
@@ -110,7 +110,7 @@ subfampath: List[int] = []
 RemoveStarts: List[int] = []
 RemoveStops: List[int] = []
 
-Changes: List[int] = []
+Changes: List[str] = []
 ChangesPos: List[int] = []
 
 SubFams.append("skip")
@@ -204,7 +204,7 @@ while j < cols:
     activecols: List[str] = []
     ActiveCellsCollapse[j] = activecols
 
-    maxx: int = 0
+    maxx: float = 0
     maxrow: int = -1
     i: int = 1
     while i < rows:
@@ -236,12 +236,13 @@ while j < cols:
 i: int = 0
 while i < rows:
     SubFamsCollapse[SubFams[i]] = 0
+    i += 1
 
 rows = len(SubFamsCollapse)
 
 # line 381
 for k in SubFamsCollapse:
-    ProbHash[i, 0] = 0
+    ProbHash[k, 0] = 0
 
 FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
 
@@ -254,7 +255,7 @@ if printt:
     PrintAllMatrices()
 
 numnodes: int = 0
-NodeConfidenceDict: Dict[Tuple[int, int], float] = {}
+NodeConfidenceDict: Dict[Tuple[str, int], float] = {}
 pathGraph: List[Tuple[int, int]] = []
 total: int = 0
 loop: int = 1
@@ -673,7 +674,7 @@ def CalcScore(seq1: List[str], seq2: List[str], lastpreva: str, lastprevb: str):
     return chunkscore
 
 
-def ConfidenceCM(lamb: float, region: List[int]) -> str:
+def ConfidenceCM(lamb: float, region: List[float]) -> str:
     confidenceString: str = ""
 
     ScoreTotal: int = 0
@@ -700,7 +701,7 @@ def ConfidenceCM(lamb: float, region: List[int]) -> str:
     return confidenceString
 
 
-def FillConfScoreMatrix(alignhash, confhash):
+def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tuple[int, int], float]):
     i: int = 0
     while i < len(Columns) - chunksize + 1:
         col: int = Columns[i]
@@ -717,6 +718,270 @@ def FillConfScoreMatrix(alignhash, confhash):
         while row < rows:
             if confidenceTemp[row] != 0:
                 confhash[row, col] = confidenceTemp[row]
+
+
+def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, int], int]):
+    j: int = 1
+    col: int = 1
+    while col < len(Columns):
+        if col in Columns:
+            j = Columns[col]
+        else:
+            j += 1
+
+        for i in ActiveCellsCollapse[j]:
+            max: float = -inf
+            maxindex: str = ''
+            supportlog: float = log(supporthash[i, j])
+
+            for row in ActiveCellsCollapse[Columns[col - 1]]:
+                score: float = -1
+                there: bool = False
+
+                if col in Columns:
+                    score = supportlog + probhash[row, col - 1]
+                    there = True
+                else:
+                    score = supportlog + probhash[row, j - 1]
+                    there = True
+
+                if there:
+                    if row == i:
+                        score = score + sameProbLog
+                    else:
+                        score = score + changeProbLog
+
+                    if score > max:
+                        max = score
+                        maxindex = row
+
+            probhash[i, j] = max
+            originhash[i, j] = maxindex
+
+        col += 1
+
+
+def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tuple[int, int], float]):
+    i: int = 0
+    while i < rows:
+        tempcol: int = -1
+        col: int = 0
+        while col < len(Columns) - chunksize - 1:
+            j = Columns[col]
+
+            if (i, j) in confhash:
+                num: int = j
+                summ: float = 0
+                numsegments: int = 0
+                while num >= 0 and num >= j - chunksize + 1:
+                    if (i, num) in confhash:
+                        summ = summ + confhash[i, num]
+                        numsegments += 1
+                    num -= 1
+
+                if numsegments > 0:
+                    supporthash[i, j] = summ / numsegments
+            col += 1
+        i += 1
+
+        j: int = cols - chunksize
+        while j <= cols:
+            num: int = j
+            summ: float = 0
+            numsegments: int = 0
+            while num >= 0 and num >= j - chunksize + 1:
+                if (i, num) in confhash:
+                    summ = summ + confhash[i, num]
+                    numsegments += 1
+                num -= 1
+
+            if numsegments > 0:
+                supporthash[i, j] = summ / numsegments
+
+
+def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, int], str], subfams: List[str]) -> List[str]:
+    maxxx: float = -inf
+    maxindex: str = ''
+    for i1 in ActiveCellsCollapse[cols - 1]:
+        if maxxx < probhash[i1, cols -1]:
+            maxxx = probhash[i1, cols - 1]
+            maxindex = i1
+
+    subfamorder: List[str] = []
+    prev: str = originhash[maxindex, cols - 1]
+    i: int = cols - 1
+
+    subfamorder.append(maxindex)
+
+    col: int = len(Columns)
+    while col > 0:
+        if col in Columns:
+            i = Columns[col]
+        else:
+            i -= 1
+
+        if col in Columns:
+            if (prev, Columns[col - 1]) in originhash and (prev, i) in originhash:
+                subfamorder.append(prev)
+                prev = originhash[prev, Columns[col - 1]]
+            else:
+                subfamorder.append('')
+        else:
+            if (prev, i - 1) in originhash and (prev, i) in originhash:
+                subfamorder.append(prev)
+                prev = originhash[prev, i - 1]
+            else:
+                subfamorder.append('')
+        col -= 1
+
+    subfamorder.reverse()
+    return subfamorder
+
+
+def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: List[str], chromseqs, changespos: List[int]):
+    nodeconfidence_temp: List[float] = [0 for _ in range(rows * numnodes)]
+
+    j: int = 1
+    while j < len(SubFams):
+        b: int = changespos[0] - 1
+        e: int = changespos[1]
+        subfam: List[str] = subfamseqs[j][b:e].split()
+        chrom: List[str] = chromseqs[j][b:e].split()
+        alignscore: float = CalcScore(subfam, chrom, '', '')
+        nodeconfidence_temp[j * numnodes + 0] = alignscore
+
+    i: int = 0
+    while i < numnodes - 1:
+        j: int = 1
+        while j < len(SubFams):
+            b: int = changespos[i] - 1
+            e: int = changespos[i + 1]
+            subfam: List[str] = subfamseqs[j][b:e].split()
+            chrom: List[str] = chromseqs[j][b:e].split()
+
+            lastpreva: str = subfamseqs[j][changespos[i + 1] - 1]
+            lastprevb: str = chromseqs[j][changespos[i + 1] - 1]
+            alignscore: float = CalcScore(subfam, chrom, lastpreva, lastprevb)
+            nodeconfidence_temp[j * numnodes + i] = alignscore
+
+            j += 1
+        i += 1
+
+    j: int = 1
+    while j < len(SubFams):
+        subfam: List[str] = subfamseqs[j][changespos[-1] - 1:].split()
+        chrom: List[str] = chromseqs[j][changespos[-1] - 1:].split()
+        alignscore: float = CalcScore(subfam, chrom, '', '')
+        nodeconfidence_temp[j * numnodes + numnodes - 1] = alignscore
+        j += 1
+
+    for j in range(numnodes):
+        temp: List[float] = []
+        for i in range(len(SubFams)):
+            temp.append(nodeconfidence_temp[i * numnodes + j])
+
+        confidenceTemp: List[float] = [float(x) for x in ConfidenceCM(lamb, temp).split(' ')]
+        for i in range(len(SubFams)):
+            nodeconfidence_temp[i * numnodes + j] = confidenceTemp[i]
+
+    for j in range(numnodes):
+        for i in range(len(SubFams)):
+            if (SubFams[i], j) in nodeconfidence:
+                nodeconfidence[SubFams[i], j] += nodeconfidence_temp[i * numnodes + j]
+            else:
+                nodeconfidence[SubFams[i], j] = nodeconfidence_temp[i * numnodes + j]
+
+
+def FillPathGraph(pathgraph: List[int]):
+    for i in range(numnodes * numnodes):
+        pathgraph.append(0)
+
+    for i in range(numnodes - 1):
+        pathgraph[i * numnodes + i + 1] = 1
+
+    for j in range(numnodes):
+        sinkSubfam: str = Changes[j]
+        sinkSubfamStart: int = ConsensusHashCollapse[sinkSubfam, Columns[ChangesPos[j]]]
+        sinkStrand: str = StrandHashCollapse[sinkSubfam, Columns[ChangesPos[j]]]
+
+        for i in range(j - 1):
+            for sourceSubfam in SubFamsCollapse:
+                sourceConf = NodeConfidenceDict[sourceSubfam, i]
+                if (sourceSubfam, Columns[ChangesPos[i + 1]] - 1) in ConsensusHashCollapse:
+                    sourceSubfamStop = ConsensusHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]] - 1]
+                    sourceStrand = StrandHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]] - 1]
+
+                    if sinkStrand == '+' and sinkStrand == sourceStrand:
+                        if sinkSubfam == sourceSubfam and sourceConf >= 0.5:
+                            if sourceSubfamStop <= sinkSubfamStart + 50:
+                                pathgraph[i * numnodes + j] = 1
+                    elif sinkStrand == '-' and sinkStrand == sourceStrand:
+                        if sinkSubfam == sourceSubfam and sourceConf >= 0.5:
+                            if sourceSubfamStop >= sinkSubfamStart + 50:
+                                pathgraph[i * numnodes + j] = 1
+
+
+def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int):
+    global cols
+
+    RemoveNodes: List[bool] = [False for _ in range(numnodes)]
+
+    NumEdgesIn: List[int] = [0 for _ in range(numnodes)]
+    NumEdgesOut: List[int] = [0 for _ in range(numnodes)]
+
+    for i in range(numnodes):
+        for j in range(numnodes):
+            NumEdgesIn[j] += pathgraph[i * numnodes + j]
+            NumEdgesOut[i] += pathgraph[i * numnodes + j]
+
+    for i in range(numnodes - 1):
+        if NumEdgesIn[i] <= 1 and NumEdgesOut[i] <= 1:
+            removestarts.append(changespos[i])
+            removestops.append(changespos[i + 1])
+
+            RemoveNodes[i] = True
+
+    if NumEdgesIn[numnodes - 1] <= 1 and NumEdgesOut[numnodes - 1] <= 1:
+        removestarts.append(changespos[numnodes - 1])
+        removestops.append(cols)
+
+        RemoveNodes[numnodes - 1] = True
+
+    i: int = numnodes - 1
+    while RemoveNodes[i]:
+        cols = changespos[i] - 1
+        i -= 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
