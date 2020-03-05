@@ -47,6 +47,16 @@ pipenv install <package>
 pipenv install --dev package
 ```
 
+### Running Perl-to-Python Tests
+
+```
+pipenv install # in the root
+pipenv shell
+pip install -e . # in the root
+```
+
+Then you should be able to run `RunTests.sh` in `test_inputs` successfully.
+
 ### Unit Tests
 
 Unit tests use [pytest](https://pytest.org/en/latest/). The linked
