@@ -15,10 +15,11 @@ def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
         j += 1
     stdout.write("\n")
 
+    stdout.write("skip\t")
     j: int = 0
     while j < column:
         if ("skip", j) in Hash:
-            stdout.write(Hash["skip", j])
+            stdout.write(str(Hash["skip", j]))
         else:
             stdout.write(f"{-inf:5.3g}")
         stdout.write("\t")
@@ -30,8 +31,8 @@ def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
             stdout.write(f"{k:<20s}\t")
             j: int = 0
             while j < column:
-                if (i, j) in Hash:
-                    stdout.write(Hash[i, j])
+                if (k, j) in Hash:
+                    stdout.write(str(Hash[k, j]))
                 else:
                     stdout.write(f"{-inf:5.3g}")
                 stdout.write("\t")
@@ -197,8 +198,6 @@ with open(infile) as _infile:
         ConsensusStops.append(alignment.consensus_stop)
         SubfamSeqs.append(alignment.subfamily_sequence)
         ChromSeqs.append(alignment.sequence)
-
-print(f"stuff = {ChromSeqs[1]}")
 
 changeProbLog = log(changeProb / (numseqs - 1))
 
@@ -435,7 +434,8 @@ def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
 
 FillConsensusPosMatrix(ConsensusHash, SubfamSeqs, ChromSeqs, ConsensusStarts, ConsensusStops)
 
-Columns: List[int] = []
+Columns: Dict[int, int] = {}
+k: int = 0
 j: int = 0
 while j < cols:
     empty: bool = True
@@ -448,7 +448,8 @@ while j < cols:
             i += 1
 
     if not empty:
-        Columns.append(j)
+        Columns[k] = j
+        k += 1
 
     AlignHash[0, j] = skipAlignScore
 
@@ -456,9 +457,10 @@ while j < cols:
 
 i: int = 0
 while i < chunksize - 1:
-    Columns.append(j)
+    Columns[k] = j
     i += 1
     j += 1
+    k += 1
 
 
 def ConfidenceCM(lamb: float, region: List[float]) -> str:
@@ -489,8 +491,9 @@ def ConfidenceCM(lamb: float, region: List[float]) -> str:
 
 
 def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tuple[int, int], float]):
-    i: int = 0
-    while i < len(Columns) - chunksize + 1:
+    for i in Columns:
+        if i >= len(Columns) - chunksize + 1:
+            break
         col: int = Columns[i]
         temp: List[int] = []
         row: int = 0
@@ -518,8 +521,9 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
     i: int = 0
     while i < rows:
         tempcol: int = -1
-        col: int = 0
-        while col < len(Columns) - chunksize + 1:
+        for col in Columns:
+            if col >= len(Columns) - chunksize + 1:
+                break
             j = Columns[col]
 
             if (i, j) in confhash:
@@ -629,8 +633,8 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
                 score: float = -1
                 there: bool = False
 
-                if col - 1 in Columns:
-                    score = supportlog + probhash[row, col - 1]
+                if col in Columns:
+                    score = supportlog + probhash[row, Columns[col - 1]]
                     there = True
                 else:
                     score = supportlog + probhash[row, j - 1]
@@ -661,9 +665,6 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     maxxx: float = -inf
     maxindex: str = ''
     for i1 in ActiveCellsCollapse[cols - 1]:
-        print(i1)
-        print(cols - 1)
-        print(probhash[i1, cols - 1])
         if maxxx < probhash[i1, cols - 1]:
             maxxx = probhash[i1, cols - 1]
             maxindex = i1
