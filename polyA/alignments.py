@@ -1,5 +1,6 @@
+from __future__ import annotations
 from itertools import groupby
-from typing import Callable, Iterable, List, NamedTuple, TextIO
+from typing import Callable, Iterable, List, NamedTuple, TextIO, Union
 
 
 class Alignment(NamedTuple):
@@ -15,6 +16,18 @@ class Alignment(NamedTuple):
     consensus_stop: int
     sequence: str
     subfamily_sequence: str
+
+    def update(self, sequence: Union[str, None], subfamily_sequence: Union[str, None]) -> Alignment:
+        return Alignment(
+            subfamily=self.subfamily,
+            score=self.score,
+            start=self.start,
+            stop=self.stop,
+            consensus_start=self.consensus_start,
+            consensus_stop=self.consensus_stop,
+            sequence=self.sequence if sequence is None else sequence,
+            subfamily_sequence=self.subfamily_sequence if subfamily_sequence is None else subfamily_sequence,
+        )
 
 
 def _line_grouper(prefix: str) -> Callable[[str], str]:

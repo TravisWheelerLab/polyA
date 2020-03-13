@@ -2,7 +2,7 @@ from io import StringIO
 import sys
 from typing import Any, Callable, Dict, List, Tuple
 
-from .sparse_table import SparseTable, Pos
+from .sparse_table import DictSparseTable, SparseTable, Pos
 
 SupportTable = SparseTable[float]
 """
@@ -42,7 +42,7 @@ def load_support_table(input_file: StringIO) -> SupportTable:
     if headers != ["key", "support_value"]:
         raise ValueError(f"invalid headers: {headers}")
 
-    support_table: SupportTable = SupportTable()
+    support_table: SupportTable = DictSparseTable()
 
     # Populate the actual table values
     for line in input_file:
@@ -70,7 +70,7 @@ def save_support_table(
     should be sufficient.
 
     >>> import io
-    >>> s = SupportTable()
+    >>> s = DictSparseTable()
     >>> s[Pos(0, 0)] = 1.0
     >>> s[Pos(0, 1)] = 2.0
     >>> r = io.StringIO()

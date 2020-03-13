@@ -4,7 +4,7 @@ from timeit import default_timer as timer
 from typing import Any, Callable, TextIO, List, Optional, Tuple
 
 from .constants import NAN_STRING, DEFAULT_CHANGE_PROB, DEFAULT_CHUNK_SIZE
-from .sparse_table import Dim, Pos, SparseTable
+from .sparse_table import DictSparseTable, Dim, Pos, SparseTable
 from .support_table import SupportTable
 
 ProbTable = SparseTable[float]
@@ -60,8 +60,8 @@ def load_prob_origin_tables(
     if headers != ["key", "prob_value", "origin"]:
         raise ValueError(f"invalid headers: {headers}")
 
-    prob_table: ProbTable = ProbTable()
-    origin_table: OriginTable = OriginTable()
+    prob_table: ProbTable = DictSparseTable()
+    origin_table: OriginTable = DictSparseTable()
 
     for line in input_file:
         # Ignore blank lines
@@ -96,10 +96,10 @@ def save_prob_origin_tables(
     should be sufficient.
 
     >>> import io
-    >>> p = ProbTable()
+    >>> p = DictSparseTable()
     >>> p[Pos(0, 0)] = 1.0
     >>> p[Pos(0, 1)] = 2.0
-    >>> o = OriginTable()
+    >>> o = DictSparseTable()
     >>> o[Pos(0, 0)] = 1
     >>> o[Pos(0, 1)] = 2
     >>> r = io.StringIO()
@@ -168,7 +168,7 @@ def fill_prob_origin_tables(
     if benchmark:
         start = timer()
 
-    prob_table: ProbTable = ProbTable()
+    prob_table: ProbTable = DictSparseTable()
     origin_table: OriginTable = OriginTable
 
     # TODO: We may be able to get row_count directly from support_table now?
@@ -248,6 +248,7 @@ def fill_prob_origin_tables(
 
     if benchmark:
         end = timer()
+        from logging import getLogger
         logger = getLogger(__name__)
         logger.info(f"benchmark: {end - start}s")
 
