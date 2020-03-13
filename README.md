@@ -8,13 +8,131 @@
 
 **TODO:** Kaitlin
 
-### The Algorithm
+A common annotation process compares an unannotated sequence to a collection of known sequences.
+Sometimes, more than one of the queries shows a significant match to the target. Current 
+annotation processes choose the 'true' match based on highest alignment score. In databases
+with highly similar sequences, more than one query may match with high alignment scores, this
+method is no longer reliable because it is possible that either query is the true sequence, and 
+it falsely implies certainty in the true match. PolyA produces confidence estimates for 
+competing annotations to eliminate implying false certainty in the annotations. In addition, 
+polyA can identify instances of gene conversion and homologous recombination, and find the 
+exact genomic location of the switch between sequences. It can also clarify ambiguous boundaries
+between neighboring elements due to homologous over extension. And it can find sequences nesting
+while identifying the inserted sequence along with the original sequence that was inserted into.
+
+
+## The Algorithm
 
 **TODO:** Kaitlin - we can also link to whatever paper(s) are published
+
+Using our confidence score analysis enables a jumping HMM approach, allowing transitions between
+competing queries identifies switches between queries. These switches are a result of gene
+conversion, homologous recombination, neighboring elements and sequence nesting.
+
+Our algorithm has 4 parts: 
+
+1. Confidence calculations help choose between competing annotations
+	using an application of the bayes theorem on the probabilities underlying alignments scores
+	we compute posterior probabilities (confidence) of the likelihood a query is the true
+	source for the genomic region.
+2A. Segmented adjacent confidence finds non-exact breakpoint locations
+	-takes alignments of all competing queries
+	-splits alignments up into contiguous segments
+	-compute confidence scores for segments 
+	-dynamic programming pass through matrix holding confidence values gives most probable
+	path through alignment
+	-allows switches between queries
+	-identifies a query for each segment
+2B. Segmented overlapping confidence finds exact breakpoints of gene conversion, homologous 
+recombination and boundary detection
+	-takes alignments of all competing queries
+	-splits alignments up into adjacent segments starting at every nucleotide
+	-compute average confidence values for each nucleotide based on all segments overlapping
+	that position
+	-new dynamic programming matrix with confidence values for each nucleotide instead
+	of each segment
+	-dynamic programming pass identifies a query for every nucleotide
+3. Graph Algorithm finds nested sequences
+	-all sequences labeled in dynamic programming become nodes
+	-find alternative paths through that graph based on confidence of the sink subfamily
+	in the source node
+	-splice out all sequences with no alternative paths (these are the inserted sequences)
+	-splice corresponding positions out of dynamic programming matrix
+	-another dynamic programming pass on the updated matrix stitches original sequence back 
+	together
+	
+For a more detailed description view the [poster](/supporting_materials/AlgorithmPoster.pdf)
 
 ## Using
 
 **TODO:** Kaitlin, George
+
+
+### Input file format
+	
+Alignment files
+	-RM of CM alignment files 
+	-links to RM and CM alignment file formats
+	-add hmmer eventually?
+	
+Score matrix files
+example format:		
+  A   R   G   C   Y   T   K   M   S   W   N   H   V   X
+  8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
+  2   2   1 -13 -13 -14  -6  -5  -5  -5  -1  -1  -1 -27
+ -2   3  10 -13 -13 -13  -1  -8  -1  -8  -1  -1  -1 -27
+-13 -13 -13  10   3  -2  -8  -1  -1  -8  -1  -1  -1 -27
+-14 -13 -13   1   2   2  -5  -6  -5  -5  -1  -1  -1 -27
+-15 -14 -13  -6   1   8  -2 -11 -10  -3  -1  -1  -1 -27
+ -9  -5  -1  -9  -6  -2  -1  -9  -5  -5  -1  -1  -1 -27
+ -2  -6  -9  -1  -5  -9  -9  -1  -5  -5  -1  -1  -1 -27
+ -8  -4  -1  -1  -4  -8  -4  -4  -1  -8  -1  -1  -1 -27
+ -3  -6 -10 -10  -6  -3  -6  -6 -10  -3  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+-27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27  -1  -1 -27
+
+
+### Output file format
+
+genomic location
+----------------
+start stop	IDnum	query
+0	362		1111	L1PREC2_3end
+363	567	2345	AluJr
+568	833	3579	AluYb8
+834	964	1245	AluJr
+965	980	6047	L1MA4A_3end
+981	1497	1111	L1PREC2_3end
+**FIXME - switch these postions to genomic locations not matrix pos 
+
+matching IDnums correspond to sequences involved in nesting that have been stitched back to 
+the original sequence 
+
+
+### Additional software
+
+esl_scorematrix as a part of the esl package in the hammer software suite
+	-will compute lambda for the input score matrix
+	-not needed if including lambda as a command line argument
+
+### Using at the command line
+
+usage: $0 alignFile matrixFile
+ARGUMENTS
+	--gapInit [-25]
+	--getExt [-5]
+	--lambda [will calc from matrix if not included - need esl_scorematrix installed]
+	--segmentsize [30]
+	--changeprob [1e-45]
+	
+OPTIONS
+	--help - display help message
+	--printmatrices - output all dynamic programming matrices
+	--matrixpos - prints subfam changes in matrix position instead of genomic position
+	
+
 
 ## Development
 
