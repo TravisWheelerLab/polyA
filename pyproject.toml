@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "polya"
+name = "polyA"
 version = "0.1.0"
 description = "A clever sequence annotation adjudicator."
 authors = [
-    "Kaitlin Carey <kaitlin.carey@umontana.edu",
+    "Kaitlin Carey <kaitlin.carey@umontana.edu>",
     "George Lesica <george.lesica@umontana.edu>",
     "Travis Wheeler <travis.wheeler@umontana.edu>",
 ]
