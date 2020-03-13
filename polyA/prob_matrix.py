@@ -12,7 +12,9 @@ The value, then, is the probability of visiting that row and column.
 ProbMatrix = Dict[Tuple[int, int], float]
 
 
-def deserialize_prob_matrix(matrix_lines: List[str]) -> Tuple[ProbMatrix, OriginMatrix]:
+def deserialize_prob_matrix(
+    matrix_lines: List[str],
+) -> Tuple[ProbMatrix, OriginMatrix]:
     """
     Deserialize a probability matrix as serialized by the Perl prototype
     and Python implementations. The format of the first column ("key") is
@@ -98,6 +100,11 @@ def serialize_prob_matrix(
         else:
             originString = str(originValue)
 
-        line = "\n%s.%s %s %s" % (cellPos[0], cellPos[1], probValue, originString)
+        line = "\n%s.%s %s %s" % (
+            cellPos[0],
+            cellPos[1],
+            probValue,
+            originString,
+        )
         output(line)
     output("\n")

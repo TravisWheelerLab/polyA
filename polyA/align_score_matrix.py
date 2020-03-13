@@ -37,9 +37,9 @@ def calculate_score(
         pass
     else:
         chunkScore += 0.0  # TODO: Bunch of weird stuff here
-    
+
     # TODO: The for-loop, but can we merge the inside bits with the above?
-    
+
     return chunkScore
 
 
@@ -76,10 +76,15 @@ def fill_align_score_matrix(
                 if seqSlice != "." and subSeqSlice[0] != ".":
                     # TODO: Flip these calculate_score arguments around? Does it matter?
                     if indexJ == 0:
-                        alignScore = calculate_score(seqSlice, subSeqSlice, "", "",)
+                        alignScore = calculate_score(
+                            seqSlice, subSeqSlice, "", "",
+                        )
                     else:
                         alignScore = calculate_score(
-                            seqSlice, subSeqSlice, seq[indexJ - 1], subSeq[indexJ - 1],
+                            seqSlice,
+                            subSeqSlice,
+                            seq[indexJ - 1],
+                            subSeq[indexJ - 1],
                         )
 
                     alignScoreMatrix[(alignmentIndex, indexI)] = alignScore
@@ -89,4 +94,3 @@ def fill_align_score_matrix(
             indexJ += 1
 
     return alignScoreMatrix
-
