@@ -74,6 +74,7 @@ changeProbLog: float = 0.0  # Reassigned later
 skipAlignScore: int = 30
 startall: int = 0  # Reassigned later
 stopall: int = 0  # Reassigned later
+ID: int = 1111
 
 help: bool = False  # Reassigned later
 prin: bool = False  # Reassigned later
@@ -166,7 +167,7 @@ ProbHash: Dict[Tuple[str, int], float] = {}
 OriginHash: Dict[Tuple[str, int], str] = {}
 ConsensusHash: Dict[Tuple[int, int], int] = {}
 
-subfampath: List[str] = []
+# subfampath: List[str] = []
 
 RemoveStarts: List[int] = []
 RemoveStops: List[int] = []
@@ -174,16 +175,17 @@ RemoveStops: List[int] = []
 Changes: List[str] = []
 ChangesPos: List[int] = []
 
-# SubFams.append("skip")
+IDs: List[int] = [];
+Changes_orig: List[int] = [];
+ChangesPos_orig: List[int] = [];
+Columns_orig: List[int] = [];
 
-# Scores.append(-1)
-# Starts.append(-1)
-# Strands.append("")
-# Stops.append(-1)
-# ConsensusStarts.append(-1)
-# ConsensusStops.append(-1)
-# SubfamSeqs.append("")
-# ChromSeqs.append("")
+SupportHashCollapse: Dict[Tuple[str, int], int] = {}
+ActiveCellsCollapse: Dict[int, List[str]] = {}
+SubFamsCollapse: Dict[str, int] = {}
+ConsensusHashCollapse: Dict[Tuple[str, int], int] = {}
+StrandHashCollapse: Dict[Tuple[str, int], str] = {}
+
 
 
 numseqs: int = 0
@@ -194,7 +196,6 @@ with open(infile) as _infile:
 
         SubFams.append(alignment.subfamily)
         Scores.append(alignment.score)
-        # TODO: If we need this, add it back in load_alignments
         Strands.append(alignment.strand)
         Starts.append(alignment.start)
         Stops.append(alignment.stop)
@@ -214,39 +215,20 @@ if numseqs == 1:
 
 changeProbLog = log(changeProb / (numseqs - 1))
 
-#don't use this anymore
-# IDs: List[int] = []
-# Active: List[bool] = []
-# nodeStarts: List[int] = []
-# nodeStops: List[int] = []
-# idnum = 1111
-# for sf in SubFams:
-#     IDs.append(idnum)
-#     Active.append(False)
-#     nodeStarts.append(0)
-#     nodeStops.append(0)
-# 
-#     idnum += 1
 
 rows: int = len(SubFams)
 cols: int = 0
-
-#don't use this anymore 
-# Position = [0] * len(SubfamSeqs)
 
 
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     minStart: int = starts[1]
     maxStop: int = stops[1]
 
-    i: int = 1
-    while i < len(starts):
+    for i in range(1, len(starts)):
         if starts[i] < minStart:
             minStart = starts[i]
         if stops[i] > maxStop:
             maxStop = stops[i]
-
-        i += 1
 
     return minStart, maxStop
 
@@ -256,15 +238,13 @@ def padSeqs(start, stop, subfamseq, chromseq):
 
     startall, stopall = Edges(start, stop)
 
-    i: int = 1
-    while i < len(SubfamSeqs):
+    for i in range(1, len(SubfamSeqs)):
         leftpad = start[i] - startall
         rightpad = stopall - stop[i]
 
         chromseq[i] = ("." * leftpad) + f"{chromseq[i]}" + ("." * rightpad)
         subfamseq[i] = ("." * leftpad) + f"{subfamseq[i]}" + ("." * rightpad)
 
-        i += 1
 
 
 padSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
@@ -287,9 +267,8 @@ def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str):
         chunkscore = chunkscore
     else:
         chunkscore += SubMatrix[CharPos[seq1[0]] * subMatrixCols + CharPos[seq2[0]]]
-
-    j: int = 1
-    while j < len(seq1):
+        
+    for j in range(1, len(seq1)):
         if seq1[j] == "-":
             if seq1[j - 1] == "-":
                 chunkscore += gapExt
@@ -306,16 +285,13 @@ def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str):
             if seq1[j] in CharPos and seq2[j] in CharPos:
                 chunkscore += SubMatrix[CharPos[seq1[j]] * subMatrixCols + CharPos[seq2[j]]]
 
-        j += 1
-
     return chunkscore
 
-
+##FIXME - come back to this one later once I have the results printed - easier for testing 
 def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
     global cols
 
-    i: int = 1
-    while i < len(ChromSeqs):
+    for i in range(1, len(ChromSeqs)):
         subfam1: str = subfams[i]
         chrom1: str = chroms[i]
 
@@ -341,14 +317,11 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
 
         alignscore = CalcScore(SubfamSlice, ChromSlice, "", "")
         AlignHash[i, index] = alignscore
-
-        if cols < index:
-            cols = index + 1
-
-        index += 1
+        
+        index+=1
 
         # TODO: Make sure these bounds are right since Python indexing is different
-        while j + offset + 1 < len(chrom1):
+        while j + offset < len(chrom1):
             tempindex = j
             tempcount = 0
 
@@ -389,18 +362,18 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                     else:
                         AlignHash[i, index] = alignscore
 
-                if cols < index:
-                    cols = index + 1
+                # if cols < index:
+#                     cols = index + 1
                 index += 1
 
             j += 1
             prevoffset = offset
-
+            
+        cols = index
         i += 1
 
 
 FillAlignScoreMatrix(SubfamSeqs, ChromSeqs)
-
 
 def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
                            subfams: List[str],
@@ -581,56 +554,45 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
 
 
 FillSupportMatrix(SupportHash, AlignHash, ConfHash)
+# PrintMatrixHash(cols, SupportHash)
 
-SupportHashCollapse: Dict[Tuple[str, int], int] = {}
-ActiveCellsCollapse: Dict[int, List[str]] = {}
-SubFamsCollapse: Dict[str, int] = {}
-ConsensusHashCollapse: Dict[Tuple[str, int], int] = {}
-StrandHashCollapse: Dict[Tuple[str, int], str] = {}
-
-# j = 0
-# while j < cols:
-for j in range(cols):
-    activecols: List[str] = []
-    ActiveCellsCollapse[j] = activecols
+#collapses matrices 
+for col in range(len(Columns)):
+	j: int = Columns[col]
+	DupMaxCon: Dict[str, float] = {}
+	DupMaxSup: Dict[str, float] = {}
+	
+	activecols: List[str] = []
+	ActiveCellsCollapse[j] = activecols
     
-    maxx: float = 0
-    maxrow: int = -1
-    i: int = 0
-    
-    for i in range(rows):
-    	if (i, j) in SupportHash:
-    		if (i, j) in ConsensusHash:
-    			ConsensusHashCollapse[SubFams[i], j] = ConsensusHash[i, j]
-    			
-    		StrandHashCollapse[SubFams[i], j] = Strands[i]
-    		
-    		if (SubFams[i], j) in SupportHashCollapse:
-    			SupportHashCollapse[SubFams[i], j] = SupportHashCollapse[SubFams[i], j]
-    			
-    			if SupportHash[i, j] > maxx:
-    				maxx = SupportHash[i, j]
-    				maxrow = i
-    				
-    		else:
-    			SupportHashCollapse[SubFams[i], j] = SupportHash[i, j]
-    			ActiveCellsCollapse[j].append(SubFams[i])
-    			
-    			maxx = SupportHash[i, j]
-    			maxrow = i
-    			
-    if maxrow > -1:
-    	ConsensusHashCollapse[SubFams[maxrow], j] = ConsensusHash[maxrow, j]
-    	StrandHashCollapse[SubFams[maxrow], j] = Strands[maxrow]
+	for i in range(rows):
+		if (i,j) in ConsensusHash:
+			if (SubFams[i]) in DupMaxCon:
+				if SupportHash[i,j] > DupMaxCon[SubFams[i]]:
+					DupMaxCon[SubFams[i]] = SupportHash[i,j]
+					ConsensusHashCollapse[SubFams[i],j] = ConsensusHash[i,j]
+					StrandHashCollapse[SubFams[i], j] = Strands[i]
+			else:
+				DupMaxCon[SubFams[i]] = SupportHash[i,j]
+				ConsensusHashCollapse[SubFams[i],j] = ConsensusHash[i,j]
+				StrandHashCollapse[SubFams[i], j] = Strands[i]
+		
+		if (i,j) in SupportHash:
+			if (SubFams[i]) in DupMaxSup:
+				if SupportHash[i,j] > DupMaxSup[SubFams[i]]:
+					DupMaxSup[SubFams[i]] = SupportHash[i,j]
+					SupportHashCollapse[SubFams[i],j] = SupportHash[i,j]
+			else:
+				DupMaxSup[SubFams[i]] = SupportHash[i,j]
+				SupportHashCollapse[SubFams[i],j] = SupportHash[i,j]
+				ActiveCellsCollapse[j].append(SubFams[i])
 
+		
 
-i: int = 0
-while i < rows:
+for i in range(rows):
     SubFamsCollapse[SubFams[i]] = 0
-    i += 1
 
 rows = len(SubFamsCollapse)
-
 
 # line 381
 for k in SubFamsCollapse:
@@ -666,7 +628,10 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 #rounding error?
 FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
 
+IDs = [0] * cols
+
 def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, int], str], subfams: List[str]) -> List[str]:
+    global ID
     maxxx: float = -inf
     maxindex: str = ''
     
@@ -675,17 +640,17 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
             maxxx = probhash[i1, cols - 1]
             maxindex = i1
     
-    subfamorder: List[str] = []
     prev: str = originhash[maxindex, cols - 1]
     
     ChangesPos.append(len(Columns))
     
     j: int = len(Columns)-1
-    while j > 0:
+    while j > 1:
     	if (prev, Columns[j-1]) in originhash:
-    		subfamorder.append(prev)
+    		IDs[Columns[j-1]] = ID
     		
     		if prev != originhash[prev, Columns[j-1]]:
+    			ID+=1234
     			ChangesPos.append(j-1)
     			Changes.append(prev)
     			
@@ -693,7 +658,9 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     		
     	j-=1
     	
-    ChangesPos.append(j)
+    	
+    IDs[Columns[j-1]] = ID	
+    ChangesPos.append(j-1)
     Changes.append(prev)
     
     Changes.reverse()
@@ -701,6 +668,12 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
 
 
 GetPath(ProbHash, OriginHash, SubFams)
+
+#keep the original info for printing at the end 
+Changes_orig = Changes.copy()
+ChangesPos_orig = ChangesPos.copy()
+Columns_orig = Columns.copy()
+
 
 def PrintChanges(changes, changespos):
     i: int = 0
@@ -710,7 +683,7 @@ def PrintChanges(changes, changespos):
         stdout.write(f"{changes[i]}\n")
         i=i+1
 
-PrintChanges(Changes, ChangesPos)
+# PrintChanges(Changes, ChangesPos)
 
 
 def PrintAllMatrices():
@@ -781,7 +754,36 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
             else:
             	nodeconfidence[SubFams[i], j] = nodeconfidence_temp[i * numnodes + j]
 
+def PrintPathGraph():
+	for i in range(numnodes):
+		stderr.write(f"{Changes[i]} ")
+	stderr.write("\n")
+	
+	for i in range(numnodes):
+		for j in range(numnodes):
+			stderr.write(f"{pathGraph[i*numnodes+j]}\t")
+		stderr.write(f"{Changes[i]}\n")
+	stderr.write("\n")
 
+def PrintNodeConfidence():
+	for subfam in SubFamsCollapse:
+		stderr.write(f"{subfam} ")
+		for j in range(numnodes):
+			if (subfam,j) in NodeConfidenceDict:
+				stderr.write(f"{NodeConfidenceDict[subfam,j]} ")
+			else:
+				stderr.write(f"-inf ")
+		stderr.write("\n")
+
+
+
+#FIXME - in Seqs_noStitching.align AluJr being stitched, but shouldn't be - think it's an 
+# error in consensusHashCollapse the current method for testing isn't working - the 
+# consensusHashCollapse is correct, but the switches in probmatrix are happening later 
+# than actual so it's looking at a diff consensus seqs postions when testing if source 
+# is before sink
+##What if we check 50nt around the sinkstart and sourcestop and if any of the pos satisfies 
+##the condition stitch them?
 def FillPathGraph(pathgraph: List[int]):
     for i in range(numnodes * numnodes):
         pathgraph.append(0)
@@ -790,25 +792,32 @@ def FillPathGraph(pathgraph: List[int]):
         pathgraph[i * numnodes + i + 1] = 1
 
     for j in range(numnodes):
-        sinkSubfam: str = Changes[j]
+        sinkSubfam: str = str(Changes[j])
         sinkSubfamStart: int = ConsensusHashCollapse[sinkSubfam, Columns[ChangesPos[j]]]
         sinkStrand: str = StrandHashCollapse[sinkSubfam, Columns[ChangesPos[j]]]
 
         for i in range(j - 1):
             for sourceSubfam in SubFamsCollapse:
-                sourceConf = NodeConfidenceDict[sourceSubfam, i]
-                if (sourceSubfam, Columns[ChangesPos[i + 1]] - 1) in ConsensusHashCollapse:
-                    sourceSubfamStop = ConsensusHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]] - 1]
-                    sourceStrand = StrandHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]] - 1]
+            	sourceSubfam = str(sourceSubfam)
+            	sourceConf = NodeConfidenceDict[sourceSubfam, i]
+            	
+            	if (sourceSubfam, Columns[ChangesPos[i + 1]-1]) in ConsensusHashCollapse:
+            		sourceSubfamStop = ConsensusHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]-1]]
+            		sourceStrand = StrandHashCollapse[sourceSubfam, Columns[ChangesPos[i + 1]-1]]
+            		
+            		if sinkStrand == '+' and sinkStrand == sourceStrand:
+            			if (sinkSubfam == sourceSubfam) and (sourceConf >= 0.3):            				
+            				if sourceSubfamStop <= sinkSubfamStart + 50:
+            					pathgraph[i * numnodes + j] = 1
+            					
+            		elif sinkStrand == '-' and sinkStrand == sourceStrand:
+            			if sinkSubfam == sourceSubfam and sourceConf >= 0.4:
+            				if sourceSubfamStop >= sinkSubfamStart + 50:
+            					pathgraph[i * numnodes + j] = 1
+    
+    # PrintPathGraph()
+#     PrintNodeConfidence()
 
-                    if sinkStrand == '+' and sinkStrand == sourceStrand:
-                        if sinkSubfam == sourceSubfam and sourceConf >= 0.5:
-                            if sourceSubfamStop <= sinkSubfamStart + 50:
-                                pathgraph[i * numnodes + j] = 1
-                    elif sinkStrand == '-' and sinkStrand == sourceStrand:
-                        if sinkSubfam == sourceSubfam and sourceConf >= 0.5:
-                            if sourceSubfamStop >= sinkSubfamStart + 50:
-                                pathgraph[i * numnodes + j] = 1
 
 
 def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int):
@@ -841,11 +850,13 @@ def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int
 		i -= 1
 
 
+
 numnodes: int = 0
 NodeConfidenceDict: Dict[Tuple[str, int], float] = {}
 pathGraph: List[int] = []
 total: int = 0
 loop: int = 1
+
 
 count: int = 0
 while (True):
@@ -888,277 +899,46 @@ while (True):
 
     Changes.clear()
     ChangesPos.clear()
-    subfampath.clear()
-
+        
     GetPath(ProbHash, OriginHash, SubFams)
-    PrintChanges(Changes, ChangesPos)
-    stderr.write("\n")
-
     
-    
-    
+#     PrintChanges(Changes, ChangesPos)
+#     stderr.write("\n")
+	
+	
+#NEXT - change subroutines to match AdjudicateRegions_graph.pl subroutines
 
 
-# 
-# def PrintAllMatrices():
-#     stdout.write("Align Scores\n")
-#     PrintMatrixHash(cols, AlignHash)
-#     stdout.write("confidence\n")
-#     PrintMatrixHash(cols, ConfHash)
-#     stdout.write("support\n")
-#     PrintMatrixHash(cols, SupportHash)
-#     stdout.write("prob\n")
-#     PrintMatrixHash(cols, ProbHash)
-#     stdout.write("origin\n")
-#     PrintMatrixHash(cols, OriginHash)
+def PrintResults():
+	stdout.write("start\tstop\tID\tname\n")
+	stdout.write("----------------------------------------\n")
+	for i in range(len(Changes_orig)):
+		if str(Changes_orig[i]) != 'skip':
+			stdout.write(str(Columns_orig[ChangesPos_orig[i]]))
+			stdout.write("\t")
+			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]))
+			stdout.write("\t")
+			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stdout.write("\t")
+			stdout.write(str(Changes_orig[i]))
+			stdout.write("\n")
+	
+
+def PrintResultsSequence():
+	stdout.write("start\tstop\tID\tname\n")
+	stdout.write("----------------------------------------\n")
+	for i in range(len(Changes_orig)):
+		if str(Changes_orig[i]) != 'skip':
+			stdout.write(str(Columns_orig[ChangesPos_orig[i]]+startall))
+			stdout.write("\t")
+			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]+startall))
+			stdout.write("\t")
+			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stdout.write("\t")
+			stdout.write(str(Changes_orig[i]))
+			stdout.write("\n")
 
 
-# def PrintResults():
-#     stderr.write("\nstart\tstop\tid\tsubfam\n")
-#     stderr.write("-------------------------------------\n")
-# 
-#     i: int = 1
-#     while i < len(Active):
-#         if Active[i]:
-#             stderr.write(f"{nodeStarts[i]}\t{nodeStops[i]}\t{IDs[i]}\t{SubFams[i]}\n")
+PrintResultsSequence()
+        
 
-
-def PrintPathGraph():
-    i: int = 0
-    while i < numnodes:
-        stderr.write(f"{Changes[i]} ")
-    stderr.write("\n")
-
-    i: int = 0
-    while i < numnodes:
-        j: int = 0
-        while j < numnodes:
-            stderr.write(f"{pathGraph[i*numnodes+j]}\t")
-        stderr.write(f"{Changes[i]}\n")
-
-
-# FIXME: Add parameter types
-# def GetChanges(changes, changespos):
-#     prev: str = "skip"
-#     if subfampath[0] != "":
-#         prev = subfampath[0]
-# 
-#     i: int = 1
-#     while i < len(subfampath):
-#         curr_subfam: str = "skip"
-#         if subfampath[i] != "":
-#             curr_subfam = subfampath[i]
-# 
-#             # FIXME: Need the Python equivalent of /g on the regex
-#             match: Union[re.Match, None] = re.search(r"(.+?)_.+", curr_subfam)
-#             if match is not None:
-#                 curr_subfam = match.groups()[0]
-# 
-#             if curr_subfam != prev:
-#                 changespos.append(i)
-#                 changes.append(subfampath[i])
-# 
-#             prev = curr_subfam
-# 
-#             i += 1
-
-
-# def PrintChanges(changes, changespos):
-#     i: int = 0
-#     while i < len(changes):
-#         stderr.write(Columns[changespos[i]])
-#         stderr.write("\t")
-#         stderr.write(f"{changes[i]}\n")
-
-
-# def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
-#     global cols
-# 
-#     i: int = 1
-#     while i < len(ChromSeqs):
-#         subfam1: str = subfams[i]
-#         chrom1:  str = chroms[i]
-# 
-#         j: int = Starts[i] - startall
-#         index: int = j
-# 
-#         offset: int = chunksize
-#         alignscore: int = 0
-# 
-#         tempindex: int = j
-#         tempcount: int = 0
-# 
-#         while tempcount < chunksize:
-#             if chrom1[tempindex] != "-":
-#                 tempcount += 1
-#             tempindex += 1
-# 
-#         offset = tempindex - j
-#         prevoffset = offset
-# 
-#         ChromSlice: str = chrom1[j:j + offset]
-#         SubfamSlice: str = subfam1[j:j + offset]
-# 
-#         alignscore = CalcScore(SubfamSlice, ChromSlice, "", "")
-#         AlignHash[i, index] = alignscore
-# 
-#         if cols < index:
-#             cols = index + 1
-# 
-#         index += 1
-# 
-#         # TODO: Make sure these bounds are right since Python indexing is different
-#         while j + offset + 1 < len(chrom1):
-#             tempindex = j
-#             tempcount = 0
-# 
-#             while tempcount < chunksize:
-#                 if chrom1[tempindex + 1] != "-":
-#                     tempcount += 1
-#                 tempindex += 1
-# 
-#             offset = tempindex - j
-# 
-#             if chrom1[j + 1] != "-":
-#                 if chrom1[j + 1] != "." and subfam1[j + 1] != ".":
-#                     if prevoffset != offset:
-#                         ChromSlice = chrom1[j+1:j+offset+1]
-#                         SubfamSlice = subfam1[j+1:j + offset + 1]
-#                         alignscore = CalcScore(SubfamSlice, ChromSlice, subfam1[j], chrom1[j])
-#                     else:
-#                         if subfam1[j] == "-":
-#                             if subfam1[j - 1] == "-":
-#                                 alignscore = alignscore - gapExt
-#                             else:
-#                                 alignscore = alignscore - gapInit
-#                         else:
-#                             alignscore = alignscore - SubMatrix[CharPos[subfam1[j]]*subMatrixCols+CharPos[chrom1[j]]]
-# 
-#                         if subfam1[j + offset] == "-":
-#                             if subfam1[j + offset - 1] == "-":
-#                                 alignscore = alignscore + gapExt
-#                             else:
-#                                 alignscore = alignscore + gapInit
-#                         elif subfam1[j + offset] == "." or chrom1[j + offset] == ".":
-#                             alignscore = alignscore
-#                         else:
-#                             alignscore = alignscore + SubMatrix[CharPos[subfam1[j + offset]] * subMatrixCols + CharPos[chrom1[j + offset]]];
-# 
-#                     if alignscore <= 0:
-#                         AlignHash[i, index] = 1
-#                     else:
-#                         AlignHash[i, index] = alignscore
-# 
-#                 if cols < index:
-#                     cols = index + 1
-#                 index += 1
-# 
-#             j += 1
-#             prevoffset = offset
-# 
-#         i += 1
-
-
-# def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
-#                            subfams: List[str],
-#                            chroms: List[str],
-#                            consensusstart: List[int],
-#                            consensusstop: List[int]):
-#     i: int = 1
-#     while i < rows:
-#         SubfamArray: List[str] = subfams[i].split()
-#         ChromArray: List[str] = chroms[i].split()
-# 
-#         consensuspos: int = 0
-#         if Strands[i] == "+":
-#             consensuspos = consensusstart[i] - 1
-#             matrixpos: int = 0
-#             j: int = 0
-#             while j < len(SubfamArray):
-#                 if SubfamArray[j] != ".":
-#                     if SubfamArray[j] != "-":
-#                         consensuspos += 1
-# 
-#                     # TODO: What does the -> in the perl code do?
-#                     consensus[i, matrixpos] = consensuspos
-# 
-#                 if ChromArray[j] != "-":
-#                     matrixpos += 1
-#         else:
-#             consensuspos = consensusstart[i] + 1
-#             matrixpos: int = 0
-#             j: int = 0
-#             while j < len(SubfamArray):
-#                 if SubfamArray[j] != ".":
-#                     if SubfamArray[j] != "-":
-#                         consensuspos -= 1
-#                     consensus[i, matrixpos] = consensuspos
-# 
-#                 if ChromArray[j] != "-":
-#                     matrixpos += 1
-# 
-#         # FIXME: Delete later, just for testing (see perl code, line 985)
-#         if consensusstop[i] != consensuspos:
-#             stderr.write("\n\nERROR - consensus seq positions not correct\n\n")
-# 
-# 
-# def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tuple[int, int], float]):
-#     i: int = 0
-#     while i < len(Columns) - chunksize + 1:
-#         col: int = Columns[i]
-#         temp: List[int] = []
-#         row: int = 0
-#         while row < rows:
-#             if alignhash[row, col]:
-#                 temp.append(alignhash[row, col])
-#             else:
-#                 temp.append(0)
-# 
-#         confidenceTemp = ConfidenceCM(lamb, temp).split(" ")
-#         row: int = 0
-#         while row < rows:
-#             if confidenceTemp[row] != 0:
-#                 confhash[row, col] = confidenceTemp[row]
-# 
-# 
-# def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, int], int]):
-#     j: int = 1
-#     col: int = 1
-#     while col < len(Columns):
-#         if col in Columns:
-#             j = Columns[col]
-#         else:
-#             j += 1
-# 
-#         for i in ActiveCellsCollapse[j]:
-#             max: float = -inf
-#             maxindex: str = ''
-#             supportlog: float = log(supporthash[i, j])
-# 
-#             for row in ActiveCellsCollapse[Columns[col - 1]]:
-#                 score: float = -1
-#                 there: bool = False
-# 
-#                 if col in Columns:
-#                     score = supportlog + probhash[row, col - 1]
-#                     there = True
-#                 else:
-#                     score = supportlog + probhash[row, j - 1]
-#                     there = True
-# 
-#                 if there:
-#                     if row == i:
-#                         score = score + sameProbLog
-#                     else:
-#                         score = score + changeProbLog
-# 
-#                     if score > max:
-#                         max = score
-#                         maxindex = row
-# 
-#             probhash[i, j] = max
-#             originhash[i, j] = maxindex
-# 
-#         col += 1
-# 
-# 

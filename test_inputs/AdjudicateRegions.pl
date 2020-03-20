@@ -198,6 +198,7 @@ while(my $region = <$in>){
 }
 close $in;
 
+
 #FIXME? - maybe? - if the input alignment file only has 1 seq that's aligned 
 #just print out the single subfam and don't run rest of script 
 #several of the align files for artificial seqs to test for recombinant 
@@ -233,11 +234,12 @@ my $cols = 0;  #assign cols in FillAlignScoreMatrix
 
 padSeqs(\@Starts, \@Stops, \@SubfamSeqs, \@ChromSeqs);
 
-@Position = (0) x @SubfamSeqs;
+
+
+# @Position = (0) x @SubfamSeqs;
 FillAlignScoreMatrix(\@SubfamSeqs, \@ChromSeqs); 
 
 FillConsensusPosMatrix(\%ConsensusHash, \@SubfamSeqs, \@ChromSeqs, \@ConsensusStarts, \@ConsensusStops);
-
  
 #BUG HERE - FIXME - if you hard code in here and fill those gaps, the issue is resolved
 # for Seqs_doubleNested.align
@@ -275,14 +277,8 @@ for(my $i = 0; $i < $chunksize-1; $i++){
 	$j++;
 }
 
-
-#printing columns array to take as input into python version of FillProbMatrix
-# for(my $i = 0; $i < @Columns; $i++){
-# 	print "$Columns[$i]\n";
-# }
-
-
 FillConfScoreMatrix(\%AlignHash, \%ConfHash); 
+
 
 $cols = $cols + $chunksize-1;
 
@@ -307,9 +303,9 @@ for(my $j = 0; $j < $cols; $j++){
 	
 	my $max = 0;
 	my $maxrow;
-	for(my $i = 1; $i < $rows; $i++){
+	for(my $i = 0; $i < $rows; $i++){
+		
 		if(exists $SupportHash{$i.'.'.$j}){	
-			
 			$ConsensusHash_collapse{$Subfams[$i].'.'.$j} = $ConsensusHash{$i.'.'.$j};
 			$StrandHash_collapse{$Subfams[$i].'.'.$j} = $Strands[$i];
 			
@@ -352,37 +348,13 @@ for(my $j = 0; $j < $cols; $j++){
 	
 }
 
+
 for(my $i = 0; $i < $rows; $i++){
 	$Subfams_collapse{$Subfams[$i]} = 0;
 }
 
-# PrintMatrixHash($cols, %SupportHash);
-# PrintMatrixHash($cols, %ConsensusHash);
-
-
 #update number of rows after collapse 
 $rows = scalar keys %Subfams_collapse;
-
-# PrintMatrixHashCollapse($cols, %SupportHash_collapse);
-# PrintMatrixHashCollapse($cols, %ConsensusHash_collapse);
-# PrintMatrixHashCollapse($cols, %StrandHash_collapse);
-
-
-	
-# 	
-# # prints out the book keeping hash that holds columns as keys and an array of all 
-# #the active subfams for that row as values 	
-# print STDERR "\n";
-# foreach my $key (keys %ActiveCells_collapse){
-# 	print STDERR "$key\t";
-# 	my @value_array = @{$ActiveCells_collapse{$key}};
-# 	
-# 	for(my $i = 0; $i < @value_array; $i++){
-# 		print STDERR "$value_array[$i] ";
-# 	}
-# 	print STDERR "\n";
-# }
-
 
  
 #fill first col of probhash with 0s
@@ -393,12 +365,10 @@ for my $i (keys %Subfams_collapse){
  
 FillProbMatrix(\%ProbHash, \%SupportHash_collapse, \%OriginHash);
 
-# PrintMatrixHashCollapse($cols, %OriginHash);
-
-
 @subfampath = GetPath(\%ProbHash, \%OriginHash, \@Subfams);
 GetChanges(\@Changes, \@ChangesPos);
 # GetBounds(\@Changes, \@ChangesPos);  #FIXME - this no longer works with the new hashes
+
 PrintChanges(\@Changes, \@ChangesPos);
 print STDERR "\n";
 
@@ -406,9 +376,9 @@ if($print){
 	PrintAllMatrices();
 }
 
-
-
-
+# for(my $i = 0; $i < @subfampath; $i++){
+# 	print "$i\t$subfampath[$i]\n";
+# }
 
 #Steps- 
 #1.create confidence for nodes
@@ -472,7 +442,7 @@ while(1){
 	undef @RemoveStops;
 	
 	ExtractNodes(\@RemoveStarts, \@RemoveStops, \@ChangesPos, \@pathGraph, $numnodes);
-
+	
 	# removing inserted Alus from @Columns so they can be ignored 
 	$total = 0;
 	for(my $i = 0; $i < @RemoveStops; $i++){
@@ -502,6 +472,7 @@ while(1){
 # PrintResults();
 
 
+print STDERR "\n\n";
 
 #----------------------------------------------------------------------------------#
 # 					SUBROUTINES				  			 						   #
@@ -748,9 +719,9 @@ sub PrintChanges{
 	for(my $i = 0; $i < @$changes; $i++){
 		#changed the position to it's position in @columns, this make it so all the positions 
 		#are correct even when full length subfams get spliced out
-		print STDERR $Columns[@$changespos[$i]];
-		print STDERR "\t";
-		print STDERR "@$changes[$i]\n";
+		print $Columns[@$changespos[$i]];
+		print "\t";
+		print "@$changes[$i]\n";
 		
 	}	
 }
@@ -935,6 +906,11 @@ sub FillAlignScoreMatrix{
 sub FillConsensusPosMatrix{
 	my ($consensus, $subfams, $chroms, $consensusstart, $consensusstop) = (@_);
 	
+	#0s for consensus pos of skip state
+	for($j = 0; $j < $cols + $chunksize-1; $j++){
+		$consensus->{"0.".$j} = 0;
+	}
+			
 	#start at 1 to skip 'skip state'
 	for(my $i = 1; $i < $rows; $i++){	
 		my @SubfamArray = split(//, @$subfams[$i]);
@@ -962,8 +938,8 @@ sub FillConsensusPosMatrix{
 				if($ChromArray[$j] ne '-'){
 					$matrixpos++;
 				}
-			}		
-		
+			}	
+				
 		}else{ #reverse strand 
 		
 			$consensuspos = @$consensusstart[$i]+1;
@@ -1230,20 +1206,6 @@ sub FillConfScoreMatrix{
 #done in log space
 sub FillProbMatrix{
 	my ($probhash, $supporthash, $originhash) = (@_);
-	
-	#prints input into the python version of FillProbMatrix
-	# print "key support_value\n";
-# 	for(my $i = 0; $i < $rows; $i++){
-# 		for(my $j = 0; $j < $cols; $j++){
-# 			if(exists $supporthash->{$i.'.'.$j}){
-# 				print $i.'.'.$j;
-# 				print " ";
-# 				print $supporthash->{$i.'.'.$j};
-# 				print "\n";
-# 			}
-# 		}
-# 	}
-# 	my $time  = Time::HiRes::gettimeofday();
 		
 	my $j = 1; 
 	for(my $col = 1; $col < @Columns; $col++){
@@ -1301,28 +1263,6 @@ sub FillProbMatrix{
 		}
 		
 	}
-	#prints the output correct output put FillProbMatrix
-	# print "key\tprob_value\torigin\n";
-# 	for(my $i = 0; $i < $rows; $i++){
-# 		for(my $j = 0; $j < $cols; $j++){
-# 			if(exists $supporthash->{$i.'.'.$j} and $supporthash->{$i.'.'.$j} != 0){
-# 				print $i.'.'.$j;
-# 				print "\t";
-# 				print $probhash->{$i.'.'.$j};
-# 				print "\t";
-# 				
-# 				if($j != 0){
-# 					print $originhash->{$i.'.'.$j};
-# 				}else{
-# 					print 'NaN';
-# 				}
-# 				print "\n";
-# 			}
-# 		}
-# 	}
-# 	
-# 	print STDERR "prob scores - in function : ";
-# 	printf STDERR ("%.2fs\n", abs($time - Time::HiRes::gettimeofday()));
 	
 }
 
