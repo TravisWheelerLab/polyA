@@ -38,6 +38,7 @@ my $changeProbLog;
 my $skipAlignScore = 30; #FIXME - have to figure out what the best score for this is
 my $startall;
 my $stopall;
+my $ID = 1111;
 
 
 my $help;
@@ -141,14 +142,29 @@ my %ProbHash;
 my %OriginHash;
 my %ConsensusHash;
 
-my @subfampath;
-my @Position;
+my %SupportHash_collapse;
+my %ActiveCells_collapse;
+my %Subfams_collapse;
+my %ConsensusHash_collapse;
+my %StrandHash_collapse;
 
 my @RemoveStarts;
 my @RemoveStops;
 
 my @Changes;
 my @ChangesPos;
+my @IDs;
+my @Changes_orig;
+my @ChangesPos_orig;
+my @Columns_orig;
+
+
+#for stitching loop 
+my $numnodes;
+my %NodeConfidence;
+my @pathGraph;
+my $total;
+my $loop = 1;
 
 
 push @Subfams, 'skip';
@@ -161,6 +177,7 @@ push @ConsensusStarts, '';
 push @ConsensusStops, '';
 push @SubfamSeqs, '';
 push @ChromSeqs, '';
+
 
 
 $/ = "Align: ";
@@ -198,7 +215,6 @@ while(my $region = <$in>){
 }
 close $in;
 
-
 #FIXME? - maybe? - if the input alignment file only has 1 seq that's aligned 
 #just print out the single subfam and don't run rest of script 
 #several of the align files for artificial seqs to test for recombinant 
@@ -210,23 +226,6 @@ if($numseqs == 1){
 
 $changeProbLog = log($changeProb/($numseqs-1));
 
-#arrays for which subfams are active, meaning they have been identified as the subfam for
-#part of the seq - and the IDs and start and stop positions in the alignment of the 
-# active subfams
-my @IDs;
-my @Active;
-my @nodeStarts;
-my @nodeStops;
-my $idnum = 1111; #makes the IDs 4 digit nums
-for(my $i = 0; $i < @Subfams; $i++){
-	push @IDs, $idnum;
-	push @Active, 0;
-	push @nodeStarts, 0;
-	push @nodeStops, 0;
-	
-	$idnum++;
-}
-
 
 #precomputing rows and cols in align score matrix
 my $rows = @Subfams;  
@@ -234,12 +233,10 @@ my $cols = 0;  #assign cols in FillAlignScoreMatrix
 
 padSeqs(\@Starts, \@Stops, \@SubfamSeqs, \@ChromSeqs);
 
-
-
-# @Position = (0) x @SubfamSeqs;
 FillAlignScoreMatrix(\@SubfamSeqs, \@ChromSeqs); 
 
 FillConsensusPosMatrix(\%ConsensusHash, \@SubfamSeqs, \@ChromSeqs, \@ConsensusStarts, \@ConsensusStops);
+
  
 #BUG HERE - FIXME - if you hard code in here and fill those gaps, the issue is resolved
 # for Seqs_doubleNested.align
@@ -271,31 +268,25 @@ for($j = 0; $j < $cols; $j++){
 	$AlignHash{'0.'.$j} = $skipAlignScore;
 }
 
+
 #adding the last $chunksize-1 columns that are not in the AlignScoreMatrix to @Columns
 for(my $i = 0; $i < $chunksize-1; $i++){
 	push @Columns, $j;
 	$j++;
 }
 
-FillConfScoreMatrix(\%AlignHash, \%ConfHash); 
 
+FillConfScoreMatrix(\%AlignHash, \%ConfHash); 
 
 $cols = $cols + $chunksize-1;
 
 FillSupportMatrix(\%SupportHash, \%AlignHash, \%ConfHash);
-
 
 #collapse and combine rows that are the same subfam - just sum their support 
 #new support dict has key = subfamname.col 
 #also creates a bookkeeping dict that has all the cols as keys and their values 
 #are arrays that hold all the active subfams in that col - used so that don't have 
 #to loop through all the $i's just to see if a column exists 
-my %SupportHash_collapse;
-my %ActiveCells_collapse;
-my %Subfams_collapse;
-my %ConsensusHash_collapse;
-my %StrandHash_collapse;
-
 for(my $j = 0; $j < $cols; $j++){
 
 	my @activecols;
@@ -304,8 +295,8 @@ for(my $j = 0; $j < $cols; $j++){
 	my $max = 0;
 	my $maxrow;
 	for(my $i = 0; $i < $rows; $i++){
-		
 		if(exists $SupportHash{$i.'.'.$j}){	
+			
 			$ConsensusHash_collapse{$Subfams[$i].'.'.$j} = $ConsensusHash{$i.'.'.$j};
 			$StrandHash_collapse{$Subfams[$i].'.'.$j} = $Strands[$i];
 			
@@ -317,10 +308,6 @@ for(my $j = 0; $j < $cols; $j++){
 				#if it already exists check if this support score is larger than the max
 				#if it us update the max values for the collapsed array 
 				if($SupportHash{$i.'.'.$j} > $max){
-					
-					#just want to see if the support scores we are choosing from are
-					#close or one clearly stands out 
- 					#print "$max\t$SupportHash{$i.'.'.$j}\n";
 					
 					$max = $SupportHash{$i.'.'.$j};
 					$maxrow = $i;
@@ -334,8 +321,6 @@ for(my $j = 0; $j < $cols; $j++){
 				$max = $SupportHash{$i.'.'.$j};
 				$maxrow = $i;
 			}
-			
-			
 		}
 	}
 	
@@ -348,13 +333,22 @@ for(my $j = 0; $j < $cols; $j++){
 	
 }
 
-
 for(my $i = 0; $i < $rows; $i++){
 	$Subfams_collapse{$Subfams[$i]} = 0;
 }
 
+# PrintMatrixHash($cols, %AlignHash);
+# PrintMatrixHash($cols, %ConfHash);
+# PrintMatrixHash($cols, %SupportHash);
+
+
 #update number of rows after collapse 
 $rows = scalar keys %Subfams_collapse;
+
+# PrintMatrixHashCollapse($cols, %SupportHash_collapse);
+# PrintMatrixHashCollapse($cols, %ConsensusHash_collapse);
+# PrintMatrixHashCollapse($cols, %StrandHash_collapse);
+
 
  
 #fill first col of probhash with 0s
@@ -365,21 +359,20 @@ for my $i (keys %Subfams_collapse){
  
 FillProbMatrix(\%ProbHash, \%SupportHash_collapse, \%OriginHash);
 
-@subfampath = GetPath(\%ProbHash, \%OriginHash, \@Subfams);
-GetChanges(\@Changes, \@ChangesPos);
-# GetBounds(\@Changes, \@ChangesPos);  #FIXME - this no longer works with the new hashes
+GetPath(\%ProbHash, \%OriginHash, \@Subfams);
 
-PrintChanges(\@Changes, \@ChangesPos);
-print STDERR "\n";
+# PrintChanges(\@Changes, \@ChangesPos);
 
 if($print){
 	PrintAllMatrices();
 }
 
-# for(my $i = 0; $i < @subfampath; $i++){
-# 	print "$i\t$subfampath[$i]\n";
-# }
+#keep original annotation for reporting results 
+@Changes_orig = @Changes;
+@ChangesPos_orig = @ChangesPos;
+@Columns_orig = @Columns;
 
+                                                                                                                                                        
 #Steps- 
 #1.create confidence for nodes
 #	will be in a matrix that is #subfams x #nodes
@@ -389,25 +382,12 @@ if($print){
 #5.annotate again with removed subfams
 #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
 
-my $numnodes;
-my %NodeConfidence;
-my @pathGraph;
-my $total;
-my $loop = 1;
-
-
 $count = 0;
 while(1){
 	$count++;
 	
-	#FIXME - take this out.. just does loop once for debugging	
-	# if($count == 2){
-# 		last;
-# 	}
-
 	$numnodes = @Changes;
-	
-		
+			
 	#breakout of loop if there are 2 or less nodes left
 	if($numnodes <= 2){
 		last;
@@ -420,7 +400,7 @@ while(1){
 
 	undef @pathGraph;
 	FillPathGraph(\@pathGraph);
-		
+			
 	#test to see if there nodes in the graph that have more that one incoming or outgoing edge,
 	#if so keep looping, if not break out of the loop
 	my $test = 0;
@@ -442,7 +422,7 @@ while(1){
 	undef @RemoveStops;
 	
 	ExtractNodes(\@RemoveStarts, \@RemoveStops, \@ChangesPos, \@pathGraph, $numnodes);
-	
+
 	# removing inserted Alus from @Columns so they can be ignored 
 	$total = 0;
 	for(my $i = 0; $i < @RemoveStops; $i++){
@@ -460,19 +440,19 @@ while(1){
 
 	undef @Changes;
 	undef @ChangesPos;
-	undef @subfampath;
 	
-	@subfampath = GetPath(\%ProbHash, \%OriginHash, \@Subfams);
-	GetChanges(\@Changes, \@ChangesPos);
-	PrintChanges(\@Changes, \@ChangesPos);
-	print STDERR "\n";	
-		
+	GetPath(\%ProbHash, \%OriginHash, \@Subfams);
+	
+# 	PrintChanges(\@Changes, \@ChangesPos);
+	
 }
 
-# PrintResults();
+if($printMatrixPos){
+	PrintResults();
+}else{
+	PrintResultsSequence();
+}
 
-
-print STDERR "\n\n";
 
 #----------------------------------------------------------------------------------#
 # 					SUBROUTINES				  			 						   #
@@ -595,22 +575,6 @@ sub PrintAllMatrices{
 }
 
 
-#prints out all the subfams that are indentified, where they start and stop in the seq, 
-#and thier IDs - subfams that are stitched together have same ID
-sub PrintResults{
-
-	print STDERR "\nstart\tstop\tid\tsubfam\n";
-	print STDERR "-------------------------------------\n";
-	
-	#don't need to print out the start and stop of the skip state, so start at $i = 1
-	for(my $i = 1 ; $i < @Active; $i++){
-		if($Active[$i]){
-			print STDERR "$nodeStarts[$i]\t$nodeStops[$i]\t$IDs[$i]\t$Subfams[$i]\n";
-		}
-	}
-}
-
-
 #prints the 2D matrix that represents the path graph
 sub PrintPathGraph(){
 
@@ -627,104 +591,73 @@ sub PrintPathGraph(){
 	}	
 }
 
+#prints the 2D matrix that represents the path graph
+sub PrintNodeConfidence(){
 
-#stores matrix pos changes in an array along with the subfam its changing to 
-#if there is one subfam that is in different rows in the matrices this will account for that
-#by looking at the strings for the subfam names
-sub GetChanges{	
-	my ($changes, $changespos) = (@_);
-		
-	my $prev = 'skip';
-	if($subfampath[0] ne ''){
-# 		$prev = $Subfams[$subfampath[0]];
-		$prev = $subfampath[0];
+	for my $i (keys %Subfams_collapse){
+		printf "%-20s\t", $i;
+		for(my $j = 0; $j < $numnodes; $j++){
+			if(exists $NodeConfidence{$i.'.'.$j}){
+				print $NodeConfidence{$i.'.'.$j};
+			}else{
+				printf "%5.3g", '-inf';
+			}
+			print "\t";
+		}
+		print "\n";
 	}
-	
-	for(my $i = 1; $i < @subfampath; $i++){
-		
-		my $curr_subfam = 'skip';
-		
-		if($subfampath[$i] ne ""){
-		
-# 			$curr_subfam = $Subfams[$subfampath[$i]];
-			$curr_subfam = $subfampath[$i];
-		
-			#if the subfam is an L1 in the form L1*_* just use the L1 name and not the end part
-			#this is used to stitch the L1s back together 
-			if($curr_subfam =~ /(.+?)_.+/g){
-				$curr_subfam = $1;
-			}
-			
-			if($curr_subfam ne $prev){
-							
-				push @$changespos, $i;
-				push @$changes, $subfampath[$i];
-			}
-			
-			$prev = $curr_subfam;
 
-		}			
-	}	
+}
+
+#prints results at end - includes ID
+sub PrintResults{
+	print STDERR "start\tstop\tID\tname\n";
+	print STDERR "----------------------------------------\n";
+	for(my $i = 0; $i < @Changes_orig; $i++){
+		if($Changes_orig[$i] ne 'skip'){
+			print STDERR "$Columns_orig[$ChangesPos_orig[$i]]\t";
+			print STDERR "$Columns_orig[$ChangesPos_orig[$i+1]-1]\t";
+			print STDERR "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
+			print STDERR "$Changes_orig[$i]\n";
+		}
+	}
+}
+
+#prints results at end - includes ID
+#prints position in input sequence not matrix pos
+sub PrintResultsSequence{
+	print STDERR "start\tstop\tID\tname\n";
+	print STDERR "----------------------------------------\n";
+	for(my $i = 0; $i < @Changes_orig; $i++){
+		if($Changes_orig[$i] ne 'skip'){
+			print STDERR $Columns_orig[$ChangesPos_orig[$i]] + $startall;
+			print STDERR "\t";
+			print STDERR $Columns_orig[$ChangesPos_orig[$i+1]-1] + $startall;
+			print STDERR "\t";
+			print STDERR "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
+			print STDERR "$Changes_orig[$i]\n";
+		}
+	}
 }
 
 
-
-
-#FIXME - need to check on multiple examples and make sure it's reporting the correct start
-# and end bounds 
-#Finds starts/stop positions in the sequence of the different subfams/nodes
-sub GetBounds{	
-	my ($changes, $changespos) = (@_);
-		
-	my $prev = 'skip';
-	if($subfampath[0] ne ''){
-		$prev = $subfampath[0];
-	}
-	
-	my $i;
-	for($i = 1; $i < @subfampath; $i++){
-		
-		my $curr_subfam = 'skip';
-		if($subfampath[$i] ne ''){
-			$curr_subfam = $subfampath[$i];
-		}
-		
-		if($curr_subfam =~ /(.+?)_.+/g){
-			$curr_subfam = $1;
-		}
-		
-		if($curr_subfam ne $prev){
-			
-			if($curr_subfam ne 'skip'){
-				$nodeStarts[$subfampath[$i]] = $Columns[$i];
-			}
-			
-			if($subfampath[$i-1] ne ''){
-				$nodeStops[$subfampath[$i-1]] = $Columns[$i-1];
-			}
-		}
-		
-		$prev = $curr_subfam;
-	}
-	
-	#FIXME - not sure if this gives the correct end value for the last node 
-	$nodeStops[$subfampath[$i-1]] = $Columns[-1];
-}
-
-
-#prints matrix positions and subfams where the path changes to a different subfam
+# #prints matrix positions and subfams where the path changes to a different subfam
 sub PrintChanges{
 	my ($changes, $changespos) = (@_);
 	
 	for(my $i = 0; $i < @$changes; $i++){
-		#changed the position to it's position in @columns, this make it so all the positions 
-		#are correct even when full length subfams get spliced out
-		print $Columns[@$changespos[$i]];
-		print "\t";
-		print "@$changes[$i]\n";
+# 		changed the position to it's position in @columns, this make it so all the positions 
+# 		are correct even when full length subfams get spliced out
+		print STDERR $Columns[@$changespos[$i]];
+		print STDERR "\t";
+		print STDERR $Columns[@$changespos[$i+1]-1];
+		print STDERR "\t";
+		print STDERR "$IDs[@$changespos[$i]]\t";
+		print STDERR "@$changes[$i]\n";
 		
 	}	
 }
+
 
 
 #find the min start and max stop for the whole region
@@ -774,7 +707,7 @@ sub FillAlignScoreMatrix{
 	my ($subfams, $chroms) = (@_);
 	
 	for(my $i = 1; $i < @ChromSeqs; $i++){
-		
+			
 		my @subfam1 = split(//, @$subfams[$i]);
 		my @chrom1 = split(//, @$chroms[$i]);
 			
@@ -812,15 +745,15 @@ sub FillAlignScoreMatrix{
 		$alignscore = CalcScore(\@SubfamSlice, \@ChromSlice, '', '');
 		$AlignHash{$i.'.'.$index} = $alignscore;
 		
-		if($cols < $index){
-			$cols = $index+1;
-		}
+		# if($cols < $index){
+# 			$cols = $index+1;
+# 		}
 		$index++;
 		
 		
 		#move to next chunk by adding next chars score and subtracting prev chars score
 		
-		while($j+$offset+1 < @chrom1){
+		while($j+$offset < @chrom1){
 				
 			$tempindex = $j;
 			$tempcount = 0;
@@ -881,20 +814,19 @@ sub FillAlignScoreMatrix{
  					} 					
 		
 				}
+				
  				
 				#finds max index value - which is assigned to num cols in align score matrix
-				if($cols < $index){
-					$cols = $index+1;
-				}
+# 				if($cols < $index){
+# 					$cols = $index+1;
+# 				}
 			 	$index++;
 			}
 			$j++;
 			$prevoffset = $offset;
-		}	
-		
+		}
+		$cols = $index;		
 	}
-	
-			
 	#keep gaps in mind 
 	#chunks can't start on gaps and gaps don't count when getting to the 30 bps 
 }
@@ -906,11 +838,6 @@ sub FillAlignScoreMatrix{
 sub FillConsensusPosMatrix{
 	my ($consensus, $subfams, $chroms, $consensusstart, $consensusstop) = (@_);
 	
-	#0s for consensus pos of skip state
-	for($j = 0; $j < $cols + $chunksize-1; $j++){
-		$consensus->{"0.".$j} = 0;
-	}
-			
 	#start at 1 to skip 'skip state'
 	for(my $i = 1; $i < $rows; $i++){	
 		my @SubfamArray = split(//, @$subfams[$i]);
@@ -938,8 +865,8 @@ sub FillConsensusPosMatrix{
 				if($ChromArray[$j] ne '-'){
 					$matrixpos++;
 				}
-			}	
-				
+			}		
+		
 		}else{ #reverse strand 
 		
 			$consensuspos = @$consensusstart[$i]+1;
@@ -1171,9 +1098,9 @@ sub ConfidenceCM{
 #fill confidence score matrix based on align score matrix hash
 sub FillConfScoreMatrix{
 	my ($alignhash, $confhash) = (@_);
-	
-	
-	for(my $i = 0; $i < @Columns-($chunksize-1); $i++){
+		
+	for(my $i = 0; $i < @Columns; $i++){
+# 		print STDERR "$i\n";
 		my $col = $Columns[$i];
 		my @temp;
 		for(my $row = 0; $row < $rows; $row++){
@@ -1223,47 +1150,40 @@ sub FillProbMatrix{
 			my $max = -inf;
 			my $maxindex;
 	
-				my $supportlog = log($supporthash->{$i.'.'.$j});
+			my $supportlog = log($supporthash->{$i.'.'.$j});
 				 
-				#loops through all the active rows in the previous column
-				foreach my $row (@{$ActiveCells_collapse{$Columns[$col-1]}}){
+			#loops through all the active rows in the previous column
+			foreach my $row (@{$ActiveCells_collapse{$Columns[$col-1]}}){
 				
-					my $score;
-					my $there = 0; #to see if the score was calculated
+				my $score;
 					
-					if(exists $Columns[$col]){
-						$score = $supportlog + $probhash->{$row.'.'.($Columns[$col-1])};
-						$there = 1;
-					}else{
-						$score = $supportlog + $probhash->{$row.'.'.($j-1)};
-						$there = 1;
-					}
-				
- 					if($there){
-						if($row eq $i){
-							#come from same seq - higher prob
-							$score = $score +  $sameProbLog;
-						}else{
-							$score = $score + $changeProbLog;
-						}
-											
-						#find the max score, it's index goes into the origin matrix 
-						if($score > $max){
-							$max = $score;
-							$maxindex = $row;
-						}
-					}
-					
+				#FIXME - should this be testing if $Columns[$col-1] exists instead?
+				if(exists $Columns[$col-1]){
+					$score = $supportlog + $probhash->{$row.'.'.($Columns[$col-1])};
+				}else{
+					$score = $supportlog + $probhash->{$row.'.'.($j-1)};
 				}
+				
+				if($row eq $i){
+					#come from same seq - higher prob
+					$score = $score +  $sameProbLog;
+				}else{
+					$score = $score + $changeProbLog;
+				}
+											
+				#find the max score, it's index goes into the origin matrix 
+				if($score > $max){
+					$max = $score;
+					$maxindex = $row;
+				}					
+			}
 							
-				#fills the 2D loc array with the origin location 
-				$probhash->{$i.'.'.$j} = $max;
-				$originhash->{$i.'.'.$j} = $maxindex;
+			#fills the 2D loc array with the origin location 
+			$probhash->{$i.'.'.$j} = $max;
+			$originhash->{$i.'.'.$j} = $maxindex;
 			
 		}
-		
-	}
-	
+	}	
 }
 
 
@@ -1325,59 +1245,51 @@ sub FillSupportMatrix{
 
 
 #using origin matrix, back traces through the 2D array to get the subfam path
-#reverses it and returns array of the path 
+#finds where the path switches to a different row and populates @Changes and @ChangesPos
+#reverses @Changes and @ChangesPos because it's a backtrace so they are initially backwards
 #jumps over removed columns when necessary
 sub GetPath{
 	my ($prob, $origin, $subfams) = (@_);
 	
 	my $max = -inf;	
 	my $maxindex;
-# 	for(my $i = 0; $i < $rows; $i++){
 	foreach my $i (@{$ActiveCells_collapse{$cols-1}}){
 		if($max < $prob->{$i.'.'.($cols-1)}){
 			$max = $prob->{$i.'.'.($cols-1)};
 			$maxindex = $i;
 		}	
 	}
+			
+	my $prev = $origin->{$maxindex.'.'.($cols-1)};	
+	
+	push @ChangesPos, scalar @Columns;
+	
+	#already added the last col, but this adds the one before $col so still start at last col
+	my $col;
+	for($col = @Columns-1; $col > 1; $col--){
 		
-	my @subfamorder;
-	
-	my $prev = $origin->{$maxindex.'.'.($cols-1)};
-	
-		
-	my $i = $cols -1;	# $i = column loop is on
-	push @subfamorder, $maxindex;
-	
-	for(my $col = @Columns; $col > 0; $col--){
-	
-		#deals with last $chunksize-1 cols that don't exist in @Columns because they are not in align score matrix
-		if(exists $Columns[$col]){
-			$i = $Columns[$col];
-		}else{
-			$i--;
-		}
-
-		#deals with last $chunksize-1 cols that don't exist in @Columns because they are not in align score matrix
-		if(exists $Columns[$col]){
-			if((exists $origin->{$prev.'.'.($Columns[$col-1])}) and (exists $origin->{$prev.'.'.($i)})){
-# 				push @subfamorder, @$subfams[$prev];
-				push @subfamorder, $prev;
-				$prev = $origin->{$prev.'.'.($Columns[$col-1])};
-			}else{
-				push @subfamorder, "";
+		if((exists $origin->{$prev.'.'.($Columns[$col-1])}) and (exists $origin->{$prev.'.'.($Columns[$col])})){
+				
+			$IDs[$Columns[$col-1]] = $ID;
+				
+			if($prev ne $origin->{$prev.'.'.($Columns[$col-1])}){
+				$ID = $ID + 1234;
+				push @ChangesPos, $col-1;
+				push @Changes, $prev;
 			}
-		}else{
-			if((exists $origin->{$prev.'.'.($i-1)}) and (exists $origin->{$prev.'.'.($i)})){
-# 				push @subfamorder, @$subfams[$prev];
-				push @subfamorder, $prev;
-				$prev = $origin->{$prev.'.'.($i-1)};
-			}else{
-				push @subfamorder, "";
-			}
+				
+			$prev = $origin->{$prev.'.'.($Columns[$col-1])};		
 		}
 	}	
-	return reverse @subfamorder;
+
+	$IDs[$Columns[$col-1]] = $ID;
+	push @ChangesPos, $col-1;
+	push @Changes, $prev;
+		
+	@Changes = reverse @Changes;
+	@ChangesPos = reverse @ChangesPos;
 }
+
 
 #fills node confidence matrix 
 #first fills matrix with node alignment scores, then reuses matrix for confidence scores 
@@ -1389,7 +1301,7 @@ sub NodeConfidence{
 	for(my $i = 0; $i < $rows*$numnodes; $i++){
 		$nodeconfidence_temp[$i] = 0; 
 	}
-
+	
 	#compute alignment scores for node region
 	
 	#does first node in the sequence - does not look back to previous char incase of gap ext
@@ -1401,19 +1313,20 @@ sub NodeConfidence{
 	}
 
 	#does rest of nodes - looks back at prev char incase of gap ext		
+	#$i is col (node), $j is subfam
 	for(my $i = 0; $i < $numnodes-1; $i++){
 		for(my $j = 1; $j < @Subfams; $j++){
-			my @subfam = split(//, substr @$subfamseqs[$j], @$changespos[$i]-1, @$changespos[$i+1]-@$changespos[$i]);
-			my @chrom = split(//, substr @$chromseqs[$j], @$changespos[$i]-1, @$changespos[$i+1]-@$changespos[$i]);
-			my $alignscore = CalcScore(\@subfam, \@chrom, (substr $SubfamSeqs[$j], @$changespos[$i+1]-1, 1), (substr @$chromseqs[$j], @$changespos[$i+1]-1, 1));
+			my @subfam = split(//, substr @$subfamseqs[$j], @$changespos[$i], @$changespos[$i+1]-@$changespos[$i]);
+			my @chrom = split(//, substr @$chromseqs[$j], @$changespos[$i], @$changespos[$i+1]-@$changespos[$i]);
+			my $alignscore = CalcScore(\@subfam, \@chrom, (substr @$subfamseqs[$j], @$changespos[$i+1], 1), (substr @$chromseqs[$j], @$changespos[$i+1], 1));
 			$nodeconfidence_temp[$j*$numnodes+$i] = $alignscore;
 		}
 	}
 	
-	#does last node
+	#does last node $changespos[-2] because -1 is the end of the last node not the beginning 
 	for(my $j = 1; $j < @Subfams; $j++){
-		my @subfam = split(//, (substr @$subfamseqs[$j], @$changespos[-1]-1));
-		my @chrom = split(//, (substr @$chromseqs[$j], @$changespos[-1]-1));
+		my @subfam = split(//, (substr @$subfamseqs[$j], @$changespos[-2]));
+		my @chrom = split(//, (substr @$chromseqs[$j], @$changespos[-2]));
 		my $alignscore = CalcScore(\@subfam, \@chrom, '', '');
 		$nodeconfidence_temp[$j*$numnodes+$numnodes-1] = $alignscore;
 	}
@@ -1469,12 +1382,10 @@ sub FillPathGraph{
 # 	better way to match them later?
 	for(my $j = 0; $j < $numnodes; $j++){
 		my $sinkSubfam = $Changes[$j];
-		
+				
 		my $sinkSubfamStart = $ConsensusHash_collapse{$sinkSubfam.'.'.$Columns[$ChangesPos[$j]]};
 		my $sinkStrand = $StrandHash_collapse{$sinkSubfam.'.'.$Columns[$ChangesPos[$j]]};
-
-# 		print STDERR "sink subfam: $sinkSubfam\n";
-# 		print STDERR "sink subfam start: $sinkSubfamStart\n";		
+		
 						
 		#looks at all the preceding nodes, except the one directly before it (source nodes)
 		for(my $i = 0; $i < $j-1; $i++){
@@ -1484,25 +1395,22 @@ sub FillPathGraph{
 				
 				my $sourceConf = $NodeConfidence{$sourceSubfam.'.'.$i};
 				
-				if( exists $ConsensusHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]]-1)}){
-					my $sourceSubfamStop = $ConsensusHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]]-1)};
-					my $sourceStrand = $StrandHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]]-1)};
-
-# 					print STDERR "$sourceSubfam\t";
-# 					print STDERR "$Columns[$ChangesPos[$i+1]]-1\t";
-# 					print STDERR "$sourceSubfamStop\n";
+				if( exists $ConsensusHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]-1])}){
+					my $sourceSubfamStop = $ConsensusHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]-1])};
+					my $sourceStrand = $StrandHash_collapse{$sourceSubfam.'.'.($Columns[$ChangesPos[$i+1]-1])};
 					
+
 # 					adds in edge if the subfam of the sink is at the source node and if it's 
 # 					confidence >= 1%, and if the source is before the sink in the consensus sequence 
 					if($sinkStrand eq '+' and $sinkStrand eq $sourceStrand){
-						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .5){
+						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .4){
  							#FIXME- not sure what this overlap should be .. just allowed 50 for now
  							if($sourceSubfamStop <= $sinkSubfamStart+50){
 								@$pathgraph[$i*$numnodes+$j] = 1;	
 							}
 						}
 					}elsif($sinkStrand eq '-' and $sinkStrand eq $sourceStrand){
-						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .5){
+						if($sinkSubfam eq $sourceSubfam and $sourceConf >= .4){
  							#FIXME- not sure what this overlap should be .. just allowed 50 for now
  							if($sourceSubfamStop >= $sinkSubfamStart+50){
 								@$pathgraph[$i*$numnodes+$j] = 1;	
@@ -1515,7 +1423,7 @@ sub FillPathGraph{
 			}
 		}
 	}
-	
+# 	PrintNodeConfidence();
 # 	PrintPathGraph();
 }
 
@@ -1547,14 +1455,17 @@ sub ExtractNodes{
 		}
 	}
 
+	#FIXME - I think I can do $numnodes not $numnodes-1, but need to test this and make sure
+	#FIXME - it works on multiple inputs
 	#$numnodes-1 because if $i = $numnodes-1 @$changespos[$i+1] is undefined because it
 	#isn't a change position, it is the end of the matrix
-	for(my $i = 0; $i < $numnodes-1; $i++){
+	for(my $i = 0; $i < $numnodes; $i++){
 		if($NumEdgesIn[$i] <= 1 and $NumEdgesOut[$i] <= 1){
 			push @$removestarts, @$changespos[$i];
 			push @$removestops, @$changespos[$i+1];
 			
 			$RemoveNodes[$i] = 1;
+			
 		}
 	}	
 	
@@ -1565,7 +1476,7 @@ sub ExtractNodes{
 		
 		$RemoveNodes[$numnodes-1] = 1;
 	}
-	
+		
 	#if remove the end nodes, need to ignore the last columns in the matrix that
 	#correspond with those nodes - this makes it so when back tracking through the
 	#matrix we start at the corrext column instead of starting at the end 
@@ -1573,7 +1484,7 @@ sub ExtractNodes{
 	while($RemoveNodes[$i]){
 		$cols = @$changespos[$i] - 1;
 		$i--;
-	}	
+	}
 }
 
 
