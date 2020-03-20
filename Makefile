@@ -14,24 +14,24 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	pipenv run python -m pytest -m 'not slow'
+	poetry run python -m pytest -m 'not slow' tests/ polyA/
 
 .PHONY: check-format
 check-format:
-	pipenv run python -m black --check -t py38 -l 80 polyA/ tests/
+	poetry run python -m black --check -t py38 -l 80 polyA/ tests/
 
 .PHONY: check-slow
 check-slow:
-	pipenv run python -m pytest -m slow
+	poetry run python -m pytest -m slow tests/ polyA/
 
 .PHONY: format
 format:
-	pipenv run python -m black -t py38 -l 80 polyA/ tests/
+	poetry run python -m black -t py38 -l 80 polyA/ tests/
 
 .PHONY: setup
 setup:
-	pipenv install
+	poetry install --no-dev
 
 .PHONY: setup-dev
 setup-dev:
-	pipenv install --dev
+	poetry install

@@ -3,7 +3,11 @@ import math
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional, TextIO
 from ._exceptions import ValidationException
-from .constants import DEFAULT_CHANGE_PROB, DEFAULT_CHUNK_SIZE, DEFAULT_SAME_PROB
+from .constants import (
+    DEFAULT_CHANGE_PROB,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_SAME_PROB,
+)
 from .support_matrix import SupportMatrix, deserialize_support_matrix
 
 # TODO: Can we use reflection to automate calling the _parse methods?
@@ -14,6 +18,7 @@ from .support_matrix import SupportMatrix, deserialize_support_matrix
 # TODO: Read options from a file by default or with a different script?
 # TODO: Accept input from a pipe
 # TODO: Add gap-ext and gap-init options and use defaults in constants
+
 
 class Options:
     benchmark: bool
@@ -30,7 +35,9 @@ class Options:
         if args is None:
             return
 
-        parser = ArgumentParser(description="polyA adjudication tool", prog=__package__)
+        parser = ArgumentParser(
+            description="polyA adjudication tool", prog=__package__
+        )
         parser.add_argument(
             "--benchmark",
             action="store_true",

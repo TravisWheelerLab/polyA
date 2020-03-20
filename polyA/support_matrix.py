@@ -58,7 +58,8 @@ def fill_support_matrix() -> SupportMatrix:
 
 
 def serialize_support_matrix(
-    support_matrix: SupportMatrix, output: Callable[[str], Any] = sys.stdout.write,
+    support_matrix: SupportMatrix,
+    output: Callable[[str], Any] = sys.stdout.write,
 ) -> None:
     """
     Serialize the support matrix in a manner that is compatible with the

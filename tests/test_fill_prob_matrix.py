@@ -30,7 +30,9 @@ def compare_origin_matrices(example: Example) -> None:
     #     assert expected[position] == actual[position]
     for position in example.expected_origin:
         assert position in example.actual_origin
-        assert example.expected_origin[position] == example.actual_origin[position]
+        assert (
+            example.expected_origin[position] == example.actual_origin[position]
+        )
 
 
 def compare_prob_matrices(example: Example) -> None:
@@ -55,9 +57,10 @@ def load_example(id: int) -> Example:
 
     with open(f"fixtures/ex{id}.out", "r") as outFile:
         expectedLines = outFile.readlines()
-        example.expected_prob, example.expected_origin = deserialize_prob_matrix(
-            expectedLines
-        )
+        (
+            example.expected_prob,
+            example.expected_origin,
+        ) = deserialize_prob_matrix(expectedLines)
 
     return example
 

@@ -46,9 +46,9 @@ def load_substitution_matrix(
     for index, line in enumerate(file):
         subScores = line.split(" ")
         for columnIndex, subScore in enumerate(subScores):
-            substitutionMatrix[count * subMatrixColumnCount + columnIndex] = float(
-                subScore
-            )
+            substitutionMatrix[
+                count * subMatrixColumnCount + columnIndex
+            ] = float(subScore)
         count += 1
 
     return characterPositions, substitutionMatrix
