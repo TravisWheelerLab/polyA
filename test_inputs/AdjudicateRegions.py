@@ -718,7 +718,7 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
         nodeconfidence_temp[j * numnodes + 0] = alignscore	 
 	 
 	#does rest of nodes - looks back at prev char incase of gap ext
-    for i in range(1, numnodes-1):
+    for i in range(1, numnodes):
     	for j in range(1, len(SubFams)):
             b: int = Columns[changespos[i]]
             e: int = Columns[changespos[i + 1]-1]
@@ -755,25 +755,30 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
             	nodeconfidence[SubFams[i], j] = nodeconfidence_temp[i * numnodes + j]
 
 def PrintPathGraph():
+	stdout.write(" ")
 	for i in range(numnodes):
-		stderr.write(f"{Changes[i]} ")
-	stderr.write("\n")
+		stdout.write(f"{Changes[i]} ")
+	stdout.write("\n")
 	
 	for i in range(numnodes):
 		for j in range(numnodes):
-			stderr.write(f"{pathGraph[i*numnodes+j]}\t")
-		stderr.write(f"{Changes[i]}\n")
-	stderr.write("\n")
+			stdout.write(f"{pathGraph[i*numnodes+j]}\t")
+		stdout.write(f"{Changes[i]}\n")
+	stdout.write("\n")
 
 def PrintNodeConfidence():
+	for i in range(numnodes):
+		stdout.write(f"{Changes[i]} ")
+	stdout.write("\n")
+
 	for subfam in SubFamsCollapse:
-		stderr.write(f"{subfam} ")
+		stdout.write(f"{subfam} ")
 		for j in range(numnodes):
 			if (subfam,j) in NodeConfidenceDict:
-				stderr.write(f"{NodeConfidenceDict[subfam,j]} ")
+				stdout.write(f"{NodeConfidenceDict[subfam,j]} ")
 			else:
-				stderr.write(f"-inf ")
-		stderr.write("\n")
+				stdout.write(f"-inf ")
+		stdout.write("\n")
 
 
 
@@ -815,9 +820,8 @@ def FillPathGraph(pathgraph: List[int]):
             				if sourceSubfamStop >= sinkSubfamStart + 50:
             					pathgraph[i * numnodes + j] = 1
     
-    # PrintPathGraph()
+#     PrintPathGraph()
 #     PrintNodeConfidence()
-
 
 
 def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int):
@@ -841,7 +845,7 @@ def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int
 	
 	if NumEdgesIn[numnodes - 1] <= 1 and NumEdgesOut[numnodes - 1] <= 1:
 		removestarts.append(changespos[numnodes - 1])
-		removestops.append(cols)
+		removestops.append(len(Columns)-1)
 		RemoveNodes[numnodes - 1] = True
 		
 	#when removing from the end, have to update cols because don't want to do to the end of the matrix anymore 
@@ -894,39 +898,19 @@ while (True):
 
     ExtractNodes(RemoveStarts, RemoveStops, ChangesPos, pathGraph, numnodes)
     
-    # for i in range(len(Columns)):
-#     	stdout.write(f"{i} {Columns[i]}\n")
-    
-#     for i in range(len(RemoveStarts)):
-#     	stdout.write(f"remove: {Columns[RemoveStarts[i]]} {Columns[RemoveStops[i]]}\n")
-
-    
     total: int = 0
     for i in range(len(RemoveStops)):
     	del Columns[RemoveStarts[i]-total:RemoveStops[i]-total]
     	total += (RemoveStops[i] - RemoveStarts[i])
         
     FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
-    
-#     print(ChangesPos)
-#     print(Changes)
-#     print()
 
     Changes.clear()
     ChangesPos.clear()
         
     GetPath(ProbHash, OriginHash, SubFams)
     
-#     print(RemoveStarts)
-#     print(RemoveStops)
-    
-    # for i in range(len(Columns)):
-#     	stdout.write(f"{i} {Columns[i]}\n")
-    
-    
-    
 #     PrintChanges(Changes, ChangesPos)
-#     print()
 	
 	
 #NEXT - change subroutines to match AdjudicateRegions_graph.pl subroutines
