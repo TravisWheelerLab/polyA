@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [ `uname -s` == Darwin ]; then
+  DATECMD=gdate
+else
+  DATECMD=date
+fi
+
 ## ---------
 ## UTILITIES
 ## ---------
@@ -28,16 +34,27 @@ function assert-same() {
   rm "$py_file"
 }
 
+function compare-elapsed() {
+  local base_file="$1"
+  local pl_elapsed=`cat "$base_file.pl.elapsed"`
+  local py_elapsed=`cat "$base_file.py.elapsed"`
+  echo -e "Perl: $pl_elapsed, Python: $py_elapsed - $base_file"
+}
+
 function run-script() {
   local alignment="$1"
   local interpreter="$2"
   local extension="$3"
+  local start=`$DATECMD +'%s%N'`
   "$interpreter" "AdjudicateRegions.$extension" \
       --lambda 0.1227 \
       "$alignment" \
       25p41g_edited.matrix \
       > "$alignment.$extension.output" \
       2>&1
+  local finish=`$DATECMD +'%s%N'`
+  local delta=`expr \( $finish / 1000000 \) - \( $start / 1000000 \)`
+  echo "$delta" > "$alignment.$extension.elapsed"
 }
 
 function run-perl() {
@@ -56,12 +73,14 @@ function run-python() {
 for alignment in *.align; do
   run-perl "$alignment"
   run-python "$alignment"
-  assert-same "$alignment"
+  compare-elapsed "$alignment"
+  # assert-same "$alignment"
 done
 
 # real test files from ISB, not as frequently used but need to use later 
 for alignment in *.align.format; do
   run-perl "$alignment"
   run-python "$alignment"
-  assert-same "$alignment"
+  compare-elapsed "$alignment"
+  # assert-same "$alignment"
 done
