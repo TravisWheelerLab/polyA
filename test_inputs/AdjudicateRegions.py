@@ -710,8 +710,8 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
     #calculated node confidence for first node - doesn't look back at prev char bc there isn't one
     #starts at 1 bc don't need to calc for skip state
     for j in range(1, len(SubFams)):
-        b: int = changespos[0]
-        e: int = changespos[1]
+        b: int = Columns[changespos[0]]
+        e: int = Columns[changespos[1]]
         subfam: str = subfamseqs[j][b:e]
         chrom: str = chromseqs[j][b:e]
         alignscore: float = CalcScore(subfam, chrom, '', '')
@@ -720,22 +720,22 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
 	#does rest of nodes - looks back at prev char incase of gap ext
     for i in range(1, numnodes-1):
     	for j in range(1, len(SubFams)):
-            b: int = changespos[i] - 1
-            e: int = changespos[i + 1]
+            b: int = Columns[changespos[i]]
+            e: int = Columns[changespos[i + 1]-1]
             subfam: str = subfamseqs[j][b:e]
             chrom: str = chromseqs[j][b:e]
-            lastpreva: str = subfamseqs[j][changespos[i + 1] - 1]
-            lastprevb: str = chromseqs[j][changespos[i + 1] - 1]
+            lastpreva: str = subfamseqs[j][b-1]#subfamseqs[j][Columns[changespos[i + 1] - 1]]
+            lastprevb: str = chromseqs[j][b-1]#chromseqs[j][changespos[i + 1] - 1]
             alignscore: float = CalcScore(subfam, chrom, lastpreva, lastprevb)
             nodeconfidence_temp[j * numnodes + i] = alignscore
        
     #FIXME - I don't think I need this with new way changespos is, just do prev loop to numnodes not numnodes-1 
     #does last node    
-    for j in range(1, len(SubFams)):
-    	subfam: str = subfamseqs[j][changespos[-1] - 1:]
-    	chrom: str = chromseqs[j][changespos[-1] - 1:]
-    	alignscore: float = CalcScore(subfam, chrom, '', '')
-    	nodeconfidence_temp[j * numnodes + numnodes - 1] = alignscore
+    # for j in range(1, len(SubFams)):
+#     	subfam: str = subfamseqs[j][Columns[changespos[-2]]:]  #-1 is the end, so grab -2 to the end
+#     	chrom: str = chromseqs[j][Columns[changespos[-2]]:]
+#     	alignscore: float = CalcScore(subfam, chrom, '', '')
+#     	nodeconfidence_temp[j * numnodes + numnodes - 1] = alignscore
     		
     for j in range(numnodes):
     	temp: List[float] = []
@@ -811,7 +811,7 @@ def FillPathGraph(pathgraph: List[int]):
             					pathgraph[i * numnodes + j] = 1
             					
             		elif sinkStrand == '-' and sinkStrand == sourceStrand:
-            			if sinkSubfam == sourceSubfam and sourceConf >= 0.4:
+            			if sinkSubfam == sourceSubfam and sourceConf >= 0.3:
             				if sourceSubfamStop >= sinkSubfamStart + 50:
             					pathgraph[i * numnodes + j] = 1
     
@@ -844,9 +844,10 @@ def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int
 		removestops.append(cols)
 		RemoveNodes[numnodes - 1] = True
 		
+	#when removing from the end, have to update cols because don't want to do to the end of the matrix anymore 
 	i: int = numnodes - 1
 	while RemoveNodes[i]:
-		cols = changespos[i] - 1
+		cols = Columns[changespos[i] - 1]  #FIXME - do I index cols here or not?
 		i -= 1
 
 
@@ -856,6 +857,9 @@ NodeConfidenceDict: Dict[Tuple[str, int], float] = {}
 pathGraph: List[int] = []
 total: int = 0
 loop: int = 1
+
+# PrintChanges(Changes, ChangesPos)
+# print()
 
 
 count: int = 0
@@ -890,20 +894,39 @@ while (True):
 
     ExtractNodes(RemoveStarts, RemoveStops, ChangesPos, pathGraph, numnodes)
     
+    # for i in range(len(Columns)):
+#     	stdout.write(f"{i} {Columns[i]}\n")
+    
+#     for i in range(len(RemoveStarts)):
+#     	stdout.write(f"remove: {Columns[RemoveStarts[i]]} {Columns[RemoveStops[i]]}\n")
+
+    
     total: int = 0
     for i in range(len(RemoveStops)):
     	del Columns[RemoveStarts[i]-total:RemoveStops[i]-total]
     	total += (RemoveStops[i] - RemoveStarts[i])
         
     FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
+    
+#     print(ChangesPos)
+#     print(Changes)
+#     print()
 
     Changes.clear()
     ChangesPos.clear()
         
     GetPath(ProbHash, OriginHash, SubFams)
     
+#     print(RemoveStarts)
+#     print(RemoveStops)
+    
+    # for i in range(len(Columns)):
+#     	stdout.write(f"{i} {Columns[i]}\n")
+    
+    
+    
 #     PrintChanges(Changes, ChangesPos)
-#     stderr.write("\n")
+#     print()
 	
 	
 #NEXT - change subroutines to match AdjudicateRegions_graph.pl subroutines
@@ -939,6 +962,7 @@ def PrintResultsSequence():
 			stdout.write("\n")
 
 
-PrintResultsSequence()
+# PrintResultsSequence()
+PrintResults()
         
 
