@@ -167,8 +167,6 @@ ProbHash: Dict[Tuple[str, int], float] = {}
 OriginHash: Dict[Tuple[str, int], str] = {}
 ConsensusHash: Dict[Tuple[int, int], int] = {}
 
-# subfampath: List[str] = []
-
 RemoveStarts: List[int] = []
 RemoveStops: List[int] = []
 
@@ -362,8 +360,6 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                     else:
                         AlignHash[i, index] = alignscore
 
-                # if cols < index:
-#                     cols = index + 1
                 index += 1
 
             j += 1
@@ -647,6 +643,7 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     j: int = len(Columns)-1
     while j > 1:
     	if (prev, Columns[j-1]) in originhash:
+    	
     		IDs[Columns[j-1]] = ID
     		
     		if prev != originhash[prev, Columns[j-1]]:
@@ -665,6 +662,9 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     
     Changes.reverse()
     ChangesPos.reverse()
+    
+    #changes ID for next round of stitching, so when starts stitching will have unique ID
+    ID+=1234
 
 
 GetPath(ProbHash, OriginHash, SubFams)
@@ -682,8 +682,6 @@ def PrintChanges(changes, changespos):
         stdout.write("\t")
         stdout.write(f"{changes[i]}\n")
         i=i+1
-
-# PrintChanges(Changes, ChangesPos)
 
 
 def PrintAllMatrices():
@@ -728,14 +726,6 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
             lastprevb: str = chromseqs[j][b-1]#chromseqs[j][changespos[i + 1] - 1]
             alignscore: float = CalcScore(subfam, chrom, lastpreva, lastprevb)
             nodeconfidence_temp[j * numnodes + i] = alignscore
-       
-    #FIXME - I don't think I need this with new way changespos is, just do prev loop to numnodes not numnodes-1 
-    #does last node    
-    # for j in range(1, len(SubFams)):
-#     	subfam: str = subfamseqs[j][Columns[changespos[-2]]:]  #-1 is the end, so grab -2 to the end
-#     	chrom: str = chromseqs[j][Columns[changespos[-2]]:]
-#     	alignscore: float = CalcScore(subfam, chrom, '', '')
-#     	nodeconfidence_temp[j * numnodes + numnodes - 1] = alignscore
     		
     for j in range(numnodes):
     	temp: List[float] = []
@@ -862,8 +852,36 @@ pathGraph: List[int] = []
 total: int = 0
 loop: int = 1
 
-# PrintChanges(Changes, ChangesPos)
-# print()
+
+def PrintResults():
+	stdout.write("start\tstop\tID\tname\n")
+	stdout.write("----------------------------------------\n")
+	for i in range(len(Changes_orig)):
+		if str(Changes_orig[i]) != 'skip':
+			stdout.write(str(Columns_orig[ChangesPos_orig[i]]))
+			stdout.write("\t")
+			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]))
+			stdout.write("\t")
+			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stdout.write("\t")
+			stdout.write(str(Changes_orig[i]))
+			stdout.write("\n")
+	
+
+def PrintResultsSequence():
+	stdout.write("start\tstop\tID\tname\n")
+	stdout.write("----------------------------------------\n")
+	for i in range(len(Changes_orig)):
+		if str(Changes_orig[i]) != 'skip':
+			stdout.write(str(Columns_orig[ChangesPos_orig[i]]+startall))
+			stdout.write("\t")
+			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]+startall))
+			stdout.write("\t")
+			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stdout.write("\t")
+			stdout.write(str(Changes_orig[i]))
+			stdout.write("\n")
+
 
 
 count: int = 0
@@ -909,41 +927,6 @@ while (True):
     ChangesPos.clear()
         
     GetPath(ProbHash, OriginHash, SubFams)
-    
-#     PrintChanges(Changes, ChangesPos)
-	
-	
-#NEXT - change subroutines to match AdjudicateRegions_graph.pl subroutines
-
-
-def PrintResults():
-	stdout.write("start\tstop\tID\tname\n")
-	stdout.write("----------------------------------------\n")
-	for i in range(len(Changes_orig)):
-		if str(Changes_orig[i]) != 'skip':
-			stdout.write(str(Columns_orig[ChangesPos_orig[i]]))
-			stdout.write("\t")
-			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]))
-			stdout.write("\t")
-			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
-			stdout.write("\t")
-			stdout.write(str(Changes_orig[i]))
-			stdout.write("\n")
-	
-
-def PrintResultsSequence():
-	stdout.write("start\tstop\tID\tname\n")
-	stdout.write("----------------------------------------\n")
-	for i in range(len(Changes_orig)):
-		if str(Changes_orig[i]) != 'skip':
-			stdout.write(str(Columns_orig[ChangesPos_orig[i]]+startall))
-			stdout.write("\t")
-			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]+startall))
-			stdout.write("\t")
-			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
-			stdout.write("\t")
-			stdout.write(str(Changes_orig[i]))
-			stdout.write("\n")
 
 
 # PrintResultsSequence()
