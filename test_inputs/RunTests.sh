@@ -65,4 +65,3 @@ for alignment in *.align.format; do
   run-python "$alignment"
   assert-same "$alignment"
 done
->>>>>>> 3bd684e84c74e8f915cf824ad61cc6873b327869
