@@ -77,7 +77,7 @@ Alignment files
 	
 Score matrix files
 example format:		
-\\\
+```
   A   R   G   C   Y   T   K   M   S   W   N   H   V   X
   8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
   2   2   1 -13 -13 -14  -6  -5  -5  -5  -1  -1  -1 -27
@@ -93,12 +93,13 @@ example format:
  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27  -1  -1 -27
-\\\
+```
 
 ### Output file format
 
 genomic location
 ----------------
+```
 start stop	IDnum	query
 0	362		1111	L1PREC2_3end
 363	567	2345	AluJr
@@ -106,6 +107,7 @@ start stop	IDnum	query
 834	964	1245	AluJr
 965	980	6047	L1MA4A_3end
 981	1497	1111	L1PREC2_3end
+```
 **FIXME - switch these postions to genomic locations not matrix pos 
 
 matching IDnums correspond to sequences involved in nesting that have been stitched back to 
