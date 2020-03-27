@@ -77,6 +77,7 @@ Alignment files
 	
 Score matrix files
 example format:		
+\\\
   A   R   G   C   Y   T   K   M   S   W   N   H   V   X
   8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
   2   2   1 -13 -13 -14  -6  -5  -5  -5  -1  -1  -1 -27
@@ -92,7 +93,7 @@ example format:
  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27  -1  -1 -27
-
+\\\
 
 ### Output file format
 
@@ -200,7 +201,6 @@ MIT license. See `LICENSE`.
 
 [Wheeler Lab](http://wheelerlab.org) at the University of Montana.
 
-  - Travis Wheeler
   - Kaitlin Carey
   - George Lesica
-
+  - Travis Wheeler
