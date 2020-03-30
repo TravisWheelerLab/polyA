@@ -108,14 +108,14 @@ raw_opts, args = getopt(argv[1:], "", [
 ])
 opts = dict(raw_opts)
 
-gapInit = int(opts["gapInit"]) if "gapInit" in opts else gapInit
-gapExt = int(opts["gapExt"]) if "gapExt" in opts else gapExt
-lamb = float(opts["lambda"]) if "lambda" in opts else lamb
-chunksize = int(opts["segmentsize"]) if "segmentsize" in opts else chunksize
-changeProb = float(opts["changeprob"]) if "changeprob" in opts else changeProb
-help = "help" in opts
-printt = "printmatrices" in opts
-printMatrixPos = "matrixPos" in opts
+gapInit = int(opts["--gapInit"]) if "--gapInit" in opts else gapInit
+gapExt = int(opts["--gapExt"]) if "--gapExt" in opts else gapExt
+lamb = float(opts["--lambda"]) if "--lambda" in opts else lamb
+chunksize = int(opts["--segmentsize"]) if "--segmentsize" in opts else chunksize
+changeProb = float(opts["--changeprob"]) if "--changeprob" in opts else changeProb
+help = "--help" in opts
+printt = "--printmatrices" in opts
+printMatrixPos = "--matrixPos" in opts
 
 if help:
     print(helpMessage)
