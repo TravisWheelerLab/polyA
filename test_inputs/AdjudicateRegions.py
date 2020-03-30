@@ -209,12 +209,17 @@ with open(infile) as _infile:
         ChromSeqs.append(alignment.sequence)
 
 #if there is only one subfam in the alignment file, no need to run anything because we know
-#that subfam is what's there 
-#FIXME - add stop of the alignment         
-if numseqs == 1:
-	stdout.write("1\t")
-	stdout.write(SubFams[1])
-	stdout.write("\n")
+#that subfam is what's there
+#2 because of the skip state 
+if numseqs == 2:
+	if printMatrixPos:
+		stdout.write("start\tstop\tID\tname\n")
+		stdout.write("----------------------------------------\n")
+		stdout.write(f"{0}\t{Stops[1]-Starts[1]}\t1111\t{SubFams[1]}\n")
+	else:
+		stdout.write("start\tstop\tID\tname\n")
+		stdout.write("----------------------------------------\n")
+		stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{SubFams[1]}\n")
 	exit()
 
 changeProbLog = log(changeProb / (numseqs - 1))
@@ -1043,8 +1048,10 @@ while (True):
     GetPath(ProbHash, OriginHash, SubFams)
 
 
-# PrintResultsSequence()
-PrintResults()
+if printMatrixPos:
+	PrintResults()
+else:
+	PrintResultsSequence()
 
         
 
