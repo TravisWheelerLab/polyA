@@ -12,6 +12,7 @@ license = "Apache-2.0"
 [tool.poetry.dependencies]
 python = "^3.7"
 numpy = "^1.18.1"
+matplotlib = "^3.2.1"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
