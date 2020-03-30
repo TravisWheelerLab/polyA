@@ -447,11 +447,13 @@ while(1){
 	
 }
 
-if($printMatrixPos){
-	PrintResults();
-}else{
-	PrintResultsSequence();
-}
+# if($printMatrixPos){
+# 	PrintResults();
+# }else{
+# 	PrintResultsSequence();
+# }
+
+PrintResults();
 
 
 #----------------------------------------------------------------------------------#
@@ -609,16 +611,17 @@ sub PrintNodeConfidence(){
 
 }
 
+
 #prints results at end - includes ID
 sub PrintResults{
-	print STDERR "start\tstop\tID\tname\n";
-	print STDERR "----------------------------------------\n";
+	print "start\tstop\tID\tname\n";
+	print "----------------------------------------\n";
 	for(my $i = 0; $i < @Changes_orig; $i++){
 		if($Changes_orig[$i] ne 'skip'){
-			print STDERR "$Columns_orig[$ChangesPos_orig[$i]]\t";
-			print STDERR "$Columns_orig[$ChangesPos_orig[$i+1]-1]\t";
-			print STDERR "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
-			print STDERR "$Changes_orig[$i]\n";
+			print "$Columns_orig[$ChangesPos_orig[$i]]\t";
+			print "$Columns_orig[$ChangesPos_orig[$i+1]-1]\t";
+			print "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
+			print "$Changes_orig[$i]\n";
 		}
 	}
 }
@@ -626,16 +629,16 @@ sub PrintResults{
 #prints results at end - includes ID
 #prints position in input sequence not matrix pos
 sub PrintResultsSequence{
-	print STDERR "start\tstop\tID\tname\n";
-	print STDERR "----------------------------------------\n";
+	print "start\tstop\tID\tname\n";
+	print "----------------------------------------\n";
 	for(my $i = 0; $i < @Changes_orig; $i++){
 		if($Changes_orig[$i] ne 'skip'){
-			print STDERR $Columns_orig[$ChangesPos_orig[$i]] + $startall;
-			print STDERR "\t";
-			print STDERR $Columns_orig[$ChangesPos_orig[$i+1]-1] + $startall;
-			print STDERR "\t";
-			print STDERR "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
-			print STDERR "$Changes_orig[$i]\n";
+			print $Columns_orig[$ChangesPos_orig[$i]] + $startall;
+			print "\t";
+			print $Columns_orig[$ChangesPos_orig[$i+1]-1] + $startall;
+			print "\t";
+			print "$IDs[$Columns_orig[$ChangesPos_orig[$i]]]\t";
+			print "$Changes_orig[$i]\n";
 		}
 	}
 }
