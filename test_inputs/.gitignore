@@ -1,1 +1,3 @@
 *.diff
+*.output
+*.elapsed
