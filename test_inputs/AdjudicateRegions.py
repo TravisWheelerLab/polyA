@@ -71,7 +71,7 @@ chunksize: int = 30
 sameProbLog: float = log(1 - (10 ** -45))
 changeProb: float = 10 ** -45
 changeProbLog: float = 0.0  # Reassigned later
-skipAlignScore: int = 30
+skipAlignScore: int = 30 #FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless skipAlignScore = 120
 startall: int = 0  # Reassigned later
 stopall: int = 0  # Reassigned later
 ID: int = 1111
@@ -550,7 +550,7 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
 
 
 FillSupportMatrix(SupportHash, AlignHash, ConfHash)
-# PrintMatrixHash(cols, SupportHash)
+# PrintMatrixHash(cols, ConfHash)
 
 #collapses matrices 
 for col in range(len(Columns)):
@@ -608,7 +608,16 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 				score: float = supportlog + probhash[row, Columns[j-1]]
 				
 				if row == i:
-					score = score + sameProbLog
+# 					score = score + sameProbLog
+					# because rows are collapsed, if the consensus seqs are contiguous - treat as if they are not the same row and get the jump penalty
+					if (row, Columns[j-1]) in ConsensusHashCollapse and (i, Columns[j]) in ConsensusHashCollapse:
+						if ConsensusHashCollapse[row, Columns[j-1]] > ConsensusHashCollapse[i, Columns[j]] + 50:
+							score = score + changeProbLog
+						else:
+							score = score + sameProbLog
+					else:
+						score = score + sameProbLog
+						
 				else:
 					score = score + changeProbLog
 					
@@ -619,6 +628,9 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 			probhash[i, Columns[j]] = max
 			originhash[i, Columns[j]] = maxindex
 			
+
+# PrintMatrixHashCollapse(cols, SupportHashCollapse)
+# PrintMatrixHashCollapse(cols, ConsensusHashCollapse)
 			
 #FIXME - these numbers are slightly different than the perl ones... I think it's just
 #rounding error?
@@ -882,8 +894,6 @@ def PrintResultsSequence():
 			stdout.write(str(Changes_orig[i]))
 			stdout.write("\n")
 
-
-
 count: int = 0
 while (True):
     count += 1
@@ -931,5 +941,6 @@ while (True):
 
 # PrintResultsSequence()
 PrintResults()
+
         
 
