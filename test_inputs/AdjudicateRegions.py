@@ -562,7 +562,7 @@ for col in range(len(Columns)):
 	ActiveCellsCollapse[j] = activecols
     
 	for i in range(rows):
-		if (i,j) in ConsensusHash:
+		if (i,j) in SupportHash and (i,j) in ConsensusHash:
 			if (SubFams[i]) in DupMaxCon:
 				if SupportHash[i,j] > DupMaxCon[SubFams[i]]:
 					DupMaxCon[SubFams[i]] = SupportHash[i,j]
