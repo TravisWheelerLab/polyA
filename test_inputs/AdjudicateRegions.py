@@ -600,6 +600,7 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
 
 FillSupportMatrix(SupportHash, AlignHash, ConfHash)
 
+# PrintMatrixHash(cols, AlignHash)
 
 #collapses matrices 
 #collapse and combine rows that are the same subfam - just sum their support 
@@ -673,19 +674,24 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 			#loop through all the subfams in the previous column
 			for row in ActiveCellsCollapse[Columns[j-1]]:
 				score: float = supportlog + probhash[row, Columns[j-1]]
+				prob: int = 0
 				
 				if row == i:
 					# because rows are collapsed, if the consensus seqs are contiguous - treat as if they are not the same row and get the jump penalty
 					if (row, Columns[j-1]) in ConsensusHashCollapse and (i, Columns[j]) in ConsensusHashCollapse:
 						if ConsensusHashCollapse[row, Columns[j-1]] > ConsensusHashCollapse[i, Columns[j]] + 50:
-							score = score + changeProbLog
+							prob = changeProbLog
 						else:
-							score = score + sameProbLog
+							prob = sameProbLog
 					else:
-						score = score + sameProbLog
+						prob = sameProbLog
 						
 				else:
-					score = score + changeProbLog
+					prob = changeProbLog
+					# if row == 'skip':
+# 						prob = -2
+					
+				score = score + prob
 					
 				if score > max:
 					max = score
@@ -783,8 +789,9 @@ def PrintAllMatrices():
 stderr.write("\n")
 if printt:
     PrintAllMatrices()
-    
  
+#FIXME - if goes into skip state for just one position, this will have an error .. also when
+#stitching want to ignore skip states
 #fills node confidence matrix 
 #first fills matrix with node alignment scores, then reuses matrix for confidence scores    
 def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: List[str], chromseqs, changespos: List[int]):
@@ -798,20 +805,31 @@ def NodeConfidence(nodeconfidence: Dict[Tuple[str, int], float], subfamseqs: Lis
         subfam: str = subfamseqs[j][b:e]
         chrom: str = chromseqs[j][b:e]
         alignscore: float = CalcScore(subfam, chrom, '', '')
-        nodeconfidence_temp[j * numnodes + 0] = alignscore	 
+        nodeconfidence_temp[j * numnodes + 0] = alignscore
 	 
 	#does rest of nodes - looks back at prev char incase of gap ext
-    for i in range(1, numnodes):
+    for i in range(1, numnodes-1):
     	for j in range(1, len(SubFams)):
             b: int = Columns[changespos[i]]
-            e: int = Columns[changespos[i + 1]-1]
+            e: int = Columns[changespos[i + 1]]
             subfam: str = subfamseqs[j][b:e]
             chrom: str = chromseqs[j][b:e]
             lastpreva: str = subfamseqs[j][b-1]#subfamseqs[j][Columns[changespos[i + 1] - 1]]
             lastprevb: str = chromseqs[j][b-1]#chromseqs[j][changespos[i + 1] - 1]
             alignscore: float = CalcScore(subfam, chrom, lastpreva, lastprevb)
             nodeconfidence_temp[j * numnodes + i] = alignscore
-    	
+    
+	#does last node
+    for j in range(1, len(SubFams)):
+        b: int = Columns[changespos[-2]]
+        e: int = Columns[changespos[-1]-1]
+        subfam: str = subfamseqs[j][b:e]
+        chrom: str = chromseqs[j][b:e]
+        lastpreva: str = subfamseqs[j][b-1]
+        lastprevb: str = chromseqs[j][b-1]
+        alignscore: float = CalcScore(subfam, chrom, lastpreva, lastprevb)
+        nodeconfidence_temp[j * numnodes + numnodes-1] = alignscore
+ 
     #reuse same matrix and compute confidence scores for the nodes	
     for j in range(numnodes):
     	temp: List[float] = []
@@ -952,18 +970,18 @@ loop: int = 1
 
 #uses position in matrix
 def PrintResults():
-	stdout.write("start\tstop\tID\tname\n")
-	stdout.write("----------------------------------------\n")
+	stderr.write("start\tstop\tID\tname\n")
+	stderr.write("----------------------------------------\n")
 	for i in range(len(Changes_orig)):
 		if str(Changes_orig[i]) != 'skip':
-			stdout.write(str(Columns_orig[ChangesPos_orig[i]]))
-			stdout.write("\t")
-			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]))
-			stdout.write("\t")
-			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
-			stdout.write("\t")
-			stdout.write(str(Changes_orig[i]))
-			stdout.write("\n")
+			stderr.write(str(Columns_orig[ChangesPos_orig[i]]))
+			stderr.write("\t")
+			stderr.write(str(Columns_orig[ChangesPos_orig[i+1]-1]))
+			stderr.write("\t")
+			stderr.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stderr.write("\t")
+			stderr.write(str(Changes_orig[i]))
+			stderr.write("\n")
 
 	
 #uses position in input sequence
@@ -972,15 +990,15 @@ def PrintResultsSequence():
 	stdout.write("----------------------------------------\n")
 	for i in range(len(Changes_orig)):
 		if str(Changes_orig[i]) != 'skip':
-			stdout.write(str(Columns_orig[ChangesPos_orig[i]]+startall))
-			stdout.write("\t")
-			stdout.write(str(Columns_orig[ChangesPos_orig[i+1]-1]+startall))
-			stdout.write("\t")
-			stdout.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
-			stdout.write("\t")
-			stdout.write(str(Changes_orig[i]))
-			stdout.write("\n")
-
+			stderr.write(str(Columns_orig[ChangesPos_orig[i]]+startall))
+			stderr.write("\t")
+			stderr.write(str(Columns_orig[ChangesPos_orig[i+1]-1]+startall))
+			stderr.write("\t")
+			stderr.write(str(IDs[Columns_orig[ChangesPos_orig[i]]]))
+			stderr.write("\t")
+			stderr.write(str(Changes_orig[i]))
+			stderr.write("\n")
+			
 
 #Steps- 
 #1.create confidence for nodes
@@ -1007,7 +1025,7 @@ while (True):
     
     pathGraph.clear()
     FillPathGraph(pathGraph)
-
+    
 	#test to see if there nodes in the graph that have more that one incoming or outgoing edge,
 	#if so keep looping, if not break out of the loop
 	#if they are all 0, break out of the loop
@@ -1052,6 +1070,9 @@ if printMatrixPos:
 	PrintResults()
 else:
 	PrintResultsSequence()
+	
+# PrintMatrixHashCollapse(cols, SupportHashCollapse)
+
 
         
 
