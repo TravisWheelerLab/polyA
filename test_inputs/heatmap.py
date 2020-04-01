@@ -4,11 +4,6 @@ import matplotlib.pyplot as plt
 import csv
 import sys
 
-## input is support matrix
-#python heatmap.py support.tsv out.pdf
-#PrintMatrixHashCollapse(cols, SupportHashCollapse) at the end of AdjudicateRegions will print support matrix
-
-#red is larger nums, dark blue is smaller nums 
 
 infile = sys.argv[1]
 outfile = sys.argv[2]
@@ -19,7 +14,7 @@ subfams = []
 positions = []
 
 count = 0
-with open(infile,'rb') as source:
+with open(infile,'r') as source:
     for line in source:
     	count+=1
     	
@@ -43,7 +38,11 @@ for j in range(len(positions)):
 			max = matrix[i][j]
 				
 	for i in range(len(subfams)):
-		matrix[i][j] = matrix [i][j] / max
+		if max:
+			matrix[i][j] = matrix [i][j] / max
+		else:
+			#columns started out empty, no skip state either
+			matrix[i][j] = matrix[i][j]
 			
 matrix = np.array(matrix)
 		
