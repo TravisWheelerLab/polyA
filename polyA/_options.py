@@ -28,13 +28,14 @@ class Options:
 
     TODO: Decide how to document each option canonically
 
+    >>> import sys
     >>> o = Options()
     >>> o.gap_ext == DEFAULT_GAP_EXT
     True
     >>> o.gap_init == DEFAULT_GAP_INIT
     True
-    >>> o.log_file.name
-    '<stderr>'
+    >>> o.log_file.name == sys.stderr.name
+    True
     >>> o = Options(['--log-file', 'foo.txt'])
     >>> o.log_file.name
     'foo.txt'
