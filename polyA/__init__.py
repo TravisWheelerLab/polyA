@@ -3,7 +3,6 @@ from .align_score_matrix import calculate_score, fill_align_score_matrix
 from .constants import (
     DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_SAME_PROB,
     NAN_STRING,
 )
 from .fill_prob_matrix import fill_prob_matrix
