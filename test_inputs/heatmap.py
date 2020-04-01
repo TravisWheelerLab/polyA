@@ -38,7 +38,11 @@ for j in range(len(positions)):
 			max = matrix[i][j]
 				
 	for i in range(len(subfams)):
-		matrix[i][j] = matrix [i][j] / max
+		if max:
+			matrix[i][j] = matrix [i][j] / max
+		else:
+			#columns started out empty, no skip state either
+			matrix[i][j] = matrix[i][j]
 			
 matrix = np.array(matrix)
 		
