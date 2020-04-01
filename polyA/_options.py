@@ -33,11 +33,11 @@ class Options:
     True
     >>> o.gap_init == DEFAULT_GAP_INIT
     True
-    >>> o.log_file
-    None
+    >>> o.log_file.name
+    '<stderr>'
     >>> o = Options(['--log-file', 'foo.txt'])
     >>> o.log_file.name
-    'foot.txt'
+    'foo.txt'
     """
 
     benchmark: bool
@@ -53,13 +53,10 @@ class Options:
     support_matrix: SupportMatrix
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
-        if args is None:
-            self._parse_all(Namespace())
-            return
-
         parser = ArgumentParser(
             description="polyA adjudication tool", prog=__package__,
         )
+
         parser.add_argument(
             "--benchmark",
             action="store_true",
@@ -109,7 +106,12 @@ class Options:
             "--support", type=str, help="Path to a serialized support matrix",
         )
 
-        namespace = parser.parse_args(args=args)
+        namespace: Namespace
+        if args is None:
+            namespace = parser.parse_args(args=[])
+        else:
+            namespace = parser.parse_args(args=args)
+
         self._parse_all(namespace)
 
     def _parse_all(self, namespace: Namespace) -> None:
@@ -170,17 +172,17 @@ class Options:
             self.log_file = sys.stderr
             return
 
-        if namespace.log == "stdout":
+        if namespace.log_file == "stdout":
             import sys
 
             self.log_file = sys.stdout
             return
 
-        if namespace.log == "none":
+        if namespace.log_file == "none":
             self.log_file = None
             return
 
-        self.log_file = open(namespace.log, "a")
+        self.log_file = open(namespace.log_file, "a")
 
     def _parse_support_matrix(self, namespace: Namespace) -> None:
         if namespace.support is None:
