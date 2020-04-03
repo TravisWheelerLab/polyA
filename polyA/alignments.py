@@ -17,7 +17,9 @@ class Alignment(NamedTuple):
     sequence: str
     subfamily_sequence: str
 
-    def update(self, sequence: Union[str, None], subfamily_sequence: Union[str, None]) -> Alignment:
+    def update(
+        self, sequence: Union[str, None], subfamily_sequence: Union[str, None]
+    ) -> Alignment:
         return Alignment(
             subfamily=self.subfamily,
             score=self.score,
@@ -26,7 +28,9 @@ class Alignment(NamedTuple):
             consensus_start=self.consensus_start,
             consensus_stop=self.consensus_stop,
             sequence=self.sequence if sequence is None else sequence,
-            subfamily_sequence=self.subfamily_sequence if subfamily_sequence is None else subfamily_sequence,
+            subfamily_sequence=self.subfamily_sequence
+            if subfamily_sequence is None
+            else subfamily_sequence,
         )
 
 
