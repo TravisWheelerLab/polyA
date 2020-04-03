@@ -79,17 +79,19 @@ for name in listdir("fixtures/"):
         EXAMPLE_COUNT += 1
 
 
+@mark.skip
 @mark.slow
 @mark.prob_matrix
 @mark.parametrize("index", range(EXAMPLE_COUNT))
 def test_origin_example(index: int):
-    example = load_example(index)
+    example = load_example(index + 1)
     compare_origin_matrices(example)
 
 
+@mark.skip
 @mark.slow
 @mark.origin_matrix
 @mark.parametrize("index", range(EXAMPLE_COUNT))
 def test_prob_example(index: int):
-    example = load_example(index)
+    example = load_example(index + 1)
     compare_prob_matrices(example)
