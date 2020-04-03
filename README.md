@@ -1,3 +1,5 @@
+![PolyA CI](https://github.com/TravisWheelerLab/polyA/workflows/PolyA%20CI/badge.svg)
+
 # AAAAAAAAAAAAAAAA (PolyA)
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
