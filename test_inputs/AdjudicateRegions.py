@@ -549,10 +549,8 @@ def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tu
 
 FillConfScoreMatrix(AlignHash, ConfHash)
 
-
 #reassign global var col to account for last chunksize-1 cols added to the next matrices 
-cols = cols + chunksize - 1
-
+# cols = cols + chunksize - 1
 
 # Fills support score matrix using values in conf matrix
 #score for subfam x at position i is sum of all confidences for subfam x for all segments that 
@@ -584,27 +582,25 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
 
 		#Columns only goes until the end of align score matrix so it is $chunksize smaller than
 		#we need here - do this last part of the loop so fill in the rest of the support matrix	
-        j: int = cols - chunksize
-        while j <= cols:
-            num: int = j
-            summ: float = 0
-            numsegments: int = 0
-            while num >= 0 and num >= j - chunksize + 1:
-                if (i, num) in confhash:
-                    summ = summ + confhash[i, num]
-                    numsegments += 1
-                num -= 1
-
-            if numsegments > 0:
-                supporthash[i, j] = summ / numsegments
-            j += 1
+#         j: int = cols - chunksize
+#         while j <= cols:
+#             num: int = j
+#             summ: float = 0
+#             numsegments: int = 0
+#             while num >= 0 and num >= j - chunksize + 1:
+#                 if (i, num) in confhash:
+#                     summ = summ + confhash[i, num]
+#                     numsegments += 1
+#                 num -= 1
+#             if numsegments > 0:
+#                 supporthash[i, j] = summ / numsegments
+#             j += 1
 
         i += 1
 
 
 FillSupportMatrix(SupportHash, AlignHash, ConfHash)
 
-# PrintMatrixHash(cols, AlignHash)
 
 #collapses matrices 
 #collapse and combine rows that are the same subfam - just sum their support 
@@ -684,16 +680,22 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 					
 					if row == 'skip':  #staying in skip
 						prob = sameProbSkip
+						
+					prob = sameProbLog
+					
+					# print(StrandHashCollapse[row, Columns[j-1]])
+# 					print(StrandHashCollapse[i, Columns[j]])
 
 					# because rows are collapsed, if the consensus seqs are contiguous - treat as if they are not the same row and get the jump penalty
-					#FIXME - bug here, also need to take strand into consideration 
-					if (row, Columns[j-1]) in ConsensusHashCollapse and (i, Columns[j]) in ConsensusHashCollapse:
-						if ConsensusHashCollapse[row, Columns[j-1]] > ConsensusHashCollapse[i, Columns[j]] + 50:
-							prob = changeProbLog
-						else:
-							prob = sameProbLog
-					else:
-						prob = sameProbLog
+					if StrandHashCollapse[row, Columns[j-1]] != StrandHashCollapse[i, Columns[j]]:
+						prob = changeProbLog
+					else: #if on same strand
+						if StrandHashCollapse[row, Columns[j-1]] == '+':
+							if ConsensusHashCollapse[row, Columns[j-1]] > ConsensusHashCollapse[i, Columns[j]] + 50:
+								prob = changeProbLog
+						if StrandHashCollapse[row, Columns[j-1]] == '-':
+							if ConsensusHashCollapse[row, Columns[j-1]] + 50 < ConsensusHashCollapse[i, Columns[j]]:
+								prob = changeProbLog
 						
 				else:  #jumping rows
 					prob = changeProbLog  
@@ -1082,7 +1084,7 @@ if printMatrixPos:
 	PrintResults()
 else:
 	PrintResultsSequence()
-	
+
 # PrintMatrixHashCollapse(cols, SupportHashCollapse)
 
 
