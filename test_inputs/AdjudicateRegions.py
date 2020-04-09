@@ -72,6 +72,8 @@ chunksize: int = 30
 sameProbLog: float = log(1 - (10 ** -45))  #FIXME - this just becomes 0.0... need to be more precise
 changeProb: float = 10 ** -45
 changeProbLog: float = 0.0  # Reassigned later
+changeProbSkip: float = 0.0 # Reassigned later
+sameProbSkip: float = 0.0
 skipAlignScore: int = 30 #FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless skipAlignScore = 120
 startall: int = 0  # Reassigned later
 stopall: int = 0  # Reassigned later
@@ -223,6 +225,8 @@ if numseqs == 2:
 	exit()
 
 changeProbLog = log(changeProb / (numseqs - 1))
+changeProbSkip = changeProbLog / 2;
+sameProbSkip = changeProbLog / 20; # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
 #precomputes global vars rows and cols in matrices 
 rows: int = len(SubFams)
@@ -676,8 +680,13 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 				score: float = supportlog + probhash[row, Columns[j-1]]
 				prob: int = 0
 				
-				if row == i:
+				if row == i:  #staying in same row
+					
+					if row == 'skip':  #staying in skip
+						prob = sameProbSkip
+
 					# because rows are collapsed, if the consensus seqs are contiguous - treat as if they are not the same row and get the jump penalty
+					#FIXME - bug here, also need to take strand into consideration 
 					if (row, Columns[j-1]) in ConsensusHashCollapse and (i, Columns[j]) in ConsensusHashCollapse:
 						if ConsensusHashCollapse[row, Columns[j-1]] > ConsensusHashCollapse[i, Columns[j]] + 50:
 							prob = changeProbLog
@@ -686,10 +695,10 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 					else:
 						prob = sameProbLog
 						
-				else:
-					prob = changeProbLog
-					# if row == 'skip':
-# 						prob = -2
+				else:  #jumping rows
+					prob = changeProbLog  
+					if row == 'skip' or i == 'skip':  #jumping in or out of skip
+						prob = changeProbSkip
 					
 				score = score + prob
 					
@@ -1064,6 +1073,9 @@ while (True):
     ChangesPos.clear()
         
     GetPath(ProbHash, OriginHash, SubFams)
+    
+#     print(Changes)
+#     print()
 
 
 if printMatrixPos:
