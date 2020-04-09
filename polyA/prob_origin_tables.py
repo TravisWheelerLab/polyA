@@ -249,6 +249,7 @@ def fill_prob_origin_tables(
     if benchmark:
         end = timer()
         from logging import getLogger
+
         logger = getLogger(__name__)
         logger.info(f"benchmark: {end - start}s")
 

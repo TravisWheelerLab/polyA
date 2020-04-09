@@ -12,3 +12,6 @@ Pipfile.lock
 *.swp
 .vstags
 
+# Test artifacts
+foo.txt
+

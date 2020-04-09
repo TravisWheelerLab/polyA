@@ -5,6 +5,7 @@ help:
 	@echo "check-fast     run tests and validations that finish quickly"
 	@echo "check-format   verify that the code formatter has been run"
 	@echo "check-slow     run tests and validations that take awhile"
+	@echo "container      build and push the CI container"
 	@echo "format         run the code formatter"
 	@echo "setup          install runtime dependencies"
 	@echo "setup-dev      install development dependencies"
@@ -23,6 +24,12 @@ check-format:
 .PHONY: check-slow
 check-slow:
 	poetry run python -m pytest -m slow tests/ polyA/
+	cd test_inputs && ./RunTests.sh
+
+.PHONY: container
+container:
+	docker build -t traviswheelerlab/polya-build:latest .
+	docker push traviswheelerlab/polya-build:latest
 
 .PHONY: format
 format:
