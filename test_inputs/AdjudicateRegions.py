@@ -323,43 +323,45 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
     for i in range(1, len(ChromSeqs)):
         subfam1: str = subfams[i]
         chrom1: str = chroms[i]
-                
-        #grab first chunk of 30 and calculate the raw score 
-		
+        		
 		#starts at the first non '.' char, but offsets it in the matrix based on where
 		#the alignments start in the seq - ex: if first alignment in the seq starts at 10,
 		#will offset by 10
-
+        
+        #calculates score for the first 16 chunks, chunk 16 is the first one that is 30nt
+        #FIXME - this could start with smallest chunk and just add score of next nt to get next, etc
+        #FIXME - but right now it takes all the chunks separately and runs them through CalcScore()
         j: int = Starts[i] - startall
         index = j+15  #index is the col we are in the align score matrix, $j is the place in @subfam1 and @chrom1
-
-        offset: int = chunksize
         alignscore: int = 0
-
         tempindex: int = j
         tempcount: int = 0
 
-        while tempcount < chunksize:
-            if chrom1[tempindex] != "-":
-                tempcount += 1
-            tempindex += 1
-
-        offset = tempindex - j
-        prevoffset = offset
-
-		#grabs first chunk - here $ j = pos of first non '.' char
-        ChromSlice: str = chrom1[j:j + offset]
-        SubfamSlice: str = subfam1[j:j + offset]
-
-		#calculates score for first chunk and puts score in alignhash
-        alignscore = CalcScore(SubfamSlice, ChromSlice, "", "")
-        AlignHash[i, index] = alignscore # already to scale so don't need to * 31 and / 31
+        for k in range(15, -1, -1):
         
-        print(index)
-        print(SubfamSlice)
-        print(ChromSlice)
+        	offset: int = chunksize - k
+        	alignscore = 0
+
+        	tempindex = j
+        	tempcount = 0
+
+        	while tempcount < chunksize - k:
+        		if chrom1[tempindex] != "-":
+        			tempcount += 1
+        		tempindex += 1
+        		
+        	offset = tempindex - j
+        	prevoffset = offset
+
+			#grabs first chunk - here $ j = pos of first non '.' char
+        	ChromSlice: str = chrom1[j:j + offset]
+        	SubfamSlice: str = subfam1[j:j + offset]
+
+			#calculates score for first chunk and puts score in alignhash
+        	alignscore = CalcScore(SubfamSlice, ChromSlice, "", "")
+        	AlignHash[i, index-k] = int(alignscore * chunksize / (chunksize - k)) # already to scale so don't need to * 31 and / 31
         
-        index+=1
+        index+=1 
         
         numnucls: int = chunksize  #how many nucls contributed to align score 
 
@@ -441,7 +443,7 @@ print(cols)
 
 #FIXME - add first 15 and last 15 into matrix
 cols = cols + 30
-# PrintMatrixHash(cols, AlignHash)
+PrintMatrixHash(cols, AlignHash)
 
 exit()
 
