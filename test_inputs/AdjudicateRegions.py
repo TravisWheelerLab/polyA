@@ -68,7 +68,7 @@ def PrintMatrixHash(column: int, Hash: Dict) -> None:
 gapInit: int = -25
 gapExt: int = -5
 lamb: float = 0.1227  # From command line
-chunksize: int = 30
+chunksize: int = 31
 sameProbLog: float = log(1 - (10 ** -45))  #FIXME - this just becomes 0.0... need to be more precise
 changeProb: float = 10 ** -45
 changeProbLog: float = 0.0  # Reassigned later
@@ -316,13 +316,14 @@ def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str):
 def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
     global cols
     
-    #chunks can't start on gaps and gaps don't count when getting to the 30 bps 
-
-
+    index: int = 0
+    
+    #chunks can't start on gaps and gaps don't count when getting to the 30 bps
+	
     for i in range(1, len(ChromSeqs)):
         subfam1: str = subfams[i]
         chrom1: str = chroms[i]
-        
+                
         #grab first chunk of 30 and calculate the raw score 
 		
 		#starts at the first non '.' char, but offsets it in the matrix based on where
@@ -330,7 +331,7 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
 		#will offset by 10
 
         j: int = Starts[i] - startall
-        index: int = j  #index is the col we are in the align score matrix, $j is the place in @subfam1 and @chrom1
+        index = j+15  #index is the col we are in the align score matrix, $j is the place in @subfam1 and @chrom1
 
         offset: int = chunksize
         alignscore: int = 0
@@ -352,9 +353,15 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
 
 		#calculates score for first chunk and puts score in alignhash
         alignscore = CalcScore(SubfamSlice, ChromSlice, "", "")
-        AlignHash[i, index] = alignscore
+        AlignHash[i, index] = alignscore # already to scale so don't need to * 31 and / 31
+        
+        print(index)
+        print(SubfamSlice)
+        print(ChromSlice)
         
         index+=1
+        
+        numnucls: int = chunksize  #how many nucls contributed to align score 
 
         # TODO: Make sure these bounds are right since Python indexing is different
 		#move to next chunk by adding next chars score and subtracting prev chars score
@@ -375,44 +382,68 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                         ChromSlice = chrom1[j+1:j+offset+1]
                         SubfamSlice = subfam1[j+1:j + offset + 1]
                         alignscore = CalcScore(SubfamSlice, ChromSlice, subfam1[j], chrom1[j])
+                        
+                        tempcount2: int = 0
+                        for nuc in ChromSlice:
+                        	if nuc != '-' and nuc != '.':
+                        		tempcount2 += 1
+                        numnucls = tempcount2 #resetting numnucls to 31
+                        
                     else:
  						#alignscore from previous segment - prev chars score + next chars score 
 						#subtracting prev  chars score - tests if its a gap in the subfam as well
 
                         if subfam1[j] == "-":
-                            if subfam1[j - 1] == "-":
-                                alignscore = alignscore - gapExt
-                            else:
-                                alignscore = alignscore - gapInit
+                        	numnucls -= 1
+                        	if subfam1[j - 1] == "-":
+                        		alignscore = alignscore - gapExt
+                        	else:
+                        		alignscore = alignscore - gapInit
                         else:
                             alignscore = alignscore - SubMatrix[CharPos[subfam1[j]]*subMatrixCols+CharPos[chrom1[j]]]
+                            numnucls -= 1
 
 						#adding next chars score - tests if its a gap in the subfam as well
                         if subfam1[j + offset] == "-":
-                            if subfam1[j + offset - 1] == "-":
-                                alignscore = alignscore + gapExt
-                            else:
-                                alignscore = alignscore + gapInit
+                        	numnucls += 1
+                        	if subfam1[j + offset - 1] == "-":
+                        		alignscore = alignscore + gapExt
+                        	else:
+                        		alignscore = alignscore + gapInit
+                        elif subfam1[j + offset - 15] == "." or chrom1[j + offset - 15] == ".":
+                            alignscore = -inf
                         elif subfam1[j + offset] == "." or chrom1[j + offset] == ".":
-                            alignscore = alignscore
+                        	alignscore = alignscore
                         else:
                             alignscore = alignscore + SubMatrix[CharPos[subfam1[j + offset]] * subMatrixCols + CharPos[chrom1[j + offset]]]
-
+                            numnucls += 1
+                    
                     if alignscore <= 0:
                         AlignHash[i, index] = 1
                     else:
-                        AlignHash[i, index] = alignscore
+                        AlignHash[i, index] = int(alignscore / numnucls * chunksize)
+                        
+                    if alignscore == -inf:
+                    	del AlignHash[i, index]
 
                 index += 1
 
             j += 1
             prevoffset = offset
             
-        cols = index
         i += 1
+    cols = index
 
 
 FillAlignScoreMatrix(SubfamSeqs, ChromSeqs)
+print(cols)
+
+
+#FIXME - add first 15 and last 15 into matrix
+cols = cols + 30
+# PrintMatrixHash(cols, AlignHash)
+
+exit()
 
 #fills parallel array to the Align Matrix that holds the consensus position for each 
 # subfam at that position in the alignment
@@ -652,6 +683,10 @@ rows = len(SubFamsCollapse)
 for k in SubFamsCollapse:
     ProbHash[k, 0] = 0
 
+
+
+##FIXME - I think we can change all log values in dp matrix to int and speed up dp
+## and all the same and change penalties can become ints 
 
 #fills prob score matrix from support matrix hash
 #also fills origin matrix
