@@ -226,7 +226,7 @@ if numseqs == 2:
 
 changeProbLog = log(changeProb / (numseqs - 1))
 changeProbSkip = changeProbLog / 2;
-sameProbSkip = changeProbLog / 20; # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+sameProbSkip = changeProbLog / 10; # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
 #precomputes global vars rows and cols in matrices 
 rows: int = len(SubFams)
@@ -258,8 +258,8 @@ def padSeqs(start, stop, subfamseq, chromseq):
         leftpad = start[i] - startall
         rightpad = stopall - stop[i]
 
-        chromseq[i] = ("." * leftpad) + f"{chromseq[i]}" + ("." * rightpad)
-        subfamseq[i] = ("." * leftpad) + f"{subfamseq[i]}" + ("." * rightpad)
+        chromseq[i] = ("." * leftpad) + f"{chromseq[i]}" + ("." * (rightpad + 15))
+        subfamseq[i] = ("." * leftpad) + f"{subfamseq[i]}" + ("." * (rightpad + 15))
 
 
 
@@ -391,6 +391,9 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                         		tempcount2 += 1
                         numnucls = tempcount2 #resetting numnucls to 31
                         
+                        if numnucls < 16:
+                        	alignscore = -inf
+                        
                     else:
  						#alignscore from previous segment - prev chars score + next chars score 
 						#subtracting prev  chars score - tests if its a gap in the subfam as well
@@ -404,16 +407,16 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                         else:
                             alignscore = alignscore - SubMatrix[CharPos[subfam1[j]]*subMatrixCols+CharPos[chrom1[j]]]
                             numnucls -= 1
-
+                            
 						#adding next chars score - tests if its a gap in the subfam as well
-                        if subfam1[j + offset] == "-":
+                        if subfam1[j + offset - 15] == "." or chrom1[j + offset - 15] == ".":
+                            alignscore = -inf
+                        elif subfam1[j + offset] == "-":
                         	numnucls += 1
                         	if subfam1[j + offset - 1] == "-":
                         		alignscore = alignscore + gapExt
                         	else:
                         		alignscore = alignscore + gapInit
-                        elif subfam1[j + offset - 15] == "." or chrom1[j + offset - 15] == ".":
-                            alignscore = -inf
                         elif subfam1[j + offset] == "." or chrom1[j + offset] == ".":
                         	alignscore = alignscore
                         else:
@@ -427,25 +430,20 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
                         
                     if alignscore == -inf:
                     	del AlignHash[i, index]
+                    	break
 
                 index += 1
 
             j += 1
             prevoffset = offset
-            
-        i += 1
-    cols = index
-
+        
+        #max index is assigned to cols
+        if cols < index:
+        	cols = index
+                    
 
 FillAlignScoreMatrix(SubfamSeqs, ChromSeqs)
-print(cols)
 
-
-#FIXME - add first 15 and last 15 into matrix
-cols = cols + 30
-PrintMatrixHash(cols, AlignHash)
-
-exit()
 
 #fills parallel array to the Align Matrix that holds the consensus position for each 
 # subfam at that position in the alignment
@@ -456,7 +454,7 @@ def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
                            consensusstop: List[int]):
                            
     #0s for consensus pos of skip state
-    for j in range(cols+chunksize-1):
+    for j in range(cols):
     	consensus[0, j] = 0
 	
 	#start at 1 to skip 'skip state'
@@ -501,7 +499,6 @@ def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
 
 FillConsensusPosMatrix(ConsensusHash, SubfamSeqs, ChromSeqs, ConsensusStarts, ConsensusStops)
 
-
 #puts all columns that are not empty into @Columns, so when I loop through hash I can use the 
 #vals in @Columns - this will skip over empty columns
 Columns = []
@@ -519,11 +516,6 @@ for j in range(cols):
 	#assigns skip states an alignment score 
 	AlignHash[0, j] = skipAlignScore
 
-
-#adding the last chunksize-1 columns that are not in the AlignScoreMatrix to Columns
-for i in range(chunksize-1):
-	j+=1
-	Columns.append(j)
 	
 #send in an array of scores for a segment - output an array of confidence values for the segment
 def ConfidenceCM(lamb: float, region: List[float]) -> str:
@@ -559,7 +551,7 @@ def ConfidenceCM(lamb: float, region: List[float]) -> str:
 
 def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tuple[int, int], float]):
     for i in range(len(Columns)):
-        if i >= len(Columns) - chunksize + 1:
+        if i >= len(Columns):
             break
         col: int = Columns[i]
         temp: List[int] = []
@@ -582,8 +574,6 @@ def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tu
 
 FillConfScoreMatrix(AlignHash, ConfHash)
 
-#reassign global var col to account for last chunksize-1 cols added to the next matrices 
-# cols = cols + chunksize - 1
 
 # Fills support score matrix using values in conf matrix
 #score for subfam x at position i is sum of all confidences for subfam x for all segments that 
@@ -595,7 +585,7 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
     while i < rows:
         tempcol: int = -1
         for col in range(len(Columns)):
-            if col >= len(Columns) - chunksize + 1:
+            if col >= len(Columns):
                 break
             j = Columns[col]
 
@@ -603,7 +593,7 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
                 num: int = j
                 summ: float = 0.0
                 numsegments: int = 0
-                while num >= 0 and num >= j - chunksize + 1:
+                while num >= 0 and num >= j:
                     if (i, num) in confhash:
                         summ = summ + confhash[i, num]
                         numsegments += 1
@@ -612,27 +602,11 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
                 if numsegments > 0:
                     supporthash[i, j] = summ / numsegments
             col += 1
-
-		#Columns only goes until the end of align score matrix so it is $chunksize smaller than
-		#we need here - do this last part of the loop so fill in the rest of the support matrix	
-#         j: int = cols - chunksize
-#         while j <= cols:
-#             num: int = j
-#             summ: float = 0
-#             numsegments: int = 0
-#             while num >= 0 and num >= j - chunksize + 1:
-#                 if (i, num) in confhash:
-#                     summ = summ + confhash[i, num]
-#                     numsegments += 1
-#                 num -= 1
-#             if numsegments > 0:
-#                 supporthash[i, j] = summ / numsegments
-#             j += 1
-
         i += 1
 
 
 FillSupportMatrix(SupportHash, AlignHash, ConfHash)
+
 
 
 #collapses matrices 
@@ -686,7 +660,6 @@ for k in SubFamsCollapse:
     ProbHash[k, 0] = 0
 
 
-
 ##FIXME - I think we can change all log values in dp matrix to int and speed up dp
 ## and all the same and change penalties can become ints 
 
@@ -719,9 +692,6 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 						prob = sameProbSkip
 						
 					prob = sameProbLog
-					
-					# print(StrandHashCollapse[row, Columns[j-1]])
-# 					print(StrandHashCollapse[i, Columns[j]])
 
 					# because rows are collapsed, if the consensus seqs are contiguous - treat as if they are not the same row and get the jump penalty
 					if StrandHashCollapse[row, Columns[j-1]] != StrandHashCollapse[i, Columns[j]]:
@@ -749,9 +719,6 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 			originhash[i, Columns[j]] = maxindex
 			
 
-# PrintMatrixHashCollapse(cols, SupportHashCollapse)
-# PrintMatrixHashCollapse(cols, ConsensusHashCollapse)
-			
 #FIXME - these numbers are slightly different than the perl ones... I think it's just
 #rounding error?
 FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
