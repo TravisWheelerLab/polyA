@@ -141,33 +141,59 @@ OPTIONS
 
 ## Development
 
-This project uses [Pipenv](https://pipenv.readthedocs.io/en/latest/). It must be installed before
-any of the Makefile targets or the commands described later in this section will work.
+This project uses [Poetry](https://python-poetry.org), see its
+web site for installation instructions. Poetry handles creating
+a virtual environment and fetching dependencies. Note that after
+installation you may need to add `"$HOME/.poetry/bin"` to your
+`PATH` environment variable.
+
+We use Python 3.8. If you're on a Mac you can install this with
+[Homebrew](https://brew.sh). Once you've done that, you may need
+to tell Poetry where to find it:
+
+```
+poetry env use "/usr/local/Cellar/python@3.8/3.8.2/bin/python3"
+```
+
+If you're on Ubuntu, you can install Python 3.8 from a
+[PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa)
+if your version doesn't include a package by default.
+
+Some basic Poetry commands are listed below:
+
+  - Fetch dependencies: `poetry install`
+  - Update dependencies: `poetry update`
+  - Launch a shell inside the virtual environment: `poetry shell`
+  - Run a command in the virtual environment: `poetry run <your command>`
+      - Run unit tests: `poetry run pytest .`
+      - Format the code: `poetry run black .`
 
 ### Makefile
 
-A Makefile is available, run `make` or `make help` in the project root to see the available targets.
+A Makefile is available, run `make` or `make help` in the project root
+to see the available targets.
 
 ### Dependencies
 
-If you prefer not to use the Makefile, the following commands will allow you to manage dependencies.
+If you prefer not to use the Makefile, the following commands will allow
+you to manage dependencies.
 
 ```
 # Get to work (from within project directory)
 # This drops you into a shell inside the project virtual environment
-pipenv shell
+poetry shell
 
 # Fetch runtime dependencies
-pipenv install
+poetry install --no-dev
 
 # Fetch runtime and development dependencies
-pipenv install --dev
+poetry install
 
 # Add a runtime dependency
-pipenv install <package>
+poetry add <package>
 
 # Add a development dependency
-pipenv install --dev package
+poetry add --dev <package>
 ```
 
 ### Running Perl-to-Python Tests
@@ -203,8 +229,9 @@ MIT license. See `LICENSE`.
 
 ## Authors
 
-[Wheeler Lab](http://wheelerlab.org) at the University of Montana.
+[Wheeler Lab](http://wheelerlab.org) at the
+[University of Montana](https://www.umt.edu).
 
-  - Kaitlin Carey
-  - George Lesica
-  - Travis Wheeler
+  - Kaitlin Carey <kaitlin.carey@umontana.edu>
+  - Travis Wheeler <travis.wheeler@umontana.edu>
+  - George Lesica <george.lesica@umontana.edu>

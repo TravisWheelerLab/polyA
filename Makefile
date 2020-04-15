@@ -19,7 +19,7 @@ check-fast:
 
 .PHONY: check-format
 check-format:
-	poetry run python -m black --check -t py38 -l 80 polyA/ tests/
+	poetry run python -m black --check .
 
 .PHONY: check-slow
 check-slow:
@@ -33,7 +33,7 @@ container:
 
 .PHONY: format
 format:
-	poetry run python -m black -t py38 -l 80 polyA/ tests/
+	poetry run python -m black .
 
 .PHONY: setup
 setup:
