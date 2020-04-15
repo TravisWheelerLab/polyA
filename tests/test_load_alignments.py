@@ -1,12 +1,10 @@
 from polyA import load_alignments
-from pytest import mark
 
 # TODO: Add test files that use different strand values
 # TODO: Add test files where start > stop
 # TODO: Add test files where consensus_start > consensus_stop
 
 
-@mark.prob_matrix
 def test_load_alignments_1():
     with open(f"fixtures/alignment1.align", "r") as file:
         first, second = load_alignments(file)
@@ -17,8 +15,8 @@ def test_load_alignments_1():
     assert first.sequence.startswith("GGCCTTGCGA")
     assert second.sequence.startswith("GGCCTTGCGA")
 
-    assert first.subfamily_sequence.startswith("GGCCGGGCG")
-    assert second.subfamily_sequence.startswith("GGCCGGGCG")
+    assert first.subfamily_sequence.startswith("GGCCGGGCGCGGTGGCTCGCGCC---TGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC")
+    assert second.subfamily_sequence.startswith("GGCCGGGCGCGGTGGCTCACGC---TTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC")
 
     assert first.score == 1049
     assert second.score == 993
