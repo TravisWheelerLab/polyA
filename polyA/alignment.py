@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List, NamedTuple, TextIO
+from typing import Iterable, List, NamedTuple
 
 
 class Alignment(NamedTuple):

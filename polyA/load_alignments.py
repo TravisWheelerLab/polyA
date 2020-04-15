@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import Callable, Iterable, List, TextIO
+from typing import Callable, List, TextIO
 from .alignment import Alignment
 from .pad_sequences import pad_sequences
 
@@ -35,7 +35,7 @@ def _line_grouper(prefix: str) -> Callable[[str], str]:
 
 
 # TODO: Move implementation to a private function and accept a format param
-def load_alignments(file: TextIO) -> Iterable[Alignment]:
+def load_alignments(file: TextIO) -> List[Alignment]:
     """
     Load a set of pair-wise alignments from a file formatted the way
     cross_match formats its output

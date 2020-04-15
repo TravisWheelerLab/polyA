@@ -15,8 +15,12 @@ def test_load_alignments_1():
     assert first.sequence.startswith("GGCCTTGCGA")
     assert second.sequence.startswith("GGCCTTGCGA")
 
-    assert first.subfamily_sequence.startswith("GGCCGGGCGCGGTGGCTCGCGCC---TGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC")
-    assert second.subfamily_sequence.startswith("GGCCGGGCGCGGTGGCTCACGC---TTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC")
+    assert first.subfamily_sequence.startswith(
+        "GGCCGGGCGCGGTGGCTCGCGCC---TGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC"
+    )
+    assert second.subfamily_sequence.startswith(
+        "GGCCGGGCGCGGTGGCTCACGC---TTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC"
+    )
 
     assert first.score == 1049
     assert second.score == 993

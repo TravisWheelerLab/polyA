@@ -1,7 +1,10 @@
 import math
 
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional, TextIO
+from typing import Iterable, List, Optional, TextIO
+
+from alignment import Alignment
+from load_alignments import load_alignments
 from ._exceptions import ValidationException
 from .constants import (
     DEFAULT_CHANGE_PROB,
@@ -41,6 +44,7 @@ class Options:
     'foo.txt'
     """
 
+    alignments: List[Alignment]
     benchmark: bool
     change_prob: float
     chunk_size: int
@@ -49,13 +53,18 @@ class Options:
     gap_init: int
     log_file: Optional[TextIO]
     logged_change_prob: float
-    logged_same_prob: float
+    logged_skip_change_prob: float
+    logged_skip_same_prob: float
     same_prob: float
     support_matrix: SupportMatrix
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
         parser = ArgumentParser(
             description="polyA adjudication tool", prog=__package__,
+        )
+
+        parser.add_argument(
+            "alignments-path", help="Path to the alignments file to process",
         )
 
         parser.add_argument(
@@ -116,6 +125,7 @@ class Options:
         self._parse_all(namespace)
 
     def _parse_all(self, namespace: Namespace) -> None:
+        self._parse_alignments_path(namespace)
         self._parse_benchmark(namespace)
         self._parse_change_prob(namespace)
         self._parse_chunk_size(namespace)
@@ -125,10 +135,19 @@ class Options:
         self._parse_log_file(namespace)
         self._parse_support_matrix(namespace)
 
+    def _parse_alignments_path(self, namespace: Namespace) -> None:
+        path: str = namespace.alignments_path
+        # TODO: Check for stdin / pipe
+        with open(path, "r") as file:
+            self.alignments = load_alignments(file)
+
     def _parse_benchmark(self, namespace: Namespace) -> None:
         self.benchmark = namespace.benchmark
 
     def _parse_change_prob(self, namespace: Namespace) -> None:
+        # Note that _parse_alignments_path must have already run
+        # at this point because we use the alignments
+
         self.change_prob = namespace.change_prob
         self.same_prob = 1.0 - self.change_prob
 
@@ -137,8 +156,14 @@ class Options:
                 f"--change-prob must be a probability in [0, 1], {self.change_prob} invalid"
             )
 
-        self.logged_change_prob = math.log(self.change_prob)
+        num_alignments = len(self.alignments)
+        self.logged_change_prob = math.log(
+            self.change_prob / (num_alignments - 1)
+        )
         self.logged_same_prob = math.log(self.same_prob)
+
+        self.logged_skip_same_prob = self.logged_change_prob / 10.0
+        self.logged_skip_change_prob = self.logged_change_prob / 2.0
 
     def _parse_chunk_size(self, namespace: Namespace) -> None:
         self.chunk_size = namespace.chunk_size
