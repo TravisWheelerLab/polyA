@@ -1,6 +1,6 @@
 import logging
 
-from polyA import SubstitutionMatrix
+from substitution_matrix import SubstitutionMatrix
 
 _logger = logging.getLogger(__name__)
 
