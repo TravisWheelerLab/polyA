@@ -1,24 +1,18 @@
-from typing import Dict, TextIO, Tuple
+from typing import Dict, List, TextIO, Tuple
 
+SubstitutionMatrix = Dict[Tuple[str, str], float]
 """
-A dict that associates characters from score matrix file with
-positions in score matrix alignment. The keys are characters
-and the values as indices into the array.   
+We're using a tuple for the keys so that we don't have to
+do anything weird to get a value out of the matrix based on
+two characters.
 
-TODO: Verify the explanation above and clarify if needed
-"""
-CharacterPositions = Dict[str, int]
-
-"""
 TODO: Explain what this is...
-TODO: This is actually a array in the Perl code so we could use a list
 """
-SubstitutionMatrix = Dict[int, float]
 
 
 def load_substitution_matrix(
     file: TextIO,
-) -> Tuple[CharacterPositions, SubstitutionMatrix]:
+) -> SubstitutionMatrix:
     """
     Load the substitution matrix along with the map of character positions.
 
@@ -26,29 +20,24 @@ def load_substitution_matrix(
     TODO: Make the doctest use realistic input values
 
     >>> from io import StringIO
-    >>> file = StringIO("a b c\\n1.0 2.0 3.0\\n4.0 5.0 6.0")
-    >>> c, s = load_substitution_matrix(file)
-    >>> c
-    {'a': 0, 'b': 1, 'c': 2}
+    >>> file = StringIO("a b\\n1.0 2.0\\n3.0 4.0")
+    >>> s = load_substitution_matrix(file)
     >>> s
-    {0: 1.0, 1: 2.0, 2: 3.0, 3: 4.0, 4: 5.0, 5: 6.0}
+    {('a', 'a'): 1.0, ('a', 'b'): 2.0, ('b', 'a'): 3.0, ('b', 'b'): 4.0}
     """
-    # First fill the character positions
-    characterPositions: CharacterPositions = {}
-    firstLine = next(file).replace(" ", "").replace("\t", "").strip()
-    for index, character in enumerate(firstLine):
-        characterPositions[character] = index
+    first_line: str = next(file).replace(" ", "").replace("\t", "").strip()
+    labels: List[str] = list(first_line)
+    substitution_matrix: SubstitutionMatrix = {}
+    for row_index, line in enumerate(file):
+        row_scores = line.split(" ")
+        for col_index, score in enumerate(row_scores):
+            row_label = labels[row_index]
+            col_label = labels[col_index]
+            substitution_matrix[row_label, col_label] = float(score)
 
-    # Then fill the substitutions
-    subMatrixColumnCount = len(characterPositions)
-    substitutionMatrix: SubstitutionMatrix = {}
-    count = 0
-    for index, line in enumerate(file):
-        subScores = line.split(" ")
-        for columnIndex, subScore in enumerate(subScores):
-            substitutionMatrix[
-                count * subMatrixColumnCount + columnIndex
-            ] = float(subScore)
-        count += 1
+    return substitution_matrix
 
-    return characterPositions, substitutionMatrix
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
