@@ -5,6 +5,7 @@ from typing import Iterable, List, Optional, TextIO
 
 from alignment import Alignment
 from load_alignments import load_alignments
+from polyA import SubstitutionMatrix
 from ._exceptions import ValidationException
 from .constants import (
     DEFAULT_CHANGE_PROB,
@@ -56,6 +57,8 @@ class Options:
     logged_skip_change_prob: float
     logged_skip_same_prob: float
     same_prob: float
+    # TODO: Write a _parse method that loads this
+    substitution_matrix: SubstitutionMatrix
     support_matrix: SupportMatrix
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
@@ -65,6 +68,9 @@ class Options:
 
         parser.add_argument(
             "alignments-path", help="Path to the alignments file to process",
+        )
+        parser.add_argument(
+            "substitution-path", help="Path to the substitution matrix",
         )
 
         parser.add_argument(
