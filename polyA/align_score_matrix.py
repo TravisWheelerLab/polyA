@@ -6,43 +6,6 @@ from .constants import DEFAULT_CHUNK_SIZE, DEFAULT_GAP_EXT, DEFAULT_GAP_INIT
 AlignScoreMatrix = Dict[Tuple[int, int], float]
 
 
-# TODO: Make this work or whatever
-def calculate_score(
-    seq1: str,
-    seq2: str,
-    seq1Prev: str,
-    seq2Prev: str,
-    gapExt: int = DEFAULT_GAP_EXT,
-    gapInit: int = DEFAULT_GAP_INIT,
-) -> float:
-    chunkScore = 0.0
-
-    if seq1[0] == "-":
-        if seq1Prev == "-":
-            # We are in the midst of an existing gap
-            chunkScore += gapExt
-        else:
-            # We have just entered a brand new gap
-            chunkScore += gapInit
-    elif seq2[0] == "-":
-        if seq2Prev == "-":
-            # We are in the midst of an existing gap
-            chunkScore += gapExt
-        else:
-            # We have just entered a brand new gap
-            chunkScore += gapInit
-    elif seq1[0] == "." or seq2[0] == ".":
-        # There is nothing at this point in the alignment so the score stays
-        # the same.
-        pass
-    else:
-        chunkScore += 0.0  # TODO: Bunch of weird stuff here
-
-    # TODO: The for-loop, but can we merge the inside bits with the above?
-
-    return chunkScore
-
-
 def fill_align_score_matrix(
     alignments: Iterable[Alignment], chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> AlignScoreMatrix:

@@ -10,9 +10,7 @@ TODO: Explain what this is...
 """
 
 
-def load_substitution_matrix(
-    file: TextIO,
-) -> SubstitutionMatrix:
+def load_substitution_matrix(file: TextIO,) -> SubstitutionMatrix:
     """
     Load the substitution matrix along with the map of character positions.
 
@@ -40,4 +38,5 @@ def load_substitution_matrix(
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
