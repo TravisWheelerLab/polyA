@@ -11,16 +11,16 @@
 **TODO:** Kaitlin
 
 A common annotation process compares an unannotated sequence to a collection of known sequences.
-Sometimes, more than one of the queries shows a significant match to the target. Current 
-annotation processes choose the 'true' match based on highest alignment score. In databases
-with highly similar sequences, more than one query may match with high alignment scores, this
-method is no longer reliable because it is possible that either query is the true sequence, and 
-it falsely implies certainty in the true match. PolyA produces confidence estimates for 
-competing annotations to eliminate implying false certainty in the annotations. In addition, 
-polyA can identify instances of gene conversion and homologous recombination, and find the 
-exact genomic location of the switch between sequences. It can also clarify ambiguous boundaries
-between neighboring elements due to homologous over extension. And it can find sequences nesting
-while identifying the inserted sequence along with the original sequence that was inserted into.
+Sometimes, more than one of the queries shows a significant match to the target. Current annotation
+processes choose the 'true' match based on highest alignment score. In databases with highly similar
+sequences, more than one query may match with high alignment scores, this method is no longer
+reliable because it is possible that either query is the true sequence, and it falsely implies
+certainty in the true match. PolyA produces confidence estimates for competing annotations to
+eliminate implying false certainty in the annotations. In addition, polyA can identify instances of
+gene conversion and homologous recombination, and find the exact genomic location of the switch
+between sequences. It can also clarify ambiguous boundaries between neighboring elements due to
+homologous over extension. And it can find sequences nesting while identifying the inserted sequence
+along with the original sequence that was inserted into.
 
 
 ## The Algorithm
