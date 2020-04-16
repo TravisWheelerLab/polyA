@@ -1,4 +1,4 @@
-from .alignments import load_alignments
+from .load_alignments import load_alignments
 from .align_score_matrix import calculate_score, fill_align_score_matrix
 from .constants import (
     DEFAULT_CHANGE_PROB,
@@ -13,7 +13,6 @@ from .prob_matrix import (
     serialize_prob_matrix,
 )
 from .substitution_matrix import (
-    CharacterPositions,
     SubstitutionMatrix,
     load_substitution_matrix,
 )
