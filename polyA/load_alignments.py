@@ -106,6 +106,4 @@ def load_alignments(file: TextIO) -> List[Alignment]:
             )
         )
 
-    # pad_sequences(alignments)
-
     return alignments

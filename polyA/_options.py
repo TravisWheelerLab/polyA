@@ -1,20 +1,21 @@
 import math
-
 from argparse import ArgumentParser, Namespace
-from typing import Iterable, List, Optional, TextIO
+from typing import List, Optional, TextIO
 
+from _exceptions import ValidationException
 from alignment import Alignment
-from load_alignments import load_alignments
-from polyA import SubstitutionMatrix
-from ._exceptions import ValidationException
-from .constants import (
+from constants import (
     DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_GAP_EXT,
-    DEFAULT_GAP_INIT,
+    DEFAULT_GAP_EXTEND,
+    DEFAULT_GAP_START,
     DEFAULT_LAMBDA,
 )
-from .support_matrix import SupportMatrix, deserialize_support_matrix
+from edges import edges
+from load_alignments import load_alignments
+from pad_sequences import pad_sequences
+from polyA import SubstitutionMatrix
+from support_matrix import SupportMatrix, deserialize_support_matrix
 
 
 # TODO: Can we use reflection to automate calling the _parse methods?
@@ -34,9 +35,9 @@ class Options:
 
     >>> import sys
     >>> o = Options()
-    >>> o.gap_ext == DEFAULT_GAP_EXT
+    >>> o.gap_ext == DEFAULT_GAP_EXTEND
     True
-    >>> o.gap_init == DEFAULT_GAP_INIT
+    >>> o.gap_init == DEFAULT_GAP_START
     True
     >>> o.log_file.name == sys.stderr.name
     True
@@ -50,6 +51,8 @@ class Options:
     change_prob: float
     chunk_size: int
     columns: Optional[List[int]]
+    edge_start: int
+    edge_stop: int
     gap_ext: int
     gap_init: int
     log_file: Optional[TextIO]
@@ -98,13 +101,13 @@ class Options:
             "--gap-ext",
             type=int,
             help="TODO: Kaitlin",
-            default=DEFAULT_GAP_EXT,
+            default=DEFAULT_GAP_EXTEND,
         )
         parser.add_argument(
             "--gap-init",
             type=int,
             help="TODO: Kaitlin",
-            default=DEFAULT_GAP_INIT,
+            default=DEFAULT_GAP_START,
         )
         parser.add_argument(
             "--lambda",
@@ -145,7 +148,16 @@ class Options:
         path: str = namespace.alignments_path
         # TODO: Check for stdin / pipe
         with open(path, "r") as file:
-            self.alignments = load_alignments(file)
+            alignments = load_alignments(file)
+
+        #TODO: Should this go here or in load_alignments?
+        pad_sequences(alignments)
+
+        edge_start, edge_stop = edges(alignments)
+        self.edge_start = edge_start
+        self.edge_stop = edge_stop
+
+        self.alignments = alignments
 
     def _parse_benchmark(self, namespace: Namespace) -> None:
         self.benchmark = namespace.benchmark
@@ -185,14 +197,14 @@ class Options:
 
     def _parse_gap_ext(self, namespace: Namespace) -> None:
         if namespace.gap_ext is None:
-            self.gap_ext = DEFAULT_GAP_EXT
+            self.gap_ext = DEFAULT_GAP_EXTEND
             return
 
         self.gap_ext = int(namespace.gap_ext)
 
     def _parse_gap_init(self, namespace: Namespace) -> None:
         if namespace.gap_init is None:
-            self.gap_init = DEFAULT_GAP_INIT
+            self.gap_init = DEFAULT_GAP_START
             return
 
         self.gap_init = int(namespace.gap_init)

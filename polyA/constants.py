@@ -6,12 +6,12 @@ The width of the "window" used to break a sequence up into pieces.
 Measured in base pairs.
 """
 
-DEFAULT_GAP_EXT = -5
+DEFAULT_GAP_EXTEND = -5
 """
 TODO: Explanation (Kaitlin)
 """
 
-DEFAULT_GAP_INIT = -25
+DEFAULT_GAP_START = -25
 """
 TODO: Explanation (Kaitlin)
 """
