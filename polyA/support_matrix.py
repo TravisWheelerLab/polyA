@@ -1,5 +1,7 @@
 import sys
+import numpy as np
 
+from math import inf
 from typing import Any, Callable, Dict, List, Tuple
 
 """
@@ -37,7 +39,7 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
     if headers != ["key", "support_value"]:
         raise ValueError(headers)
 
-    supportMatrix: SupportMatrix = {}
+    support_matrix: SupportMatrix = {}
 
     # Populate the actual matrix values
     for line in matrix_lines:
@@ -47,10 +49,10 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
 
         [key, value] = line.split()
         [row, col] = key.split(".")
-        cellPos = (int(row), int(col))
-        supportMatrix[cellPos] = float(value)
+        cell_pos = (int(row), int(col))
+        support_matrix[cell_pos] = float(value)
 
-    return supportMatrix
+    return support_matrix
 
 
 def fill_support_matrix() -> SupportMatrix:
@@ -80,7 +82,31 @@ def serialize_support_matrix(
     """
     output("key support_value")
     for cellPos in support_matrix:
-        supportValue = support_matrix[cellPos]
-        line = "\n%s.%s %s" % (cellPos[0], cellPos[1], supportValue)
+        support_value = support_matrix[cellPos]
+        line = "\n%s.%s %s" % (cellPos[0], cellPos[1], support_value)
         output(line)
     output("\n")
+
+
+def support_matrix_dims(
+    support_matrix: SupportMatrix,
+) -> Tuple[int, int, float, float]:
+    """
+    Returns a 4-tuple of the number of rows and columns in the matrix,
+    respectively, followed by the minimum and maximum values in the
+    matrix, again respectively.
+    """
+    rows: int = 0
+    cols: int = 0
+    min_value: float = inf
+    max_value: float = -inf
+    for (row, col), value in support_matrix.items():
+        if row >= rows:
+            rows = row
+        if col >= cols:
+            cols = col
+        if value < min_value:
+            min_value = value
+        if value > max_value:
+            max_value = value
+    return rows, cols, min_value, max_value

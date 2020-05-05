@@ -19,11 +19,13 @@ def fill_align_score_matrix(
     edge_start: int,
     substitution_matrix: SubstitutionMatrix,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
-) -> AlignScoreMatrix:
+) -> Tuple[AlignScoreMatrix, int]:
     """
     TODO: Kaitlin
     """
     align_score_matrix: AlignScoreMatrix = {}
+
+    column_count = 0
 
     for alignment_index, alignment in enumerate(alignments):
         subfamily_sequence = alignment.subfamily_sequence
@@ -165,10 +167,10 @@ def fill_align_score_matrix(
             prev_chunk_offset = chunk_offset
 
         # TODO: We just need to keep track of the max nucleotide index
-        if cols < nuc_index:
-            cols = nuc_index
+        if column_count < nuc_index:
+            column_count = nuc_index
 
-    return align_score_matrix
+    return align_score_matrix, column_count
 
 
 if __name__ == "__main__":

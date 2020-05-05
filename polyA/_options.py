@@ -55,6 +55,7 @@ class Options:
     edge_stop: int
     gap_ext: int
     gap_init: int
+    lambda: float
     log_file: Optional[TextIO]
     logged_change_prob: float
     logged_skip_change_prob: float
@@ -110,10 +111,7 @@ class Options:
             default=DEFAULT_GAP_START,
         )
         parser.add_argument(
-            "--lambda",
-            type=float,
-            help="TODO: Kaitlin",
-            default=DEFAULT_LAMBDA,
+            "--lambda-value", type=float, help="TODO: Kaitlin", default=None,
         )
         parser.add_argument(
             "--log-file",
@@ -150,7 +148,7 @@ class Options:
         with open(path, "r") as file:
             alignments = load_alignments(file)
 
-        #TODO: Should this go here or in load_alignments?
+        # TODO: Should this go here or in load_alignments?
         pad_sequences(alignments)
 
         edge_start, edge_stop = edges(alignments)
@@ -208,6 +206,14 @@ class Options:
             return
 
         self.gap_init = int(namespace.gap_init)
+
+    def _parse_lambda(self, namespace: Namespace) -> None:
+        if namespace.lambda_value is None:
+            self.lambda_value = namespace.lambda_value
+            # TODO: Add option to run esl_scorematrix
+            return
+
+        self.lambda_value = float(namespace.lambda_value)
 
     def _parse_log_file(self, namespace: Namespace) -> None:
         if namespace.log_file is None or namespace.log_file == "stderr":
