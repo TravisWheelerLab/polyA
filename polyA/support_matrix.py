@@ -4,6 +4,8 @@ import numpy as np
 from math import inf
 from typing import Any, Callable, Dict, List, Tuple
 
+from conf_score_matrix import ConfScoreMatrix
+
 """
 Typedef to represent a sparse support matrix implemented as a
 dictionary (for now).
@@ -55,8 +57,23 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
     return support_matrix
 
 
-def fill_support_matrix() -> SupportMatrix:
-    pass
+def fill_support_matrix(
+    conf_matrix: ConfScoreMatrix, n_rows: int, non_empty_columns: List[int]
+) -> SupportMatrix:
+    support_matrix: SupportMatrix = {}
+
+    for row in range(n_rows):
+        # TODO (Kaitlin): Make sure this isn't broken
+        # In the Perl version of the code this section was more
+        # complicated and in some cases the `total` calculation
+        # would involve more than one confidence matrix value.
+        # However, the current version appears to work.
+        for col in non_empty_columns:
+            if (row, col) in conf_matrix:
+                total = conf_matrix[row, col]
+                support_matrix[row, col] = total
+
+    return support_matrix
 
 
 def serialize_support_matrix(

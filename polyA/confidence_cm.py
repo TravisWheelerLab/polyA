@@ -7,6 +7,7 @@ def confidence_cm(lambda_value: float, region: List[float]) -> str:
     a string of scores.
 
     TODO (Kaitlin): Explain this a little better
+    TODO: Can this return a list instead of a string?
 
     >>> confidence_cm(0.5, [1.0, 0.0, -1.0])
     '1.0 0.0 0.0'
