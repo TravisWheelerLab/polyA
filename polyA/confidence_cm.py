@@ -2,12 +2,15 @@ from typing import List
 
 
 def confidence_cm(lambda_value: float, region: List[float]) -> str:
-    """
-    Loops through the array once to convert scores then produces
-    a string of scores.
+    """    
+    input: list of scores for competing annotations, lambda value for score matrix used
+    output: list of confidence values for competing annotations, each input alignment 
+    score will have one output confidence score
+    
+    computes confidence values for competing annoations using alignment scores
+    Loops through the array once to find sum, then loops back through to calculate confidence
 
-    TODO (Kaitlin): Explain this a little better
-    TODO: Can this return a list instead of a string?
+    TODO: Can this return a list instead of a string?  -- YES (from Kaitlin)
 
     >>> confidence_cm(0.5, [1.0, 0.0, -1.0])
     '1.0 0.0 0.0'
@@ -24,3 +27,4 @@ if __name__ == "__main__":
     import doctest
 
     doctest.testmod()
+
