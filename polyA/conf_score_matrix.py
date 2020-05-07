@@ -17,6 +17,17 @@ def fill_conf_score_matrix(
     lambda_value: float,
 ) -> ConfScoreMatrix:
     conf_score_matrix: ConfScoreMatrix = {}
+    
+    
+    """
+    fills confidence matrix from alignment matrix.
+    each column in the alignment matrix is a group of competing annotations that are
+    input into confidence_cm, the output confidence values are used to populate the confidence 
+    matrix
+    
+    TODO: ask george if need a doc test here - just calls confidence_cm and uses it to 
+    populate conf matrix    
+    """
 
     for col in non_empty_columns:
         scores: List[float] = []
