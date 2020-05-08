@@ -7,10 +7,14 @@ def non_empty_columns(
     align_matrix: AlignScoreMatrix, seq_length: int, seq_count: int
 ) -> Iterable[int]:
     """
-    TODO: Better docstring
-    # puts all columns that are not empty into @Columns, so when
-    # I loop through hash I can use the
-    # vals in @Columns - this will skip over empty columns
+    Holds all non empty columns in AlignScoreMatrix.
+    Input alignment file may have empty nucleotide positions (columns) for all alignments.
+    The empty columns are not included in non_empty_columns. Instead of looping through all 
+    columns and jumping over empty ones, we loop through non_empty_columns.
+    
+    Also used when removing nodes during stitching process.. for any node that is removed,
+    all corresponding columns are removed from non_empty_columns. When looping over 
+    non_empty_columns these nodes are ignored when stitching surrounding nodes.
 
     >>> a = {(0, 0): 1.0, (0, 1): 1.0}
     >>> non_empty_columns(a, 3, 1)
