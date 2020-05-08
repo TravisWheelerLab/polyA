@@ -9,14 +9,19 @@ def calculate_chunk_score(
     subfamily_chunk: str,
     sequence_chunk: str,
     gap_extend_score: int,
-    gap_start_score: int,
+    gap_start_score: int,  #TODO: GEORGE - change name to gap_init_score
     substitution_matrix: SubstitutionMatrix,
-    prev_subfamily_chunk: str = "",
-    prev_sequence_chunk: str = "",
+    prev_subfamily_chunk: str = "", #TODO: GEORGE - prev_subfamily_char
+    prev_sequence_chunk: str = "",	#TODO: GEORGE - prev_sequence_char
 ) -> int:
     """
     Calculate the score for a particular alignment between a subfamily
-    and a sequence.
+    and a sequence. Scores are calculated based on input SubstitutionMatrix, gap_extend_score,
+    and gap_init_score.
+    
+    prev_subfamily_char, prev_sequence_char are the single nucleotides in the alignment 
+    before the chunk - if chunk starts with '-' these tell us to use gap_init_score or 
+    gap_extend_score as the penalty
 
     >>> sub_mat = {("a", "a"): 1, ("a", "b"): 2, ("b", "a"): 4, ("b", "b"): 8}
     >>> calculate_chunk_score("ab", "ab", 0, 0, sub_mat)
