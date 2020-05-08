@@ -1,5 +1,6 @@
 import math
 from argparse import ArgumentParser, Namespace
+from io import StringIO
 from typing import List, Optional, TextIO
 
 from ._exceptions import ValidationException
@@ -34,14 +35,14 @@ class Options:
     TODO: Decide how to document each option canonically
 
     >>> import sys
-    >>> o = Options()
+    >>> o = Options(["fixtures/alignment1.align", "fixtures/sub-matrix.in"])
     >>> o.gap_ext == DEFAULT_GAP_EXTEND
     True
     >>> o.gap_init == DEFAULT_GAP_START
     True
     >>> o.log_file.name == sys.stderr.name
     True
-    >>> o = Options(['--log-file', 'foo.txt'])
+    >>> o = Options(["--log-file", "foo.txt", "fixtures/alignment1.align", "fixtures/sub-matrix.in"])
     >>> o.log_file.name
     'foo.txt'
     """
@@ -55,7 +56,7 @@ class Options:
     edge_stop: int
     gap_ext: int
     gap_init: int
-    lambda: float
+    lambda_value: float
     log_file: Optional[TextIO]
     logged_change_prob: float
     logged_skip_change_prob: float
@@ -65,16 +66,16 @@ class Options:
     substitution_matrix: SubstitutionMatrix
     support_matrix: SupportMatrix
 
-    def __init__(self, args: Optional[List[str]] = None) -> None:
+    def __init__(self, args: List[str]) -> None:
         parser = ArgumentParser(
             description="polyA adjudication tool", prog=__package__,
         )
 
         parser.add_argument(
-            "alignments-path", help="Path to the alignments file to process",
+            "alignments_path", help="Path to the alignments file to process",
         )
         parser.add_argument(
-            "substitution-path", help="Path to the substitution matrix",
+            "substitution_path", help="Path to the substitution matrix",
         )
 
         parser.add_argument(
@@ -123,12 +124,7 @@ class Options:
             "--support", type=str, help="Path to a serialized support matrix",
         )
 
-        namespace: Namespace
-        if args is None:
-            namespace = parser.parse_args(args=[])
-        else:
-            namespace = parser.parse_args(args=args)
-
+        namespace: Namespace = parser.parse_args(args=args)
         self._parse_all(namespace)
 
     def _parse_all(self, namespace: Namespace) -> None:
