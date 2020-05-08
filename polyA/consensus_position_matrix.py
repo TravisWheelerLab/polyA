@@ -1,7 +1,13 @@
 from typing import Dict, List, Tuple
 
 ConsensusPositionMatrix = Dict[Tuple[int, int], int]
-
+"""
+Hash implementation of sparse 2D matrix used along with DP matrices. Key is 
+tuple[int, int] that maps row and column to value held in that cell of matrix. Each cell 
+holds the alignment position in the consensus subfamily sequence. Consensus position is used
+to check where alignments are on the consensus subfam sequence in relation to eachother -
+needed for checking if two alignments from the same subfam can be stiched together
+"""
 
 def fill_consensus_position_matrix(
     subfamily_sequences: List[str],
@@ -13,6 +19,14 @@ def fill_consensus_position_matrix(
     row_count: int,
 ) -> ConsensusPositionMatrix:
     consensus_matrix: ConsensusPositionMatrix = {}
+    
+    """
+    fills parallel array to the AlignScoreMatrix that holds the consensus position for each 
+	subfam at that position in the alignment
+	
+	walks along the alignments one nucleotide at a time adding the consensus position to 
+	the matrix
+    """
 
     for col_index in range(column_count):
         consensus_matrix[0, col_index] = 0
