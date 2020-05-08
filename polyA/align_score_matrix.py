@@ -6,7 +6,7 @@ from alignment import Alignment
 from constants import DEFAULT_CHUNK_SIZE, DEFAULT_GAP_EXTEND, DEFAULT_GAP_START
 from substitution_matrix import SubstitutionMatrix
 
-AlignScoreMatrix = Dict[Tuple[int, int], float]
+AlignScoreMatrix = Dict[Tuple[int, int], int]
 """
 Hash implementation of sparse 2D matrix used in pre-DP calculations. 
 Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows 
