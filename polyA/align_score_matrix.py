@@ -8,7 +8,11 @@ from substitution_matrix import SubstitutionMatrix
 
 AlignScoreMatrix = Dict[Tuple[int, int], float]
 """
-TODO: Kaitlin
+Hash implementation of sparse 2D matrix used in pre-DP calculations. 
+Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows 
+are  subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
+Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
+for that particular subfamily.
 """
 
 
@@ -21,7 +25,27 @@ def fill_align_score_matrix(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> Tuple[AlignScoreMatrix, int]:
     """
-    TODO: Kaitlin
+    
+    FIXME: KAITLIN - rewrite this....
+    
+    fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring) 
+    for every segment of size chunksize for all seqs in alignments
+    
+    Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in 
+    matrix holds aligment score for nucleotides at positons 0 - 30. 
+    
+    Starting and trailing cells are different - column 0 in matrix holds alignment score for
+    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc.
+	
+	computes score for the first segment that does not start with a '.' by calling CalcScore()
+	and from there keeps the base score and adds new chars score and subtracts old chars 
+	score - if a new gap is introduced, calls CalcScore() instead of adding onto base score
+	
+	Score are weighted based on number of nucleotides that contribute to the score - so beginning
+	and trailing positions with less than chunksize nucleotides don't have lower scores
+	
+	TODO: KAITLIN - doc test
+
     """
     align_score_matrix: AlignScoreMatrix = {}
 
