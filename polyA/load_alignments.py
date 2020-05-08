@@ -37,6 +37,10 @@ def _line_grouper(prefix: str) -> Callable[[str], str]:
 # TODO: Move implementation to a private function and accept a format param
 def load_alignments(file: TextIO) -> List[Alignment]:
     """
+    
+    TODO: This isn't crossmatch format, it's a format Kaitlin made up. How do we want to
+    approach this? We will also eventually want to take in hmmer format...
+    
     Load a set of pair-wise alignments from a file formatted the way
     cross_match formats its output
     (see http://www.phrap.org/phredphrapconsed.html). For example:
