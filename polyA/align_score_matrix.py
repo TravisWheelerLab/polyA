@@ -1,10 +1,10 @@
 from math import inf
 from typing import Dict, Iterable, Tuple
 
-from calculate_chunk_score import calculate_chunk_score
-from alignment import Alignment
-from constants import DEFAULT_CHUNK_SIZE, DEFAULT_GAP_EXTEND, DEFAULT_GAP_START
-from substitution_matrix import SubstitutionMatrix
+from .calculate_chunk_score import calculate_chunk_score
+from .alignment import Alignment
+from .constants import DEFAULT_CHUNK_SIZE, DEFAULT_GAP_EXTEND, DEFAULT_GAP_START
+from .substitution_matrix import SubstitutionMatrix
 
 AlignScoreMatrix = Dict[Tuple[int, int], int]
 """

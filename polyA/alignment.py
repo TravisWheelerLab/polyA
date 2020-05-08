@@ -15,6 +15,12 @@ class Alignment(NamedTuple):
     sequences: List[str]
     strand: str
 
+    def __repr__(self):
+        return f"Alignment(subfamily={self.subfamily})"
+
+    def __str__(self):
+        return f"Alignment(subfamily={self.subfamily})"
+
     # TODO: Remove these mutators once we clean up the padding code
 
     @property
