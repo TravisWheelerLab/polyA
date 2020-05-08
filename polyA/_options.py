@@ -2,20 +2,20 @@ import math
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional, TextIO
 
-from _exceptions import ValidationException
-from alignment import Alignment
-from constants import (
+from ._exceptions import ValidationException
+from .alignment import Alignment
+from .constants import (
     DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_GAP_EXTEND,
     DEFAULT_GAP_START,
     DEFAULT_LAMBDA,
 )
-from edges import edges
-from load_alignments import load_alignments
-from pad_sequences import pad_sequences
-from polyA import SubstitutionMatrix
-from support_matrix import SupportMatrix, deserialize_support_matrix
+from .edges import edges
+from .load_alignments import load_alignments
+from .pad_sequences import pad_sequences
+from .substitution_matrix import SubstitutionMatrix
+from .support_matrix import SupportMatrix, deserialize_support_matrix
 
 
 # TODO: Can we use reflection to automate calling the _parse methods?

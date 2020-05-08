@@ -4,7 +4,7 @@ import numpy as np
 from math import inf
 from typing import Any, Callable, Dict, List, Tuple
 
-from conf_score_matrix import ConfScoreMatrix
+from .conf_score_matrix import ConfScoreMatrix
 
 """
 Typedef to represent a sparse support matrix implemented as a
