@@ -5,11 +5,15 @@ from .constants import NAN_STRING
 from .origin_matrix import OriginMatrix
 
 """
-A typedef that represents a probability matrix. The keys are of the form
-`(i_r, i_c)` where `i_r` is the row index and `i_c` is the column index.
-The value, then, is the probability of visiting that row and column.
+A typedef that represents a probability matrix. This is a collapsed matrix. 
+The keys are of the form `(i_r, i_c)` where `i_r` is the subfamily and `i_c` 
+is the column index. The value, then, is the probability of visiting that row 
+and column when finding most probable path through the DP matrix. 
 """
-ProbMatrix = Dict[Tuple[int, int], float]
+
+#FIXME - GEORGE - this is a collapsed matrix so I updated type to be Dict[Tuple[str, int], int]
+#FIXME might break code?
+ProbMatrix = Dict[Tuple[str, int], float]
 
 
 def deserialize_prob_matrix(
