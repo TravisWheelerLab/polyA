@@ -7,8 +7,11 @@ from typing import Any, Callable, Dict, List, Tuple
 from .conf_score_matrix import ConfScoreMatrix
 
 """
-Typedef to represent a sparse support matrix implemented as a
-dictionary (for now).
+Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
+tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are 
+subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
+Each cell in matrix is the support score (or average confidence value) for the following 
+chunksize cells in the confidence matrix.
 """
 SupportMatrix = Dict[Tuple[int, int], float]
 
@@ -61,7 +64,14 @@ def fill_support_matrix(
     conf_matrix: ConfScoreMatrix, n_rows: int, non_empty_columns: List[int]
 ) -> SupportMatrix:
     support_matrix: SupportMatrix = {}
+    
+    """
+    Fills support score matrix using values in conf matrix. Score for subfam row 
+    at position col is sum of all confidences for subfam row for all segments that 
+    overlap position i - normalized by dividing by number of segments
+    """
 
+	#FIXME - this is wrong here and in AdjudicateRegion.py, fix both
     for row in range(n_rows):
         # TODO (Kaitlin): Make sure this isn't broken
         # In the Perl version of the code this section was more
