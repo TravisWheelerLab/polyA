@@ -67,21 +67,29 @@ def fill_support_matrix(
     
     """
     Fills support score matrix using values in conf matrix. Score for subfam row 
-    at position col is sum of all confidences for subfam row for all segments that 
-    overlap position i - normalized by dividing by number of segments
+    at position col is sum of all confidences for subfam row for that column and 
+    the following chunksize-1 columns - normalized by dividing by number of segments
+    
+    Ex: support_matrix[0,0] is sum of conf_matrix[0,0] to conf_matrix[0,30], divided by 31
     """
 
-	#FIXME - this is wrong here and in AdjudicateRegion.py, fix both
-    for row in range(n_rows):
-        # TODO (Kaitlin): Make sure this isn't broken
-        # In the Perl version of the code this section was more
-        # complicated and in some cases the `total` calculation
-        # would involve more than one confidence matrix value.
-        # However, the current version appears to work.
-        for col in non_empty_columns:
-            if (row, col) in conf_matrix:
-                total = conf_matrix[row, col]
-                support_matrix[row, col] = total
+	for i in range(n_rows):
+		for col in range(len(non_empty_columns)):
+			j = non_empty_columns[col]
+			
+			if (i, j) in conf_matrix:
+				
+				num = 0
+				summ = 0
+				numsegments = 0
+				while num < chunksize:
+					if (i, j+num) in conf_matrix:
+						summ += conf_matrix[i, j+num]
+						numsegments += 1
+											
+					num += 1
+					
+				support_matrix[i, j] = summ / numsegments
 
     return support_matrix
 
