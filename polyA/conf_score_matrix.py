@@ -41,7 +41,7 @@ def fill_conf_score_matrix(
     0.9965
     
     """
-    
+
     conf_score_matrix: ConfScoreMatrix = {}
 
     for col in non_empty_columns:
