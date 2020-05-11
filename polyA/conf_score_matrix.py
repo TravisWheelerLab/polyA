@@ -42,10 +42,6 @@ def fill_conf_score_matrix(
     
     """
     
- #        >>> print(conf_mat)
-#     {(0, 0): 0.0, (1, 0): 1.0,(0, 1): 0.5, (1, 1): 0.5, (0, 2): 0.00351, (1, 2): 0.9965}
-
-    
     conf_score_matrix: ConfScoreMatrix = {}
 
     for col in non_empty_columns:
