@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from .conf_score_matrix import ConfScoreMatrix
 
+SupportMatrix = Dict[Tuple[int, int], float]
 """
 Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
 tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are 
@@ -13,7 +14,15 @@ subfamilies in the input alignment file, cols are nucleotide positions in the al
 Each cell in matrix is the support score (or average confidence value) for the following 
 chunksize cells in the confidence matrix.
 """
-SupportMatrix = Dict[Tuple[int, int], float]
+
+
+CollapsedSupportMatrix = Dict[str, float]
+"""
+One the support matrix is collapsed it becomes a mapping from
+subfamily name into the total support value for that subfamily.
+
+TODO (Kaitlin): Confirm this and feel free to edit
+"""
 
 
 def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
@@ -64,7 +73,7 @@ def fill_support_matrix(
     conf_matrix: ConfScoreMatrix, n_rows: int, non_empty_columns: List[int]
 ) -> SupportMatrix:
     support_matrix: SupportMatrix = {}
-    
+
     """
     Fills support score matrix using values in conf matrix. Score for subfam row 
     at position col is sum of all confidences for subfam row for that column and 
@@ -72,24 +81,25 @@ def fill_support_matrix(
     
     Ex: support_matrix[0,0] is sum of conf_matrix[0,0] to conf_matrix[0,30], divided by 31
     """
-    
+
     for i in range(n_rows):
-    	for col in range(len(non_empty_columns)):
-    		j = non_empty_columns[col]
-    		
-    		if (i, j) in conf_matrix:
-    			num = 0
-    			summ = 0
-    			numsegments = 0
-    			while num < chunksize:
-    				if (i, j+num) in conf_matrix:
-    					summ += conf_matrix[i, j+num]
-    					numsegments += 1
-    					
-    				num += 1
-    			
-    			support_matrix[i, j] = summ / numsegments
-    			
+        for col in range(len(non_empty_columns)):
+            j = non_empty_columns[col]
+
+            if (i, j) in conf_matrix:
+
+                num = 0
+                summ = 0
+                numsegments = 0
+                while num < chunksize:
+                    if (i, j + num) in conf_matrix:
+                        summ += conf_matrix[i, j + num]
+                        numsegments += 1
+
+                    num += 1
+
+                support_matrix[i, j] = summ / numsegments
+
     return support_matrix
 
 
