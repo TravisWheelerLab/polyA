@@ -278,9 +278,13 @@ for(my $i = 0; $i < $chunksize-1; $i++){
 
 FillConfScoreMatrix(\%AlignHash, \%ConfHash); 
 
+# PrintMatrixHash($cols, %ConfHash);
+
 $cols = $cols + $chunksize-1;
 
 FillSupportMatrix(\%SupportHash, \%AlignHash, \%ConfHash);
+
+# PrintMatrixHash($cols, %SupportHash);
 
 #collapse and combine rows that are the same subfam - just sum their support 
 #new support dict has key = subfamname.col 

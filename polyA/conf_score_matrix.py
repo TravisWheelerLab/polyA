@@ -17,8 +17,7 @@ def fill_conf_score_matrix(
     lambda_value: float,
 ) -> ConfScoreMatrix:
     conf_score_matrix: ConfScoreMatrix = {}
-    
-    
+
     """
     fills confidence matrix from alignment matrix.
     each column in the alignment matrix is a group of competing annotations that are

@@ -11,8 +11,8 @@ is the column index. The value, then, is the probability of visiting that row
 and column when finding most probable path through the DP matrix. 
 """
 
-#FIXME - GEORGE - this is a collapsed matrix so I updated type to be Dict[Tuple[str, int], int]
-#FIXME might break code?
+# FIXME - GEORGE - this is a collapsed matrix so I updated type to be Dict[Tuple[str, int], int]
+# FIXME might break code?
 ProbMatrix = Dict[Tuple[str, int], float]
 
 

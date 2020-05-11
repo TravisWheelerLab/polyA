@@ -9,6 +9,7 @@ to check where alignments are on the consensus subfam sequence in relation to ea
 needed for checking if two alignments from the same subfam can be stiched together
 """
 
+
 def fill_consensus_position_matrix(
     subfamily_sequences: List[str],
     # TODO: Come up with a less ambiguous name for this
@@ -19,7 +20,7 @@ def fill_consensus_position_matrix(
     row_count: int,
 ) -> ConsensusPositionMatrix:
     consensus_matrix: ConsensusPositionMatrix = {}
-    
+
     """
     fills parallel array to the AlignScoreMatrix that holds the consensus position for each 
 	subfam at that position in the alignment

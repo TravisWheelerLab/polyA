@@ -9,10 +9,10 @@ def calculate_chunk_score(
     subfamily_chunk: str,
     sequence_chunk: str,
     gap_extend_score: int,
-    gap_start_score: int,  #TODO: GEORGE - change name to gap_init_score
+    gap_start_score: int,  # TODO: GEORGE - change name to gap_init_score
     substitution_matrix: SubstitutionMatrix,
-    prev_subfamily_chunk: str = "", #TODO: GEORGE - prev_subfamily_char
-    prev_sequence_chunk: str = "",	#TODO: GEORGE - prev_sequence_char
+    prev_subfamily_chunk: str = "",  # TODO: GEORGE - prev_subfamily_char
+    prev_sequence_chunk: str = "",  # TODO: GEORGE - prev_sequence_char
 ) -> int:
     """
     Calculate the score for a particular alignment between a subfamily

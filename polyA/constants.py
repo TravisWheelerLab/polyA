@@ -31,7 +31,7 @@ The string used to represent "not a number" for serialization and
 deserialization.
 """
 
-DEFAULT_CHANGE_PROB = 10**-45
+DEFAULT_CHANGE_PROB = 10 ** -45
 """
 The probability that corresponds to the penalty of changing rows (jumping subfams)
 in the DP matrix. This will generally be a very small value.
