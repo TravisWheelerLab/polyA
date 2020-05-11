@@ -41,7 +41,7 @@ def load_substitution_matrix(file: TextIO,) -> SubstitutionMatrix:
         for col_index, score in enumerate(row_scores):
             row_label = labels[row_index]
             col_label = labels[col_index]
-            substitution_matrix[row_label, col_label] = float(score)
+            substitution_matrix[row_label, col_label] = int(score)
 
     return substitution_matrix
 
