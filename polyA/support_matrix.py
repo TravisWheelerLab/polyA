@@ -72,25 +72,24 @@ def fill_support_matrix(
     
     Ex: support_matrix[0,0] is sum of conf_matrix[0,0] to conf_matrix[0,30], divided by 31
     """
-
-	for i in range(n_rows):
-		for col in range(len(non_empty_columns)):
-			j = non_empty_columns[col]
-			
-			if (i, j) in conf_matrix:
-				
-				num = 0
-				summ = 0
-				numsegments = 0
-				while num < chunksize:
-					if (i, j+num) in conf_matrix:
-						summ += conf_matrix[i, j+num]
-						numsegments += 1
-											
-					num += 1
-					
-				support_matrix[i, j] = summ / numsegments
-
+    
+    for i in range(n_rows):
+    	for col in range(len(non_empty_columns)):
+    		j = non_empty_columns[col]
+    		
+    		if (i, j) in conf_matrix:
+    			num = 0
+    			summ = 0
+    			numsegments = 0
+    			while num < chunksize:
+    				if (i, j+num) in conf_matrix:
+    					summ += conf_matrix[i, j+num]
+    					numsegments += 1
+    					
+    				num += 1
+    			
+    			support_matrix[i, j] = summ / numsegments
+    			
     return support_matrix
 
 
