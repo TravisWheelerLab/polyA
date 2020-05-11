@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 
-from align_score_matrix import AlignScoreMatrix
-from confidence_cm import confidence_cm
+from .align_score_matrix import AlignScoreMatrix
+from .confidence_cm import confidence_cm
 
 ConfScoreMatrix = Dict[Tuple[int, int], float]
 """
