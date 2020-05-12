@@ -5,6 +5,7 @@ from math import inf
 from typing import Any, Callable, Dict, List, Tuple
 
 from .conf_score_matrix import ConfScoreMatrix
+from .constants import DEFAULT_CHUNK_SIZE
 
 SupportMatrix = Dict[Tuple[int, int], float]
 """
@@ -70,9 +71,11 @@ def deserialize_support_matrix(matrix_lines: List[str]) -> SupportMatrix:
 
 
 def fill_support_matrix(
-    conf_matrix: ConfScoreMatrix, n_rows: int, non_empty_columns: List[int]
+    conf_matrix: ConfScoreMatrix,
+    n_rows: int,
+    non_empty_columns: List[int],
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> SupportMatrix:
-    support_matrix: SupportMatrix = {}
 
     """
     Fills support score matrix using values in conf matrix. Score for subfam row 
@@ -80,7 +83,17 @@ def fill_support_matrix(
     the following chunksize-1 columns - normalized by dividing by number of segments
     
     Ex: support_matrix[0,0] is sum of conf_matrix[0,0] to conf_matrix[0,30], divided by 31
+    
+	>>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (1, 0): 0.1}
+    >>> non_cols = [0, 1]
+    >>> supp_mat = {}
+    >>> supp_mat = fill_support_matrix(conf_mat, 2, non_cols)
+    >>> supp_mat
+    {(0, 0): 0.7, (0, 1): 0.5, (1, 0): 0.1}
+
     """
+
+    support_matrix: SupportMatrix = {}
 
     for i in range(n_rows):
         for col in range(len(non_empty_columns)):
@@ -91,7 +104,7 @@ def fill_support_matrix(
                 num = 0
                 summ = 0
                 numsegments = 0
-                while num < chunksize:
+                while num < chunk_size:
                     if (i, j + num) in conf_matrix:
                         summ += conf_matrix[i, j + num]
                         numsegments += 1
