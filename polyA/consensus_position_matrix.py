@@ -34,36 +34,23 @@ def fill_consensus_position_matrix(
         consensus_matrix[0, col_index] = 0
 
     for row_index, alignment in enumerate(alignments):
-        consensus_position = 0
-        if alignment.strand == "+":
-            consensus_position = alignment.consensus_start - 1
-            matrix_position = 0
-            for subfam_nuc, seq_nuc in zip(
-                alignment.subfamily_sequence, alignment.sequence
-            ):
-                if subfam_nuc != ".":
-                    # Consensus position only advances when there is
-                    # not a gap in the subfamily sequence
-                    if subfam_nuc != "-":
-                        consensus_position += 1
-                    consensus_matrix[
-                        row_index, matrix_position
-                    ] = consensus_position
-                if seq_nuc != "-":
-                    matrix_position += 1
-        else:  # reverse strand
-            consensus_position = alignment.consensus_start + 1
-            matrix_position = 0
-            for subfam_nuc, seq_nuc in zip(
-                alignment.subfamily_sequence, alignment.sequence
-            ):
-                if subfam_nuc != ".":
-                    if subfam_nuc != "-":
-                        consensus_position -= 1
-                    consensus_matrix[
-                        row_index, matrix_position
-                    ] = consensus_position
-                if seq_nuc != "-":
-                    matrix_position += 1
+        start_delta = -1 if alignment.strand == "+" else 1
+        consensus_delta = 1 if alignment.strand == "+" else -1
+
+        consensus_position = alignment.consensus_start + start_delta
+        matrix_position = 0
+        for subfam_nuc, seq_nuc in zip(
+            alignment.subfamily_sequence, alignment.sequence
+        ):
+            if subfam_nuc != ".":
+                # Consensus position only advances when there is
+                # not a gap in the subfamily sequence
+                if subfam_nuc != "-":
+                    consensus_position += consensus_delta
+                consensus_matrix[
+                    row_index, matrix_position
+                ] = consensus_position
+            if seq_nuc != "-":
+                matrix_position += 1
 
     return consensus_matrix
