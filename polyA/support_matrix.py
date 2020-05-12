@@ -76,7 +76,6 @@ def fill_support_matrix(
     non_empty_columns: List[int],
     chunk_size: int = DEFAULT_CHUNK_SIZE,
 ) -> SupportMatrix:
-
     """
     Fills support score matrix using values in conf matrix. Score for subfam row 
     at position col is sum of all confidences for subfam row for that column and 
@@ -84,13 +83,10 @@ def fill_support_matrix(
     
     Ex: support_matrix[0,0] is sum of conf_matrix[0,0] to conf_matrix[0,30], divided by 31
     
-	>>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (1, 0): 0.1}
+    >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (1, 0): 0.1}
     >>> non_cols = [0, 1]
-    >>> supp_mat = {}
-    >>> supp_mat = fill_support_matrix(conf_mat, 2, non_cols)
-    >>> supp_mat
+    >>> fill_support_matrix(conf_mat, 2, non_cols)
     {(0, 0): 0.7, (0, 1): 0.5, (1, 0): 0.1}
-
     """
 
     support_matrix: SupportMatrix = {}

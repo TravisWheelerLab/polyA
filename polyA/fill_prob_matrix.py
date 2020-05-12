@@ -1,7 +1,5 @@
 import math
-
-from logging import Logger, getLogger, root
-import math
+from logging import getLogger
 from timeit import default_timer as timer
 from typing import List, Optional, Tuple
 
@@ -137,4 +135,4 @@ def fill_prob_matrix(
         logger = getLogger(__name__)
         logger.info(f"benchmark: {end - start}s")
 
-    return (probabilities, origins)
+    return probabilities, origins
