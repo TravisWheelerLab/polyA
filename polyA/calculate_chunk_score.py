@@ -23,15 +23,15 @@ def calculate_chunk_score(
     before the chunk - if chunk starts with '-' these tell us to use gap_init_score or 
     gap_extend_score as the penalty
 
-    >>> sub_mat = {("a", "a"): 1, ("a", "b"): 2, ("b", "a"): 4, ("b", "b"): 8}
-    >>> calculate_chunk_score("ab", "ab", 0, 0, sub_mat)
-    9
-    >>> calculate_chunk_score("ba", "ab", 0, 0, sub_mat)
-    6
-    >>> calculate_chunk_score("-b", "ab", 0, 10, sub_mat, prev_subfamily_chunk = "a")
-    18
-    >>> calculate_chunk_score("-b", "ab", 10, 0, sub_mat, prev_subfamily_chunk = "-")
-    18
+    >>> sub_mat = {("A", "A"): 1, ("A", "T"): -1, ("T", "A"): -1, ("T", "T"): 1}
+    >>> calculate_chunk_score("AT", "AT", -5, -25, sub_mat)
+    2
+    >>> calculate_chunk_score("TA", "AT", -5, -25, sub_mat)
+    -2
+    >>> calculate_chunk_score("-T", "AT", -5, -25, sub_mat, prev_subfamily_chunk = "a")
+    -24
+    >>> calculate_chunk_score("-T", "AT", -5, -25, sub_mat, prev_subfamily_chunk = "-")
+    -4
     """
     chunk_score: int = 0
 
