@@ -44,6 +44,45 @@ def fill_prob_matrix(
         if comes from same i, mult by higher prob
         else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
      return max
+     
+    >>> supp_mat = {(0, 0): 0.7, (0, 1): 0.1, (0, 2): 0.1, (1, 0): 0.1, (1, 1): 0.9, (1, 2): 0.9}
+    >>> non_cols = [0, 1, 2]
+    >>> (prob_mat, orig_mat) = fill_prob_matrix(supp_mat, non_cols, 2)
+    >>> orig_mat
+    {(0, 0): -1, (1, 0): -1, (0, 1): 0, (1, 1): 1, (0, 2): 0, (1, 2): 1}
+    >>> f"{prob_mat[0,0]:.1f}"
+    '0.0'
+    >>> f"{prob_mat[1,0]:.1f}"
+    '0.0'
+    >>> f"{prob_mat[0,1]:.4f}"
+    '-2.3026'
+    >>> f"{prob_mat[1,1]:.4f}"
+    '-0.1054'
+    >>> f"{prob_mat[0,2]:.4f}"
+    '-4.6052'
+    >>> f"{prob_mat[1,2]:.4f}"
+    '-0.2107'
+    
+    unrealistic numbers, but want to test when it switches subfams
+    
+    >>> supp_mat2 = {(0, 0): 10.0, (0, 1): (10 ** -50), (0, 2): (10 ** -50), (1, 0): (10 ** -50), (1, 1): 10.0, (1, 2): 10.0}
+    >>> non_cols = [0, 1, 2]
+    >>> (prob_mat2, orig_mat2) = fill_prob_matrix(supp_mat2, non_cols, 2)
+    >>> orig_mat2
+    {(0, 0): -1, (1, 0): -1, (0, 1): 0, (1, 1): 1, (0, 2): 1, (1, 2): 1}
+    >>> f"{prob_mat2[0,0]:.1f}"
+    '0.0'
+    >>> f"{prob_mat2[1,0]:.1f}"
+    '0.0'
+    >>> f"{prob_mat2[0,1]:.4f}"
+    '-115.1293'
+    >>> f"{prob_mat2[1,1]:.4f}"
+    '2.3026'
+    >>> f"{prob_mat2[0,2]:.4f}"
+    '-216.4430'
+    >>> f"{prob_mat2[1,2]:.4f}"
+    '4.6052'
+	
     """
     same_prob = 1.0 - change_prob
 
