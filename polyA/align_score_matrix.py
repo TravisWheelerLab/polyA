@@ -44,17 +44,17 @@ def fill_align_score_matrix(
 	Score are weighted based on number of nucleotides that contribute to the score - so beginning
 	and trailing positions with less than chunksize nucleotides don't have lower scores
 	
-	TODO: KAITLIN - more robust test
+	TODO: KAITLIN - more robust test - check gaps on chrom seq
 	
 	** padding of (chunksize-1)/2 added to right pad.. this way we can go all the way to the
 	end of the sequence and calc alignscores without doing anything special 
 	
 	>>> sub_mat = {("A", "A"): 1, ("A", "T"): -1, ("T", "A"): -1, ("T", "T"): 1}
-	>>> a0 = Alignment("", 0, 0, 0, -1, -1, ["", ""], "")
-    >>> a1 = Alignment("", 0, 0, 0, 0, 0, ["TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA..............."], "+")
-	>>> (matrix, col) = fill_align_score_matrix([a1], -5, -25, 0, sub_mat)
+    >>> align0 = Alignment("", 0, 2, 0, 0, 0, ["..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA..............."], "+")
+    >>> align1 = Alignment("", 0, 0, 0, 0, 0, ["TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."], "+")
+	>>> (matrix, col) = fill_align_score_matrix([align0, align1], -5, -25, 0, sub_mat)
 	>>> matrix
-	{(0, 0): 27, (0, 1): 27, (0, 2): 27, (0, 3): 27, (0, 4): 27, (0, 5): 28, (0, 6): 28, (0, 7): 28, (0, 8): 28, (0, 9): 28, (0, 10): 28, (0, 11): 28, (0, 12): 28, (0, 13): 28, (0, 14): 28, (0, 15): 29, (0, 16): 31, (0, 17): 31, (0, 18): 31, (0, 19): 31, (0, 20): 31, (0, 21): 31, (0, 22): 31, (0, 23): 31, (0, 24): 29, (0, 25): 28, (0, 26): 28, (0, 27): 28, (0, 28): 28, (0, 29): 28, (0, 30): 28, (0, 31): 28, (0, 32): 28, (0, 33): 28, (0, 34): 28, (0, 35): 27, (0, 36): 27, (0, 37): 27, (0, 38): 27, (0, 39): 27}
+	{(0, 2): 31, (0, 3): 31, (0, 4): 31, (0, 5): 31, (0, 6): 31, (0, 7): 31, (0, 8): 31, (0, 9): 31, (0, 10): 31, (0, 11): 31, (0, 12): 31, (0, 13): 31, (0, 14): 31, (0, 15): 31, (0, 16): 31, (0, 17): 31, (0, 18): 31, (0, 19): 31, (0, 20): 31, (0, 21): 31, (0, 22): 31, (0, 23): 31, (0, 24): 29, (0, 25): 28, (0, 26): 28, (0, 27): 28, (0, 28): 28, (0, 29): 28, (0, 30): 28, (0, 31): 28, (0, 32): 28, (0, 33): 28, (0, 34): 28, (0, 35): 27, (0, 36): 27, (0, 37): 27, (0, 38): 27, (0, 39): 27, (1, 0): 27, (1, 1): 27, (1, 2): 27, (1, 3): 27, (1, 4): 27, (1, 5): 28, (1, 6): 28, (1, 7): 28, (1, 8): 28, (1, 9): 28, (1, 10): 28, (1, 11): 28, (1, 12): 28, (1, 13): 28, (1, 14): 28, (1, 15): 29, (1, 16): 31, (1, 17): 31, (1, 18): 31, (1, 19): 31, (1, 20): 31, (1, 21): 31, (1, 22): 5, (1, 23): 1, (1, 24): 1, (1, 25): 1, (1, 26): 1, (1, 27): 1, (1, 28): 1, (1, 29): 1, (1, 30): 1, (1, 31): 1, (1, 32): 1, (1, 33): 1, (1, 34): 1, (1, 35): 1, (1, 36): 1, (1, 37): 1, (1, 38): 1, (1, 39): 1}
 	>>> col
 	40
     """
@@ -71,6 +71,8 @@ def fill_align_score_matrix(
         score_index = nuc_index + int((chunk_size - 1) / 2)
 
         align_score: float = 0.0
+
+        chunk_offset: int = 0
 
         for nuc_offset in range(15, -1, -1):
             temp_index = nuc_index
@@ -99,9 +101,14 @@ def fill_align_score_matrix(
                 "",
             )
 
-            align_score_matrix[alignment_index, score_index - nuc_offset] = int(
-                align_score * chunk_size / (chunk_size - nuc_offset)
-            )
+            if align_score <= 0:
+                align_score_matrix[
+                    alignment_index, score_index - nuc_offset
+                ] = 1
+            else:
+                align_score_matrix[
+                    alignment_index, score_index - nuc_offset
+                ] = int(align_score * chunk_size / (chunk_size - nuc_offset))
 
         score_index += 1
         nuc_count = chunk_size
