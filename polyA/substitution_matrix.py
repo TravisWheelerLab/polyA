@@ -2,21 +2,20 @@ from typing import Dict, List, TextIO, Tuple
 
 SubstitutionMatrix = Dict[Tuple[str, str], float]
 """
-We're using a tuple for the keys so that we don't have to
-do anything weird to get a value out of the matrix based on
-two characters.
+We're using a tuple for the keys so that we don't have to do anything
+weird to get a value out of the matrix based on two characters.
 
-Score matrix used when calculating alignment scores. Holds values to 
-give when aligning 2 letters (nucleotides). 
+Score matrix used when calculating alignment scores. Holds
+values to give when aligning 2 letters (nucleotides).
 
-Ex: VERY basic substitution matrix will give a score of 1 for matchinn nucleotides and 
-0 for mismatching nucleotides
-	A	C	T	G
-A	1	0	0	0
-C	0	1	0	0
-T	0 	0	1	0
-G	0	0	0	1
+Ex: VERY basic substitution matrix will give a score of 1
+for matching nucleotides and 0 for mismatching nucleotides.
 
+    A   C   T   G
+A   1   0   0   0
+C   0   1   0   0
+T   0   0   1   0
+G   0   0   0   1
 """
 
 

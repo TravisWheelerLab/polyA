@@ -19,7 +19,7 @@ chunksize cells in the confidence matrix.
 
 CollapsedSupportMatrix = Dict[str, float]
 """
-One the support matrix is collapsed it becomes a mapping from
+Once the support matrix is collapsed it becomes a mapping from
 subfamily name into the total support value for that subfamily.
 
 TODO (Kaitlin): Confirm this and feel free to edit
