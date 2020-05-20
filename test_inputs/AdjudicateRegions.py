@@ -6,6 +6,11 @@ from typing import Dict, List, Tuple, Union
 
 from polyA.load_alignments import load_alignments
 
+#-----------------------------------------------------------------------------------#
+#			FUNCTIONS																#
+#-----------------------------------------------------------------------------------#
+
+
 
 def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
     stdout.write("\t")
@@ -65,174 +70,6 @@ def PrintMatrixHash(column: int, Hash: Dict) -> None:
         i += 1
 
 
-gapInit: int = -25
-gapExt: int = -5
-lamb: float = 0.1227  # From command line
-chunksize: int = 31
-sameProbLog: float = log(1 - (10 ** -45))  #FIXME - this just becomes 0.0... need to be more precise
-changeProb: float = 10 ** -45
-changeProbLog: float = 0.0  # Reassigned later
-changeProbSkip: float = 0.0 # Reassigned later
-sameProbSkip: float = 0.0
-skipAlignScore: int = 30 #FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless skipAlignScore = 120
-startall: int = 0  # Reassigned later
-stopall: int = 0  # Reassigned later
-ID: int = 1111
-
-help: bool = False  # Reassigned later
-prin: bool = False  # Reassigned later
-printMatrixPos: bool = False  # Reassigned later
-
-helpMessage: str = f"""
-usage: {argv[0]} alignFile matrixFile\n
-ARGUMENTS
-    --gapInit[-25]
-    --getExt[-5]
-    --lambda [will calc from matrix if not included]
-    --segmentsize[30]
-    --changeprob[1e-45]
-
-OPTIONS
-    --help - display help message
-    --printmatrices - output all matrices
-    --matrixpos - prints subfam changes in matrix position instead of genomic position
-"""
-
-raw_opts, args = getopt(argv[1:], "", [
-    "gapInit=",
-    "gapExt=",
-    "lambda=",
-    "segmentsize=",
-    "changeprob=",
-
-    "help",
-    "printmatrices",
-    "matrixPos",
-])
-opts = dict(raw_opts)
-
-gapInit = int(opts["--gapInit"]) if "--gapInit" in opts else gapInit
-gapExt = int(opts["--gapExt"]) if "--gapExt" in opts else gapExt
-lamb = float(opts["--lambda"]) if "--lambda" in opts else lamb
-chunksize = int(opts["--segmentsize"]) if "--segmentsize" in opts else chunksize
-changeProb = float(opts["--changeprob"]) if "--changeprob" in opts else changeProb
-help = "--help" in opts
-printt = "--printmatrices" in opts
-printMatrixPos = "--matrixPos" in opts
-
-if help:
-    print(helpMessage)
-    exit(0)
-
-#input is alignment file of hits region and substitution matrix 
-infile: str = args[0]
-infile_matrix: str = args[1]
-
-# Other open was moved down to where we load the alignments file
-with open(infile_matrix) as _infile_matrix:
-    in_matrix: List[str] = _infile_matrix.readlines()
-
-#FIXME - want to add option to run easel in here
-# We require a --lambda or provide a default so there's no need to run easel
-
-#creates a dict that associates character from score matrix file with position in score matrix
-#alignment char as key and pos in array as value   
-CharPos: Dict[str, int] = {}
-line = in_matrix[0]
-line = re.sub(r"^\s+", "", line)
-line = re.sub(r"\s+$", "", line)
-chars = re.split(r"\s+", line)
-for i in range(len(chars)):
-    CharPos[chars[i]] = i
-subMatrixCols: int = len(chars)
-
-
-#reads in the score matrix from file and stores in 2D array Score matrix 
-SubMatrix: Dict[int, int] = {}
-count: int = 0
-for line in in_matrix[1:]:
-    line = re.sub(r"^\s+", "", line)
-    line = re.sub(r"\s+$", "", line)
-    subScores = re.split(r"\s+", line)
-    for i in range(len(subScores)):
-        SubMatrix[count*subMatrixCols+i] = int(subScores[i])
-    count += 1
-
-SubFams: List[str] = []
-Scores: List[int] = []
-Strands: List[str] = []
-Starts: List[int] = []
-Stops: List[int] = []
-ConsensusStarts: List[int] = []
-ConsensusStops: List[int] = []
-SubfamSeqs: List[str] = []
-ChromSeqs: List[str] = []
-
-AlignHash: Dict[Tuple[int, int], int] = {}
-ConfHash: Dict[Tuple[int, int], float] = {}
-SupportHash: Dict[Tuple[int, int], float] = {}
-ProbHash: Dict[Tuple[str, int], float] = {}
-OriginHash: Dict[Tuple[str, int], str] = {}
-ConsensusHash: Dict[Tuple[int, int], int] = {}
-
-RemoveStarts: List[int] = []
-RemoveStops: List[int] = []
-
-Changes: List[str] = []
-ChangesPos: List[int] = []
-
-IDs: List[int] = [];
-Changes_orig: List[int] = [];
-ChangesPos_orig: List[int] = [];
-Columns_orig: List[int] = [];
-
-SupportHashCollapse: Dict[Tuple[str, int], int] = {}
-ActiveCellsCollapse: Dict[int, List[str]] = {}
-SubFamsCollapse: Dict[str, int] = {}
-ConsensusHashCollapse: Dict[Tuple[str, int], int] = {}
-StrandHashCollapse: Dict[Tuple[str, int], str] = {}
-
-
-#opens alignment file and stores all Subfams, Scores, Starts, Stops, subfams seqs and Chrom seqs in arrays 
-numseqs: int = 0
-with open(infile) as _infile:
-    alignments = load_alignments(_infile)
-    for alignment in alignments:
-        numseqs += 1
-
-        SubFams.append(alignment.subfamily)
-        Scores.append(alignment.score)
-        Strands.append(alignment.strand)
-        Starts.append(alignment.start)
-        Stops.append(alignment.stop)
-        ConsensusStarts.append(alignment.consensus_start)
-        ConsensusStops.append(alignment.consensus_stop)
-        SubfamSeqs.append(alignment.subfamily_sequence)
-        ChromSeqs.append(alignment.sequence)
-
-#if there is only one subfam in the alignment file, no need to run anything because we know
-#that subfam is what's there
-#2 because of the skip state 
-if numseqs == 2:
-	if printMatrixPos:
-		stdout.write("start\tstop\tID\tname\n")
-		stdout.write("----------------------------------------\n")
-		stdout.write(f"{0}\t{Stops[1]-Starts[1]}\t1111\t{SubFams[1]}\n")
-	else:
-		stdout.write("start\tstop\tID\tname\n")
-		stdout.write("----------------------------------------\n")
-		stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{SubFams[1]}\n")
-	exit()
-
-changeProbLog = log(changeProb / (numseqs - 1))
-changeProbSkip = changeProbLog / 2;
-sameProbSkip = changeProbLog / 10; # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
-
-#precomputes global vars rows and cols in matrices 
-rows: int = len(SubFams)
-cols: int = 0 #assign cols in FillAlignScoreMatrix
-
-
 #find the min start and max stop for the whole region
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     minStart: int = starts[1]
@@ -260,12 +97,7 @@ def padSeqs(start, stop, subfamseq, chromseq):
 
         chromseq[i] = ("." * leftpad) + f"{chromseq[i]}" + ("." * (rightpad + 15))
         subfamseq[i] = ("." * leftpad) + f"{subfamseq[i]}" + ("." * (rightpad + 15))
-
-
-
-padSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
-
-	
+        
 def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str):
     chunkscore: int = 0
 
@@ -440,9 +272,11 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str]):
         #max index is assigned to cols
         if cols < index:
         	cols = index
-                    
+        	
+    #assigns skip states an alignment score 
+    for j in range(cols):
+    	AlignHash[0, j] = skipAlignScore
 
-FillAlignScoreMatrix(SubfamSeqs, ChromSeqs)
 
 
 #fills parallel array to the Align Matrix that holds the consensus position for each 
@@ -497,26 +331,24 @@ def FillConsensusPosMatrix(consensus: Dict[Tuple[int, int], int],
         i += 1
 
 
-FillConsensusPosMatrix(ConsensusHash, SubfamSeqs, ChromSeqs, ConsensusStarts, ConsensusStops)
-
 #puts all columns that are not empty into @Columns, so when I loop through hash I can use the 
 #vals in @Columns - this will skip over empty columns
-Columns = []
-j: int = 0
-for j in range(cols):
-	empty = 1;
-	for i in range(rows):
-		if (i, j) in AlignHash:
-			empty = 0
-			i = rows
+def FillColumns(num_cols: int, num_rows: int, alignmatrix: Dict[Tuple[int, int], int]):
+	columns = []
+	j: int = 0
+	for j in range(num_cols):
+		empty = 1;
+		for i in range(num_rows):
+			if (i, j) in alignmatrix:
+				empty = 0
+				i = num_rows
  	 	
-	if not empty:
-		Columns.append(j)
-	
-	#assigns skip states an alignment score 
-	AlignHash[0, j] = skipAlignScore
+		if not empty:
+			columns.append(j)
+		
+	return columns
 
-	
+
 #send in an array of scores for a segment - output an array of confidence values for the segment
 def ConfidenceCM(lamb: float, region: List[float]) -> str:
     confidenceString: str = ""
@@ -572,8 +404,6 @@ def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], confhash: Dict[Tu
             row += 1
         i += 1
 
-FillConfScoreMatrix(AlignHash, ConfHash)
-
 
 # Fills support score matrix using values in conf matrix
 #score for subfam x at position i is sum of all confidences for subfam x for all segments that 
@@ -605,63 +435,57 @@ def FillSupportMatrix(supporthash: Dict[Tuple[int, int], float], alignhash: Dict
         i += 1
 
 
-FillSupportMatrix(SupportHash, AlignHash, ConfHash)
-
-
-
 #collapses matrices 
 #collapse and combine rows that are the same subfam - just sum their support 
 #new support dict has key = subfamname.col 
 #also creates a bookkeeping dict that has all the cols as keys and their values 
 #are arrays that hold all the active subfams in that col - used so that don't have 
 #to loop through all the $i's just to see if a column exists 
-for col in range(len(Columns)):
-	j: int = Columns[col]
-	DupMaxCon: Dict[str, float] = {}
-	DupMaxSup: Dict[str, float] = {}
+def CollapseMatrices():
+	global rows
 	
-	activecols: List[str] = []
-	ActiveCellsCollapse[j] = activecols
+	for col in range(len(Columns)):
+		j: int = Columns[col]
+		DupMaxCon: Dict[str, float] = {}
+		DupMaxSup: Dict[str, float] = {}
 	
-	#sum the support score for rows that are collapsed together
-	#find max support score for collapsed rows and use the consensus from that row
-	for i in range(rows):
-		if (i,j) in SupportHash and (i,j) in ConsensusHash:
-			if (SubFams[i]) in DupMaxCon:
-				if SupportHash[i,j] > DupMaxCon[SubFams[i]]:
+		activecols: List[str] = []
+		ActiveCellsCollapse[j] = activecols
+	
+		#sum the support score for rows that are collapsed together
+		#find max support score for collapsed rows and use the consensus from that row
+		for i in range(rows):
+			if (i,j) in SupportHash and (i,j) in ConsensusHash:
+				if (SubFams[i]) in DupMaxCon:
+					if SupportHash[i,j] > DupMaxCon[SubFams[i]]:
+						DupMaxCon[SubFams[i]] = SupportHash[i,j]
+						ConsensusHashCollapse[SubFams[i],j] = ConsensusHash[i,j]
+						StrandHashCollapse[SubFams[i], j] = Strands[i]
+				else:
 					DupMaxCon[SubFams[i]] = SupportHash[i,j]
 					ConsensusHashCollapse[SubFams[i],j] = ConsensusHash[i,j]
 					StrandHashCollapse[SubFams[i], j] = Strands[i]
-			else:
-				DupMaxCon[SubFams[i]] = SupportHash[i,j]
-				ConsensusHashCollapse[SubFams[i],j] = ConsensusHash[i,j]
-				StrandHashCollapse[SubFams[i], j] = Strands[i]
 		
-		if (i,j) in SupportHash:
-			if (SubFams[i]) in DupMaxSup:
-				if SupportHash[i,j] > DupMaxSup[SubFams[i]]:
+			if (i,j) in SupportHash:
+				if (SubFams[i]) in DupMaxSup:
+					if SupportHash[i,j] > DupMaxSup[SubFams[i]]:
+						DupMaxSup[SubFams[i]] = SupportHash[i,j]
+						SupportHashCollapse[SubFams[i],j] = SupportHash[i,j]
+				else:
 					DupMaxSup[SubFams[i]] = SupportHash[i,j]
 					SupportHashCollapse[SubFams[i],j] = SupportHash[i,j]
-			else:
-				DupMaxSup[SubFams[i]] = SupportHash[i,j]
-				SupportHashCollapse[SubFams[i],j] = SupportHash[i,j]
-				ActiveCellsCollapse[j].append(SubFams[i])
+					ActiveCellsCollapse[j].append(SubFams[i])
+					
+	for i in range(rows):
+		SubFamsCollapse[SubFams[i]] = 0
 
-		
+	#update global var rows after collapse 
+	rows = len(SubFamsCollapse)
 
-for i in range(rows):
-    SubFamsCollapse[SubFams[i]] = 0
+	#fill first col of probhash with 0s
+	for k in SubFamsCollapse:
+		ProbHash[k, 0] = 0
 
-#update global var rows after collapse 
-rows = len(SubFamsCollapse)
-
-#fill first col of probhash with 0s
-for k in SubFamsCollapse:
-    ProbHash[k, 0] = 0
-
-
-##FIXME - I think we can change all log values in dp matrix to int and speed up dp
-## and all the same and change penalties can become ints 
 
 #fills prob score matrix from support matrix hash
 #also fills origin matrix
@@ -717,13 +541,7 @@ def FillProbMatrix(probhash: Dict[Tuple[str, int], float], supporthash: Dict[Tup
 					
 			probhash[i, Columns[j]] = max
 			originhash[i, Columns[j]] = maxindex
-			
 
-#FIXME - these numbers are slightly different than the perl ones... I think it's just
-#rounding error?
-FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
-
-IDs = [0] * cols
 
 #using origin matrix, back traces through the 2D array to get the subfam path
 #finds where the path switches to a different row and populates @Changes and @ChangesPos
@@ -770,15 +588,6 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     #changes ID for next round of stitching, so when starts stitching will have unique ID
     ID+=1234
 
-
-GetPath(ProbHash, OriginHash, SubFams)
-
-#keep the original annotation for reporting results
-Changes_orig = Changes.copy()
-ChangesPos_orig = ChangesPos.copy()
-Columns_orig = Columns.copy()
-
-
 def PrintChanges(changes, changespos):
     i: int = 0
     while i < len(changes):
@@ -786,24 +595,6 @@ def PrintChanges(changes, changespos):
         stdout.write("\t")
         stdout.write(f"{changes[i]}\n")
         i=i+1
-
-
-def PrintAllMatrices():
-    stdout.write("Align Scores\n")
-    PrintMatrixHash(cols, AlignHash)
-    stdout.write("confidence\n")
-    PrintMatrixHash(cols, ConfHash)
-    stdout.write("support\n")
-    PrintMatrixHash(cols, SupportHash)
-    stdout.write("prob\n")
-    PrintMatrixHash(cols, ProbHash)
-    stdout.write("origin\n")
-    PrintMatrixHash(cols, OriginHash)
-
-
-stderr.write("\n")
-if printt:
-    PrintAllMatrices()
  
 #FIXME - if goes into skip state for just one position, this will have an error .. also when
 #stitching want to ignore skip states
@@ -975,14 +766,6 @@ def ExtractNodes(removestarts, removestops, changespos, pathgraph, numnodes: int
 		i -= 1
 
 
-
-numnodes: int = 0
-NodeConfidenceDict: Dict[Tuple[str, int], float] = {}
-pathGraph: List[int] = []
-total: int = 0
-loop: int = 1
-
-
 #uses position in matrix
 def PrintResults():
 	stderr.write("start\tstop\tID\tname\n")
@@ -1013,7 +796,217 @@ def PrintResultsSequence():
 			stderr.write("\t")
 			stderr.write(str(Changes_orig[i]))
 			stderr.write("\n")
-			
+
+
+#---------------------------------------------------------------------------------------#
+#GLOBALS - yes I know these are bad, will be passed into functions to make port easier	#
+#---------------------------------------------------------------------------------------#
+
+gapInit: int = -25
+gapExt: int = -5
+lamb: float = 0.1227  # From command line
+chunksize: int = 31
+sameProbLog: float = log(1 - (10 ** -45))  #FIXME - this just becomes 0.0... need to be more precise
+changeProb: float = 10 ** -45
+changeProbLog: float = 0.0  # Reassigned later
+changeProbSkip: float = 0.0 # Reassigned later
+sameProbSkip: float = 0.0
+skipAlignScore: int = 30 #FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless skipAlignScore = 120
+startall: int = 0  # Reassigned later
+stopall: int = 0  # Reassigned later
+ID: int = 1111
+
+help: bool = False  # Reassigned later
+prin: bool = False  # Reassigned later
+printMatrixPos: bool = False  # Reassigned later
+
+helpMessage: str = f"""
+usage: {argv[0]} alignFile matrixFile\n
+ARGUMENTS
+    --gapInit[-25]
+    --getExt[-5]
+    --lambda [will calc from matrix if not included]
+    --segmentsize[30]
+    --changeprob[1e-45]
+
+OPTIONS
+    --help - display help message
+    --printmatrices - output all matrices
+    --matrixpos - prints subfam changes in matrix position instead of genomic position
+"""
+
+raw_opts, args = getopt(argv[1:], "", [
+    "gapInit=",
+    "gapExt=",
+    "lambda=",
+    "segmentsize=",
+    "changeprob=",
+
+    "help",
+    "matrixPos",
+])
+opts = dict(raw_opts)
+
+gapInit = int(opts["--gapInit"]) if "--gapInit" in opts else gapInit
+gapExt = int(opts["--gapExt"]) if "--gapExt" in opts else gapExt
+lamb = float(opts["--lambda"]) if "--lambda" in opts else lamb
+chunksize = int(opts["--segmentsize"]) if "--segmentsize" in opts else chunksize
+changeProb = float(opts["--changeprob"]) if "--changeprob" in opts else changeProb
+help = "--help" in opts
+printMatrixPos = "--matrixPos" in opts
+
+if help:
+    print(helpMessage)
+    exit(0)
+
+#input is alignment file of hits region and substitution matrix 
+infile: str = args[0]
+infile_matrix: str = args[1]
+
+# Other open was moved down to where we load the alignments file
+with open(infile_matrix) as _infile_matrix:
+    in_matrix: List[str] = _infile_matrix.readlines()
+
+#FIXME - want to add option to run easel in here
+# We require a --lambda or provide a default so there's no need to run easel
+
+#creates a dict that associates character from score matrix file with position in score matrix
+#alignment char as key and pos in array as value   
+CharPos: Dict[str, int] = {}
+line = in_matrix[0]
+line = re.sub(r"^\s+", "", line)
+line = re.sub(r"\s+$", "", line)
+chars = re.split(r"\s+", line)
+for i in range(len(chars)):
+    CharPos[chars[i]] = i
+subMatrixCols: int = len(chars)
+
+
+#reads in the score matrix from file and stores in 2D array Score matrix 
+SubMatrix: Dict[int, int] = {}
+count: int = 0
+for line in in_matrix[1:]:
+    line = re.sub(r"^\s+", "", line)
+    line = re.sub(r"\s+$", "", line)
+    subScores = re.split(r"\s+", line)
+    for i in range(len(subScores)):
+        SubMatrix[count*subMatrixCols+i] = int(subScores[i])
+    count += 1
+
+SubFams: List[str] = []
+Scores: List[int] = []
+Strands: List[str] = []
+Starts: List[int] = []
+Stops: List[int] = []
+ConsensusStarts: List[int] = []
+ConsensusStops: List[int] = []
+SubfamSeqs: List[str] = []
+ChromSeqs: List[str] = []
+
+AlignHash: Dict[Tuple[int, int], int] = {}
+ConfHash: Dict[Tuple[int, int], float] = {}
+SupportHash: Dict[Tuple[int, int], float] = {}
+ProbHash: Dict[Tuple[str, int], float] = {}
+OriginHash: Dict[Tuple[str, int], str] = {}
+ConsensusHash: Dict[Tuple[int, int], int] = {}
+
+Columns: List[int] = [];
+
+RemoveStarts: List[int] = []
+RemoveStops: List[int] = []
+
+Changes: List[str] = []
+ChangesPos: List[int] = []
+
+IDs: List[int] = [];
+Changes_orig: List[int] = [];
+ChangesPos_orig: List[int] = [];
+Columns_orig: List[int] = [];
+
+SupportHashCollapse: Dict[Tuple[str, int], int] = {}
+ActiveCellsCollapse: Dict[int, List[str]] = {}
+SubFamsCollapse: Dict[str, int] = {}
+ConsensusHashCollapse: Dict[Tuple[str, int], int] = {}
+StrandHashCollapse: Dict[Tuple[str, int], str] = {}
+
+#for graph/node part
+numnodes: int = 0
+NodeConfidenceDict: Dict[Tuple[str, int], float] = {}
+pathGraph: List[int] = []
+total: int = 0
+loop: int = 1
+
+
+
+#-----------------------------------------------------------------------------------#
+#			MAIN																	#
+#-----------------------------------------------------------------------------------#
+
+#opens alignment file and stores all Subfams, Scores, Starts, Stops, subfams seqs and Chrom seqs in arrays 
+numseqs: int = 0
+with open(infile) as _infile:
+    alignments = load_alignments(_infile)
+    for alignment in alignments:
+        numseqs += 1
+
+        SubFams.append(alignment.subfamily)
+        Scores.append(alignment.score)
+        Strands.append(alignment.strand)
+        Starts.append(alignment.start)
+        Stops.append(alignment.stop)
+        ConsensusStarts.append(alignment.consensus_start)
+        ConsensusStops.append(alignment.consensus_stop)
+        SubfamSeqs.append(alignment.subfamily_sequence)
+        ChromSeqs.append(alignment.sequence)
+
+#if there is only one subfam in the alignment file, no need to run anything because we know
+#that subfam is what's there
+#2 because of the skip state 
+if numseqs == 2:
+	if printMatrixPos:
+		stdout.write("start\tstop\tID\tname\n")
+		stdout.write("----------------------------------------\n")
+		stdout.write(f"{0}\t{Stops[1]-Starts[1]}\t1111\t{SubFams[1]}\n")
+	else:
+		stdout.write("start\tstop\tID\tname\n")
+		stdout.write("----------------------------------------\n")
+		stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{SubFams[1]}\n")
+	exit()
+
+changeProbLog = log(changeProb / (numseqs - 1))
+changeProbSkip = changeProbLog / 2;
+sameProbSkip = changeProbLog / 10; # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+
+#precomputes global vars rows and cols in matrices 
+rows: int = len(SubFams)
+cols: int = 0 #assign cols in FillAlignScoreMatrix
+
+padSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
+                    
+FillAlignScoreMatrix(SubfamSeqs, ChromSeqs)
+
+FillConsensusPosMatrix(ConsensusHash, SubfamSeqs, ChromSeqs, ConsensusStarts, ConsensusStops)		
+
+Columns = FillColumns(cols, rows, AlignHash)
+
+FillConfScoreMatrix(AlignHash, ConfHash)
+
+FillSupportMatrix(SupportHash, AlignHash, ConfHash)
+
+CollapseMatrices()
+
+FillProbMatrix(ProbHash, SupportHashCollapse, OriginHash)
+
+#FIXME - how to make this not a global?
+IDs = [0] * cols
+
+GetPath(ProbHash, OriginHash, SubFams)
+
+#FIXME - how to make this not globals?
+#keep the original annotation for reporting results
+Changes_orig = Changes.copy()
+ChangesPos_orig = ChangesPos.copy()
+Columns_orig = Columns.copy()			
 
 #Steps- 
 #1.create confidence for nodes
@@ -1079,17 +1072,12 @@ while (True):
     ChangesPos.clear()
         
     GetPath(ProbHash, OriginHash, SubFams)
-    
-#     print(Changes)
-#     print()
 
 
 if printMatrixPos:
 	PrintResults()
 else:
 	PrintResultsSequence()
-
-# PrintMatrixHashCollapse(cols, SupportHashCollapse)
 
 
         
