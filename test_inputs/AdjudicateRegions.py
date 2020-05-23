@@ -12,7 +12,7 @@ from polyA.load_alignments import load_alignments
 
 
 #just for debugging so can look at values in matrices
-def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
+def PrintMatrixHashCollapse(column: int, Hash: Dict, subfamscollapse: Dict[str, int]) -> None:
     stdout.write("\t")
 
     j: int = 0
@@ -33,7 +33,7 @@ def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
         j += 1
     stdout.write("\n")
 
-    for k in SubFamsCollapse:
+    for k in subfamscollapse:
         if k != "skip":
             stdout.write(f"{k:<20s}\t")
             j: int = 0
@@ -48,7 +48,7 @@ def PrintMatrixHashCollapse(column: int, Hash: Dict) -> None:
 
 
 #just for debugging so can look at values in matrices
-def PrintMatrixHash(column: int, Hash: Dict) -> None:
+def PrintMatrixHash(column: int, Hash: Dict, subfams: List[str]) -> None:
     stdout.write("\t")
     j: int = 0
     while j < column:
@@ -58,7 +58,7 @@ def PrintMatrixHash(column: int, Hash: Dict) -> None:
 
     i: int = 0
     while i < rows:
-        stdout.write(f"{SubFams[i]:<20s}\t")
+        stdout.write(f"{subfams[i]:<20s}\t")
         j: int = 0
         while j < column:
             if (i, j) in Hash:
@@ -87,14 +87,15 @@ def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
 
 #pads sequences with '.' and makes sparse matrix - allows regions where seqs do not all have same 
 #start and stop positions
-def padSeqs(start, stop, subfamseq, chromseq) -> Tuple[int, int]:
+#pass in SubfamSeqs and ChromSeqs and changes the actual strings int the lists 
+def padSeqs(start: List[int], stop: List[int], subfamseq: List[str], chromseq: List[str]) -> Tuple[int, int]:
 
 	edgestart: int = 0
 	edgestop: int = 0
 	
 	(edgestart, edgestop) = Edges(start, stop)
 	
-	for i in range(1, len(SubfamSeqs)):
+	for i in range(1, len(subfamseq)):
 		leftpad = start[i] - edgestart
 		rightpad = edgestop - stop[i]
 		
@@ -102,6 +103,7 @@ def padSeqs(start, stop, subfamseq, chromseq) -> Tuple[int, int]:
 		subfamseq[i] = ("." * leftpad) + f"{subfamseq[i]}" + ("." * (rightpad + 15))
 		
 	return (edgestart, edgestop)
+	
 
 #lastpreva and lastprevb will be single chars        
 def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str, gapext: int, gapinit: int, submatrix: Dict[int, int], submatrixcols: int, charpos: Dict[str, int]) -> int:
@@ -138,7 +140,7 @@ def CalcScore(seq1: str, seq2: str, lastpreva: str, lastprevb: str, gapext: int,
         elif seq1[j] == "." or seq2[j] == ".":
             chunkscore = chunkscore
         else:
-            if seq1[j] in CharPos and seq2[j] in CharPos:
+            if seq1[j] in CharPos and seq2[j] in charpos:
                 chunkscore += submatrix[charpos[seq1[j]] * submatrixcols + charpos[seq2[j]]]
 
     return chunkscore
@@ -262,7 +264,7 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str], starts: List[int
                         elif subfam1[j + offset] == "." or chrom1[j + offset] == ".":
                         	alignscore = alignscore
                         else:
-                            alignscore = alignscore + SubMatrix[CharPos[subfam1[j + offset]] * subMatrixCols + CharPos[chrom1[j + offset]]]
+                            alignscore = alignscore + SubMatrix[charpos[subfam1[j + offset]] * submatrixcols + charpos[chrom1[j + offset]]]
                             numnucls += 1
                     
                     if alignscore <= 0:
@@ -293,7 +295,7 @@ def FillAlignScoreMatrix(subfams: List[str], chroms: List[str], starts: List[int
 
 #fills parallel array to the Align Matrix that holds the consensus position for each 
 # subfam at that position in the alignment
-def FillConsensusPosMatrix(colnum,
+def FillConsensusPosMatrix(colnum: int,
                            subfams: List[str],
                            chroms: List[str],
                            consensusstart: List[int],
@@ -351,7 +353,7 @@ def FillConsensusPosMatrix(colnum,
 #puts all columns that are not empty into @Columns, so when I loop through hash I can use the 
 #vals in @Columns - this will skip over empty columns
 def FillColumns(num_cols: int, num_rows: int, alignmatrix: Dict[Tuple[int, int], int]) -> List[int]:
-	columns = []
+	columns: List[int] = []
 	j: int = 0
 	for j in range(num_cols):
 		empty = 1;
@@ -399,7 +401,7 @@ def ConfidenceCM(lamb: float, region: List[int]) -> str:
     return confidenceString
 
 
-def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], columns: List[int], lamb: float) -> Dict[Tuple[int, int], float]:
+def FillConfScoreMatrix(rownum: int, alignhash: Dict[Tuple[int, int], int], columns: List[int], lamb: float) -> Dict[Tuple[int, int], float]:
 	confhash: Dict[Tuple[int, int], float] = {}
 	
 	for i in range(len(columns)):
@@ -410,7 +412,7 @@ def FillConfScoreMatrix(alignhash: Dict[Tuple[int, int], int], columns: List[int
 		temp: List[int] = []
 		row: int = 0
 		
-		while row < rows:
+		while row < rownum:
 		
 			if (row, col) in alignhash:
 				temp.append(alignhash[row, col])
@@ -438,7 +440,7 @@ def FillSupportMatrix(row_num: int, alignhash: Dict[Tuple[int, int], int], confh
 
     # i = subfam, j = position
     i: int = 0
-    while i < rows:
+    while i < row_num:
         tempcol: int = -1
         for col in range(len(columns)):
             if col >= len(columns):
@@ -518,7 +520,7 @@ def CollapseMatrices(row: int, columns: List[int], subfams: List[str], supportha
 	for i in range(row):
 		subfamscollapse[subfams[i]] = 0
 
-	#update global var rows after collapse 
+	#update var rows after collapse 
 	row_update = len(subfamscollapse)
 
 	return (row_update, consensushashcollapse, strandhashcollapse, supporthashcollapse, subfamscollapse, activecellscollapse)
@@ -640,7 +642,7 @@ def GetPath(probhash: Dict[Tuple[str, int], float], originhash: Dict[Tuple[str, 
     return (changespos, changes, temp_id)
 
 #for debugging
-def PrintChanges(changes, changespos, columns) -> None:
+def PrintChanges(changes: List[str], changespos: List[int], columns: List[int]) -> None:
     i: int = 0
     while i < len(changes):
         stdout.write(str(columns[changespos[i]]))
@@ -694,7 +696,7 @@ def NodeConfidence(subfamseqs: List[str], chromseqs: List[str], changespos: List
     #reuse same matrix and compute confidence scores for the nodes	
     for j in range(nodes):
     	temp: List[float] = []
-    	for i in range(len(SubFams)):
+    	for i in range(len(subfams)):
     		temp.append(nodeconfidence_temp[i * nodes + j])
     		
     	confidenceTemp: List[float] = [float(x) for x in ConfidenceCM(lamb, temp).split(' ')]
@@ -715,6 +717,7 @@ def NodeConfidence(subfamseqs: List[str], chromseqs: List[str], changespos: List
             	nodeconfidence[subfams[i], j] = nodeconfidence_temp[i * nodes + j]
             	
     return nodeconfidence
+
 
 #used for debugging
 def PrintPathGraph(nodes: int, changes: List[str], pathgraph: List[int]) -> None:
@@ -793,7 +796,7 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changespos
 # @RemoveStarts and @RemoveStops so they can be extracted from the alignment 
 #pass in columns and updates it to ignore removed nodes
 # updates cols if removes node from end 
-def ExtractNodes(col, columns, changespos, pathgraph, nodes: int) -> int:
+def ExtractNodes(col: int, columns: List[int], changespos: List[int], pathgraph: List[int], nodes: int) -> int:
 	
 	removestarts: List[int] = []
 	removestops: List[int] = []
@@ -1063,7 +1066,7 @@ ConsensusHash = FillConsensusPosMatrix(cols, SubfamSeqs, ChromSeqs, ConsensusSta
 
 Columns = FillColumns(cols, rows, AlignHash)
 
-ConfHash = FillConfScoreMatrix(AlignHash, Columns, Lamb)
+ConfHash = FillConfScoreMatrix(rows, AlignHash, Columns, Lamb)
 
 SupportHash = FillSupportMatrix(rows, AlignHash, ConfHash, Columns)
 
