@@ -352,7 +352,7 @@ def FillColumns(num_cols: int, num_rows: int, alignmatrix: Dict[Tuple[int, int],
 	j: int = 0
 	for j in range(num_cols):
 		empty = 1;
-		for i in range(num_rows):
+		for i in range(1, num_rows):
 			if (i, j) in alignmatrix:
 				empty = 0
 				i = num_rows
@@ -514,7 +514,7 @@ def CollapseMatrices(row: int, columns: List[int], subfams: List[str], strands: 
 					
 	for i in range(row):
 		subfamscollapse[subfams[i]] = 0
-
+		
 	#update var rows after collapse 
 	row_update = len(subfamscollapse)
 
@@ -538,8 +538,8 @@ def FillProbMatrix(sameprobskip: float, sameproblog: float, changeproblog: float
 	
 	#fill first col of probhash with 0s
 	for k in subfamscollapse:
-		probhash[k, 0] = 0
-
+		probhash[k, Columns[0]] = 0
+		
 	for j in range(1, len(columns)):
 	 			
 		for i in activecellscollapse[columns[j]]:
@@ -1066,6 +1066,7 @@ ConfHash = FillConfScoreMatrix(rows, Lamb, Columns, AlignHash)
 SupportHash = FillSupportMatrix(rows, Columns, AlignHash, ConfHash)
 
 (rows, ConsensusHashCollapse, StrandHashCollapse, SupportHashCollapse, SubFamsCollapse, ActiveCellsCollapse) = CollapseMatrices(rows, Columns, SubFams, Strands, SupportHash, ConsensusHash)
+
 
 (ProbHash, OriginHash) = FillProbMatrix(sameProbSkip, sameProbLog, changeProbLog, changeProbSkip, Columns, SubFamsCollapse, ActiveCellsCollapse, SupportHashCollapse, StrandHashCollapse, ConsensusHashCollapse)
 
