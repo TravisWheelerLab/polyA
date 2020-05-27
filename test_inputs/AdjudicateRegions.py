@@ -484,7 +484,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
 
 # FIXME - make this return an array of ints instead of a string
 # send in an array of scores for a segment - output an array of confidence values for the segment
-def ConfidenceCM(lambdaa: float, region: List[int]) -> str:
+def ConfidenceCM(lambdaa: float, region: List[int]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum, then loops back through to calculate confidence
@@ -494,10 +494,10 @@ def ConfidenceCM(lambdaa: float, region: List[int]) -> str:
     region: list of scores for competing annotations
 
     output:
-    list of confidence values for competing annotations, each input alignment
+    confidence_list: list of confidence values for competing annotations, each input alignment
     score will have one output confidence score
     """
-    confidence_string: str = ""
+    confidence_list: List[float] = []
 
     # loops through the array once to get the sum of 2^every_hit_score in region
     # converts the score to account for lambda before summing
@@ -513,19 +513,11 @@ def ConfidenceCM(lambdaa: float, region: List[int]) -> str:
         if score > 0:
             converted_score = score * lambdaa
             confidence = ((2 ** converted_score) / score_total)
-
-            if confidence_string != "":
-                confidence_string += f" {confidence}"
-            else:
-                confidence_string = f"{confidence}"
+            confidence_list.append(confidence)
         else:
-            if confidence_string != "":
-                confidence_string += " 0"
-            else:
-                confidence_string = "0"
+            confidence_list.append(0.0)
 
-    return confidence_string
-
+    return confidence_list
 
 def FillConfidenceMatrix(row_num: int, lamb: float, columns: List[int], align_matrix: Dict[Tuple[int, int], int]) -> \
 Dict[Tuple[int, int], float]:
@@ -562,11 +554,11 @@ Dict[Tuple[int, int], float]:
             else:
                 temp_region.append(0)
 
-        temp_confidence: List[str] = ConfidenceCM(lamb, temp_region).split(" ")
+        temp_confidence: List[float] = ConfidenceCM(lamb, temp_region)
 
         for row_index2 in range(rows):
-            if temp_confidence[row_index2] != '0':
-                confidence_matrix[row_index2, col_index] = float(temp_confidence[row_index2])
+            if temp_confidence[row_index2] != 0.0:
+                confidence_matrix[row_index2, col_index] = temp_confidence[row_index2]
 
     return confidence_matrix
 
@@ -969,7 +961,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
         for row_index in range(len(subfams)):
             temp.append(int(node_confidence_temp[row_index * nodes + node_index4]))
 
-        confidence_temp: List[float] = [float(x) for x in ConfidenceCM(lamb, temp).split(' ')]
+        confidence_temp: List[float] = ConfidenceCM(lamb, temp)
 
         for row_index2 in range(len(subfams)):
             node_confidence_temp[row_index2 * nodes + node_index4] = confidence_temp[row_index2]
