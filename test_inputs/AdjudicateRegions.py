@@ -1196,271 +1196,272 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
 # GLOBALS - yes I know these are bad, will be passed into functions to make port easier	#
 # ---------------------------------------------------------------------------------------#
 
-GapInit: int = -25
-GapExt: int = -5
-Lamb: float = 0.1227  # From command line
-ChunkSize: int = 31
-SameProbLog: float = log(1 - (10 ** -45))  # FIXME - this just becomes 0.0... need to be more precise
-ChangeProb: float = 10 ** -45
-ChangeProbLog: float = 0.0  # Reassigned later
-ChangeProbSkip: float = 0.0  # Reassigned later
-SameProbSkip: float = 0.0
-SkipAlignScore: int = 30  # FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless SkipAlignScore = 120
-StartAll: int = 0  # Reassigned later
-StopAll: int = 0  # Reassigned later
-ID: int = 1111
+if __name__ == "__main__":
+    GapInit: int = -25
+    GapExt: int = -5
+    Lamb: float = 0.1227  # From command line
+    ChunkSize: int = 31
+    SameProbLog: float = log(1 - (10 ** -45))  # FIXME - this just becomes 0.0... need to be more precise
+    ChangeProb: float = 10 ** -45
+    ChangeProbLog: float = 0.0  # Reassigned later
+    ChangeProbSkip: float = 0.0  # Reassigned later
+    SameProbSkip: float = 0.0
+    SkipAlignScore: int = 30  # FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless SkipAlignScore = 120
+    StartAll: int = 0  # Reassigned later
+    StopAll: int = 0  # Reassigned later
+    ID: int = 1111
 
-help: bool = False  # Reassigned later
-prin: bool = False  # Reassigned later
-printMatrixPos: bool = False  # Reassigned later
+    help: bool = False  # Reassigned later
+    prin: bool = False  # Reassigned later
+    printMatrixPos: bool = False  # Reassigned later
 
-helpMessage: str = f"""
-usage: {argv[0]} alignFile matrixFile\n
-ARGUMENTS
-    --GapInit[-25]
-    --getExt[-5]
-    --lambda [will calc from matrix if not included]
-    --segmentsize[30]
-    --changeprob[1e-45]
+    helpMessage: str = f"""
+    usage: {argv[0]} alignFile matrixFile\n
+    ARGUMENTS
+        --GapInit[-25]
+        --getExt[-5]
+        --lambda [will calc from matrix if not included]
+        --segmentsize[30]
+        --changeprob[1e-45]
+    
+    OPTIONS
+        --help - display help message
+        --printmatrices - output all matrices
+        --matrixpos - prints subfam changes in matrix position instead of genomic position
+    """
 
-OPTIONS
-    --help - display help message
-    --printmatrices - output all matrices
-    --matrixpos - prints subfam changes in matrix position instead of genomic position
-"""
+    raw_opts, args = getopt(argv[1:], "", [
+        "GapInit=",
+        "GapExt=",
+        "lambda=",
+        "segmentsize=",
+        "changeprob=",
 
-raw_opts, args = getopt(argv[1:], "", [
-    "GapInit=",
-    "GapExt=",
-    "lambda=",
-    "segmentsize=",
-    "changeprob=",
+        "help",
+        "matrixPos",
+    ])
+    opts = dict(raw_opts)
 
-    "help",
-    "matrixPos",
-])
-opts = dict(raw_opts)
+    GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
+    GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
+    Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
+    ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
+    ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
+    help = "--help" in opts
+    printMatrixPos = "--matrixPos" in opts
 
-GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
-GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
-Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
-ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
-ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
-help = "--help" in opts
-printMatrixPos = "--matrixPos" in opts
+    if help:
+        print(helpMessage)
+        exit(0)
 
-if help:
-    print(helpMessage)
-    exit(0)
+    # input is alignment file of hits region and substitution matrix
+    infile: str = args[0]
+    infile_matrix: str = args[1]
 
-# input is alignment file of hits region and substitution matrix
-infile: str = args[0]
-infile_matrix: str = args[1]
+    # Other open was moved down to where we load the alignments file
+    with open(infile_matrix) as _infile_matrix:
+        in_matrix: List[str] = _infile_matrix.readlines()
 
-# Other open was moved down to where we load the alignments file
-with open(infile_matrix) as _infile_matrix:
-    in_matrix: List[str] = _infile_matrix.readlines()
+    # FIXME - want to add option to run easel in here
+    # We require a --lambda or provide a default so there's no need to run easel
 
-# FIXME - want to add option to run easel in here
-# We require a --lambda or provide a default so there's no need to run easel
-
-# creates a dict that associates character from score matrix file with position in score matrix
-# alignment char as key and pos in array as value
-CharPos: Dict[str, int] = {}
-line = in_matrix[0]
-line = re.sub(r"^\s+", "", line)
-line = re.sub(r"\s+$", "", line)
-chars = re.split(r"\s+", line)
-for i in range(len(chars)):
-    CharPos[chars[i]] = i
-SubMatrixCols: int = len(chars)
-
-# reads in the score matrix from file and stores in 2D array Score matrix
-SubMatrix: Dict[int, int] = {}
-count: int = 0
-for line in in_matrix[1:]:
+    # creates a dict that associates character from score matrix file with position in score matrix
+    # alignment char as key and pos in array as value
+    CharPos: Dict[str, int] = {}
+    line = in_matrix[0]
     line = re.sub(r"^\s+", "", line)
     line = re.sub(r"\s+$", "", line)
-    subScores = re.split(r"\s+", line)
-    for i in range(len(subScores)):
-        SubMatrix[count * SubMatrixCols + i] = int(subScores[i])
-    count += 1
+    chars = re.split(r"\s+", line)
+    for i in range(len(chars)):
+        CharPos[chars[i]] = i
+    SubMatrixCols: int = len(chars)
 
-Subfams: List[str] = []
-Scores: List[int] = []
-Strands: List[str] = []
-Starts: List[int] = []
-Stops: List[int] = []
-ConsensusStarts: List[int] = []
-ConsensusStops: List[int] = []
-SubfamSeqs: List[str] = []
-ChromSeqs: List[str] = []
+    # reads in the score matrix from file and stores in 2D array Score matrix
+    SubMatrix: Dict[int, int] = {}
+    count: int = 0
+    for line in in_matrix[1:]:
+        line = re.sub(r"^\s+", "", line)
+        line = re.sub(r"\s+$", "", line)
+        subScores = re.split(r"\s+", line)
+        for i in range(len(subScores)):
+            SubMatrix[count * SubMatrixCols + i] = int(subScores[i])
+        count += 1
 
-AlignMatrix: Dict[Tuple[int, int], int] = {}
-ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
-SupportMatrix: Dict[Tuple[int, int], float] = {}
-ProbMatrix: Dict[Tuple[str, int], float] = {}
-OriginMatrix: Dict[Tuple[str, int], str] = {}
-ConsensusMatrix: Dict[Tuple[int, int], int] = {}
+    Subfams: List[str] = []
+    Scores: List[int] = []
+    Strands: List[str] = []
+    Starts: List[int] = []
+    Stops: List[int] = []
+    ConsensusStarts: List[int] = []
+    ConsensusStops: List[int] = []
+    SubfamSeqs: List[str] = []
+    ChromSeqs: List[str] = []
 
-NonEmptyColumns: List[int] = []
+    AlignMatrix: Dict[Tuple[int, int], int] = {}
+    ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
+    SupportMatrix: Dict[Tuple[int, int], float] = {}
+    ProbMatrix: Dict[Tuple[str, int], float] = {}
+    OriginMatrix: Dict[Tuple[str, int], str] = {}
+    ConsensusMatrix: Dict[Tuple[int, int], int] = {}
 
-Changes: List[str] = []
-ChangesPosition: List[int] = []
+    NonEmptyColumns: List[int] = []
 
-IDs: List[int] = []
-ChangesOrig: List[str] = []
-ChangesPositionOrig: List[int] = []
-NonEmptyColumnsOrig: List[int] = []
+    Changes: List[str] = []
+    ChangesPosition: List[int] = []
 
-SupportMatrixCollapse: Dict[Tuple[str, int], int] = {}
-ActiveCellsCollapse: Dict[int, List[str]] = {}
-SubfamsCollapse: Dict[str, int] = {}
-ConsensusMatrixCollapse: Dict[Tuple[str, int], int] = {}
-StrandMatrixCollapse: Dict[Tuple[str, int], str] = {}
+    IDs: List[int] = []
+    ChangesOrig: List[str] = []
+    ChangesPositionOrig: List[int] = []
+    NonEmptyColumnsOrig: List[int] = []
 
-# for graph/node part
-NumNodes: int = 0
-NodeConfidence: Dict[Tuple[str, int], float] = {}
-PathGraph: List[int] = []
-total: int = 0
-loop: int = 1
+    SupportMatrixCollapse: Dict[Tuple[str, int], int] = {}
+    ActiveCellsCollapse: Dict[int, List[str]] = {}
+    SubfamsCollapse: Dict[str, int] = {}
+    ConsensusMatrixCollapse: Dict[Tuple[str, int], int] = {}
+    StrandMatrixCollapse: Dict[Tuple[str, int], str] = {}
 
-# -----------------------------------------------------------------------------------#
-#			MAIN																	#
-# -----------------------------------------------------------------------------------#
+    # for graph/node part
+    NumNodes: int = 0
+    NodeConfidence: Dict[Tuple[str, int], float] = {}
+    PathGraph: List[int] = []
+    total: int = 0
+    loop: int = 1
 
-# opens alignment file and stores all Subfams, Scores, Starts, Stops, subfams seqs and Chrom seqs in arrays
-numseqs: int = 0
-with open(infile) as _infile:
-    alignments = load_alignments(_infile)
-    for alignment in alignments:
-        numseqs += 1
+    # -----------------------------------------------------------------------------------#
+    #			MAIN																	#
+    # -----------------------------------------------------------------------------------#
 
-        Subfams.append(alignment.subfamily)
-        Scores.append(alignment.score)
-        Strands.append(alignment.strand)
-        Starts.append(alignment.start)
-        Stops.append(alignment.stop)
-        ConsensusStarts.append(alignment.consensus_start)
-        ConsensusStops.append(alignment.consensus_stop)
-        SubfamSeqs.append(alignment.subfamily_sequence)
-        ChromSeqs.append(alignment.sequence)
+    # opens alignment file and stores all Subfams, Scores, Starts, Stops, subfams seqs and Chrom seqs in arrays
+    numseqs: int = 0
+    with open(infile) as _infile:
+        alignments = load_alignments(_infile)
+        for alignment in alignments:
+            numseqs += 1
 
-# if there is only one subfam in the alignment file, no need to run anything because we know
-# that subfam is what's there
-# 2 because of the skip state
-if numseqs == 2:
-    if printMatrixPos:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
-        stdout.write(f"{0}\t{Stops[1] - Starts[1]}\t1111\t{Subfams[1]}\n")
-    else:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
-        stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
-    exit()
+            Subfams.append(alignment.subfamily)
+            Scores.append(alignment.score)
+            Strands.append(alignment.strand)
+            Starts.append(alignment.start)
+            Stops.append(alignment.stop)
+            ConsensusStarts.append(alignment.consensus_start)
+            ConsensusStops.append(alignment.consensus_stop)
+            SubfamSeqs.append(alignment.subfamily_sequence)
+            ChromSeqs.append(alignment.sequence)
 
-ChangeProbLog = log(ChangeProb / (numseqs - 1))
-ChangeProbSkip = ChangeProbLog / 2
-SameProbSkip = ChangeProbLog / 10  # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+    # if there is only one subfam in the alignment file, no need to run anything because we know
+    # that subfam is what's there
+    # 2 because of the skip state
+    if numseqs == 2:
+        if printMatrixPos:
+            stdout.write("start\tstop\tID\tname\n")
+            stdout.write("----------------------------------------\n")
+            stdout.write(f"{0}\t{Stops[1] - Starts[1]}\t1111\t{Subfams[1]}\n")
+        else:
+            stdout.write("start\tstop\tID\tname\n")
+            stdout.write("----------------------------------------\n")
+            stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
+        exit()
 
-# precomputes global vars rows and cols in matrices
-rows: int = len(Subfams)
-cols: int = 0  # assign cols in FillAlignMatrix
+    ChangeProbLog = log(ChangeProb / (numseqs - 1))
+    ChangeProbSkip = ChangeProbLog / 2
+    SameProbSkip = ChangeProbLog / 10  # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
-(StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
+    # precomputes global vars rows and cols in matrices
+    rows: int = len(Subfams)
+    cols: int = 0  # assign cols in FillAlignMatrix
 
-(cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubMatrixCols, SubfamSeqs,
-                                      ChromSeqs, Starts, SubMatrix, CharPos)
+    (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
-ConsensusMatrix = FillConsensusPositionMatrix(cols, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
+    (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubMatrixCols, SubfamSeqs,
+                                          ChromSeqs, Starts, SubMatrix, CharPos)
 
-NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
+    ConsensusMatrix = FillConsensusPositionMatrix(cols, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
-ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, NonEmptyColumns, AlignMatrix)
+    NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
 
-SupportMatrix = FillSupportMatrix(rows, NonEmptyColumns, ConfidenceMatrix)
+    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, NonEmptyColumns, AlignMatrix)
 
-(rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
- ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
+    SupportMatrix = FillSupportMatrix(rows, NonEmptyColumns, ConfidenceMatrix)
 
-(ProbMatrix, OriginMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
-                                                   NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
-                                                   SupportMatrixCollapse, StrandMatrixCollapse, ConsensusMatrixCollapse)
+    (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
+     ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
 
-IDs = [0] * cols
-
-(ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
-                                         OriginMatrix)
-
-# keep the original annotation for reporting results
-ChangesOrig = Changes.copy()
-ChangesPositionOrig = ChangesPosition.copy()
-NonEmptyColumnsOrig = NonEmptyColumns.copy()
-
-# Steps-
-# 1.create confidence for nodes
-#	will be in a matrix that is #subfams x #nodes
-# 2.create path graph
-# 3.find alternative paths through graph and add those edges
-# 4.extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
-# 5.annotate again with removed subfams
-#   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
-
-count: int = 0
-while (True):
-    count += 1
-    NumNodes = len(Changes)
-
-    # breakout of loop if there are 2 or less nodes left
-    if (NumNodes <= 2):
-        break
-
-    NodeConfidence.clear()
-
-    # initializes and fills node confidence matrix
-    NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, SubMatrixCols, Lamb, NonEmptyColumns, SubfamSeqs,
-                                        ChromSeqs, ChangesPosition, Subfams, SubMatrix, CharPos)
-
-    PathGraph.clear()
-    PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
-                              ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence)
-
-    # test to see if there nodes in the graph that have more that one incoming or outgoing edge,
-    # if so keep looping, if not break out of the loop
-    # if they are all 0, break out of the loop
-    test: bool = False
-    j: int = 0
-    while j < NumNodes:
-        i: int = 0
-        while i < j - 1:
-            if (PathGraph[i * NumNodes + j] == 1):
-                test = True
-            i += 1
-        j += 1
-
-    if not test:
-        break
-
-    cols = ExtractNodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
-
-    # using prob matrix and origin matrix, just skip the cols I'm not interested in and annotate
-    # without the removed subfam
-    # using old prob matrix and origin matrix
-    # this time ignores inserted subfam because there are values in @RemoveStarts and @RemoveStops
     (ProbMatrix, OriginMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
                                                        NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
-                                                       SupportMatrixCollapse, StrandMatrixCollapse,
-                                                       ConsensusMatrixCollapse)
+                                                       SupportMatrixCollapse, StrandMatrixCollapse, ConsensusMatrixCollapse)
 
-    Changes.clear()
-    ChangesPosition.clear()
+    IDs = [0] * cols
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix)
 
-if printMatrixPos:
-    PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
-else:
-    PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+    # keep the original annotation for reporting results
+    ChangesOrig = Changes.copy()
+    ChangesPositionOrig = ChangesPosition.copy()
+    NonEmptyColumnsOrig = NonEmptyColumns.copy()
+
+    # Steps-
+    # 1.create confidence for nodes
+    #	will be in a matrix that is #subfams x #nodes
+    # 2.create path graph
+    # 3.find alternative paths through graph and add those edges
+    # 4.extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
+    # 5.annotate again with removed subfams
+    #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
+
+    count: int = 0
+    while (True):
+        count += 1
+        NumNodes = len(Changes)
+
+        # breakout of loop if there are 2 or less nodes left
+        if (NumNodes <= 2):
+            break
+
+        NodeConfidence.clear()
+
+        # initializes and fills node confidence matrix
+        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, SubMatrixCols, Lamb, NonEmptyColumns, SubfamSeqs,
+                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, CharPos)
+
+        PathGraph.clear()
+        PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
+                                  ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence)
+
+        # test to see if there nodes in the graph that have more that one incoming or outgoing edge,
+        # if so keep looping, if not break out of the loop
+        # if they are all 0, break out of the loop
+        test: bool = False
+        j: int = 0
+        while j < NumNodes:
+            i: int = 0
+            while i < j - 1:
+                if (PathGraph[i * NumNodes + j] == 1):
+                    test = True
+                i += 1
+            j += 1
+
+        if not test:
+            break
+
+        cols = ExtractNodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
+
+        # using prob matrix and origin matrix, just skip the cols I'm not interested in and annotate
+        # without the removed subfam
+        # using old prob matrix and origin matrix
+        # this time ignores inserted subfam because there are values in @RemoveStarts and @RemoveStops
+        (ProbMatrix, OriginMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
+                                                           NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
+                                                           SupportMatrixCollapse, StrandMatrixCollapse,
+                                                           ConsensusMatrixCollapse)
+
+        Changes.clear()
+        ChangesPosition.clear()
+
+        (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
+                                                 OriginMatrix)
+
+    if printMatrixPos:
+        PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+    else:
+        PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)

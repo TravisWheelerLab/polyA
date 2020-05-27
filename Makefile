@@ -15,7 +15,7 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	poetry run python -m pytest -m 'not slow' tests/ polyA/
+	poetry run python -m pytest -m 'not slow' tests/ polyA/ test_inputs/AdjudicateRegions.py
 
 .PHONY: check-format
 check-format:
