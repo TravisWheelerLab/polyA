@@ -91,6 +91,14 @@ def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
 
     output:
     minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+
+    >>> strt = [0, 1, 4, 7]
+    >>> stp = [0, 3, 10, 9]
+    >>> b, e = Edges(strt, stp)
+    >>> b
+    1
+    >>> e
+    10
     """
     min_start: int = starts[1]
     max_stop: int = stops[1]
@@ -112,6 +120,8 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     Pad out sequences with "." to allow regions where sequences do not all
     have the same start and stop positions.
 
+    padd with an extra (chunk_size-1)/2 at the end
+
     input:
     start: start positions on the target sequence from the input alignment
     stop: stop positions on the target sequence from the input alignment
@@ -121,6 +131,20 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     output:
     updates subfam_seqs and chrom_seqs with padded sequences
     minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+
+    >>> strt = [0, 1, 3]
+    >>> stp = [0, 1, 5]
+    >>> s_seq = ['', 'a', 'aaa']
+    >>> c_seq = ['', 'a', 't-t']
+    >>> (b, e) = PadSeqs(strt, stp, s_seq, c_seq)
+    >>> b
+    1
+    >>> e
+    5
+    >>> s_seq
+    ['', 'a...................', '..aaa...............']
+    >>> c_seq
+    ['', 'a...................', '..t-t...............']
     """
 
     edge_start: int = 0
@@ -162,6 +186,15 @@ def CalcScore(gap_ext: int, gap_init: int, submatrix_cols: int, seq1: str, seq2:
 
     output:
     alignment score
+
+    >>> sub_mat = {0:1, 1:-1, 2:-1, 3:1}
+    >>> pos = {"A":0, "T":1}
+    >>> CalcScore(-5, -25, 2, "AT", "AT", "", "", sub_mat, pos)
+    2
+    >>> CalcScore(-5, -25, 2, "-T", "AT", "A", "A", sub_mat, pos)
+    -24
+    >>> CalcScore(-5, -25, 2, "-T", "AT", "-", "", sub_mat, pos)
+    -4
     """
     chunk_score: int = 0
 
@@ -242,6 +275,17 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     are  subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
     Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
     for that particular subfamily.
+
+    >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
+    >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
+    >>> strts = [0, 2, 0]
+    >>> sub_mat = {0:1, 1:-1, 2:-1, 3:1}
+    >>> pos = {"A":0, "T":1}
+    >>> (c, m) = FillAlignMatrix(0, 31, -5, -25, 30, 2, subs, chros, strts, sub_mat, pos)
+    >>> c
+    40
+    >>> m
+    {(1, 2): 31, (1, 3): 31, (1, 4): 31, (1, 5): 31, (1, 6): 31, (1, 7): 31, (1, 8): 31, (1, 9): 31, (1, 10): 31, (1, 11): 31, (1, 12): 31, (1, 13): 31, (1, 14): 31, (1, 15): 31, (1, 16): 31, (1, 17): 31, (1, 18): 31, (1, 19): 31, (1, 20): 31, (1, 21): 31, (1, 22): 31, (1, 23): 31, (1, 24): 29, (1, 25): 28, (1, 26): 28, (1, 27): 28, (1, 28): 28, (1, 29): 28, (1, 30): 28, (1, 31): 28, (1, 32): 28, (1, 33): 28, (1, 34): 28, (1, 35): 27, (1, 36): 27, (1, 37): 27, (1, 38): 27, (1, 39): 27, (2, 0): 27, (2, 1): 27, (2, 2): 27, (2, 3): 27, (2, 4): 27, (2, 5): 28, (2, 6): 28, (2, 7): 28, (2, 8): 28, (2, 9): 28, (2, 10): 28, (2, 11): 28, (2, 12): 28, (2, 13): 28, (2, 14): 28, (2, 15): 29, (2, 16): 31, (2, 17): 31, (2, 18): 31, (2, 19): 31, (2, 20): 31, (2, 21): 31, (2, 22): 5, (2, 23): 1, (2, 24): 1, (2, 25): 1, (2, 26): 1, (2, 27): 1, (2, 28): 1, (2, 29): 1, (2, 30): 1, (2, 31): 1, (2, 32): 1, (2, 33): 1, (2, 34): 1, (2, 35): 1, (2, 36): 1, (2, 37): 1, (2, 38): 1, (2, 39): 1, (0, 0): 30, (0, 1): 30, (0, 2): 30, (0, 3): 30, (0, 4): 30, (0, 5): 30, (0, 6): 30, (0, 7): 30, (0, 8): 30, (0, 9): 30, (0, 10): 30, (0, 11): 30, (0, 12): 30, (0, 13): 30, (0, 14): 30, (0, 15): 30, (0, 16): 30, (0, 17): 30, (0, 18): 30, (0, 19): 30, (0, 20): 30, (0, 21): 30, (0, 22): 30, (0, 23): 30, (0, 24): 30, (0, 25): 30, (0, 26): 30, (0, 27): 30, (0, 28): 30, (0, 29): 30, (0, 30): 30, (0, 31): 30, (0, 32): 30, (0, 33): 30, (0, 34): 30, (0, 35): 30, (0, 36): 30, (0, 37): 30, (0, 38): 30, (0, 39): 30}
     """
     num_cols: int = 0
     col_index: int = 0
@@ -259,17 +303,17 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         # will offset by 10
 
         # calculates score for the first 16 chunks, chunk 16 is the first one that is 30nt
-        # FIXME - this could start with smallest chunk and seq_indexust add score of next nt to get next, etc
+        # FIXME - this could start with smallest chunk and seq_index just add score of next nt to get next, etc
         # FIXME - but right now it takes all the chunks separately and runs them through CalcScore()
         seq_index: int = starts[i] - edge_start
-        col_index = seq_index + int((ChunkSize - 1) / 2)  # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
+        col_index = seq_index + int((chunk_size - 1) / 2)  # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
         align_score: int = 0
         temp_index: int = seq_index
         temp_count: int = 0
         offset: int = 0
         prev_offset: int = 0
 
-        for k in range(int((ChunkSize - 1) / 2), -1, -1):
+        for k in range(int((chunk_size - 1) / 2), -1, -1):
 
             offset: int = chunk_size - k
             align_score = 0
@@ -326,7 +370,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                                 temp_count2 += 1
                         num_nucls = temp_count2  # resetting num_nucls to 31
 
-                        if num_nucls <= int((ChunkSize - 1) / 2):
+                        if num_nucls <= int((chunk_size - 1) / 2):
                             align_score = -inf
 
                     else:
@@ -345,8 +389,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                             num_nucls -= 1
 
                         # adding next chars score - tests if its a gap in the subfam as well
-                        if subfam_seq[seq_index + offset - int((ChunkSize - 1) / 2)] == "." or chrom_seq[
-                            seq_index + offset - int((ChunkSize - 1) / 2)] == ".":
+                        if subfam_seq[seq_index + offset - int((chunk_size - 1) / 2)] == "." or chrom_seq[
+                            seq_index + offset - int((chunk_size - 1) / 2)] == ".":
                             align_score = -inf
                         elif subfam_seq[seq_index + offset] == "-":
                             num_nucls += 1
@@ -389,7 +433,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
 # fills parallel array to the Align Matrix that holds the consensus position for each
 # subfam at that position in the alignment
-def FillConsensusPositionMatrix(col_num: int, subfams: List[str], chroms: List[str], consensus_starts: List[int],
+def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], chroms: List[str], consensus_starts: List[int],
                                 strands: List[str]) -> Dict[Tuple[int, int], int]:
     """
     Fills parallel array to the AlignScoreMatrix that holds the consensus position for each subfam
@@ -408,6 +452,12 @@ def FillConsensusPositionMatrix(col_num: int, subfams: List[str], chroms: List[s
     tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
     holds the alignment position in the consensus subfamily sequence.
 
+    >>> subs = ["", "AAA", "TT-"]
+    >>> chrs = ["", "AAA", "TTT"]
+    >>> con_strts = [-1, 0, 10]
+    >>> strandss = ["", "+", "-"]
+    >>> FillConsensusPositionMatrix(3, 3, subs, chrs, con_strts, strandss)
+    {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 0): 0, (1, 1): 1, (1, 2): 2, (2, 0): 10, (2, 1): 9, (2, 2): 9}
     """
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
@@ -416,7 +466,7 @@ def FillConsensusPositionMatrix(col_num: int, subfams: List[str], chroms: List[s
         consensus_matrix[0, j] = 0
 
     # start at 1 to skip 'skip state'
-    for row_index in range(1, rows):
+    for row_index in range(1, row_num):
 
         consensus_pos: int = 0
         if strands[row_index] == "+":
@@ -466,6 +516,10 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
 
     output:
     columns: list of columns that are not empty
+
+    >>> align_mat = {(0, 0): 100, (0, 2): 100, (1, 0): 100, (1, 2): 100, (2, 0): 100, (2, 2): 100}
+    >>> FillColumns(3, 3, align_mat)
+    [0, 2]
     """
     columns: List[int] = []
     j: int = 0
@@ -1375,7 +1429,7 @@ if __name__ == "__main__":
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubMatrixCols, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix, CharPos)
 
-    ConsensusMatrix = FillConsensusPositionMatrix(cols, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
+    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
 
