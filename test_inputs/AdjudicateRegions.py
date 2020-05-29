@@ -1514,8 +1514,6 @@ if __name__ == "__main__":
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubMatrixCols, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix, CharPos)
 
-    PrintMatrixHash(cols, rows, Subfams, AlignMatrix)
-
     ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
