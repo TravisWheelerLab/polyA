@@ -81,7 +81,6 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str], matrix: Dict
 # find the min start and max stop for the whole region
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     """
-    TODO: make check-fast needs to check these doc tests
     Find and return the min and max stop positions for the entire region
     included in the alignments.
 
@@ -843,16 +842,14 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     previous column the probability in the DP matrix came from. Used when doing backtrace through the DP matrix.
     Dict that hols subfam name as row and col number and maps it to value in cell
 
-    TODO: doc test
-    # >>> same_prob_skip, same_prob, change_prob, change_prob_skip, columns, subfams_collapse, active_cells_collapse,
-    support_matrix_collapse, strand_matrix_collapse, consensus_matrix_collapse
+    TODO: larger test needed for this function
     """
     prob_matrix: Dict[Tuple[str, int], float] = {}
     origin_matrix: Dict[Tuple[str, int], str] = {}
 
     # fill first col of prob_matrix with 0s
     for k in subfams_collapse:
-        prob_matrix[k, NonEmptyColumns[0]] = 0
+        prob_matrix[k, columns[0]] = 0
 
     for columns_index in range(1, len(columns)):
 
@@ -938,7 +935,21 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
     changes: parallel array to changes_position - what subfam is being switches to
     updates input list ids
 
-    TODO: doc test
+    >>> non_cols = [0, 1, 2, 3]
+    >>> idss = [0, 0, 0, 0]
+    >>> subs = ["s1", "s2"]
+    >>> active_col = {0: ['s1', 's2'], 1: ['s1', 's2'], 2: ['s1', 's2'], 3: ['s1', 's2']}
+    >>> prob_mat = {('s1', 0): 0, ('s2', 0): 0, ('s1', 1): 0, ('s2', 1): 0, ('s1', 2): 1, ('s2', 2): 1, ('s1', 3): -100, ('s2', 3): -10}
+    >>> orig_mat = {('s1', 0): "s1", ('s2', 0): "s2", ('s1', 1): "s1", ('s2', 1): "s1", ('s1', 2): "s1", ('s2', 2): "s1", ('s1', 3): "s1", ('s2', 3): "s2"}
+    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, subs, active_col, prob_mat, orig_mat)
+    >>> temp_idd
+    3579
+    >>> changes_pos
+    [0, 2, 4]
+    >>> changess
+    ['s1', 's2']
+    >>> idss
+    [2345, 2345, 1111, 1111]
     """
     maxxx: float = -inf
     max_row_index: str = ''
@@ -952,6 +963,8 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
             max_row_index = i
 
     prev_row_index: str = origin_matrix[max_row_index, num_col - 1]
+
+    ids[columns[- 1]] = temp_id
 
     changes_position.append(len(columns))
 
@@ -1157,7 +1170,15 @@ List[int]:
     path_graph: 2D matrix. Graph used during stitching. Maps nodes to all other nodes and holds
     values for if there is an alternative edge between the nodes.
 
-    TODO: doc test
+    >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    >>> changess = ["s1", "s2", "s1"]
+    >>> changes_pos = [0, 3, 6, 10]
+    >>> subs_col = {"s1": 0, "s2": 0}
+    >>> con_mat_col = {('s1', 0): 0, ('s1', 1): 1, ('s1', 2): 2, ('s1', 3): 3, ('s1', 6): 6, ('s1', 7): 7, ('s1', 8): 8, ('s1', 9): 9, ('s2', 3): 1, ('s2', 4): 2, ('s2', 5): 3, ('s2', 6): 4}
+    >>> strand_mat_col = {('s1', 0): '+', ('s1', 1): '+', ('s1', 2): '+', ('s1', 3): '+', ('s1', 6): '+', ('s1', 7): '+', ('s1', 8): '+', ('s1', 9): '+', ('s2', 3): '-', ('s2', 4): '-', ('s2', 5): '-', ('s2', 6): '-'}
+    >>> node_conf = {('s1', 0): 0.9, ('s1', 1): 0.5, ('s1', 2): 0.9, ('s2', 0): 0.1, ('s2', 1): 0.5, ('s2', 2): 0.1}
+    >>> FillPathGraph(3, non_cols, changess, changes_pos, subs_col, con_mat_col, strand_mat_col, node_conf)
+    [0, 1, 1, 0, 0, 1, 0, 0, 0]
     """
     path_graph: List[int] = []
 
