@@ -12,7 +12,7 @@ from polyA.load_alignments import load_alignments
 # -----------------------------------------------------------------------------------#
 
 
-def PrintMatrixHashCollapse(num_col: int, matrix: Dict, subfams_collapse: Dict[str, int]) -> None:
+def PrintMatrixHashCollapse(num_col: int, matrix: Dict[Tuple[str, int], Union[float, int, str]], subfams_collapse: Dict[str, int]) -> None:
     """
     just for debugging
     prints values inside collapsed matrices
@@ -146,8 +146,8 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     ['', 'a...................', '..t-t...............']
     """
 
-    edge_start: int = 0
-    edge_stop: int = 0
+    edge_start: int
+    edge_stop: int
 
     (edge_start, edge_stop) = Edges(start, stop)
 
