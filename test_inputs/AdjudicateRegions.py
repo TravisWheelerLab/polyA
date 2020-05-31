@@ -519,7 +519,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     return columns
 
 
-def ConfidenceCM(lambdaa: float, region: List[int]) -> List[float]:
+def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -555,7 +555,7 @@ def ConfidenceCM(lambdaa: float, region: List[int]) -> List[float]:
 
     return confidence_list
 
-def FillConfidenceMatrix(row_num: int, lamb: float, columns: List[int], align_matrix: Dict[Tuple[int, int], int]) -> \
+def FillConfidenceMatrix(row_num: int, lamb: float, columns: List[int], subfam_countss: Dict[str, int], align_matrix: Dict[Tuple[int, int], int]) -> \
 Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
@@ -604,7 +604,7 @@ Dict[Tuple[int, int], float]:
             else:
                 temp_region.append(0)
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, temp_region)
+        temp_confidence: List[float] = ConfidenceCM(lamb, temp_region,subfam_countss)
 
         for row_index2 in range(row_num):
             if temp_confidence[row_index2] != 0.0:
@@ -977,7 +977,7 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
 # stitching want to ignore skip states - can't remember if I already fixed this, need to test?
 def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols: int, lamb: float, columns: List[int],
                        subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
-                       sub_matrix: Dict[int, int], char_pos: Dict[str, int]) -> Dict[Tuple[str, int], float]:
+                       sub_matrix: Dict[int, int], char_pos: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
     """
     finds completing annoations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1051,7 +1051,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
         for row_index in range(len(subfams)):
             temp.append(int(node_confidence_temp[row_index * nodes + node_index4]))
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, temp)
+        confidence_temp: List[float] = ConfidenceCM(lamb, temp, subfam_countss)
 
         for row_index2 in range(len(subfams)):
             node_confidence_temp[row_index2 * nodes + node_index4] = confidence_temp[row_index2]
@@ -1366,10 +1366,14 @@ if __name__ == "__main__":
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
     infile_matrix: str = args[1]
+    infile_prior_counts: str = args[2]
 
     # Other open was moved down to where we load the alignments file
     with open(infile_matrix) as _infile_matrix:
         in_matrix: List[str] = _infile_matrix.readlines()
+
+    with open(infile_prior_counts) as _infile_prior_counts:
+        in_counts: List[str] = _infile_prior_counts.readlines()
 
     # FIXME - want to add option to run easel in here
     # We require a --lambda or provide a default so there's no need to run easel
@@ -1395,6 +1399,14 @@ if __name__ == "__main__":
         for i in range(len(subScores)):
             SubMatrix[count * SubMatrixCols + i] = int(subScores[i])
         count += 1
+
+    #maps subfam names to genomic prior counts from input file
+    #used during confidence calculations
+    SubfamCounts: Dict[str, int] = {}
+    for line in in_counts[1:]:
+        line = re.sub(r"\n", "", line)
+        info = re.split(r"\s+", line)
+        SubfamCounts[info[0]] = int(info[1])
 
     Subfams: List[str] = []
     Scores: List[int] = []
@@ -1484,7 +1496,7 @@ if __name__ == "__main__":
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
 
-    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, NonEmptyColumns, AlignMatrix)
+    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, NonEmptyColumns, SubfamCounts, AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, NonEmptyColumns, ConfidenceMatrix)
 
@@ -1527,7 +1539,7 @@ if __name__ == "__main__":
 
         # initializes and fills node confidence matrix
         NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, SubMatrixCols, Lamb, NonEmptyColumns, SubfamSeqs,
-                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, CharPos)
+                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, CharPos, SubfamCounts)
 
         PathGraph.clear()
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
