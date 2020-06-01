@@ -157,8 +157,8 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     return (edge_start, edge_stop)
 
 
-def CalcScore(gap_ext: int, gap_init: int, submatrix_cols: int, seq1: str, seq2: str, prev_char_seq1: str,
-              prev_char_seq2: str, sub_matrix: Dict[int, int], char_pos: Dict[str, int]) -> int:
+def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1: str,
+              prev_char_seq2: str, sub_matrix: Dict[str, int]) -> int:
     """
     Calculate the score for a particular alignment between a subfamily and a target/chromsome sequence.
     Scores are calculated based on input SubstitutionMatrix, gap_ext, and gap_init.
@@ -169,25 +169,21 @@ def CalcScore(gap_ext: int, gap_init: int, submatrix_cols: int, seq1: str, seq2:
     input:
     gap_ext: penalty to extend a gap
     gap_init: penalty to start a gap
-    submatrix_cols: size of input substitution matrix
     seq1: sequence chunk from alignment
     seq2: sequence chunk from alignment
     prev_char_seq1: character before alignment - tells if should use gap_ext or gap_init
     prev_char_seq2: character before alignment - tells if should use gap_ext or gap_init
-    sub_matrix: input substitution matrix - dict that holds 2D array of the matrix - maps array
-    index to value - could also just be stored as a list
-    char_pos: dict that maps a character found in sequence to it's position in sub_matrix
+    sub_matrix: input substitution matrix - dict that maps 2 chars being aligned to the score
 
     output:
     alignment score
 
-    >>> sub_mat = {0:1, 1:-1, 2:-1, 3:1}
-    >>> pos = {"A":0, "T":1}
-    >>> CalcScore(-5, -25, 2, "AT", "AT", "", "", sub_mat, pos)
+    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
+    >>> CalcScore(-5, -25, "AT", "AT", "", "", sub_mat)
     2
-    >>> CalcScore(-5, -25, 2, "-T", "AT", "A", "A", sub_mat, pos)
+    >>> CalcScore(-5, -25, "-T", "AT", "A", "A", sub_mat)
     -24
-    >>> CalcScore(-5, -25, 2, "-T", "AT", "-", "", sub_mat, pos)
+    >>> CalcScore(-5, -25, "-T", "AT", "-", "", sub_mat)
     -4
     """
     chunk_score: int = 0
@@ -207,7 +203,7 @@ def CalcScore(gap_ext: int, gap_init: int, submatrix_cols: int, seq1: str, seq2:
     elif seq1[0] == "." or seq2[0] == ".":
         chunk_score = chunk_score
     else:
-        chunk_score += sub_matrix[char_pos[seq1[0]] * submatrix_cols + char_pos[seq2[0]]]
+        chunk_score += sub_matrix[seq1[0] + seq2[0]]
 
     for j in range(1, len(seq1)):
         if seq1[j] == "-":
@@ -223,15 +219,14 @@ def CalcScore(gap_ext: int, gap_init: int, submatrix_cols: int, seq1: str, seq2:
         elif seq1[j] == "." or seq2[j] == ".":
             chunk_score = chunk_score
         else:
-            if seq1[j] in char_pos and seq2[j] in char_pos:
-                chunk_score += sub_matrix[char_pos[seq1[j]] * submatrix_cols + char_pos[seq2[j]]]
+            if (seq1[j]+seq2[j]) in sub_matrix:  #just incase the char isn't in the input substitution matrix
+                chunk_score += sub_matrix[seq1[j] + seq2[j]]
 
     return chunk_score
 
 
-def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: int,
-                    sub_matrix_cols: int, subfams: List[str], chroms: List[str], starts: List[int],
-                    sub_matrix: Dict[int, int], char_pos: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], int]]:
+def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: int, subfams: List[str], chroms: List[str], starts: List[int],
+                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], int]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
     for every segment of size chunksize for all seqs in alignments
@@ -266,9 +261,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
-    >>> sub_mat = {0:1, 1:-1, 2:-1, 3:1}
-    >>> pos = {"A":0, "T":1}
-    >>> (c, m) = FillAlignMatrix(0, 31, -5, -25, 30, 2, subs, chros, strts, sub_mat, pos)
+    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
+    >>> (c, m) = FillAlignMatrix(0, 31, -5, -25, 30, subs, chros, strts, sub_mat)
     >>> c
     40
     >>> m
@@ -321,8 +315,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             subfam_slice: str = subfam_seq[seq_index:seq_index + offset]
 
             # calculates score for first chunk and puts score in align_matrix
-            align_score = CalcScore(gap_ext, gap_init, sub_matrix_cols, subfam_slice, chrom_slice, "", "", sub_matrix,
-                                    char_pos)
+            align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
             align_matrix[i, col_index - k] = int(
                 align_score * chunk_size / (chunk_size - k))  # already to scale so don't need to * 31 and / 31
 
@@ -348,8 +341,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                     if prev_offset != offset:  # there is a new gap, or a gap was removed from beginning
                         chrom_slice = chrom_seq[seq_index + 1:seq_index + offset + 1]
                         subfam_slice = subfam_seq[seq_index + 1:seq_index + offset + 1]
-                        align_score = CalcScore(gap_ext, gap_init, sub_matrix_cols, subfam_slice, chrom_slice,
-                                                subfam_seq[seq_index], chrom_seq[seq_index], sub_matrix, char_pos)
+                        align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
+                                                subfam_seq[seq_index], chrom_seq[seq_index], sub_matrix)
 
                         temp_count2: int = 0
                         for nuc in chrom_slice:
@@ -371,8 +364,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                             else:
                                 align_score = align_score - gap_init
                         else:
-                            align_score = align_score - sub_matrix[
-                                char_pos[subfam_seq[seq_index]] * sub_matrix_cols + char_pos[chrom_seq[seq_index]]]
+                            align_score = align_score - sub_matrix[subfam_seq[seq_index] + chrom_seq[seq_index]]
                             num_nucls -= 1
 
                         # adding next chars score - tests if its a gap in the subfam as well
@@ -388,9 +380,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                         elif subfam_seq[seq_index + offset] == "." or chrom_seq[seq_index + offset] == ".":
                             align_score = align_score
                         else:
-                            align_score = align_score + sub_matrix[
-                                char_pos[subfam_seq[seq_index + offset]] * sub_matrix_cols + char_pos[
-                                    chrom_seq[seq_index + offset]]]
+                            align_score = align_score + sub_matrix[subfam_seq[seq_index + offset] + chrom_seq[seq_index + offset]]
                             num_nucls += 1
 
                     if align_score <= 0:
@@ -983,9 +973,9 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
 
 # FIXME - if goes into skip state for just one position, this will have an error .. also when
 # stitching want to ignore skip states - can't remember if I already fixed this, need to test?
-def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols: int, lamb: float, columns: List[int],
+def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, columns: List[int],
                        subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
-                       sub_matrix: Dict[int, int], char_pos: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
+                       sub_matrix: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
     """
     finds completing annoations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1002,15 +992,14 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
     for whole nodes. Used during stitching process. Tuple[str, int] is key that maps a subfamily
     and node number to a confidence score.
 
-    >>> sub_mat = {0:1, 1:-1, 2:-1, 3:1}
-    >>> pos = {"A":0, "T":1}
+    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     >>> subs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
     >>> chrs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
     >>> change_pos = [0, 3, 7]
     >>> names = ["skip", "n1", "n2"]
     >>> counts = {"skip": 3, "n1": 3, "n2": 3}
-    >>> FillNodeConfidence(3, -5, -25, 2, 0.1227, non_cols, subs, chrs, change_pos, names, sub_mat, pos, counts)
+    >>> FillNodeConfidence(3, -5, -25, 0.1227, non_cols, subs, chrs, change_pos, names, sub_mat, counts)
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
     """
     node_confidence_temp: List[float] = [0 for _ in range(len(subfams) * nodes)]
@@ -1024,7 +1013,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
         end_node: int = columns[changes_position[1]]
         subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
         chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
-        align_score: int = CalcScore(gap_ext, gap_init, sub_matrix_cols, subfam, chrom, '', '', sub_matrix, char_pos)
+        align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, '', '', sub_matrix)
         node_confidence_temp[subfam_index * nodes + 0] = float(align_score)
 
     # does rest of nodes - looks back at prev char incase of gap ext
@@ -1038,8 +1027,8 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
                 begin_node2 - 1]  # subfam_seqs[j][NonEmptyColumns[changes_position[i + 1] - 1]]
             last_prev_chrom2: str = chrom_seqs[subfam_index2][
                 begin_node2 - 1]  # chrom_seqs[j][changes_position[i + 1] - 1]
-            align_score: int = CalcScore(gap_ext, gap_init, sub_matrix_cols, subfam, chrom, last_prev_subfam2,
-                                           last_prev_chrom2, sub_matrix, char_pos)
+            align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam2,
+                                           last_prev_chrom2, sub_matrix)
             node_confidence_temp[subfam_index2 * nodes + node_index2] = float(align_score)
 
     # does last node
@@ -1050,8 +1039,8 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, sub_matrix_cols:
         chrom: str = chrom_seqs[node_index3][begin_node3:end_node3]
         last_prev_subfam3: str = subfam_seqs[node_index3][begin_node3 - 1]
         last_prev_chrom3: str = chrom_seqs[node_index3][begin_node3 - 1]
-        align_score: int = CalcScore(gap_ext, gap_init, sub_matrix_cols, subfam, chrom, last_prev_subfam3,
-                                       last_prev_chrom3, sub_matrix, char_pos)
+        align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam3,
+                                       last_prev_chrom3, sub_matrix)
         node_confidence_temp[node_index3 * nodes + nodes - 1] = float(align_score)
 
     # reuse same matrix and compute confidence scores for the nodes
@@ -1390,26 +1379,21 @@ if __name__ == "__main__":
     # FIXME - want to add option to run easel in here
     # We require a --lambda or provide a default so there's no need to run easel
 
-    # creates a dict that associates character from score matrix file with position in score matrix
-    # alignment char as key and pos in array as value
-    CharPos: Dict[str, int] = {}
+    # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
+    #input substitution matrix - ex: 'AA' = 8
+    SubMatrix: Dict[str, int] = {}
     line = in_matrix[0]
     line = re.sub(r"^\s+", "", line)
     line = re.sub(r"\s+$", "", line)
     chars = re.split(r"\s+", line)
-    for i in range(len(chars)):
-        CharPos[chars[i]] = i
-    SubMatrixCols: int = len(chars)
 
-    # reads in the score matrix from file and stores in 2D array Score matrix
-    SubMatrix: Dict[int, int] = {}
     count: int = 0
     for line in in_matrix[1:]:
         line = re.sub(r"^\s+", "", line)
         line = re.sub(r"\s+$", "", line)
         subScores = re.split(r"\s+", line)
         for i in range(len(subScores)):
-            SubMatrix[count * SubMatrixCols + i] = int(subScores[i])
+            SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
 
     #maps subfam names to genomic prior counts from input file
@@ -1504,8 +1488,8 @@ if __name__ == "__main__":
 
     (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
-    (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubMatrixCols, SubfamSeqs,
-                                          ChromSeqs, Starts, SubMatrix, CharPos)
+    (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
+                                          ChromSeqs, Starts, SubMatrix)
 
     ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
@@ -1553,8 +1537,8 @@ if __name__ == "__main__":
         NodeConfidence.clear()
 
         # initializes and fills node confidence matrix
-        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, SubMatrixCols, Lamb, NonEmptyColumns, SubfamSeqs,
-                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, CharPos, SubfamCounts)
+        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, Lamb, NonEmptyColumns, SubfamSeqs,
+                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, SubfamCounts)
 
         PathGraph.clear()
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
