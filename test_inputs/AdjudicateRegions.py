@@ -51,7 +51,7 @@ def PrintMatrixHashCollapse(num_col: int, matrix: Dict[Tuple[str, int], Union[fl
             stdout.write("\n")
 
 
-def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str], matrix: Dict) -> None:
+def PrintMatrixHash(num_col: object, num_row: object, subfams: object, matrix: object) -> object:
     """
     just for debugging
     prints values inside matrices (non collapsed)
@@ -1167,31 +1167,33 @@ List[int]:
         sink_subfam_start: int = consensus_matrix_collapse[sink_subfam, columns[changes_position[sink_node_index]]]
         sink_strand: str = strand_matrix_collapse[sink_subfam, columns[changes_position[sink_node_index]]]
 
-        # looks at all the preceding nodes, except the one directly before it (source nodes)
-        for source_node_index in range(sink_node_index - 1):
-            # look at all the subfams in each node
-            for source_subfam in subfams_collapse:
-                source_subfam = str(source_subfam)
-                sourceConf = node_confidence[source_subfam, source_node_index]
+        if sink_subfam != "skip": #don't want to add alternative edges to skip nodes
+            # looks at all the preceding nodes, except the one directly before it (source nodes)
+            for source_node_index in range(sink_node_index - 1):
+                if changes[source_node_index] != "skip":
+                    # look at all the subfams in each node
+                    for source_subfam in subfams_collapse:
+                        source_subfam = str(source_subfam)
+                        sourceConf = node_confidence[source_subfam, source_node_index]
 
-                if (source_subfam, columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
-                    source_subfam_stop = consensus_matrix_collapse[
-                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
-                    source_strand = strand_matrix_collapse[
-                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                        if (source_subfam, columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
+                            source_subfam_stop = consensus_matrix_collapse[
+                                source_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                            source_strand = strand_matrix_collapse[
+                                source_subfam, columns[changes_position[source_node_index + 1] - 1]]
 
-                    # adds in edge if the subfam of the sink is at the source node and if it's
-                    # confidence >= 30%, and if the source is before the sink in the consensus sequence
-                    if sink_strand == '+' and sink_strand == source_strand:
-                        if (sink_subfam == source_subfam) and (sourceConf >= 0.3):
-                            # FIXME- not sure what this overlap should be .. just allowed 50 for now
-                            if source_subfam_stop <= sink_subfam_start + 50:
-                                path_graph[source_node_index * nodes + sink_node_index] = 1
+                            # adds in edge if the subfam of the sink is at the source node and if it's
+                            # confidence >= 30%, and if the source is before the sink in the consensus sequence
+                            if sink_strand == '+' and sink_strand == source_strand:
+                                if (sink_subfam == source_subfam) and (sourceConf >= 0.3):
+                                    # FIXME- not sure what this overlap should be .. just allowed 50 for now
+                                    if source_subfam_stop <= sink_subfam_start + 50:
+                                        path_graph[source_node_index * nodes + sink_node_index] = 1
 
-                    elif sink_strand == '-' and sink_strand == source_strand:
-                        if sink_subfam == source_subfam and sourceConf >= 0.3:
-                            if source_subfam_stop >= sink_subfam_start + 50:
-                                path_graph[source_node_index * nodes + sink_node_index] = 1
+                            elif sink_strand == '-' and sink_strand == source_strand:
+                                if sink_subfam == source_subfam and sourceConf >= 0.3:
+                                    if source_subfam_stop >= sink_subfam_start + 50:
+                                        path_graph[source_node_index * nodes + sink_node_index] = 1
 
     return path_graph
 
@@ -1432,6 +1434,7 @@ if __name__ == "__main__":
     ProbMatrix: Dict[Tuple[str, int], float] = {}
     OriginMatrix: Dict[Tuple[str, int], str] = {}
     ConsensusMatrix: Dict[Tuple[int, int], int] = {}
+    SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
 
     NonEmptyColumns: List[int] = []
 
@@ -1489,7 +1492,6 @@ if __name__ == "__main__":
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
     ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
-    #ChangeProbSkip = (ChangeProbLog / 2) - 11 # want to make this slightly worse than just a single jump so doesn't jump in and out of skip instead of jumping once
     SameProbSkip = ChangeProbLog / 20  # 10% of the jump penalty, staying in skip state for 10nt "counts" as one jump
 
     # precomputes number of rows and cols in matrices
@@ -1512,16 +1514,11 @@ if __name__ == "__main__":
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
 
-    # PrintMatrixHashCollapse(cols, ConsensusMatrixCollapse, SubfamsCollapse)
-
-    SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
     (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
                                                        NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
                                                        SupportMatrixCollapse, StrandMatrixCollapse, ConsensusMatrixCollapse)
 
     IDs = [0] * cols
-
-    # PrintMatrixHashCollapse(cols, StrandMatrixCollapse, SubfamsCollapse)
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix, SameSubfamChangeMatrix)
