@@ -531,6 +531,8 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
     """
     confidence_list: List[float] = []
 
+    #add check here if the input prior counts file exists, then add it to confidence cacls
+
     score_total: int = 0
     for index in range(len(region)):
         score: int = region[index]
@@ -1329,12 +1331,14 @@ if __name__ == "__main__":
     StopAll: int = 0  # Reassigned later
     ID: int = 1111
 
+    infile_prior_counts: str = ""
+
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
     printMatrixPos: bool = False  # Reassigned later
 
     helpMessage: str = f"""
-    usage: {argv[0]} alignFile matrixFile priorCounts\n
+    usage: {argv[0]} alignFile matrixFile\n
     ARGUMENTS
         --GapInit[-25]
         --getExt[-5]
@@ -1342,6 +1346,7 @@ if __name__ == "__main__":
         --lambda [will calc from matrix if not included]
         --segmentsize[30]
         --changeprob[1e-45]
+        --priorCounts PriorCountsFile
     
     OPTIONS
         --help - display help message
@@ -1356,6 +1361,7 @@ if __name__ == "__main__":
         "lambda=",
         "segmentsize=",
         "changeprob=",
+        "priorCounts=",
 
         "help",
         "matrixPos",
@@ -1368,6 +1374,7 @@ if __name__ == "__main__":
     Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
     ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
+    infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
     help = "--help" in opts
     printMatrixPos = "--matrixPos" in opts
 
@@ -1378,14 +1385,15 @@ if __name__ == "__main__":
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
     infile_matrix: str = args[1]
-    infile_prior_counts: str = args[2]
+    # infile_prior_counts: str = args[2]
 
     # Other open was moved down to where we load the alignments file
     with open(infile_matrix) as _infile_matrix:
         in_matrix: List[str] = _infile_matrix.readlines()
 
-    with open(infile_prior_counts) as _infile_prior_counts:
-        in_counts: List[str] = _infile_prior_counts.readlines()
+    if infile_prior_counts:
+        with open(infile_prior_counts) as _infile_prior_counts:
+            in_counts: List[str] = _infile_prior_counts.readlines()
 
     # FIXME - want to add option to run easel in here
     # We require a --lambda or provide a default so there's no need to run easel
@@ -1409,14 +1417,16 @@ if __name__ == "__main__":
 
     #maps subfam names to genomic prior counts from input file
     #used during confidence calculations
-    SubfamCounts: Dict[str, int] = {}
-    for line in in_counts[1:]:
-        line = re.sub(r"\n", "", line)
-        info = re.split(r"\s+", line)
-        SubfamCounts[info[0]] = int(info[1])
 
-    #FIXME - what prior count to give skip state? We calculate confidence for skip state, so need this
-    SubfamCounts["skip"] = 100
+    SubfamCounts: Dict[str, int] = {}
+    if infile_prior_counts:
+        for line in in_counts[1:]:
+            line = re.sub(r"\n", "", line)
+            info = re.split(r"\s+", line)
+            SubfamCounts[info[0]] = int(info[1])
+
+        #FIXME - what prior count to give skip state? We calculate confidence for skip state, so need this
+        SubfamCounts["skip"] = 100
 
     Subfams: List[str] = []
     Scores: List[int] = []
