@@ -877,7 +877,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
 def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subfams: List[str],
             active_cells_collapse: Dict[int, List[str]], prob_matrix: Dict[Tuple[str, int], float],
-            origin_matrix: Dict[Tuple[str, int], str], consensus_matrix: Dict[Tuple[str,int], int], strand_matrix: Dict[Tuple[str, int], str], same_subfam_change_matrix: Dict[Tuple[str, int], int]) -> Tuple[int, List[int], List[str]]:
+            origin_matrix: Dict[Tuple[str, int], str], same_subfam_change_matrix: Dict[Tuple[str, int], int]) -> Tuple[int, List[int], List[str]]:
     """
     using origin matrix, back traces through the 2D array to get the subfam path (most probable
     path through the DP matrix)
@@ -910,7 +910,8 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
     >>> active_col = {0: ['s1', 's2'], 1: ['s1', 's2'], 2: ['s1', 's2'], 3: ['s1', 's2']}
     >>> prob_mat = {('s1', 0): 0, ('s2', 0): 0, ('s1', 1): 0, ('s2', 1): 0, ('s1', 2): 1, ('s2', 2): 1, ('s1', 3): -100, ('s2', 3): -10}
     >>> orig_mat = {('s1', 0): "s1", ('s2', 0): "s2", ('s1', 1): "s1", ('s2', 1): "s1", ('s1', 2): "s1", ('s2', 2): "s1", ('s1', 3): "s1", ('s2', 3): "s2"}
-    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, subs, active_col, prob_mat, orig_mat)
+    >>> same_sub_mat = {}
+    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, subs, active_col, prob_mat, orig_mat, same_sub_mat)
     >>> temp_idd
     3579
     >>> changes_pos
@@ -1523,7 +1524,7 @@ if __name__ == "__main__":
     # PrintMatrixHashCollapse(cols, StrandMatrixCollapse, SubfamsCollapse)
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
-                                             OriginMatrix, ConsensusMatrixCollapse, StrandMatrixCollapse, SameSubfamChangeMatrix)
+                                             OriginMatrix, SameSubfamChangeMatrix)
 
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
@@ -1588,7 +1589,7 @@ if __name__ == "__main__":
         ChangesPosition.clear()
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
-                                                 OriginMatrix, ConsensusMatrixCollapse, StrandMatrixCollapse, SameSubfamChangeMatrix)
+                                                 OriginMatrix, SameSubfamChangeMatrix)
 
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
