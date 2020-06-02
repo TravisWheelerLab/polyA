@@ -813,6 +813,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     """
     prob_matrix: Dict[Tuple[str, int], float] = {}
     origin_matrix: Dict[Tuple[str, int], str] = {}
+    same_subfam_change_matrix: Dict[Tuple[str, int], int] = {}
 
     # fill first col of prob_matrix with 0s
     for k in subfams_collapse:
@@ -831,13 +832,12 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             for prev_row_index in active_cells_collapse[columns[columns_index - 1]]:
                 score: float = support_log + prob_matrix[prev_row_index, columns[columns_index - 1]]
                 prob: float = 0
+                same_subfam_change: int = 0 #if 1 - prob came from same subfam, but got change prob because not contiguous in consensusdat
 
                 if prev_row_index == row_index:  # staying in same row
-
+                    prob = same_prob
                     if prev_row_index == 'skip':  # staying in skip
                         prob = same_prob_skip
-
-                    prob = same_prob
 
                     # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
                     if strand_matrix_collapse[prev_row_index, columns[columns_index - 1]] != strand_matrix_collapse[
@@ -848,10 +848,12 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                             if consensus_matrix_collapse[prev_row_index, columns[columns_index - 1]] > \
                                     consensus_matrix_collapse[row_index, columns[columns_index]] + 50:
                                 prob = change_prob
+                                same_subfam_change = 1
                         if strand_matrix_collapse[prev_row_index, columns[columns_index - 1]] == '-':
                             if consensus_matrix_collapse[prev_row_index, columns[columns_index - 1]] + 50 < \
                                     consensus_matrix_collapse[row_index, columns[columns_index]]:
                                 prob = change_prob
+                                same_subfam_change = 1
 
                 else:  # jumping rows
                     prob = change_prob
@@ -867,12 +869,15 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             prob_matrix[row_index, columns[columns_index]] = max
             origin_matrix[row_index, columns[columns_index]] = max_index
 
-    return (prob_matrix, origin_matrix)
+            if same_subfam_change == 1 and max_index == row_index:
+                same_subfam_change_matrix[row_index, columns[columns_index]] = 1
+
+    return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
 
 def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subfams: List[str],
             active_cells_collapse: Dict[int, List[str]], prob_matrix: Dict[Tuple[str, int], float],
-            origin_matrix: Dict[Tuple[str, int], str]) -> Tuple[int, List[int], List[str]]:
+            origin_matrix: Dict[Tuple[str, int], str], consensus_matrix: Dict[Tuple[str,int], int], strand_matrix: Dict[Tuple[str, int], str], same_subfam_change_matrix: Dict[Tuple[str, int], int]) -> Tuple[int, List[int], List[str]]:
     """
     using origin matrix, back traces through the 2D array to get the subfam path (most probable
     path through the DP matrix)
@@ -942,6 +947,11 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
                 temp_id += 1234
                 changes_position.append(columns_index - 1)
                 changes.append(prev_row_index)
+            else:
+                if (prev_row_index, columns[columns_index - 1]) in same_subfam_change_matrix:
+                    temp_id += 1234
+                    changes_position.append(columns_index - 1)
+                    changes.append(prev_row_index)
 
             prev_row_index = origin_matrix[prev_row_index, columns[columns_index - 1]]
 
@@ -971,8 +981,6 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
         i = i + 1
 
 
-# FIXME - if goes into skip state for just one position, this will have an error .. also when
-# stitching want to ignore skip states - can't remember if I already fixed this, need to test?
 def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, columns: List[int],
                        subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
                        sub_matrix: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
@@ -1246,7 +1254,7 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
     # when removing from the end, have to update num_cols because don't want the end of the matrix anymore
     col_index: int = nodes - 1
     while remove_nodes[col_index]:
-        updated_num_col = columns[changes_position[col_index] - 1]  # FIXME - do I index num_cols here or not?
+        updated_num_col = columns[changes_position[col_index] - 1]
         col_index -= 1
 
     # removing inserted elements from NonEmptyColumns so they can be ignored
@@ -1313,7 +1321,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: int = 20  # FIXME - still need to decide what this number is, skip state doesn't work in seqs_fullAlu.align unless SkipAlignScore = 120
+    SkipAlignScore: int = 20  # FIXME - still need to decide what this number is, skip state doesn't work for all examples unless atleast 20
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
     ID: int = 1111
@@ -1479,8 +1487,9 @@ if __name__ == "__main__":
         exit()
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
-    ChangeProbSkip = ChangeProbLog / 2
-    SameProbSkip = ChangeProbLog / 10  # 10% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+    ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
+    #ChangeProbSkip = (ChangeProbLog / 2) - 11 # want to make this slightly worse than just a single jump so doesn't jump in and out of skip instead of jumping once
+    SameProbSkip = ChangeProbLog / 20  # 10% of the jump penalty, staying in skip state for 10nt "counts" as one jump
 
     # precomputes number of rows and cols in matrices
     rows: int = len(Subfams)
@@ -1502,14 +1511,19 @@ if __name__ == "__main__":
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
 
-    (ProbMatrix, OriginMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
+    # PrintMatrixHashCollapse(cols, ConsensusMatrixCollapse, SubfamsCollapse)
+
+    SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
+    (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
                                                        NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
                                                        SupportMatrixCollapse, StrandMatrixCollapse, ConsensusMatrixCollapse)
 
     IDs = [0] * cols
 
+    # PrintMatrixHashCollapse(cols, StrandMatrixCollapse, SubfamsCollapse)
+
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
-                                             OriginMatrix)
+                                             OriginMatrix, ConsensusMatrixCollapse, StrandMatrixCollapse, SameSubfamChangeMatrix)
 
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
@@ -1565,7 +1579,7 @@ if __name__ == "__main__":
         # using prob matrix and origin matrix, just skip the cols I'm not interested in and annotate
         # without the removed node - ignores removed nodes because they are not in NonEmptyColumns
         # using old prob matrix and origin matrix
-        (ProbMatrix, OriginMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
+        (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
                                                            NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
                                                            SupportMatrixCollapse, StrandMatrixCollapse,
                                                            ConsensusMatrixCollapse)
@@ -1574,7 +1588,7 @@ if __name__ == "__main__":
         ChangesPosition.clear()
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
-                                                 OriginMatrix)
+                                                 OriginMatrix, ConsensusMatrixCollapse, StrandMatrixCollapse, SameSubfamChangeMatrix)
 
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
