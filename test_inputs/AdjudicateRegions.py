@@ -531,22 +531,26 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
     """
     confidence_list: List[float] = []
 
-    #add check here if the input prior counts file exists, then add it to confidence cacls
-
     score_total: int = 0
     for index in range(len(region)):
         score: int = region[index]
         if score > 0:
             converted_score = score * lambdaa
-            score_total += 2 ** converted_score
+            if infile_prior_counts:
+                score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
+            else:
+                score_total += (2 ** converted_score)
 
-    #FIXME - how do we add prior counts to the confidence calculation?
-    #FIXME - scale by (count/total) or (count/total in region)?
     for index in range(len(region)):
         score: int = region[index]
+        # print(subfam_counts[subfams[index]])
         if score > 0:
             converted_score = score * lambdaa
-            confidence = ((2 ** converted_score) / score_total)
+            if infile_prior_counts:
+                confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
+            else:
+                confidence = (2 ** converted_score) / score_total
+
             confidence_list.append(confidence)
         else:
             confidence_list.append(0.0)
@@ -657,6 +661,7 @@ def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_m
                         summ = summ + confidence_matrix[row_index, col_index + num]
                         num_segments += 1
                     num += 1
+
                 if num_segments > 0:
                     support_matrix[row_index, col_index] = summ / num_segments
 
@@ -1326,7 +1331,8 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: int = 20  # FIXME - still need to decide what this number is, skip state doesn't work for all examples unless atleast 20
+    # FIXME - I think have a constant SkipAlignScore and get rid of command line option
+    SkipAlignScore: int = 1  # FIXME - need 1 so confidence > 0 - I think this works?
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
     ID: int = 1111
@@ -1396,7 +1402,7 @@ if __name__ == "__main__":
             in_counts: List[str] = _infile_prior_counts.readlines()
 
     # FIXME - want to add option to run easel in here
-    # We require a --lambda or provide a default so there's no need to run easel
+    # ask george to add easl to the virtual environment so can add this in here
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     #input substitution matrix - ex: 'AA' = 8
@@ -1415,18 +1421,22 @@ if __name__ == "__main__":
             SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
 
-    #maps subfam names to genomic prior counts from input file
+    #maps subfam names to genomic prior_count/total_in_genome from input file
     #used during confidence calculations
-
-    SubfamCounts: Dict[str, int] = {}
+    SubfamCounts: Dict[str, float] = {}
+    PriorTotal: float = 0
     if infile_prior_counts:
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
             info = re.split(r"\s+", line)
             SubfamCounts[info[0]] = int(info[1])
+            PriorTotal += float(info[1])
+
+        for key in SubfamCounts:
+            SubfamCounts[key] = SubfamCounts[key] / PriorTotal
 
         #FIXME - what prior count to give skip state? We calculate confidence for skip state, so need this
-        SubfamCounts["skip"] = 100
+        SubfamCounts["skip"] = 100 / PriorTotal
 
     Subfams: List[str] = []
     Scores: List[int] = []
@@ -1527,6 +1537,7 @@ if __name__ == "__main__":
     (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog, ChangeProbSkip,
                                                        NonEmptyColumns, SubfamsCollapse, ActiveCellsCollapse,
                                                        SupportMatrixCollapse, StrandMatrixCollapse, ConsensusMatrixCollapse)
+
 
     IDs = [0] * cols
 
