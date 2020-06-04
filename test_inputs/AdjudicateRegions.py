@@ -1331,8 +1331,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    # FIXME - I think have a constant SkipAlignScore and get rid of command line option
-    SkipAlignScore: int = 1  # FIXME - need 1 so confidence > 0 - I think this works?
+    SkipAlignScore: int = (1/Lamb)/10  # can't be 0 because then conf will be 0 and will have to take log(0) in DP calculations
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
     ID: int = 1111
@@ -1344,11 +1343,10 @@ if __name__ == "__main__":
     printMatrixPos: bool = False  # Reassigned later
 
     helpMessage: str = f"""
-    usage: {argv[0]} alignFile matrixFile\n
+    usage: {argv[0]} alignFile subMatrixFile\n
     ARGUMENTS
         --GapInit[-25]
         --getExt[-5]
-        --skipScore[1]
         --lambda [will calc from matrix if not included]
         --segmentsize[30]
         --changeprob[1e-45]
@@ -1376,7 +1374,6 @@ if __name__ == "__main__":
 
     GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
     GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
-    SkipAlignScore = float(opts["--skipScore"]) if "--skipScore" in opts else SkipAlignScore
     Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
     ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
