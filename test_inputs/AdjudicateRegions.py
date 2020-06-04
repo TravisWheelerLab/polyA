@@ -51,7 +51,7 @@ def PrintMatrixHashCollapse(num_col: int, matrix: Dict[Tuple[str, int], Union[fl
             stdout.write("\n")
 
 
-def PrintMatrixHash(num_col: object, num_row: object, subfams: object, matrix: object) -> object:
+def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str], matrix: Dict[Tuple[int, int], Union[float, int, str]]) -> None:
     """
     just for debugging
     prints values inside matrices (non collapsed)
@@ -226,7 +226,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
 
 
 def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: int, subfams: List[str], chroms: List[str], starts: List[int],
-                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], int]]:
+                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
     for every segment of size chunksize for all seqs in alignments
@@ -271,7 +271,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     num_cols: int = 0
     col_index: int = 0
 
-    align_matrix: Dict[Tuple[int, int], int] = {}
+    align_matrix: Dict[Tuple[int, int], float] = {}
 
     # chunks can't start on gaps and gaps don't count when getting to the 30 bps
 
@@ -316,8 +316,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
             # calculates score for first chunk and puts score in align_matrix
             align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
-            align_matrix[i, col_index - k] = int(
-                align_score * chunk_size / (chunk_size - k))  # already to scale so don't need to * 31 and / 31
+            align_matrix[i, col_index - k] = float(align_score * chunk_size / (chunk_size - k))  # already to scale so don't need to * 31 and / 31
 
         col_index += 1
 
@@ -384,9 +383,9 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                             num_nucls += 1
 
                     if align_score <= 0:
-                        align_matrix[i, col_index] = 1
+                        align_matrix[i, col_index] = 1.0
                     else:
-                        align_matrix[i, col_index] = int(align_score / num_nucls * chunk_size)
+                        align_matrix[i, col_index] = float(align_score / num_nucls * chunk_size)
 
                     if align_score == -inf:
                         del align_matrix[i, col_index]
@@ -477,7 +476,7 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
     return consensus_matrix
 
 
-def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], int]) -> List[int]:
+def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> List[int]:
     """
     in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
     so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
@@ -509,7 +508,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     return columns
 
 
-def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: Dict[str, int], subfams: List[str]) -> List[float]:
+def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: Dict[str, float], subfams: List[str]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -557,7 +556,7 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: 
 
     return confidence_list
 
-def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, int], subfamss: List[str], align_matrix: Dict[Tuple[int, int], int]) -> \
+def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float], subfamss: List[str], align_matrix: Dict[Tuple[int, int], float]) -> \
 Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
@@ -776,7 +775,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                           support_matrix_collapse: Dict[Tuple[str, int], float],
                           strand_matrix_collapse: Dict[Tuple[str, int], str],
                           consensus_matrix_collapse: Dict[Tuple[str, int], int]) -> Tuple[
-    Dict[Tuple[str, int], float], Dict[Tuple[str, int], str]]:
+    Dict[Tuple[str, int], float], Dict[Tuple[str, int], str], Dict[Tuple[str, int], int]]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
     the origin matrix for convenience.
@@ -832,6 +831,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             max: float = -inf
             max_index: str = ''
             support_log: float = log(support_matrix_collapse[row_index, columns[columns_index]])
+            same_subfam_change: int = 0
 
             # row = prev_row_index
             # loop through all the rows in the previous column that have a value - active_cells_collapse
@@ -839,7 +839,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             for prev_row_index in active_cells_collapse[columns[columns_index - 1]]:
                 score: float = support_log + prob_matrix[prev_row_index, columns[columns_index - 1]]
                 prob: float = 0
-                same_subfam_change: int = 0 #if 1 - prob came from same subfam, but got change prob because not contiguous in consensusdat
+                same_subfam_change = 0 #if 1 - prob came from same subfam, but got change prob because not contiguous in consensus
 
                 if prev_row_index == row_index:  # staying in same row
                     prob = same_prob
@@ -991,7 +991,7 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
 
 def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, infilee: str, columns: List[int],
                        subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
-                       sub_matrix: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
+                       sub_matrix: Dict[str, int], subfam_countss: Dict[str, float]) -> Dict[Tuple[str, int], float]:
     """
     finds completing annoations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1348,7 +1348,7 @@ if __name__ == "__main__":
     ARGUMENTS
         --GapInit[-25]
         --getExt[-5]
-        --skipScore[-20]
+        --skipScore[1]
         --lambda [will calc from matrix if not included]
         --segmentsize[30]
         --changeprob[1e-45]
@@ -1376,7 +1376,7 @@ if __name__ == "__main__":
 
     GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
     GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
-    SkipAlignScore = int(opts["--skipScore"]) if "--skipScore" in opts else SkipAlignScore
+    SkipAlignScore = float(opts["--skipScore"]) if "--skipScore" in opts else SkipAlignScore
     Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
     ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
@@ -1448,7 +1448,7 @@ if __name__ == "__main__":
     SubfamSeqs: List[str] = []
     ChromSeqs: List[str] = []
 
-    AlignMatrix: Dict[Tuple[int, int], int] = {}
+    AlignMatrix: Dict[Tuple[int, int], float] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
     ProbMatrix: Dict[Tuple[str, int], float] = {}
