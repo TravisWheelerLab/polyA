@@ -509,7 +509,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     return columns
 
 
-def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int], subfams: List[str]) -> List[float]:
+def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: Dict[str, int], subfams: List[str]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -524,9 +524,9 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
     confidence_list: list of confidence values for competing annotations, each input alignment
     score will have one output confidence score
 
-    >>> counts = {"s1": 3, "s2": 3, "s3": 3}
+    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> ConfidenceCM(0.5, [0, 1, 1], counts, subs)
+    >>> ConfidenceCM(0.5, "infile", [0, 1, 1], counts, subs)
     [0.0, 0.5, 0.5]
     """
     confidence_list: List[float] = []
@@ -536,7 +536,7 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
         score: int = region[index]
         if score > 0:
             converted_score = score * lambdaa
-            if infile_prior_counts:
+            if infile:
                 score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
             else:
                 score_total += (2 ** converted_score)
@@ -546,7 +546,7 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
         # print(subfam_counts[subfams[index]])
         if score > 0:
             converted_score = score * lambdaa
-            if infile_prior_counts:
+            if infile:
                 confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
             else:
                 confidence = (2 ** converted_score) / score_total
@@ -557,7 +557,7 @@ def ConfidenceCM(lambdaa: float, region: List[int], subfam_counts: Dict[str, int
 
     return confidence_list
 
-def FillConfidenceMatrix(row_num: int, lamb: float, columns: List[int], subfam_countss: Dict[str, int], subfamss: List[str], align_matrix: Dict[Tuple[int, int], int]) -> \
+def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, int], subfamss: List[str], align_matrix: Dict[Tuple[int, int], int]) -> \
 Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
@@ -579,9 +579,9 @@ Dict[Tuple[int, int], float]:
 
     >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
     >>> non_cols = [0, 1, 2]
-    >>> counts = {"s1": 3, "s2": 3}
+    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = FillConfidenceMatrix(2, 0.1227, non_cols, counts, subs, align_mat)
+    >>> conf_mat = FillConfidenceMatrix(2, 0.1227, "infile", non_cols, counts, subs, align_mat)
     >>> f"{conf_mat[1,0]:.4f}"
     '1.0000'
     >>> f"{conf_mat[0,1]:.4f}"
@@ -608,7 +608,7 @@ Dict[Tuple[int, int], float]:
             else:
                 temp_region.append(0)
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, temp_region,subfam_countss, subfamss)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region,subfam_countss, subfamss)
 
         for row_index2 in range(row_num):
             if temp_confidence[row_index2] != 0.0:
@@ -989,7 +989,7 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
         i = i + 1
 
 
-def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, columns: List[int],
+def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, infilee: str, columns: List[int],
                        subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
                        sub_matrix: Dict[str, int], subfam_countss: Dict[str, int]) -> Dict[Tuple[str, int], float]:
     """
@@ -1014,8 +1014,8 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, col
     >>> chrs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
     >>> change_pos = [0, 3, 7]
     >>> names = ["skip", "n1", "n2"]
-    >>> counts = {"skip": 3, "n1": 3, "n2": 3}
-    >>> FillNodeConfidence(3, -5, -25, 0.1227, non_cols, subs, chrs, change_pos, names, sub_mat, counts)
+    >>> counts = {"n1": .33, "n2": .33, "n3": .33}
+    >>> FillNodeConfidence(3, -5, -25, 0.1227, "infile", non_cols, subs, chrs, change_pos, names, sub_mat, counts)
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
     """
     node_confidence_temp: List[float] = [0 for _ in range(len(subfams) * nodes)]
@@ -1065,7 +1065,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, col
         for row_index in range(len(subfams)):
             temp.append(int(node_confidence_temp[row_index * nodes + node_index4]))
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, temp, subfam_countss, subfams)
+        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
 
         for row_index2 in range(len(subfams)):
             node_confidence_temp[row_index2 * nodes + node_index4] = confidence_temp[row_index2]
@@ -1527,7 +1527,7 @@ if __name__ == "__main__":
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
 
-    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, NonEmptyColumns, SubfamCounts, Subfams, AlignMatrix)
+    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, NonEmptyColumns, ConfidenceMatrix)
 
@@ -1570,7 +1570,7 @@ if __name__ == "__main__":
         NodeConfidence.clear()
 
         # initializes and fills node confidence matrix
-        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, Lamb, NonEmptyColumns, SubfamSeqs,
+        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, Lamb, infile_prior_counts, NonEmptyColumns, SubfamSeqs,
                                             ChromSeqs, ChangesPosition, Subfams, SubMatrix, SubfamCounts)
 
         PathGraph.clear()
