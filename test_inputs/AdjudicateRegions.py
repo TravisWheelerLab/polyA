@@ -645,21 +645,21 @@ def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_m
     support_matrix: Dict[Tuple[int, int], float] = {}
 
     for row_index in range(row_num):
-        tempcol: int = -1
+
         for col in range(len(columns)):
-            if col >= len(columns):
-                break
             col_index: int = columns[col]
 
             if (row_index, col_index) in confidence_matrix:
-                num: int = 0
-                summ: float = 0.0
+
+                summ: int = 0
                 num_segments: int = 0
-                while num < chunk_size:
-                    if (row_index, col_index + num) in confidence_matrix:
-                        summ = summ + confidence_matrix[row_index, col_index + num]
+                sum_index: int = col_index - int((chunk_size-1)/2)
+
+                while sum_index <= col_index + int((chunk_size - 1) / 2):
+                    if (row_index, sum_index) in confidence_matrix:
                         num_segments += 1
-                    num += 1
+                        summ += confidence_matrix[row_index, sum_index]
+                    sum_index += 1
 
                 if num_segments > 0:
                     support_matrix[row_index, col_index] = summ / num_segments
@@ -766,6 +766,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     # update var row_nums after collapse
     row_num_update: int = len(subfams_collapse)
+
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse
 
 
@@ -878,6 +879,9 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
             if same_subfam_change == 1 and max_index == row_index:
                 same_subfam_change_matrix[row_index, columns[columns_index]] = 1
+
+    # PrintMatrixHashCollapse(cols, origin_matrix, SubfamsCollapse)
+    # exit()
 
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
@@ -1433,7 +1437,8 @@ if __name__ == "__main__":
             SubfamCounts[key] = SubfamCounts[key] / PriorTotal
 
         #FIXME - what prior count to give skip state? We calculate confidence for skip state, so need this
-        SubfamCounts["skip"] = 100 / PriorTotal
+        #FIXME - Travis sent email, but need some clarification
+        SubfamCounts["skip"] = .5 / PriorTotal
 
     Subfams: List[str] = []
     Scores: List[int] = []
