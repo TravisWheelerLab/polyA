@@ -640,7 +640,7 @@ def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_m
     >>> non_cols = [0,1,2]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3}
     >>> FillSupportMatrix(2, 31, non_cols, conf_mat)
-    {(0, 0): 0.6333333333333333, (0, 1): 0.5, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.3}
+    {(0, 0): 0.6333333333333333, (0, 1): 0.6333333333333333, (0, 2): 0.6333333333333333, (1, 0): 0.2, (1, 1): 0.2}
     """
     support_matrix: Dict[Tuple[int, int], float] = {}
 
