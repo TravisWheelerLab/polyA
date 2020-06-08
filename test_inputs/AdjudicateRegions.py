@@ -557,7 +557,7 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> ConfidenceCM(0.5, "infile", [0, 1, 1], counts, subs)
+    >>> ConfidenceCM(0.5, "infile", [-1, 1, 1], counts, subs)
     [0.0, 0.5, 0.5]
     """
     confidence_list: List[float] = []
@@ -613,8 +613,10 @@ Dict[Tuple[int, int], float]:
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
     >>> conf_mat = FillConfidenceMatrix(2, 0.1227, "infile", non_cols, counts, subs, align_mat)
+    >>> f"{conf_mat[0,0]:.4f}"
+    '0.0002'
     >>> f"{conf_mat[1,0]:.4f}"
-    '1.0000'
+    '0.9998'
     >>> f"{conf_mat[0,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
@@ -1096,14 +1098,15 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
     >>> chrs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
     >>> change_pos = [0, 3, 7]
     >>> names = ["skip", "n1", "n2"]
-    >>> counts = {"n1": .33, "n2": .33, "n3": .33}
-    >>> FillNodeConfidence(3, -5, -25, 0.1227, "infile", non_cols, subs, chrs, change_pos, names, sub_mat, counts)
+    >>> counts = {"skip": .33, "n1": .33, "n2": .33}
+    >>> node_conf = FillNodeConfidence(3, -5, -25, 0.1227, "infile", non_cols, subs, chrs, change_pos, names, sub_mat, counts)
+    >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
     """
 
     # time1: float = time.time()
 
-    node_confidence_temp: List[float] = [0 for _ in range(len(subfams) * nodes)]
+    node_confidence_temp: List[float] = [-1 for _ in range(len(subfams) * nodes)]
 
     node_confidence: Dict[Tuple[str, int], float] = {}
 
