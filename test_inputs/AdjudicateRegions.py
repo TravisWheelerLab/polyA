@@ -940,7 +940,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
 
-def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subfams: List[str],
+def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str], changes_position_orig: List[int], columns_orig: List[int], subfams: List[str],
             active_cells_collapse: Dict[int, List[str]], prob_matrix: Dict[Tuple[str, int], float],
             origin_matrix: Dict[Tuple[str, int], str], same_subfam_change_matrix: Dict[Tuple[str, int], int]) -> Tuple[int, List[int], List[str]]:
     """
@@ -976,7 +976,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
     >>> prob_mat = {('s1', 0): 0, ('s2', 0): 0, ('s1', 1): 0, ('s2', 1): 0, ('s1', 2): 1, ('s2', 2): 1, ('s1', 3): -100, ('s2', 3): -10}
     >>> orig_mat = {('s1', 0): "s1", ('s2', 0): "s2", ('s1', 1): "s1", ('s2', 1): "s1", ('s1', 2): "s1", ('s2', 2): "s1", ('s1', 3): "s1", ('s2', 3): "s2"}
     >>> same_sub_mat = {}
-    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, subs, active_col, prob_mat, orig_mat, same_sub_mat)
+    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, [], [], [], subs, active_col, prob_mat, orig_mat, same_sub_mat)
     >>> temp_idd
     3579
     >>> changes_pos
@@ -1033,6 +1033,12 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], subf
 
     # changes ID for next round of stitching, so when starts stitching will have unique ID
     temp_id += 1234
+
+    #FIXME - uses globals, fix this and pass them in
+    for orig_index in range(len(changes_position_orig)-1):
+        for changes_index in range(len(changes_position)-1):
+            if columns[changes_position[changes_index]] == columns_orig[changes_position_orig[orig_index]]:
+                changes_orig[orig_index] = changes[changes_index]
 
     # print("GetPath", time.time() - time1)
     # print()
@@ -1591,7 +1597,7 @@ if __name__ == "__main__":
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
     ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
-    SameProbSkip = ChangeProbLog / 20  # 10% of the jump penalty, staying in skip state for 10nt "counts" as one jump
+    SameProbSkip = ChangeProbLog / 20  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows and cols in matrices
     rows: int = len(Subfams)
@@ -1605,6 +1611,9 @@ if __name__ == "__main__":
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
+
+    # PrintMatrixHash(cols, rows, Subfams, AlignMatrix)
+    # exit()
 
     ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
@@ -1623,7 +1632,7 @@ if __name__ == "__main__":
 
     IDs = [0] * cols
 
-    (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
+    (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix, SameSubfamChangeMatrix)
 
     # keep the original annotation for reporting results
@@ -1688,7 +1697,7 @@ if __name__ == "__main__":
         Changes.clear()
         ChangesPosition.clear()
 
-        (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, Subfams, ActiveCellsCollapse, ProbMatrix,
+        (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
     if printMatrixPos:
