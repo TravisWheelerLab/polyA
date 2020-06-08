@@ -1006,11 +1006,17 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
 
     changes_position.append(len(columns))
 
-    # already added the last col, but this adds the one before $col so still start at last col
+    # already added the last col, but this adds the one before cols so still start at last col
     for columns_index in range(len(columns) - 1, 0, -1):
         if (prev_row_index, columns[columns_index - 1]) in origin_matrix:
 
             ids[columns[columns_index - 1]] = temp_id
+
+            #updates the original node labels if they change when being stitched
+            for i in range(len(changes_position_orig)-1):
+                if columns_orig[changes_position_orig[i]] == columns[columns_index-1]:
+                    changes_orig[i] = origin_matrix[prev_row_index, columns[columns_index]]
+
 
             if prev_row_index != origin_matrix[prev_row_index, columns[columns_index - 1]]:
                 temp_id += 1234
@@ -1034,11 +1040,10 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     # changes ID for next round of stitching, so when starts stitching will have unique ID
     temp_id += 1234
 
-    #FIXME - uses globals, fix this and pass them in
-    for orig_index in range(len(changes_position_orig)-1):
-        for changes_index in range(len(changes_position)-1):
-            if columns[changes_position[changes_index]] == columns_orig[changes_position_orig[orig_index]]:
-                changes_orig[orig_index] = changes[changes_index]
+    # for orig_index in range(len(changes_position_orig)-1):
+    #     for changes_index in range(len(changes_position)-1):
+    #         if columns[changes_position[changes_index]] == columns_orig[changes_position_orig[orig_index]]:
+    #             changes_orig[orig_index] = changes[changes_index]
 
     # print("GetPath", time.time() - time1)
     # print()
@@ -1635,6 +1640,9 @@ if __name__ == "__main__":
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix, SameSubfamChangeMatrix)
 
+    # PrintChanges(NonEmptyColumns, Changes, ChangesPosition)
+    # print()
+
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
     ChangesPositionOrig = ChangesPosition.copy()
@@ -1699,6 +1707,9 @@ if __name__ == "__main__":
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                                  OriginMatrix, SameSubfamChangeMatrix)
+
+        # PrintChanges(NonEmptyColumns, Changes, ChangesPosition)
+        # print()
 
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
