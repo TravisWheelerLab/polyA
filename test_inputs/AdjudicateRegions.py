@@ -239,7 +239,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
     return chunk_score
 
 
-def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: int, subfams: List[str], chroms: List[str], starts: List[int],
+def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: float, subfams: List[str], chroms: List[str], starts: List[int],
                     sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
@@ -540,7 +540,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     return columns
 
 
-def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: Dict[str, float], subfams: List[str]) -> List[float]:
+def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float], subfams: List[str]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -564,8 +564,8 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: 
 
     score_total: int = 0
     for index in range(len(region)):
-        score: int = region[index]
-        if score > 0:
+        score: float = region[index]
+        if score > -1:
             converted_score = score * lambdaa
             if infile:
                 score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
@@ -573,9 +573,9 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[int], subfam_counts: 
                 score_total += (2 ** converted_score)
 
     for index in range(len(region)):
-        score: int = region[index]
+        score: float = region[index]
         # print(subfam_counts[subfams[index]])
-        if score > 0:
+        if score > -1:
             converted_score = score * lambdaa
             if infile:
                 confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
@@ -634,13 +634,13 @@ Dict[Tuple[int, int], float]:
             break
 
         col_index: int = columns[i]
-        temp_region: List[int] = []
+        temp_region: List[float] = []
 
         for row_index in range(row_num):
             if (row_index, col_index) in align_matrix:
                 temp_region.append(align_matrix[row_index, col_index])
             else:
-                temp_region.append(0)
+                temp_region.append(-1.0)
 
         temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region,subfam_countss, subfamss)
 
@@ -1408,7 +1408,8 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: int = (1/Lamb)/10  # can't be 0 because then conf will be 0 and will have to take log(0) in DP calculations
+    SkipAlignScore: float = 0.0
+
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
     ID: int = 1111
