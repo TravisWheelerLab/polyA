@@ -286,7 +286,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     # time1: float = time.time()
 
     num_cols: int = 0
-    col_index: int = 0
 
     align_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -306,15 +305,12 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         seq_index: int = starts[i] - edge_start
         col_index = seq_index + int((chunk_size - 1) / 2)  # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
         align_score: int = 0
-        temp_index: int = seq_index
-        temp_count: int = 0
         offset: int = 0
         prev_offset: int = 0
 
         for k in range(int((chunk_size - 1) / 2), -1, -1):
 
             offset: int = chunk_size - k
-            align_score = 0
 
             temp_index = seq_index
             temp_count = 0
@@ -520,23 +516,23 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     [0, 2]
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     columns: List[int] = []
-    j: int = 0
     for j in range(num_cols):
         empty = 1
-        for i in range(1, num_rows):
+        i: int = 1
+        while i < num_rows:
             if (i, j) in align_matrix:
                 empty = 0
                 i = num_rows
+            i += 1
 
         if not empty:
             columns.append(j)
 
     # print("FillColumns", time.time() - time1)
     # print()
-
     return columns
 
 
