@@ -1282,7 +1282,8 @@ List[int]:
                         elif sink_strand == '-' and sink_strand == source_strand:
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
-
+    # PrintPathGraph(nodes,changes, path_graph)
+    # exit()
     return path_graph
 
 
@@ -1514,6 +1515,7 @@ if __name__ == "__main__":
     #used during confidence calculations
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
+    prob_skip = 0.4 # about 60% pf genome is TE derived #FIXME - do we want to hard code this in?
     if infile_prior_counts:
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
@@ -1522,11 +1524,9 @@ if __name__ == "__main__":
             PriorTotal += float(info[1])
 
         for key in SubfamCounts:
-            SubfamCounts[key] = SubfamCounts[key] / PriorTotal
+            SubfamCounts[key] = (1 - prob_skip) * SubfamCounts[key] / PriorTotal
 
-        #FIXME - what prior count to give skip state? We calculate confidence for skip state, so need this
-        #FIXME - Travis sent email, but need some clarification
-        SubfamCounts["skip"] = .5 / PriorTotal
+        SubfamCounts["skip"] = prob_skip
 
     Subfams: List[str] = []
     Scores: List[int] = []
@@ -1617,9 +1617,6 @@ if __name__ == "__main__":
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    # PrintMatrixHash(cols, rows, Subfams, AlignMatrix)
-    # exit()
-
     ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
@@ -1639,9 +1636,6 @@ if __name__ == "__main__":
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix, SameSubfamChangeMatrix)
-
-    # PrintChanges(NonEmptyColumns, Changes, ChangesPosition)
-    # print()
 
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
@@ -1707,9 +1701,6 @@ if __name__ == "__main__":
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                                  OriginMatrix, SameSubfamChangeMatrix)
-
-        # PrintChanges(NonEmptyColumns, Changes, ChangesPosition)
-        # print()
 
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
