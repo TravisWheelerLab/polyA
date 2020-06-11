@@ -628,8 +628,8 @@ Dict[Tuple[int, int], float]:
     confidence_matrix: Dict[Tuple[int, int], float] = {}
 
     for i in range(len(columns)):
-        if i >= len(columns):
-            break
+        # if i >= len(columns):
+        #     break
 
         col_index: int = columns[i]
         temp_region: List[float] = []
@@ -644,11 +644,11 @@ Dict[Tuple[int, int], float]:
 
         for row_index2 in range(row_num):
             if temp_confidence[row_index2] != 0.0:
+            # if temp_confidence[row_index2]:
                 confidence_matrix[row_index2, col_index] = temp_confidence[row_index2]
 
     # print("FillConfidenceMatrix", time.time() - time1)
     # print()
-
     return confidence_matrix
 
 
@@ -679,7 +679,7 @@ def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_m
     {(0, 0): 0.6333333333333333, (0, 1): 0.6333333333333333, (0, 2): 0.6333333333333333, (1, 0): 0.2, (1, 1): 0.2}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -699,7 +699,6 @@ def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_m
                         num_segments += 1
                         summ += confidence_matrix[row_index, sum_index]
                     sum_index += 1
-
                 if num_segments > 0:
                     support_matrix[row_index, col_index] = summ / num_segments
 
@@ -765,7 +764,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     consensus_matrix_collapse: Dict[Tuple[str, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[str, int], str] = {}
@@ -775,7 +774,6 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     for col in range(len(columns)):
         col_index: int = columns[col]
-        dup_max_consensus: Dict[str, float] = {}
         dup_max_support: Dict[str, float] = {}
 
         active_cols: List[str] = []
@@ -783,25 +781,18 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
         # find max support score for collapsed row_nums and use that row for collapsed matrices
         for row_index in range(row_num):
-            if (row_index, col_index) in support_matrix and (row_index, col_index) in consensus_matrix:
-                if (subfams[row_index]) in dup_max_consensus:
-                    if support_matrix[row_index, col_index] > dup_max_consensus[subfams[row_index]]:
-                        dup_max_consensus[subfams[row_index]] = support_matrix[row_index, col_index]
-                        consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[
-                            row_index, col_index]
-                        strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
-                else:
-                    dup_max_consensus[subfams[row_index]] = support_matrix[row_index, col_index]
-                    consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[row_index, col_index]
-                    strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
-
             if (row_index, col_index) in support_matrix:
                 if (subfams[row_index]) in dup_max_support:
                     if support_matrix[row_index, col_index] > dup_max_support[subfams[row_index]]:
                         dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
+                        consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[
+                            row_index, col_index]
+                        strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
                         support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
                 else:
                     dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
+                    consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[row_index, col_index]
+                    strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
                     support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
                     active_cells_collapse[col_index].append(subfams[row_index])
 
