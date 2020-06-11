@@ -764,7 +764,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     """
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     consensus_matrix_collapse: Dict[Tuple[str, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[str, int], str] = {}
@@ -857,7 +857,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     TODO: larger test needed for this function
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     prob_matrix: Dict[Tuple[str, int], float] = {}
     origin_matrix: Dict[Tuple[str, int], str] = {}
@@ -868,19 +868,21 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
         prob_matrix[k, columns[0]] = 0
 
     for columns_index in range(1, len(columns)):
+        curr_column: int = columns[columns_index]
+        prev_column: int = columns[columns_index - 1]
 
-        for row_index in active_cells_collapse[columns[columns_index]]:
+        for row_index in active_cells_collapse[curr_column]:
             max: float = -inf
             max_index: str = ''
-            support_log: float = log(support_matrix_collapse[row_index, columns[columns_index]])
+            support_log: float = log(support_matrix_collapse[row_index, curr_column])
             same_subfam_change: int = 0  #if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()
 
             # row = prev_row_index
             # loop through all the rows in the previous column that have a value - active_cells_collapse
             # specifies which rows have a value for each column
-            for prev_row_index in active_cells_collapse[columns[columns_index - 1]]:
-                score: float = support_log + prob_matrix[prev_row_index, columns[columns_index - 1]]
-                prob: float = 0
+            for prev_row_index in active_cells_collapse[prev_column]:
+                score: float = support_log + prob_matrix[prev_row_index, prev_column]
+                prob: float = 0.0
 
                 if prev_row_index == row_index:  # staying in same row
                     prob = same_prob
@@ -888,18 +890,19 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                         prob = same_prob_skip
 
                     # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
-                    if strand_matrix_collapse[prev_row_index, columns[columns_index - 1]] != strand_matrix_collapse[
+                    if strand_matrix_collapse[prev_row_index, prev_column] != strand_matrix_collapse[
                         row_index, columns[columns_index]]:
+                        #if not on same strand give change prob
                         prob = change_prob
                     else:  # if on same strand
-                        if strand_matrix_collapse[prev_row_index, columns[columns_index - 1]] == '+':
-                            if consensus_matrix_collapse[prev_row_index, columns[columns_index - 1]] > \
-                                    consensus_matrix_collapse[row_index, columns[columns_index]] + 50:
+                        if strand_matrix_collapse[prev_row_index, prev_column] == '+':
+                            if consensus_matrix_collapse[prev_row_index, prev_column] > \
+                                    consensus_matrix_collapse[row_index, curr_column] + 50:
                                 prob = change_prob
                                 same_subfam_change = 1
-                        if strand_matrix_collapse[prev_row_index, columns[columns_index - 1]] == '-':
-                            if consensus_matrix_collapse[prev_row_index, columns[columns_index - 1]] + 50 < \
-                                    consensus_matrix_collapse[row_index, columns[columns_index]]:
+                        if strand_matrix_collapse[prev_row_index, prev_column] == '-':
+                            if consensus_matrix_collapse[prev_row_index, prev_column] + 50 < \
+                                    consensus_matrix_collapse[row_index, curr_column]:
                                 prob = change_prob
                                 same_subfam_change = 1
 
@@ -914,15 +917,16 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                     max = score
                     max_index = prev_row_index
 
-            prob_matrix[row_index, columns[columns_index]] = max
-            origin_matrix[row_index, columns[columns_index]] = max_index
+            prob_matrix[row_index, curr_column] = max
+            origin_matrix[row_index, curr_column] = max_index
 
             if same_subfam_change == 1 and max_index == row_index:
-                same_subfam_change_matrix[row_index, columns[columns_index]] = 1
+                same_subfam_change_matrix[row_index, curr_column] = 1
 
 
     # print("FillProbabilityMatrix", time.time() - time1)
     # print()
+    # exit()
 
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
