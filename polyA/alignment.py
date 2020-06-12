@@ -7,6 +7,7 @@ class Alignment(NamedTuple):
     """
 
     subfamily: str
+    chrom: str
     score: int
     start: int
     stop: int

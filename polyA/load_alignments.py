@@ -41,6 +41,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
     alignments: List[Alignment] = [
         Alignment(
             subfamily="skip",
+            chrom="",
             score=0,
             start=0,
             stop=0,
@@ -63,6 +64,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         metaItems = meta.split()
 
         subfamily = metaItems[1]
+        chrom = metaItems[2]
         score = int(metaItems[3])
 
         # TODO: Figure out whether we can drop this bit
@@ -80,6 +82,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         alignments.append(
             Alignment(
                 subfamily=subfamily,
+                chrom=chrom,
                 score=score,
                 start=start,
                 stop=stop,
