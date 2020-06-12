@@ -998,28 +998,30 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     changes_position.append(len(columns))
 
     # already added the last col, but this adds the one before cols so still start at last col
-    for columns_index in range(len(columns) - 1, 0, -1):
-        if (prev_row_index, columns[columns_index - 1]) in origin_matrix:
+    for columns_index in range(len(columns) - 1, 1, -1):
 
-            ids[columns[columns_index - 1]] = temp_id
+        prev_column: int = columns[columns_index - 1]
+        curr_column: int = columns[columns_index]
 
-            #updates the original node labels if they change when being stitched
-            for i in range(len(changes_position_orig)-1):
-                if columns_orig[changes_position_orig[i]] == columns[columns_index-1]:
-                    changes_orig[i] = origin_matrix[prev_row_index, columns[columns_index]]
+        ids[columns[columns_index - 1]] = temp_id
+
+        #updates the original node labels if they change when being stitched
+        for i in range(len(changes_position_orig)-1):
+            if columns_orig[changes_position_orig[i]] == prev_column:
+                changes_orig[i] = origin_matrix[prev_row_index, curr_column]
 
 
-            if prev_row_index != origin_matrix[prev_row_index, columns[columns_index - 1]]:
+        if prev_row_index != origin_matrix[prev_row_index, prev_column]:
+            temp_id += 1234
+            changes_position.append(columns_index - 1)
+            changes.append(prev_row_index)
+        else:
+            if (prev_row_index, prev_column) in same_subfam_change_matrix:
                 temp_id += 1234
                 changes_position.append(columns_index - 1)
                 changes.append(prev_row_index)
-            else:
-                if (prev_row_index, columns[columns_index - 1]) in same_subfam_change_matrix:
-                    temp_id += 1234
-                    changes_position.append(columns_index - 1)
-                    changes.append(prev_row_index)
 
-            prev_row_index = origin_matrix[prev_row_index, columns[columns_index - 1]]
+        prev_row_index = origin_matrix[prev_row_index, prev_column]
 
     ids[columns[0]] = temp_id
     changes_position.append(0)
@@ -1031,12 +1033,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     # changes ID for next round of stitching, so when starts stitching will have unique ID
     temp_id += 1234
 
-    # for orig_index in range(len(changes_position_orig)-1):
-    #     for changes_index in range(len(changes_position)-1):
-    #         if columns[changes_position[changes_index]] == columns_orig[changes_position_orig[orig_index]]:
-    #             changes_orig[orig_index] = changes[changes_index]
-
-    # print("GetPath", time.time() - time1)
+   # print("GetPath", time.time() - time1)
     # print()
 
     return (temp_id, changes_position, changes)
