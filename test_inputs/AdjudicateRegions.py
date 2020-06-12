@@ -193,11 +193,11 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
 
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
     >>> CalcScore(-5, -25, "AT", "AT", "", "", sub_mat)
-    2
+    2.0
     >>> CalcScore(-5, -25, "-T", "AT", "A", "A", sub_mat)
-    -24
+    -24.0
     >>> CalcScore(-5, -25, "-T", "AT", "-", "", sub_mat)
-    -4
+    -4.0
     """
 
     chunk_score: int = 0
