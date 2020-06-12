@@ -171,7 +171,7 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
 
 
 def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1: str,
-              prev_char_seq2: str, sub_matrix: Dict[str, int]) -> int:
+              prev_char_seq2: str, sub_matrix: Dict[str, int]) -> float:
     """
     Calculate the score for a particular alignment between a subfamily and a target/chromsome sequence.
     Scores are calculated based on input SubstitutionMatrix, gap_ext, and gap_init.
@@ -236,7 +236,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
             if (seq1[j]+seq2[j]) in sub_matrix:  #just incase the char isn't in the input substitution matrix
                 chunk_score += sub_matrix[seq1[j] + seq2[j]]
 
-    return chunk_score
+    return float(chunk_score)
 
 
 def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: float, subfams: List[str], chroms: List[str], starts: List[int],
@@ -304,7 +304,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         # FIXME - but right now it takes all the chunks separately and runs them through CalcScore()
         seq_index: int = starts[i] - edge_start
         col_index = seq_index + int((chunk_size - 1) / 2)  # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
-        align_score: int = 0
+        align_score: float = 0
         offset: int = 0
         prev_offset: int = 0
 
@@ -329,7 +329,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
             # calculates score for first chunk and puts score in align_matrix
             align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
-            align_matrix[i, col_index - k] = float(align_score * chunk_size / (chunk_size - k))  # already to scale so don't need to * 31 and / 31
+            align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)  # already to scale so don't need to * 31 and / 31
 
         col_index += 1
 
@@ -398,7 +398,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                     if align_score <= 0:
                         align_matrix[i, col_index] = 1.0
                     else:
-                        align_matrix[i, col_index] = float(align_score / num_nucls * chunk_size)
+                        align_matrix[i, col_index] = align_score / num_nucls * chunk_size
 
                     if align_score == -inf:
                         del align_matrix[i, col_index]
@@ -1116,7 +1116,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
         end_node: int = columns[changes_position[1]]
         subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
         chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
-        align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, '', '', sub_matrix)
+        align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, '', '', sub_matrix)
         node_confidence_temp[subfam_index * nodes + 0] = float(align_score)
 
     # does rest of nodes - looks back at prev char incase of gap ext
@@ -1130,9 +1130,9 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
                 begin_node2 - 1]  # subfam_seqs[j][NonEmptyColumns[changes_position[i + 1] - 1]]
             last_prev_chrom2: str = chrom_seqs[subfam_index2][
                 begin_node2 - 1]  # chrom_seqs[j][changes_position[i + 1] - 1]
-            align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam2,
+            align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam2,
                                            last_prev_chrom2, sub_matrix)
-            node_confidence_temp[subfam_index2 * nodes + node_index2] = float(align_score)
+            node_confidence_temp[subfam_index2 * nodes + node_index2] = align_score
 
     # does last node
     for node_index3 in range(1, len(subfams)):
@@ -1142,9 +1142,9 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
         chrom: str = chrom_seqs[node_index3][begin_node3:end_node3]
         last_prev_subfam3: str = subfam_seqs[node_index3][begin_node3 - 1]
         last_prev_chrom3: str = chrom_seqs[node_index3][begin_node3 - 1]
-        align_score: int = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam3,
+        align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam3,
                                        last_prev_chrom3, sub_matrix)
-        node_confidence_temp[node_index3 * nodes + nodes - 1] = float(align_score)
+        node_confidence_temp[node_index3 * nodes + nodes - 1] = align_score
 
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
@@ -1392,6 +1392,98 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
             stdout.write("\n")
 
 
+def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], changes_position_orig: List[int], columns_orig: List[int], strand_matrix_collapse: Dict[Tuple[str, int], str], consensus_matrix_collapse: Dict[Tuple[str, int], int]):
+    """
+    prints the results in the proper format to input into the SODA visualization tool
+
+    format described here:
+    https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
+
+    """
+    match = re.search(r"(.+):(\d+)-.+", Chroms[1])
+    chrom: str = match.groups()[0]
+    chrom_start: int = int(match.groups()[1])
+
+    id: int = 0
+
+    length = len(changes_position_orig)-1
+
+    used: List[int] = [1] * length  #wont print out the results of the same thing twice
+
+    with open(outfile, 'w') as out:
+
+        i = 0
+        while i < length:
+            if changes_orig[i] != 'skip' and used[i]:
+                strand: str = strand_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i]]]
+                consensus_start: int = 0
+                consensus_stop: int = 0
+                if strand == '+':
+                    consensus_start = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i]]] - 1
+                else:
+                    consensus_stop = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i+1]-1]] - 1
+
+                feature_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all) - consensus_start
+                align_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all)
+                feature_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)  + consensus_stop
+                align_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)
+                subfam: str = changes_orig[i]
+
+                block_start_matrix: int = columns_orig[changes_position_orig[i]]
+
+                block_count: int = 3
+                id += 1
+
+                block_start: List[str] = []
+                block_size: List[str] = []
+
+                block_start.append("-1")
+                block_start.append(str(columns_orig[changes_position_orig[i]]+1-block_start_matrix))
+                block_start.append("-1")
+
+                block_size.append(str(align_start-feature_start))
+                block_size.append(str(columns_orig[changes_position_orig[i + 1] - 1]-columns_orig[changes_position_orig[i]]+1))
+                if strand == "+":
+                    block_size.append("0")
+                else:
+                    block_size.append(str(feature_stop-align_stop))
+
+                j: int = i + 1
+                while j < length:
+                    if changes_orig[j] != 'skip':
+
+                        if IDs[columns_orig[changes_position_orig[i]]] == IDs[columns_orig[changes_position_orig[j]]]:
+
+                            if strand == "-":
+                                consensus_stop = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[j + 1] - 1]] - 1
+                                del block_size[-1]
+                                block_size.append("0")
+
+                            feature_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)  + consensus_stop
+                            align_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)
+
+                            block_start.append(str(columns_orig[changes_position_orig[j]]+1-block_start_matrix))
+                            block_start.append("-1")
+
+                            block_size.append(str(columns_orig[changes_position_orig[j + 1] - 1] - columns_orig[changes_position_orig[j]] + 1))
+
+                            if strand == "+":
+                                block_size.append("0")
+                            else:
+                                block_size.append(str(feature_stop - align_stop))
+
+                            block_count += 2
+
+                            used[j] = 0
+                    j += 1
+
+                out.write("000 " + chrom + " " + str(feature_start) + " " + str(feature_stop) + " " + subfam  + " 0 " + strand + " " + str(align_start) + " " + str(align_stop) + " 0 " + str(block_count) + " " + (",".join(block_size)) + " " + (",".join(block_start)) + " " + str(id))
+                out.write("\n")
+
+            used[i] = 0
+            i += 1
+
+
 # -----------------------------------------------------------------------------------#
 #			   MAIN														   			#
 # -----------------------------------------------------------------------------------#
@@ -1418,6 +1510,7 @@ if __name__ == "__main__":
     ID: int = 1111
 
     infile_prior_counts: str = ""
+    outfile_viz: str = ""
 
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
@@ -1437,6 +1530,7 @@ if __name__ == "__main__":
         --help - display help message
         --printmatrices - output all matrices
         --matrixpos - prints subfam changes in matrix position instead of genomic position
+        --viz outfile - prints output format for SODA visualization
     """
 
     raw_opts, args = getopt(argv[1:], "", [
@@ -1447,6 +1541,7 @@ if __name__ == "__main__":
         "segmentsize=",
         "changeprob=",
         "priorCounts=",
+        "viz=",
 
         "help",
         "matrixPos",
@@ -1459,6 +1554,7 @@ if __name__ == "__main__":
     ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
+    outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     help = "--help" in opts
     printMatrixPos = "--matrixPos" in opts
 
@@ -1517,6 +1613,7 @@ if __name__ == "__main__":
         SubfamCounts["skip"] = prob_skip
 
     Subfams: List[str] = []
+    Chroms: List[str] = []
     Scores: List[int] = []
     Strands: List[str] = []
     Starts: List[int] = []
@@ -1565,6 +1662,7 @@ if __name__ == "__main__":
             numseqs += 1
 
             Subfams.append(alignment.subfamily)
+            Chroms.append(alignment.chrom)
             Scores.append(alignment.score)
             Strands.append(alignment.strand)
             Starts.append(alignment.start)
@@ -1695,4 +1793,5 @@ if __name__ == "__main__":
     else:
         PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
-
+    if outfile_viz:
+        PrintResultsViz(StartAll, outfile_viz, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, StrandMatrixCollapse, ConsensusMatrixCollapse)
