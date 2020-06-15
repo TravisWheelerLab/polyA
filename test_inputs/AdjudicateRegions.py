@@ -1438,7 +1438,7 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
                 block_size: List[str] = []
 
                 block_start.append("-1")
-                block_start.append(str(columns_orig[changes_position_orig[i]]+1-block_start_matrix))
+                block_start.append(str(columns_orig[changes_position_orig[i]]+1-block_start_matrix+consensus_start))
                 block_start.append("-1")
 
                 block_size.append(str(align_start-feature_start))
@@ -1462,7 +1462,7 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
                             feature_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)  + consensus_stop
                             align_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)
 
-                            block_start.append(str(columns_orig[changes_position_orig[j]]+1-block_start_matrix))
+                            block_start.append(str(columns_orig[changes_position_orig[j]]+1-block_start_matrix+consensus_start))
                             block_start.append("-1")
 
                             block_size.append(str(columns_orig[changes_position_orig[j + 1] - 1] - columns_orig[changes_position_orig[j]] + 1))
