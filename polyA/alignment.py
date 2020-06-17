@@ -15,6 +15,7 @@ class Alignment(NamedTuple):
     consensus_stop: int
     sequences: List[str]
     strand: str
+    flank: int
 
     # TODO: Remove these mutators once we clean up the padding code
 

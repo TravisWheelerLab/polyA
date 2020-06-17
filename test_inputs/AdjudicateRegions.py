@@ -1423,7 +1423,7 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
             stdout.write("\n")
 
 
-def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], changes_position_orig: List[int], columns_orig: List[int], strand_matrix_collapse: Dict[Tuple[str, int], str], consensus_matrix_collapse: Dict[Tuple[str, int], int]):
+def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], changes_position_orig: List[int], columns_orig: List[int], consensus_lengths: Dict[str, int], strand_matrix_collapse: Dict[Tuple[str, int], str], consensus_matrix_collapse: Dict[Tuple[str, int], int]):
     """
     prints the results in the proper format to input into the SODA visualization tool
 
@@ -1446,19 +1446,25 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
         i = 0
         while i < length:
             if changes_orig[i] != 'skip' and used[i]:
-                strand: str = strand_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i]]]
-                consensus_start: int = 0
-                consensus_stop: int = 0
-                if strand == '+':
-                    consensus_start = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i]]] - 1
-                else:
-                    consensus_stop = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i+1]-1]] - 1
-
-                feature_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all) - consensus_start
-                align_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all)
-                feature_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)  + consensus_stop
-                align_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)
                 subfam: str = changes_orig[i]
+                strand: str = strand_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]]
+                consensus_start: int
+                consensus_stop: int
+
+                left_flank: int
+                right_flank: int
+
+                if strand == "-":
+                    left_flank = consensus_lengths[subfam] - consensus_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]]
+                    right_flank = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[i+1]-1]] - 1
+                else:
+                    left_flank = consensus_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]] - 1
+                    right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[subfam, columns_orig[changes_position_orig[i+1]-1]]
+
+                align_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all)
+                feature_start: int = align_start - left_flank
+                align_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)
+                feature_stop: int = align_stop  + right_flank
 
                 block_start_matrix: int = columns_orig[changes_position_orig[i]]
 
@@ -1469,15 +1475,12 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
                 block_size: List[str] = []
 
                 block_start.append("-1")
-                block_start.append(str(columns_orig[changes_position_orig[i]]+1-block_start_matrix+consensus_start))
+                block_start.append(str(left_flank+1))
                 block_start.append("-1")
 
-                block_size.append(str(align_start-feature_start))
+                block_size.append(str(left_flank))
                 block_size.append(str(columns_orig[changes_position_orig[i + 1] - 1]-columns_orig[changes_position_orig[i]]+1))
-                if strand == "+":
-                    block_size.append("0")
-                else:
-                    block_size.append(str(feature_stop-align_stop))
+                block_size.append(str(right_flank))
 
                 j: int = i + 1
                 while j < length:
@@ -1486,22 +1489,23 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
                         if IDs[columns_orig[changes_position_orig[i]]] == IDs[columns_orig[changes_position_orig[j]]]:
 
                             if strand == "-":
-                                consensus_stop = consensus_matrix_collapse[changes_orig[i], columns_orig[changes_position_orig[j + 1] - 1]] - 1
-                                del block_size[-1]
-                                block_size.append("0")
+                                right_flank = consensus_matrix_collapse[changes_orig[j], columns_orig[changes_position_orig[j+1]-1]] - 1
+                            else:
+                                right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[subfam, columns_orig[changes_position_orig[j+1]-1]]
 
-                            feature_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)  + consensus_stop
-                            align_stop = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)
+                            del block_size[-1]
+                            block_size.append("0")
 
-                            block_start.append(str(columns_orig[changes_position_orig[j]]+1-block_start_matrix+consensus_start))
+                            align_stop: int = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)
+                            feature_stop: int = align_stop + right_flank
+
+
+                            block_start.append(str(columns_orig[changes_position_orig[j]]+1-block_start_matrix+left_flank))
                             block_start.append("-1")
 
                             block_size.append(str(columns_orig[changes_position_orig[j + 1] - 1] - columns_orig[changes_position_orig[j]] + 1))
 
-                            if strand == "+":
-                                block_size.append("0")
-                            else:
-                                block_size.append(str(feature_stop - align_stop))
+                            block_size.append(str(right_flank))
 
                             block_count += 2
 
@@ -1653,6 +1657,7 @@ if __name__ == "__main__":
     ConsensusStops: List[int] = []
     SubfamSeqs: List[str] = []
     ChromSeqs: List[str] = []
+    Flanks: List[int] = []
 
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
@@ -1702,6 +1707,7 @@ if __name__ == "__main__":
             ConsensusStops.append(alignment.consensus_stop)
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
+            Flanks.append(alignment.flank)
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
     # that subfam is what's there
@@ -1724,6 +1730,15 @@ if __name__ == "__main__":
     # precomputes number of rows and cols in matrices
     rows: int = len(Subfams)
     cols: int = 0  # assign cols in FillAlignMatrix
+
+    #precomputes consensus seq length for PrintResultsViz()
+    ConsensusLengths: Dict[str, int] = {}
+    if outfile_viz:
+        for i in range(1,len(Flanks)):
+            if Strands[i] == "+":
+                ConsensusLengths[Subfams[i]] = ConsensusStops[i] + Flanks[i]
+            else:
+                ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
     # print("initialization and reading in files", time.time()-time1)
     # print()
@@ -1825,4 +1840,4 @@ if __name__ == "__main__":
         PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
     if outfile_viz:
-        PrintResultsViz(StartAll, outfile_viz, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, StrandMatrixCollapse, ConsensusMatrixCollapse)
+        PrintResultsViz(StartAll, outfile_viz, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths, StrandMatrixCollapse, ConsensusMatrixCollapse)

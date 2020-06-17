@@ -49,6 +49,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             consensus_stop=0,
             sequences=["", ""],
             strand="",
+            flank=0
         )
     ]
     for meta, lines in groupby(file, _line_grouper("Align:")):
@@ -75,6 +76,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
 
         consensusStart = int(metaItems[7])
         consensusStop = int(metaItems[8])
+        flank = int(metaItems[9])
 
         sequence = sequences[0]
         subfamilySequence = sequences[1]
@@ -90,6 +92,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
                 consensus_stop=consensusStop,
                 sequences=[sequence, subfamilySequence],
                 strand=strand,
+                flank=flank,
             )
         )
 

@@ -16,6 +16,7 @@ class Alignment(NamedTuple):
     consensus_stop: int
     sequence: str
     subfamily_sequence: str
+    flank: int
 
     def update(
         self, sequence: Union[str, None], subfamily_sequence: Union[str, None]
@@ -31,6 +32,7 @@ class Alignment(NamedTuple):
             subfamily_sequence=self.subfamily_sequence
             if subfamily_sequence is None
             else subfamily_sequence,
+            flank = self.flank,
         )
 
 
@@ -91,6 +93,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
 
         consensusStart = int(metaItems[7])
         consensusStop = int(metaItems[8])
+        flank = int(metaItems[9])
         if consensusStart > consensusStop:
             consensusStart, consensusStop = consensusStop, consensusStart
 
@@ -109,4 +112,5 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             consensus_stop=consensusStop,
             sequence=sequence,
             subfamily_sequence=subfamilySequence,
+            flank=flank
         )
