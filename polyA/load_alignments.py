@@ -49,7 +49,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             consensus_stop=0,
             sequences=["", ""],
             strand="",
-            flank=0
+            flank=0,
         )
     ]
     for meta, lines in groupby(file, _line_grouper("Align:")):

@@ -32,7 +32,7 @@ class Alignment(NamedTuple):
             subfamily_sequence=self.subfamily_sequence
             if subfamily_sequence is None
             else subfamily_sequence,
-            flank = self.flank,
+            flank=self.flank,
         )
 
 
@@ -112,5 +112,5 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             consensus_stop=consensusStop,
             sequence=sequence,
             subfamily_sequence=subfamilySequence,
-            flank=flank
+            flank=flank,
         )
