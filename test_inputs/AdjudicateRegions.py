@@ -686,7 +686,7 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
     return confidence_matrix
 
 
-def FillSupportMatrix(row_num: int, chunk_size, columns: List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
+def FillSupportMatrix(row_num: int, num_cols: int, chunk_size, start_all: int, columns: List[int], starts: List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
 Dict[Tuple[int, int], float]:
     """
     Fills support score matrix using values in conf matrix. Score for subfam row
@@ -709,8 +709,9 @@ Dict[Tuple[int, int], float]:
     chunksize cells in the confidence matrix.
 
     >>> non_cols = [0,1,2]
+    >>> strts = [0, 0, 0]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3}
-    >>> FillSupportMatrix(2, 31, non_cols, conf_mat)
+    >>> FillSupportMatrix(2, 3, 31, 0, non_cols, strts, conf_mat)
     {(0, 0): 0.6333333333333333, (0, 1): 0.6333333333333333, (0, 2): 0.6333333333333333, (1, 0): 0.2, (1, 1): 0.2}
     """
 
@@ -737,7 +738,7 @@ Dict[Tuple[int, int], float]:
     #rest of rows
     for row_index in range(1, row_num):
         #starts at the col where the seq starts and breaks out of loop once seq is done
-        for col_index in range((Starts[row_index] - StartAll), cols):
+        for col_index in range((starts[row_index] - start_all), num_cols):
 
             if (row_index, col_index) in confidence_matrix:
 
@@ -1790,7 +1791,7 @@ if __name__ == "__main__":
     ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                             AlignMatrix)
 
-    SupportMatrix = FillSupportMatrix(rows, ChunkSize, NonEmptyColumns, ConfidenceMatrix)
+    SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
