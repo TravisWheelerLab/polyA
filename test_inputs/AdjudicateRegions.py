@@ -102,8 +102,6 @@ def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     10
     """
 
-    # time1: float = time.time()
-
     min_start: int = starts[1]
     max_stop: int = stops[1]
 
@@ -112,9 +110,6 @@ def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
             min_start = starts[i]
         if stops[i] > max_stop:
             max_stop = stops[i]
-
-    # print("Edges", time.time() - time1)
-    # print()
 
     return min_start, max_stop
 
@@ -151,8 +146,6 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     ['', 'a...................', '..t-t...............']
     """
 
-    # time1: float = time.time()
-
     edge_start: int
     edge_stop: int
 
@@ -164,9 +157,6 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
 
         chrom_seqs[i] = ("." * left_pad) + f"{chrom_seqs[i]}" + ("." * (right_pad + 15))
         subfam_seqs[i] = ("." * left_pad) + f"{subfam_seqs[i]}" + ("." * (right_pad + 15))
-
-    # print("PadSeqs", time.time() - time1)
-    # print()
 
     return (edge_start, edge_stop)
 
@@ -215,7 +205,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
             chunk_score += gap_ext
         else:
             chunk_score += gap_init
-    elif seq1[0] == "." or seq2[0] == ".":
+    elif seq1[0] == ".":
         chunk_score = chunk_score
     else:
         chunk_score += sub_matrix[seq1[0] + seq2[0]]
@@ -231,7 +221,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
                 chunk_score += gap_ext
             else:
                 chunk_score += gap_init
-        elif seq1[j] == "." or seq2[j] == ".":
+        elif seq1[j] == ".":
             chunk_score = chunk_score
         else:
             if (seq1[j] + seq2[j]) in sub_matrix:  # just incase the char isn't in the input substitution matrix
@@ -302,8 +292,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
         # calculates score for the first (chunksize-1)/2 chunks, chunk ((chunksize-1)/2)+1 is the first one that is 31nt
         seq_index: int = starts[i] - edge_start
-        col_index = seq_index + int((
-                                                chunk_size - 1) / 2)  # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
+        # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
+        col_index = seq_index + int((chunk_size - 1) / 2)
 
         k = int((chunk_size - 1) / 2)
 
@@ -372,6 +362,9 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             temp_index = seq_index
             temp_count = 0
 
+            if chrom_seq[seq_index + 1] == ".":
+                break
+
             while temp_count < chunk_size:
                 if chrom_seq[temp_index + 1] != "-":
                     temp_count += 1
@@ -379,11 +372,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
             offset = temp_index - seq_index
 
-            if chrom_seq[seq_index + 1] == ".":
-                break
-
             if chrom_seq[seq_index + 1] != "-":
-                # if chrom_seq[seq_index + 1] != ".":
                 if prev_offset != offset:  # there is a new gap, or a gap was removed from beginning
                     chrom_slice = chrom_seq[seq_index + 1:seq_index + offset + 1]
                     subfam_slice = subfam_seq[seq_index + 1:seq_index + offset + 1]
@@ -414,8 +403,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                         num_nucls -= 1
 
                     # adding next chars score - tests if its a gap in the subfam as well
-                    if subfam_seq[seq_index + offset - int((chunk_size - 1) / 2)] == "." or chrom_seq[
-                        seq_index + offset - int((chunk_size - 1) / 2)] == ".":
+                    if subfam_seq[seq_index + offset - int((chunk_size - 1) / 2)] == ".":
                         align_score = -inf
                     elif subfam_seq[seq_index + offset] == "-":
                         num_nucls += 1
@@ -423,7 +411,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                             align_score = align_score + gap_ext
                         else:
                             align_score = align_score + gap_init
-                    elif subfam_seq[seq_index + offset] == "." or chrom_seq[seq_index + offset] == ".":
+                    elif subfam_seq[seq_index + offset] == ".":
                         align_score = align_score
                     else:
                         align_score = align_score + sub_matrix[
@@ -503,16 +491,19 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
         consensus_pos: int = 0
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
-            col_index: int = 0
+            col_index: int = Starts[row_index] - StartAll
 
-            for seq_index in range(len(subfams[row_index])):
-                if subfams[row_index][seq_index] != ".":
-                    # consensus pos only advances when there is not a gap in the subfam seq
-                    if subfams[row_index][seq_index] != "-":
-                        consensus_pos += 1
+            for seq_index in range((Starts[row_index] - StartAll), len(subfams[row_index])):
+                if subfams[row_index][seq_index] == ".":
+                    #stop looping through row when seq is done
+                    break
 
-                    # put consensus pos corresponding to pos in matrix in hash
-                    consensus_matrix[row_index, col_index] = consensus_pos
+                # consensus pos only advances when there is not a gap in the subfam seq
+                if subfams[row_index][seq_index] != "-":
+                    consensus_pos += 1
+
+                # put consensus pos corresponding to pos in matrix in hash
+                consensus_matrix[row_index, col_index] = consensus_pos
 
                 # matrix position only advances when there is not a gap in the chrom seq
                 if chroms[row_index][seq_index] != "-":
@@ -520,13 +511,15 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
 
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
-            col_index2: int = 0
+            col_index2: int = Starts[row_index] - StartAll
 
-            for seq_index2 in range(len(subfams[row_index])):
-                if subfams[row_index][seq_index2] != ".":
-                    if subfams[row_index][seq_index2] != "-":
-                        consensus_pos2 -= 1
-                    consensus_matrix[row_index, col_index2] = consensus_pos2
+            for seq_index2 in range((Starts[row_index] - StartAll), len(subfams[row_index])):
+                if subfams[row_index][seq_index2] == ".":
+                    break
+
+                if subfams[row_index][seq_index2] != "-":
+                    consensus_pos2 -= 1
+                consensus_matrix[row_index, col_index2] = consensus_pos2
 
                 if chroms[row_index][seq_index2] != "-":
                     col_index2 += 1
