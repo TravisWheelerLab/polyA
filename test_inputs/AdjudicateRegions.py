@@ -449,7 +449,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     return (num_cols, align_matrix)
 
 
-def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], chroms: List[str],
+def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int],
                                 consensus_starts: List[int],
                                 strands: List[str]) -> Dict[Tuple[int, int], int]:
     """
@@ -469,12 +469,13 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
     tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
     holds the alignment position in the consensus subfamily sequence.
 
-    >>> subs = ["", "AAA", "TT-"]
-    >>> chrs = ["", "AAA", "TTT"]
+    >>> subs = ["", ".AA", "TT-"]
+    >>> chrs = ["", ".AA", "TTT"]
+    >>> strts = [0, 1, 0]
     >>> con_strts = [-1, 0, 10]
     >>> strandss = ["", "+", "-"]
-    >>> FillConsensusPositionMatrix(3, 3, subs, chrs, con_strts, strandss)
-    {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 0): 0, (1, 1): 1, (1, 2): 2, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    >>> FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, con_strts, strandss)
+    {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
     """
 
     # time1: float = time.time()
@@ -491,9 +492,9 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
         consensus_pos: int = 0
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
-            col_index: int = Starts[row_index] - StartAll
+            col_index: int = starts[row_index] - start_all
 
-            for seq_index in range((Starts[row_index] - StartAll), len(subfams[row_index])):
+            for seq_index in range((starts[row_index] - start_all), len(subfams[row_index])):
                 if subfams[row_index][seq_index] == ".":
                     #stop looping through row when seq is done
                     break
@@ -511,9 +512,9 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, subfams: List[str], 
 
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
-            col_index2: int = Starts[row_index] - StartAll
+            col_index2: int = starts[row_index] - start_all
 
-            for seq_index2 in range((Starts[row_index] - StartAll), len(subfams[row_index])):
+            for seq_index2 in range((starts[row_index] - start_all), len(subfams[row_index])):
                 if subfams[row_index][seq_index2] == ".":
                     break
 
@@ -1766,7 +1767,7 @@ if __name__ == "__main__":
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, SubfamSeqs, ChromSeqs, ConsensusStarts, Strands)
+    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, ConsensusStarts, Strands)
 
     NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
 
