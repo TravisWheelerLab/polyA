@@ -549,7 +549,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     [0, 2]
     """
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     columns: List[int] = []
     for j in range(num_cols):
@@ -566,6 +566,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
 
     # print("FillColumns", time.time() - time1)
     # print()
+    # exit()
     return columns
 
 
@@ -587,34 +588,34 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> ConfidenceCM(0.5, "infile", [-1, 1, 1], counts, subs)
-    [0.0, 0.5, 0.5]
+    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs)
+    >>> f"{conf[0]:.2f}"
+    '0.41'
+    >>> f"{conf[1]:.2f}"
+    '0.29'
+    >>> f"{conf[2]:.2f}"
+    '0.29'
     """
     confidence_list: List[float] = []
 
     score_total: int = 0
     for index in range(len(region)):
         score: float = region[index]
-        if score > -1:
-            converted_score = score * lambdaa
-            if infile:
-                score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
-            else:
-                score_total += (2 ** converted_score)
+        converted_score = score * lambdaa
+        if infile:
+            score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
+        else:
+            score_total += (2 ** converted_score)
 
     for index in range(len(region)):
         score: float = region[index]
-        # print(subfam_counts[subfams[index]])
-        if score > -1:
-            converted_score = score * lambdaa
-            if infile:
-                confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
-            else:
-                confidence = (2 ** converted_score) / score_total
-
-            confidence_list.append(confidence)
+        converted_score = score * lambdaa
+        if infile:
+            confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
         else:
-            confidence_list.append(0.0)
+            confidence = (2 ** converted_score) / score_total
+
+        confidence_list.append(confidence)
 
     return confidence_list
 
@@ -664,27 +665,24 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
     confidence_matrix: Dict[Tuple[int, int], float] = {}
 
     for i in range(len(columns)):
-        # if i >= len(columns):
-        #     break
 
         col_index: int = columns[i]
         temp_region: List[float] = []
+        active_rows: List[int] = []  #which rows have align scores so have quick access to them later
 
         for row_index in range(row_num):
             if (row_index, col_index) in align_matrix:
                 temp_region.append(align_matrix[row_index, col_index])
-            else:
-                temp_region.append(-1.0)
+                active_rows.append(row_index)
 
         temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
 
-        for row_index2 in range(row_num):
-            if temp_confidence[row_index2] != 0.0:
-                # if temp_confidence[row_index2]:
-                confidence_matrix[row_index2, col_index] = temp_confidence[row_index2]
+        for row_index2 in range(len(active_rows)):
+            confidence_matrix[active_rows[row_index2], col_index] = temp_confidence[row_index2]
 
     # print("FillConfidenceMatrix", time.time() - time1)
     # print()
+
     return confidence_matrix
 
 
@@ -1142,7 +1140,7 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
 
     # time1: float = time.time()
 
-    node_confidence_temp: List[float] = [-1 for _ in range(len(subfams) * nodes)]
+    node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
 
     node_confidence: Dict[Tuple[str, int], float] = {}
 
@@ -1186,13 +1184,13 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
         temp: List[int] = []
-        for row_index in range(len(subfams)):
+        for row_index in range(1, len(subfams)):
             temp.append(int(node_confidence_temp[row_index * nodes + node_index4]))
 
         confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
 
-        for row_index2 in range(len(subfams)):
-            node_confidence_temp[row_index2 * nodes + node_index4] = confidence_temp[row_index2]
+        for row_index2 in range(len(confidence_temp)):
+            node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
 
     # collapse node_confidence down same way supportmatrix is collapsed - all seqs of
     # the same subfam are put in the same row
