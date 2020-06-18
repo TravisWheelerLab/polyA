@@ -714,14 +714,30 @@ Dict[Tuple[int, int], float]:
     {(0, 0): 0.6333333333333333, (0, 1): 0.6333333333333333, (0, 2): 0.6333333333333333, (1, 0): 0.2, (1, 1): 0.2}
     """
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
-    for row_index in range(row_num):
+    #skip state
+    for col in range(len(columns)):
+        col_index: int = columns[col]
 
-        for col in range(len(columns)):
-            col_index: int = columns[col]
+        summ: int = 0
+        num_segments: int = 0
+        sum_index: int = col_index - int((chunk_size - 1) / 2)
+
+        while sum_index <= col_index + int((chunk_size - 1) / 2):
+            if (0, sum_index) in confidence_matrix:
+                num_segments += 1
+                summ += confidence_matrix[0, sum_index]
+            sum_index += 1
+        if num_segments > 0:
+            support_matrix[0, col_index] = summ / num_segments
+
+    #rest of rows
+    for row_index in range(1, row_num):
+        #starts at the col where the seq starts and breaks out of loop once seq is done
+        for col_index in range((Starts[row_index] - StartAll), cols):
 
             if (row_index, col_index) in confidence_matrix:
 
@@ -736,6 +752,8 @@ Dict[Tuple[int, int], float]:
                     sum_index += 1
                 if num_segments > 0:
                     support_matrix[row_index, col_index] = summ / num_segments
+            else:
+                break
 
     # print("FillSupportMatrix", time.time() - time1)
     # print()
