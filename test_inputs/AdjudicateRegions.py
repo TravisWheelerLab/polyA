@@ -531,7 +531,8 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     return consensus_matrix
 
 
-def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> List[int]:
+def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Tuple[
+    List[int], Dict[int, List[str]]]:
     """
     in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
     so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
@@ -544,30 +545,37 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     output:
     columns: list of columns that are not empty
 
-    >>> align_mat = {(0, 0): 100, (0, 2): 100, (1, 0): 100, (1, 2): 100, (2, 0): 100, (2, 2): 100}
-    >>> FillColumns(3, 3, align_mat)
+    >>> align_mat = {(0, 0): 100, (0, 2): 100, (1, 0): 100, (1, 2): 100, (2, 0): 100}
+    >>> (non_cols, active) = FillColumns(3, 3, align_mat)
+    >>> non_cols
     [0, 2]
+    >>> active
+    {0: [0, 1, 2], 2: [0, 1]}
     """
 
     # time1: float = time.time()
 
     columns: List[int] = []
+    active_cells: Dict[int, List[str]] = {}
     for j in range(num_cols):
         empty = 1
         i: int = 1
+        active_rows: List[int] = []
+        active_rows.append(0)
         while i < num_rows:
             if (i, j) in align_matrix:
+                active_rows.append(i)
                 empty = 0
-                i = num_rows
+                # i = num_rows
             i += 1
 
         if not empty:
+            active_cells[j] = active_rows
             columns.append(j)
 
     # print("FillColumns", time.time() - time1)
-    # print()
     # exit()
-    return columns
+    return (columns, active_cells)
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
@@ -621,7 +629,7 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
 
 def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
-                         subfamss: List[str], align_matrix: Dict[Tuple[int, int], float]) -> \
+                         subfamss: List[str], active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float]) -> \
         Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
@@ -642,10 +650,11 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
     column of the AlignHash
 
     >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
+    >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
     >>> non_cols = [0, 1, 2]
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = FillConfidenceMatrix(2, 0.1227, "infile", non_cols, counts, subs, align_mat)
+    >>> conf_mat = FillConfidenceMatrix(2, 0.1227, "infile", non_cols, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
     '0.0002'
     >>> f"{conf_mat[1,0]:.4f}"
@@ -668,20 +677,16 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
 
         col_index: int = columns[i]
         temp_region: List[float] = []
-        active_rows: List[int] = []  #which rows have align scores so have quick access to them later
 
-        for row_index in range(row_num):
-            if (row_index, col_index) in align_matrix:
-                temp_region.append(align_matrix[row_index, col_index])
-                active_rows.append(row_index)
+        for row_index in active_cells[col_index]:
+            temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
 
-        for row_index2 in range(len(active_rows)):
-            confidence_matrix[active_rows[row_index2], col_index] = temp_confidence[row_index2]
+        for row_index2 in range(len(active_cells[col_index])):
+            confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
     # print("FillConfidenceMatrix", time.time() - time1)
-    # print()
 
     return confidence_matrix
 
@@ -762,7 +767,7 @@ Dict[Tuple[int, int], float]:
     return support_matrix
 
 
-def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str],
+def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
                      support_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]) -> \
         Tuple[int, Dict[Tuple[str, int], int], Dict[Tuple[str, int], str], Dict[Tuple[str, int], float], Dict[str, int],
               Dict[
@@ -798,11 +803,12 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     number as the key, and an array of which rows hold values for that column.
 
     >>> non_cols = [0, 2, 3]
+    >>> active = {0: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
     >>> subs = ["s1", "s2", "s1"]
     >>> strandss = ["+", "-", "-"]
     >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
     >>> con_mat = {(0, 0): 0, (0, 2): 1, (0, 3): 2, (1, 0): 0, (1, 2): 1, (1, 3): 2, (2, 0): 0, (2, 2): 3, (2, 3): 10}
-    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col) = CollapseMatrices(3, non_cols, subs, strandss, sup_mat, con_mat)
+    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col) = CollapseMatrices(3, non_cols, subs, strandss, active, sup_mat, con_mat)
     >>> r
     2
     >>> con_mat_col
@@ -834,21 +840,21 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
         active_cells_collapse[col_index] = active_cols
 
         # find max support score for collapsed row_nums and use that row for collapsed matrices
-        for row_index in range(row_num):
-            if (row_index, col_index) in support_matrix:
-                if (subfams[row_index]) in dup_max_support:
-                    if support_matrix[row_index, col_index] > dup_max_support[subfams[row_index]]:
-                        dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                        consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[
-                            row_index, col_index]
-                        strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
-                        support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
-                else:
+        # for row_index in range(row_num):
+        for row_index in active_cells[col_index]:
+            if (subfams[row_index]) in dup_max_support:
+                if support_matrix[row_index, col_index] > dup_max_support[subfams[row_index]]:
                     dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                    consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[row_index, col_index]
+                    consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[
+                            row_index, col_index]
                     strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
                     support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
-                    active_cells_collapse[col_index].append(subfams[row_index])
+            else:
+                dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
+                consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[row_index, col_index]
+                strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
+                support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
+                active_cells_collapse[col_index].append(subfams[row_index])
 
     for i in range(row_num):
         subfams_collapse[subfams[i]] = 0
@@ -857,7 +863,6 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     row_num_update: int = len(subfams_collapse)
 
     # print("CollapseMatrices", time.time() - time1)
-    # print()
 
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse
 
@@ -1704,6 +1709,7 @@ if __name__ == "__main__":
     SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
 
     NonEmptyColumns: List[int] = []
+    ActiveCells: Dict[int, List[str]] = {}
 
     Changes: List[str] = []
     ChangesPosition: List[int] = []
@@ -1786,15 +1792,15 @@ if __name__ == "__main__":
 
     ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, ConsensusStarts, Strands)
 
-    NonEmptyColumns = FillColumns(cols, rows, AlignMatrix)
+    (NonEmptyColumns, ActiveCells) = FillColumns(cols, rows, AlignMatrix)
 
-    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
+    ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
-     ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, SupportMatrix, ConsensusMatrix)
+     ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
     (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
                                                                                ChangeProbSkip,
