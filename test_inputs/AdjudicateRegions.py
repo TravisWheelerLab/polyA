@@ -532,7 +532,7 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 
 
 def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Tuple[
-    List[int], Dict[int, List[str]]]:
+    List[int], Dict[int, List[int]]]:
     """
     in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
     so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
@@ -556,7 +556,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     # time1: float = time.time()
 
     columns: List[int] = []
-    active_cells: Dict[int, List[str]] = {}
+    active_cells: Dict[int, List[int]] = {}
     for j in range(num_cols):
         empty = 1
         i: int = 1
@@ -866,7 +866,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse
 
-
+#FIXME - can we make this faster?
 def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
                           columns: List[int], subfams_collapse: Dict[str, int],
                           active_cells_collapse: Dict[int, List[str]],
@@ -1131,9 +1131,9 @@ def PrintNodeConfidence(nodes: int, changes: List[str], subfams_collapse: Dict[s
         stdout.write("\n")
 
 
-def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, infilee: str, columns: List[int],
-                       subfam_seqs: List[str], chrom_seqs: List[str], changes_position: List[int], subfams: List[str],
-                       sub_matrix: Dict[str, int], subfam_countss: Dict[str, float]) -> Dict[Tuple[str, int], float]:
+def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, columns: List[int],
+                       changes_position: List[int], subfams: List[str],
+                       subfam_countss: Dict[str, float], align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[str, int], float]:
     """
     finds completing annoations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1150,66 +1150,48 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
     for whole nodes. Used during stitching process. Tuple[str, int] is key that maps a subfamily
     and node number to a confidence score.
 
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    >>> subs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
-    >>> chrs = ['', 'AAAAAAAAAA', 'AAAAAAAAAA']
     >>> change_pos = [0, 3, 7]
     >>> names = ["skip", "n1", "n2"]
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
-    >>> node_conf = FillNodeConfidence(3, -5, -25, 0.1227, "infile", non_cols, subs, chrs, change_pos, names, sub_mat, counts)
+    >>> align_mat = {(1,0): 3, (1,1): 3, (1,2): 3, (1,3): 3, (1,4): 3, (1,5): 3, (1,6): 3, (1,7): 3, (1,8): 3, (1,9): 3, (2,0): 3, (2,1): 3, (2,2): 3, (2,3): 3, (2,4): 3, (2,5): 3, (2,6): 3, (2,7): 3, (2,8): 3, (2,9): 3}
+    >>> node_conf = FillNodeConfidence(3, 31, 0.1227, "infile", non_cols, change_pos, names, counts, align_mat)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
-
     node_confidence: Dict[Tuple[str, int], float] = {}
 
-    # calculated node confidence for first node - doesn't look back at prev char bc there isn't one
-    # starts at 1 bc don't need to calc for skip state
-    for subfam_index in range(1, len(subfams)):
-        begin_node: int = columns[changes_position[0]]
-        end_node: int = columns[changes_position[1]]
-        subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
-        chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
-        align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, '', '', sub_matrix)
-        node_confidence_temp[subfam_index * nodes + 0] = float(align_score)
-
-    # does rest of nodes - looks back at prev char incase of gap ext
-    for node_index2 in range(1, nodes - 1):
-        for subfam_index2 in range(1, len(subfams)):
-            begin_node2: int = columns[changes_position[node_index2]]
-            end_node2: int = columns[changes_position[node_index2 + 1]]
-            subfam: str = subfam_seqs[subfam_index2][begin_node2:end_node2]
-            chrom: str = chrom_seqs[subfam_index2][begin_node2:end_node2]
-            last_prev_subfam2: str = subfam_seqs[subfam_index2][
-                begin_node2 - 1]  # subfam_seqs[j][NonEmptyColumns[changes_position[i + 1] - 1]]
-            last_prev_chrom2: str = chrom_seqs[subfam_index2][
-                begin_node2 - 1]  # chrom_seqs[j][changes_position[i + 1] - 1]
-            align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam2,
-                                           last_prev_chrom2, sub_matrix)
-            node_confidence_temp[subfam_index2 * nodes + node_index2] = align_score
+    for node_index in range(nodes-1):
+        for subfam_index in range(1, len(subfams)):
+            begin_node: int = columns[changes_position[node_index]]
+            end_node: int = columns[changes_position[node_index + 1]]
+            align_score: float = 0.0
+            for col in range(begin_node, end_node):
+                if (subfam_index, col) in align_matrix:
+                    align_score += align_matrix[subfam_index, col]
+            node_confidence_temp[subfam_index * nodes + node_index] = align_score / chunk_size
 
     # does last node
-    for node_index3 in range(1, len(subfams)):
-        begin_node3: int = columns[changes_position[-2]]
-        end_node3: int = columns[changes_position[-1] - 1]
-        subfam: str = subfam_seqs[node_index3][begin_node3:end_node3]
-        chrom: str = chrom_seqs[node_index3][begin_node3:end_node3]
-        last_prev_subfam3: str = subfam_seqs[node_index3][begin_node3 - 1]
-        last_prev_chrom3: str = chrom_seqs[node_index3][begin_node3 - 1]
-        align_score: float = CalcScore(gap_ext, gap_init, subfam, chrom, last_prev_subfam3,
-                                       last_prev_chrom3, sub_matrix)
-        node_confidence_temp[node_index3 * nodes + nodes - 1] = align_score
+    for subfam_index2 in range(1, len(subfams)):
+        begin_node2: int = columns[changes_position[-2]]
+        end_node2: int = columns[changes_position[-1] - 1]
+
+        align_score: float = 0.0
+        for col in range(begin_node2, end_node2):
+            if (subfam_index2, col) in align_matrix:
+                align_score += align_matrix[subfam_index2, col]
+        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score / chunk_size
+
 
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
-        temp: List[int] = []
+        temp: List[float] = []
         for row_index in range(1, len(subfams)):
-            temp.append(int(node_confidence_temp[row_index * nodes + node_index4]))
+            temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
         confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
 
@@ -1229,6 +1211,8 @@ def FillNodeConfidence(nodes: int, gap_ext: int, gap_init: int, lamb: float, inf
             else:
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
+
+    # print("FillNodeConfidence", time.time() - time1)
 
     return node_confidence
 
@@ -1322,7 +1306,7 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                     # confidence >= 30%, and if the source is before the sink in the consensus sequence
 
                     # FIXME - not sure what this confidence threshold should be
-                    if sourceConf >= 0.3 or sinkConf >= 0.3:
+                    if sourceConf >= 0.2 or sinkConf >= 0.2:
                         if sink_strand == '+' and sink_strand == source_strand:
                             # FIXME- not sure what this overlap should be .. just allowed 50 for now
                             if source_subfam_stop <= sink_subfam_start + 50:
@@ -1709,7 +1693,7 @@ if __name__ == "__main__":
     SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
 
     NonEmptyColumns: List[int] = []
-    ActiveCells: Dict[int, List[str]] = {}
+    ActiveCells: Dict[int, List[int]] = {}
 
     Changes: List[str] = []
     ChangesPosition: List[int] = []
@@ -1842,9 +1826,7 @@ if __name__ == "__main__":
         NodeConfidence.clear()
 
         # initializes and fills node confidence matrix
-        NodeConfidence = FillNodeConfidence(NumNodes, GapExt, GapInit, Lamb, infile_prior_counts, NonEmptyColumns,
-                                            SubfamSeqs,
-                                            ChromSeqs, ChangesPosition, Subfams, SubMatrix, SubfamCounts)
+        NodeConfidence = FillNodeConfidence(NumNodes, ChunkSize, Lamb, infile_prior_counts, NonEmptyColumns, ChangesPosition, Subfams, SubfamCounts, AlignMatrix)
 
         PathGraph.clear()
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
