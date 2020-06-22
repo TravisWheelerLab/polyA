@@ -4,6 +4,7 @@ import re
 from sys import argv, stderr, stdout
 from typing import Dict, List, Tuple, Union
 import time
+import os
 
 from polyA.load_alignments import load_alignments
 
@@ -866,7 +867,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse
 
-#FIXME - can we make this faster?
+#FIXME - can we make this faster? numpy arrays instead of hashes?
 def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
                           columns: List[int], subfams_collapse: Dict[str, int],
                           active_cells_collapse: Dict[int, List[str]],
@@ -982,9 +983,8 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             if same_subfam_change == 1 and max_index == row_index:
                 same_subfam_change_matrix[row_index, curr_column] = 1
 
+
     # print("FillProbabilityMatrix", time.time() - time1)
-    # print()
-    # exit()
 
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
@@ -1038,7 +1038,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     [2345, 2345, 1111, 1111]
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     maxxx: float = -inf
     max_row_index: str = ''
@@ -1053,7 +1053,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
 
     prev_row_index: str = origin_matrix[max_row_index, num_col - 1]
 
-    ids[columns[- 1]] = temp_id
+    ids[columns[-1]] = temp_id
 
     changes_position.append(len(columns))
 
@@ -1093,7 +1093,6 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     temp_id += 1234
 
     # print("GetPath", time.time() - time1)
-    # print()
 
     return (temp_id, changes_position, changes)
 
@@ -1271,8 +1270,6 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
     [0, 1, 1, 0, 0, 1, 0, 0, 0]
     """
 
-    # time1: float = time.time()
-
     path_graph: List[int] = []
 
     for i in range(nodes * nodes):
@@ -1314,8 +1311,8 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                         elif sink_strand == '-' and sink_strand == source_strand:
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
-    # PrintPathGraph(nodes,changes, path_graph)
-    # exit()
+
+    # print("FillPathGraph", time.time()- time1)
     return path_graph
 
 
@@ -1392,8 +1389,6 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
         total += (remove_stops[i] - remove_starts[i])
 
     # print("ExtractNodes", time.time() - time1)
-    # print()
-
     return updated_num_col
 
 
@@ -1552,11 +1547,12 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
 
 if __name__ == "__main__":
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     GapInit: int = -25
     GapExt: int = -5
-    Lamb: float = 0.1227  # From command line
+    Lamb: float = 0.0
+    EslPath = ""
     ChunkSize: int = 31
     SameProbLog: float = 0.0
     ChangeProb: float = 10 ** -45
@@ -1582,6 +1578,7 @@ if __name__ == "__main__":
         --GapInit[-25]
         --getExt[-5]
         --lambda [will calc from matrix if not included]
+        --eslPath [specify path to easel]
         --segmentsize[30]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
@@ -1598,6 +1595,7 @@ if __name__ == "__main__":
         "GapExt=",
         "skipScore=",
         "lambda=",
+        "eslPath=",
         "segmentsize=",
         "changeprob=",
         "priorCounts=",
@@ -1611,6 +1609,7 @@ if __name__ == "__main__":
     GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
     GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
     Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
+    EslPath = str(opts["--eslPath"]) if "--eslPath" in opts else EslPath
     ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
@@ -1625,7 +1624,6 @@ if __name__ == "__main__":
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
     infile_matrix: str = args[1]
-    # infile_prior_counts: str = args[2]
 
     # Other open was moved down to where we load the alignments file
     with open(infile_matrix) as _infile_matrix:
@@ -1635,8 +1633,13 @@ if __name__ == "__main__":
         with open(infile_prior_counts) as _infile_prior_counts:
             in_counts: List[str] = _infile_prior_counts.readlines()
 
-    # FIXME - want to add option to run easel in here
-    # ask george to add easl to the virtual environment so can add this in here
+    #if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
+    if not Lamb:
+        esl_stream = os.popen(EslPath + 'esl_scorematrix --dna 25p41g_edited.matrix')
+        esl_output = esl_stream.read()
+        esl_output_list = re.split(r"\n+", esl_output)
+        lambda_list = re.split(r"\s+", esl_output_list[1])
+        Lamb = float(lambda_list[2])
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
@@ -1767,7 +1770,7 @@ if __name__ == "__main__":
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
     # print("initialization and reading in files", time.time()-time1)
-    # print()
+    # time1 = time.time()
 
     (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
@@ -1813,6 +1816,9 @@ if __name__ == "__main__":
     # 4.extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
     # 5.annotate again with removed subfams
     #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
+
+    # print("original DP calculations", time.time() - time1)
+    # time1 = time.time()
 
     count: int = 0
     while (True):
@@ -1868,6 +1874,9 @@ if __name__ == "__main__":
                                                  NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
+    # print("graph stitching", time.time() - time1)
+    # time1 = time.time()
+
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
     else:
@@ -1876,3 +1885,5 @@ if __name__ == "__main__":
     if outfile_viz:
         PrintResultsViz(StartAll, outfile_viz, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse)
+
+    # print("printint results", time.time() - time1)
