@@ -10,48 +10,52 @@ from polyA.load_alignments import load_alignments
 
 
 # -----------------------------------------------------------------------------------#
-#			FUNCTIONS																#
+#			FUNCTIONS													   			#
 # -----------------------------------------------------------------------------------#
 
 
-def PrintMatrixHashCollapse(num_col: int, matrix: Dict[Tuple[str, int], Union[float, int, str]],
+def PrintMatrixHashCollapse(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[str, int], Union[float, int, str]],
                             subfams_collapse: Dict[str, int]) -> None:
     """
     just for debugging
     prints values inside collapsed matrices
     """
-    stdout.write("\t")
 
-    j: int = 0
-    while j < num_col:
-        stdout.write(f"{j}\t")
-        j += 1
-    stdout.write("\n")
+    with open(outfile, 'w') as out:
+        out.write("\t")
 
-    # Subfams_collapse is not ordered, so prints the skip state first
-    stdout.write("skip\t")
-    j: int = 0
-    while j < num_col:
-        if ("skip", j) in matrix:
-            stdout.write(str(matrix["skip", j]))
-        else:
-            stdout.write(f"{-inf:5.3g}")
-        stdout.write("\t")
-        j += 1
-    stdout.write("\n")
+        start: int = chrom_start + start_all
+        j: int = 0
+        while j < num_col:
+            out.write(f"{start}\t")
+            start += 1
+            j += 1
+        out.write("\n")
 
-    for k in subfams_collapse:
-        if k != "skip":
-            stdout.write(f"{k:<20s}\t")
-            j: int = 0
-            while j < num_col:
-                if (k, j) in matrix:
-                    stdout.write(str(matrix[k, j]))
-                else:
-                    stdout.write(f"{-inf:5.3g}")
-                stdout.write("\t")
-                j += 1
-            stdout.write("\n")
+        # Subfams_collapse is not ordered, so prints the skip state first
+        out.write("skip\t")
+        j: int = 0
+        while j < num_col:
+            if ("skip", j) in matrix:
+                out.write(str(matrix["skip", j]))
+            else:
+                out.write(f"{-inf}")
+            out.write("\t")
+            j += 1
+        out.write("\n")
+
+        for k in subfams_collapse:
+            if k != "skip":
+                out.write(f"{k}\t")
+                j: int = 0
+                while j < num_col:
+                    if (k, j) in matrix:
+                        out.write(str(matrix[k, j]))
+                    else:
+                        out.write(f"{-inf}")
+                    out.write("\t")
+                    j += 1
+                out.write("\n")
 
 
 def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
@@ -1431,7 +1435,7 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
             stdout.write("\n")
 
 
-def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], changes_position_orig: List[int],
+def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, changes_orig: List[str], changes_position_orig: List[int],
                     columns_orig: List[int], consensus_lengths: Dict[str, int],
                     strand_matrix_collapse: Dict[Tuple[str, int], str],
                     consensus_matrix_collapse: Dict[Tuple[str, int], int]):
@@ -1442,9 +1446,6 @@ def PrintResultsViz(start_all: int, outfile: str, changes_orig: List[str], chang
     https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
 
     """
-    match = re.search(r"(.+):(\d+)-.+", Chroms[1])
-    chrom: str = match.groups()[0]
-    chrom_start: int = int(match.groups()[1])
 
     id: int = 0
 
@@ -1567,6 +1568,7 @@ if __name__ == "__main__":
 
     infile_prior_counts: str = ""
     outfile_viz: str = ""
+    outfile_heatmap: str = ""
 
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
@@ -1588,6 +1590,7 @@ if __name__ == "__main__":
         --printmatrices - output all matrices
         --matrixpos - prints subfam changes in matrix position instead of genomic position
         --viz outfile - prints output format for SODA visualization
+        --heatmap outfile - prints probability file for input into heatmap
     """
 
     raw_opts, args = getopt(argv[1:], "", [
@@ -1600,6 +1603,7 @@ if __name__ == "__main__":
         "changeprob=",
         "priorCounts=",
         "viz=",
+        "heatmap=",
 
         "help",
         "matrixPos",
@@ -1614,6 +1618,7 @@ if __name__ == "__main__":
     ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
+    outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
     help = "--help" in opts
     printMatrixPos = "--matrixPos" in opts
 
@@ -1752,6 +1757,10 @@ if __name__ == "__main__":
             stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
         exit()
 
+    match = re.search(r"(.+):(\d+)-.+", Chroms[1])
+    Chrom: str = match.groups()[0]
+    ChromStart: int = int(match.groups()[1])
+
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
     ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
     SameProbSkip = ChangeProbLog / 20  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
@@ -1788,6 +1797,9 @@ if __name__ == "__main__":
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
+
+    if outfile_heatmap:
+        PrintMatrixHashCollapse(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
 
     (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
                                                                                ChangeProbSkip,
@@ -1883,7 +1895,7 @@ if __name__ == "__main__":
         PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
     if outfile_viz:
-        PrintResultsViz(StartAll, outfile_viz, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
+        PrintResultsViz(StartAll, outfile_viz, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse)
 
     # print("printint results", time.time() - time1)
