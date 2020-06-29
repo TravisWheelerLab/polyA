@@ -17,8 +17,7 @@ from polyA.load_alignments import load_alignments
 def PrintMatrixHashCollapse(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[str, int], Union[float, int, str]],
                             subfams_collapse: Dict[str, int]) -> None:
     """
-    just for debugging
-    prints values inside collapsed matrices
+    prints support matrix to outfile for heatmap
     """
 
     with open(outfile, 'w') as out:
@@ -447,9 +446,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
     # print("FillAlignScoreMatrix", time.time() - time1)
     # print()
-
-    # PrintMatrixHash(num_cols, len(chroms), Subfams, align_matrix)
-    # exit()
 
     return (num_cols, align_matrix)
 
@@ -1163,7 +1159,7 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
     """
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
@@ -1296,18 +1292,19 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                 sinkConf: float = node_confidence[
                     source_subfam, sink_node_index]  # source subfam confidence in sink node
 
-                if (sink_subfam, columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
+                if (source_subfam, columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
 
                     source_subfam_stop = consensus_matrix_collapse[
-                        sink_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
                     source_strand = strand_matrix_collapse[
-                        sink_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
 
                     # adds in edge if the subfam of the sink is at the source node and if it's
                     # confidence >= 30%, and if the source is before the sink in the consensus sequence
 
                     # FIXME - not sure what this confidence threshold should be
                     if sourceConf >= 0.2 or sinkConf >= 0.2:
+                        # print(source_subfam, sink_subfam)
                         if sink_strand == '+' and sink_strand == source_strand:
                             # FIXME- not sure what this overlap should be .. just allowed 50 for now
                             if source_subfam_stop <= sink_subfam_start + 50:
@@ -1315,8 +1312,8 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                         elif sink_strand == '-' and sink_strand == source_strand:
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
-
     # print("FillPathGraph", time.time()- time1)
+    # exit()
     return path_graph
 
 
@@ -1428,6 +1425,26 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart))
             stdout.write("\t")
             stdout.write(str(columns_orig[changespos_orig[i + 1] - 1] + edgestart))
+            stdout.write("\t")
+            stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
+            stdout.write("\t")
+            stdout.write(str(changes_orig[i]))
+            stdout.write("\n")
+
+
+def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str], changespos_orig: List[int], columns_orig: List[int],
+                         ids: List[int]) -> None:
+    """
+    prints final results
+    prints start and stop in terms of chromosome
+    """
+    stdout.write("start\tstop\tID\tname\n")
+    stdout.write("----------------------------------------\n")
+    for i in range(len(changes_orig)):
+        if str(changes_orig[i]) != 'skip':
+            stdout.write(str(columns_orig[changespos_orig[i]] + edgestart + chrom_start))
+            stdout.write("\t")
+            stdout.write(str(columns_orig[changespos_orig[i + 1] - 1] + edgestart + chrom_start))
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
@@ -1573,6 +1590,7 @@ if __name__ == "__main__":
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
     printMatrixPos: bool = False  # Reassigned later
+    printSeqPos: bool = False
 
     helpMessage: str = f"""
     usage: {argv[0]} alignFile subMatrixFile\n
@@ -1589,6 +1607,7 @@ if __name__ == "__main__":
         --help - display help message
         --printmatrices - output all matrices
         --matrixpos - prints subfam changes in matrix position instead of genomic position
+        --sequencepos - prints subfam changes in sequence position instead of genomic position
         --viz outfile - prints output format for SODA visualization
         --heatmap outfile - prints probability file for input into heatmap
     """
@@ -1606,7 +1625,8 @@ if __name__ == "__main__":
         "heatmap=",
 
         "help",
-        "matrixPos",
+        "matrixpos",
+        "seqpos",
     ])
     opts = dict(raw_opts)
 
@@ -1620,7 +1640,8 @@ if __name__ == "__main__":
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
     help = "--help" in opts
-    printMatrixPos = "--matrixPos" in opts
+    printMatrixPos = "--matrixpos" in opts
+    printSeqPos = "--seqpos" in opts
 
     if help:
         print(helpMessage)
@@ -1891,11 +1912,13 @@ if __name__ == "__main__":
 
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
-    else:
+    elif printSeqPos:
         PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+    else:
+        PrintResultsChrom(StartAll, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
     if outfile_viz:
         PrintResultsViz(StartAll, outfile_viz, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse)
 
-    # print("printint results", time.time() - time1)
+    # print("print results", time.time() - time1)
