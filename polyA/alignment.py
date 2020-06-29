@@ -7,6 +7,7 @@ class Alignment(NamedTuple):
     """
 
     subfamily: str
+    chrom: str
     score: int
     start: int
     stop: int
@@ -14,6 +15,7 @@ class Alignment(NamedTuple):
     consensus_stop: int
     sequences: List[str]
     strand: str
+    flank: int
 
     # TODO: Remove these mutators once we clean up the padding code
 

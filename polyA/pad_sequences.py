@@ -12,11 +12,11 @@ def pad_sequences(alignments: Iterable[Alignment]):
     have the same start and stop positions.
 
     >>> a0 = Alignment(sequences=["a", "b"],
-    ...     start=1, stop=1, subfamily='', score=0,
-    ...     consensus_start=0, consensus_stop=0, strand='',)
+    ...     start=1, stop=1, subfamily='', chrom='', score=0,
+    ...     consensus_start=0, consensus_stop=0, strand='', flank=0)
     >>> a1 = Alignment(sequences=["aaa", "bbb"],
-    ...     start=0, stop=2, subfamily='', score=0,
-    ...     consensus_start=0, consensus_stop=0, strand='',)
+    ...     start=0, stop=2, subfamily='', chrom='', score=0,
+    ...     consensus_start=0, consensus_stop=0, strand='',flank=0)
     >>> pad_sequences([a0, a1])
     >>> a0.sequence
     '.a.'

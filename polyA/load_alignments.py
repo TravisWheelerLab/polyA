@@ -41,6 +41,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
     alignments: List[Alignment] = [
         Alignment(
             subfamily="skip",
+            chrom="",
             score=0,
             start=0,
             stop=0,
@@ -48,6 +49,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             consensus_stop=0,
             sequences=["", ""],
             strand="",
+            flank=0,
         )
     ]
     for meta, lines in groupby(file, _line_grouper("Align:")):
@@ -63,6 +65,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         metaItems = meta.split()
 
         subfamily = metaItems[1]
+        chrom = metaItems[2]
         score = int(metaItems[3])
 
         # TODO: Figure out whether we can drop this bit
@@ -73,6 +76,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
 
         consensusStart = int(metaItems[7])
         consensusStop = int(metaItems[8])
+        flank = int(metaItems[9])
 
         sequence = sequences[0]
         subfamilySequence = sequences[1]
@@ -80,6 +84,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         alignments.append(
             Alignment(
                 subfamily=subfamily,
+                chrom=chrom,
                 score=score,
                 start=start,
                 stop=stop,
@@ -87,6 +92,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
                 consensus_stop=consensusStop,
                 sequences=[sequence, subfamilySequence],
                 strand=strand,
+                flank=flank,
             )
         )
 

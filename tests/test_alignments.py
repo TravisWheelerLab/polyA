@@ -34,3 +34,6 @@ def test_alignment_1():
 
     assert first.consensus_stop == 311
     assert second.consensus_stop == 311
+
+    assert first.flank == 0
+    assert second.flank == 0
