@@ -478,7 +478,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     return (num_cols, align_matrix)
 
 
-def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int],
+def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int], stops: List[int],
                                 consensus_starts: List[int],
                                 strands: List[str]) -> Dict[Tuple[int, int], int]:
     """
@@ -501,13 +501,14 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     >>> subs = ["", ".AA", "TT-"]
     >>> chrs = ["", ".AA", "TTT"]
     >>> strts = [0, 1, 0]
+    >>> stps = [0, 2, 2]
     >>> con_strts = [-1, 0, 10]
     >>> strandss = ["", "+", "-"]
-    >>> FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, con_strts, strandss)
+    >>> FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
@@ -518,15 +519,12 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     # start at 1 to ignore 'skip state'
     for row_index in range(1, row_num):
 
-        consensus_pos: int = 0
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
             col_index: int = starts[row_index] - start_all
+            seq_index: int = starts[row_index] - start_all
 
-            for seq_index in range((starts[row_index] - start_all), len(subfams[row_index])):
-                if subfams[row_index][seq_index] == ".":
-                    #stop looping through row when seq is done
-                    break
+            while col_index < stops[row_index] - start_all + 1:
 
                 # consensus pos only advances when there is not a gap in the subfam seq
                 if subfams[row_index][seq_index] != "-":
@@ -539,13 +537,14 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                 if chroms[row_index][seq_index] != "-":
                     col_index += 1
 
+                seq_index += 1
+
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
             col_index2: int = starts[row_index] - start_all
+            seq_index2: int = starts[row_index] - start_all
 
-            for seq_index2 in range((starts[row_index] - start_all), len(subfams[row_index])):
-                if subfams[row_index][seq_index2] == ".":
-                    break
+            while col_index2 < stops[row_index] - start_all + 1:
 
                 if subfams[row_index][seq_index2] != "-":
                     consensus_pos2 -= 1
@@ -554,9 +553,13 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                 if chroms[row_index][seq_index2] != "-":
                     col_index2 += 1
 
+                seq_index2 += 1
+
     # print("FillConsensusPositionMatrix", time.time() - time1)
     # print()
 
+    # PrintMatrixHash(cols, rows, Subfams, consensus_matrix)
+    # exit()
     return consensus_matrix
 
 
@@ -715,12 +718,14 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
+    # PrintMatrixHash(cols, rows, Subfams, confidence_matrix)
     # print("FillConfidenceMatrix", time.time() - time1)
+    # exit()
 
     return confidence_matrix
 
 
-def FillSupportMatrix(row_num: int, num_cols: int, chunk_size, start_all: int, columns: List[int], starts: List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
+def FillSupportMatrix(row_num: int, num_cols: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
 Dict[Tuple[int, int], float]:
     """
     Fills support score matrix using values in conf matrix. Score for subfam row
@@ -743,13 +748,14 @@ Dict[Tuple[int, int], float]:
     chunksize cells in the confidence matrix.
 
     >>> non_cols = [0,1,2]
-    >>> strts = [0, 0, 0]
+    >>> strts = [0, 0]
+    >>> stps = [0, 1]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3}
-    >>> FillSupportMatrix(2, 3, 31, 0, non_cols, strts, conf_mat)
-    {(0, 0): 0.6333333333333333, (0, 1): 0.6333333333333333, (0, 2): 0.6333333333333333, (1, 0): 0.2, (1, 1): 0.2}
+    >>> FillSupportMatrix(2, 3, 3, 0, non_cols, strts, stps, conf_mat)
+    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.2}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -766,32 +772,60 @@ Dict[Tuple[int, int], float]:
                 num_segments += 1
                 summ += confidence_matrix[0, sum_index]
             sum_index += 1
-        if num_segments > 0:
-            support_matrix[0, col_index] = summ / num_segments
+
+        support_matrix[0, col_index] = summ / num_segments
 
     #rest of rows
     for row_index in range(1, row_num):
-        #starts at the col where the seq starts and breaks out of loop once seq is done
-        for col_index in range((starts[row_index] - start_all), num_cols):
 
-            if (row_index, col_index) in confidence_matrix:
+        #first chunk_size/2
+        left_index: int = 0
+        for col_index in range(starts[row_index] - start_all, starts[row_index] - start_all + int((chunk_size - 1) / 2)):
 
-                summ: int = 0
-                num_segments: int = 0
-                sum_index: int = col_index - int((chunk_size - 1) / 2)
+            summ: int = 0
+            sum_index: int = col_index - left_index
+            num_segments: int = 0
 
-                while sum_index <= col_index + int((chunk_size - 1) / 2):
-                    if (row_index, sum_index) in confidence_matrix:
-                        num_segments += 1
-                        summ += confidence_matrix[row_index, sum_index]
-                    sum_index += 1
-                if num_segments > 0:
-                    support_matrix[row_index, col_index] = summ / num_segments
-            else:
-                break
+            while sum_index <= col_index + int((chunk_size - 1) / 2):
+                summ += confidence_matrix[row_index, sum_index]
+                sum_index += 1
+                num_segments += 1
+
+            support_matrix[row_index, col_index] = summ / num_segments
+            left_index += 1
+
+
+        #middle part where num segments is chunk_size
+        for col_index in range((starts[row_index] - start_all + int((chunk_size - 1) / 2)), (stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2)):
+
+            summ: int = 0
+            sum_index: int = col_index - int((chunk_size - 1) / 2)
+
+            while sum_index <= col_index + int((chunk_size - 1) / 2):
+                summ += confidence_matrix[row_index, sum_index]
+                sum_index += 1
+
+            support_matrix[row_index, col_index] = summ / chunk_size
+
+        # last chunk_size/2
+        right_index: int = int((chunk_size - 1) / 2)
+        for col_index in range((stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2), stops[row_index] - start_all + 1):
+
+            summ: int = 0
+            sum_index: int = col_index - int((chunk_size - 1) / 2)
+            num_segments: int = 0
+
+            while sum_index < col_index + right_index:
+                summ += confidence_matrix[row_index, sum_index]
+                sum_index += 1
+                num_segments += 1
+
+            support_matrix[row_index, col_index] = summ / num_segments
+            right_index -= 1
 
     # print("FillSupportMatrix", time.time() - time1)
     # print()
+    # PrintMatrixHash(cols, rows, Subfams, support_matrix)
 
     return support_matrix
 
@@ -1835,14 +1869,14 @@ if __name__ == "__main__":
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, ConsensusStarts, Strands)
+    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
     (NonEmptyColumns, ActiveCells) = FillColumns(cols, rows, AlignMatrix)
 
     ConfidenceMatrix = FillConfidenceMatrix(rows, Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
 
-    SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, ConfidenceMatrix)
+    SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
