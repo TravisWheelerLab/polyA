@@ -243,21 +243,24 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
         chunk_score += sub_matrix[seq1[0] + seq2[0]]
 
     for j in range(1, len(seq1)):
-        if seq1[j] == "-":
-            if seq1[j - 1] == "-":
-                chunk_score += gap_ext
+        if seq1[j] != ".":
+            if seq1[j] == "-":
+                if seq1[j - 1] == "-":
+                    chunk_score += gap_ext
+                else:
+                    chunk_score += gap_init
+            elif seq2[j] == "-":
+                if seq2[j - 1] == "-":
+                    chunk_score += gap_ext
+                else:
+                    chunk_score += gap_init
+            # elif seq1[j] == ".":
+            #     chunk_score = chunk_score
             else:
-                chunk_score += gap_init
-        elif seq2[j] == "-":
-            if seq2[j - 1] == "-":
-                chunk_score += gap_ext
-            else:
-                chunk_score += gap_init
-        elif seq1[j] == ".":
-            chunk_score = chunk_score
+                if (seq1[j] + seq2[j]) in sub_matrix:  # just incase the char isn't in the input substitution matrix
+                    chunk_score += sub_matrix[seq1[j] + seq2[j]]
         else:
-            if (seq1[j] + seq2[j]) in sub_matrix:  # just incase the char isn't in the input substitution matrix
-                chunk_score += sub_matrix[seq1[j] + seq2[j]]
+            break
 
     return float(chunk_score)
 
@@ -413,6 +416,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
                     temp_count2: int = 0
                     for nuc in chrom_slice:
+                        if nuc == '.':
+                            break
                         if nuc != '-' and nuc != '.':
                             temp_count2 += 1
                     num_nucls = temp_count2  # resetting num_nucls to chunk_size
@@ -437,6 +442,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                     # adding next chars score - tests if its a gap in the subfam as well
                     if subfam_seq[seq_index + offset - int((chunk_size - 1) / 2)] == ".":
                         align_score = -inf
+                        break
                     elif subfam_seq[seq_index + offset] == "-":
                         num_nucls += 1
                         if subfam_seq[seq_index + offset - 1] == "-":
@@ -749,10 +755,10 @@ Dict[Tuple[int, int], float]:
 
     >>> non_cols = [0,1,2]
     >>> strts = [0, 0]
-    >>> stps = [0, 1]
-    >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3}
+    >>> stps = [0, 2]
+    >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
     >>> FillSupportMatrix(2, 3, 3, 0, non_cols, strts, stps, conf_mat)
-    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.2}
+    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
     """
 
     time1: float = time.time()
@@ -763,7 +769,7 @@ Dict[Tuple[int, int], float]:
     for col in range(len(columns)):
         col_index: int = columns[col]
 
-        summ: int = 0
+        summ: float = 0
         num_segments: int = 0
         sum_index: int = col_index - int((chunk_size - 1) / 2)
 
@@ -775,6 +781,7 @@ Dict[Tuple[int, int], float]:
 
         support_matrix[0, col_index] = summ / num_segments
 
+
     #rest of rows
     for row_index in range(1, row_num):
 
@@ -782,7 +789,7 @@ Dict[Tuple[int, int], float]:
         left_index: int = 0
         for col_index in range(starts[row_index] - start_all, starts[row_index] - start_all + int((chunk_size - 1) / 2)):
 
-            summ: int = 0
+            summ: float = 0.0
             sum_index: int = col_index - left_index
             num_segments: int = 0
 
@@ -794,16 +801,24 @@ Dict[Tuple[int, int], float]:
             support_matrix[row_index, col_index] = summ / num_segments
             left_index += 1
 
+        # middle part where num segments is chunk_size
+        #calc first chunk_size average
+        col_index: int = (starts[row_index] - start_all + int((chunk_size - 1) / 2))
+        summ: float = 0.0
+        sum_index: int = col_index - int((chunk_size - 1) / 2)
+        while sum_index <= col_index + int((chunk_size - 1) / 2):
+            summ += confidence_matrix[row_index, sum_index]
+            sum_index += 1
 
-        #middle part where num segments is chunk_size
-        for col_index in range((starts[row_index] - start_all + int((chunk_size - 1) / 2)), (stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2)):
+        support_matrix[row_index, col_index] = summ / chunk_size
 
-            summ: int = 0
-            sum_index: int = col_index - int((chunk_size - 1) / 2)
+        #to get next bp average subtract previous confidence, add next confidence
+        for col_index in range((1+ starts[row_index] - start_all + int((chunk_size - 1) / 2)), (stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2)):
+            last_index: int = col_index - int((chunk_size - 1) / 2) - 1
+            next_index: int = col_index + int((chunk_size - 1) / 2)
 
-            while sum_index <= col_index + int((chunk_size - 1) / 2):
-                summ += confidence_matrix[row_index, sum_index]
-                sum_index += 1
+            summ -= confidence_matrix[row_index, last_index]
+            summ += confidence_matrix[row_index, next_index]
 
             support_matrix[row_index, col_index] = summ / chunk_size
 
@@ -811,7 +826,7 @@ Dict[Tuple[int, int], float]:
         right_index: int = int((chunk_size - 1) / 2)
         for col_index in range((stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2), stops[row_index] - start_all + 1):
 
-            summ: int = 0
+            summ: float = 0.0
             sum_index: int = col_index - int((chunk_size - 1) / 2)
             num_segments: int = 0
 
@@ -824,9 +839,6 @@ Dict[Tuple[int, int], float]:
             right_index -= 1
 
     # print("FillSupportMatrix", time.time() - time1)
-    # print()
-    # PrintMatrixHash(cols, rows, Subfams, support_matrix)
-
     return support_matrix
 
 
@@ -1628,6 +1640,7 @@ def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, 
 if __name__ == "__main__":
 
     # time1: float = time.time()
+    time2: float = time.time()
 
     GapInit: int = -25
     GapExt: int = -5
@@ -1984,3 +1997,5 @@ if __name__ == "__main__":
                         StrandMatrixCollapse, ConsensusMatrixCollapse)
 
     # print("print results", time.time() - time1)
+
+    print("ALL", time.time()-time2)
