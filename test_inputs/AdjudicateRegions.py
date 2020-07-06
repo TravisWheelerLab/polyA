@@ -1205,9 +1205,9 @@ def PrintNodeConfidence(nodes: int, changes: List[str], subfams_collapse: Dict[s
         stdout.write("\n")
 
 
-def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, columns: List[int],
-                       changes_position: List[int], subfams: List[str],
-                       subfam_countss: Dict[str, float], align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[str, int], float]:
+def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, lamb: float, infilee: str, columns: List[int],
+                       starts: List[int], stops: List[int], changes_position: List[int], subfams: List[str], subfam_seqs: List[str], chrom_seqs: List[str],
+                       subfam_countss: Dict[str, float], sub_matrix: Dict[str, int]) -> Dict[Tuple[str, int], float]:
     """
     finds completing annoations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1225,13 +1225,17 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
     and node number to a confidence score.
 
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    >>> change_pos = [0, 3, 7]
+    >>> strts = [0, 0, 0]
+    >>> stps = [10, 10, 10]
+    >>> change_pos = [0, 3, 7, 10]
     >>> names = ["skip", "n1", "n2"]
+    >>> s_seqs = ['', 'AAA-TTTTT-', 'TTTTTTTTTT']
+    >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
-    >>> align_mat = {(1,0): 3, (1,1): 3, (1,2): 3, (1,3): 3, (1,4): 3, (1,5): 3, (1,6): 3, (1,7): 3, (1,8): 3, (1,9): 3, (2,0): 3, (2,1): 3, (2,2): 3, (2,3): 3, (2,4): 3, (2,5): 3, (2,6): 3, (2,7): 3, (2,8): 3, (2,9): 3}
-    >>> node_conf = FillNodeConfidence(3, 31, 0.1227, "infile", non_cols, change_pos, names, counts, align_mat)
+    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
+    >>> node_conf = FillNodeConfidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat)
     >>> node_conf
-    {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.5, ('n2', 1): 0.5, ('skip', 2): 0.0, ('n1', 2): 0.5, ('n2', 2): 0.5}
+    {('skip', 0): 0.0, ('n1', 0): 0.3751243838973974, ('n2', 0): 0.6248756161026026, ('skip', 1): 0.0, ('n1', 1): 0.09874227070127324, ('n2', 1): 0.9012577292987267, ('skip', 2): 0.0, ('n1', 2): 0.09874227070127327, ('n2', 2): 0.9012577292987267}
     """
 
     # time1: float = time.time()
@@ -1250,20 +1254,20 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
 
         count: int = 0
         for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
-            if ChromSeqs[subfam_index0][i] == '-':
+            if chrom_seqs[subfam_index0][i] == '-':
                 count += 1
 
         chrom_seq_offset[subfam_index0] = count
 
         end_node0: int = columns[changes_position[1]] + count
 
-        subfam0: str = SubfamSeqs[subfam_index0][begin_node0:end_node0]
-        chrom0: str = ChromSeqs[subfam_index0][begin_node0:end_node0]
+        subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
+        chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
 
         align_score0: float = 0.0
         #if whole alignment is padding - don't run CalcScore
-        if end_node0 >= Starts[subfam_index0]-StartAll and begin_node0 <= Stops[subfam_index0] - StartAll:
-            align_score0 = CalcScore(GapExt, GapInit, subfam0, chrom0, '', '', SubMatrix)
+        if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
+            align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
 
     #middle nodes
@@ -1275,22 +1279,22 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
 
             count: int = 0
             for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
-                if ChromSeqs[subfam_index][i] == '-':
+                if chrom_seqs[subfam_index][i] == '-':
                     count += 1
 
             chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
 
             end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
 
-            lastprev_subfam: str = SubfamSeqs[subfam_index][begin_node-1]
-            lastprev_chrom: str = ChromSeqs[subfam_index][begin_node - 1]
-            subfam: str = SubfamSeqs[subfam_index][begin_node:end_node]
-            chrom: str = ChromSeqs[subfam_index][begin_node:end_node]
+            lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
+            lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
+            subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
+            chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
 
             align_score: float = 0.0
             # if whole alignment is padding - don't run CalcScore
-            if end_node >= Starts[subfam_index] - StartAll and begin_node <= Stops[subfam_index] - StartAll:
-                align_score = CalcScore(GapExt, GapInit, subfam, chrom, lastprev_subfam, lastprev_chrom, SubMatrix)
+            if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
+                align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
 
             node_confidence_temp[subfam_index * nodes + node_index] = align_score
 
@@ -1302,25 +1306,26 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
         count: int = 0
         for i in range(begin_node2,
                        begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
-            if ChromSeqs[subfam_index2][i] == '-':
+            if chrom_seqs[subfam_index2][i] == '-':
                 count += 1
 
         chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
 
         end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
 
+        lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
+        lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
 
-        lastprev_subfam2: str = SubfamSeqs[subfam_index2][begin_node2 - 1]
-        lastprev_chrom2: str = ChromSeqs[subfam_index2][begin_node2 - 1]
-
-        subfam2: str = SubfamSeqs[subfam_index2][begin_node2:end_node2]
-        chrom2: str = ChromSeqs[subfam_index2][begin_node2:end_node2]
+        subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
+        chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
 
         align_score2: float = 0.0
         # if whole alignment is padding - don't run CalcScore
-        if end_node2 >= Starts[subfam_index2] - StartAll and begin_node0 <= Stops[subfam_index2] - StartAll:
-            align_score2 = CalcScore(GapExt, GapInit, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
-                                                SubMatrix)
+        if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
+            align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
+                                                sub_matrix)
+            # print(subfam2, chrom2)
+            # print(begin_node2, end_node2)
 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
@@ -2041,7 +2046,7 @@ if __name__ == "__main__":
         NodeConfidence.clear()
 
         # initializes and fills node confidence matrix
-        NodeConfidence = FillNodeConfidence(NumNodes, ChunkSize, Lamb, infile_prior_counts, NonEmptyColumns, ChangesPosition, Subfams, SubfamCounts, AlignMatrix)
+        NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
 
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
