@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Union
 import time
 import os
 import numpy as np
+import json
 
 from polyA.load_alignments import load_alignments
 
@@ -1238,26 +1239,90 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
 
-    for node_index in range(nodes-1):
+    #holds all chrom seqs and the offset needed to get to the correct position in the chrom
+    #seq - remember gaps in chrom seq are skipped over for matrix position
+    chrom_seq_offset: Dict[int, int] = {}
+
+    #first node
+    begin_node0: int = columns[changes_position[0]]
+
+    for subfam_index0 in range(1, len(subfams)):
+
+        count: int = 0
+        for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
+            if ChromSeqs[subfam_index0][i] == '-':
+                count += 1
+
+        chrom_seq_offset[subfam_index0] = count
+
+        end_node0: int = columns[changes_position[1]] + count
+
+        subfam0: str = SubfamSeqs[subfam_index0][begin_node0:end_node0]
+        chrom0: str = ChromSeqs[subfam_index0][begin_node0:end_node0]
+
+        align_score0: float = 0.0
+        #if whole alignment is padding - don't run CalcScore
+        if end_node0 >= Starts[subfam_index0]-StartAll and begin_node0 <= Stops[subfam_index0] - StartAll:
+            align_score0 = CalcScore(GapExt, GapInit, subfam0, chrom0, '', '', SubMatrix)
+        node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+
+    #middle nodes
+    for node_index in range(1, nodes-1):
+
         for subfam_index in range(1, len(subfams)):
-            begin_node: int = columns[changes_position[node_index]]
-            end_node: int = columns[changes_position[node_index + 1]]
+
+            begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
+
+            count: int = 0
+            for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
+                if ChromSeqs[subfam_index][i] == '-':
+                    count += 1
+
+            chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
+
+            end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
+
+            lastprev_subfam: str = SubfamSeqs[subfam_index][begin_node-1]
+            lastprev_chrom: str = ChromSeqs[subfam_index][begin_node - 1]
+            subfam: str = SubfamSeqs[subfam_index][begin_node:end_node]
+            chrom: str = ChromSeqs[subfam_index][begin_node:end_node]
+
             align_score: float = 0.0
-            for col in range(begin_node, end_node):
-                if (subfam_index, col) in align_matrix:
-                    align_score += align_matrix[subfam_index, col]
-            node_confidence_temp[subfam_index * nodes + node_index] = align_score / chunk_size
+            # if whole alignment is padding - don't run CalcScore
+            if end_node >= Starts[subfam_index] - StartAll and begin_node <= Stops[subfam_index] - StartAll:
+                align_score = CalcScore(GapExt, GapInit, subfam, chrom, lastprev_subfam, lastprev_chrom, SubMatrix)
+
+            node_confidence_temp[subfam_index * nodes + node_index] = align_score
+
 
     # does last node
     for subfam_index2 in range(1, len(subfams)):
-        begin_node2: int = columns[changes_position[-2]]
-        end_node2: int = columns[changes_position[-1] - 1]
+        begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
 
-        align_score: float = 0.0
-        for col in range(begin_node2, end_node2):
-            if (subfam_index2, col) in align_matrix:
-                align_score += align_matrix[subfam_index2, col]
-        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score / chunk_size
+        count: int = 0
+        for i in range(begin_node2,
+                       begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
+            if ChromSeqs[subfam_index2][i] == '-':
+                count += 1
+
+        chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
+
+        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
+
+
+        lastprev_subfam2: str = SubfamSeqs[subfam_index2][begin_node2 - 1]
+        lastprev_chrom2: str = ChromSeqs[subfam_index2][begin_node2 - 1]
+
+        subfam2: str = SubfamSeqs[subfam_index2][begin_node2:end_node2]
+        chrom2: str = ChromSeqs[subfam_index2][begin_node2:end_node2]
+
+        align_score2: float = 0.0
+        # if whole alignment is padding - don't run CalcScore
+        if end_node2 >= Starts[subfam_index2] - StartAll and begin_node0 <= Stops[subfam_index2] - StartAll:
+            align_score2 = CalcScore(GapExt, GapInit, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
+                                                SubMatrix)
+
+        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
 
     # reuse same matrix and compute confidence scores for the nodes
@@ -1285,8 +1350,7 @@ def FillNodeConfidence(nodes: int, chunk_size: int, lamb: float, infilee: str, c
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
 
-    # print("FillNodeConfidence", time.time() - time1)
-
+    # print("node confidence", time.time() - time1)
     return node_confidence
 
 
@@ -1387,7 +1451,7 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
     # print("FillPathGraph", time.time()- time1)
-    # exit()
+
     return path_graph
 
 
@@ -1526,7 +1590,7 @@ def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str],
             stdout.write("\n")
 
 
-def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, changes_orig: List[str], changes_position_orig: List[int],
+def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str, chrom_start: int, changes_orig: List[str], changes_position_orig: List[int],
                     columns_orig: List[int], consensus_lengths: Dict[str, int],
                     strand_matrix_collapse: Dict[Tuple[str, int], str],
                     consensus_matrix_collapse: Dict[Tuple[str, int], int]):
@@ -1544,10 +1608,16 @@ def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, 
 
     used: List[int] = [1] * length  # wont print out the results of the same thing twice
 
+    json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
+
     with open(outfile, 'w') as out:
 
         i = 0
         while i < length:
+
+            sub_id: int = 0
+            json_dict_subid: Dict[str, Dict[str, float]] = {}
+
             if changes_orig[i] != 'skip' and used[i]:
                 subfam: str = changes_orig[i]
                 strand: str = strand_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]]
@@ -1576,6 +1646,16 @@ def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, 
 
                 block_count: int = 3
                 id += 1
+
+                json_dict_subfam_i: Dict[str, float] = {}
+
+                for subfam_i in range(1, len(Subfams)):
+                    subfamm = Subfams[subfam_i]
+                    if NodeConfidenceOrig[subfamm, i] > 0.001:
+                        json_dict_subfam_i[subfamm] = NodeConfidenceOrig[subfamm, i]
+
+                json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(json_dict_subfam_i.items(), key=lambda x: x[1], reverse=True)
+                sub_id += 1
 
                 block_start: List[str] = []
                 block_size: List[str] = []
@@ -1620,7 +1700,20 @@ def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, 
                             block_count += 2
 
                             used[j] = 0
+
+                            json_dict_subfam_j: Dict[str, float] = {}
+
+                            for subfam_i in range(1, len(Subfams)):
+                                subfamm = Subfams[subfam_i]
+                                if NodeConfidenceOrig[subfamm, j] > 0.001:
+                                    json_dict_subfam_j[subfamm] = NodeConfidenceOrig[subfamm, j]
+
+                            json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(json_dict_subfam_j.items(), key=lambda x: x[1], reverse=True)
+                            sub_id += 1
+
                     j += 1
+
+                json_dict_id[str(id)] = json_dict_subid
 
                 out.write("000 " + chrom + " " + str(feature_start) + " " + str(
                     feature_stop) + " " + subfam + " 0 " + strand + " " + str(align_start) + " " + str(
@@ -1630,6 +1723,11 @@ def PrintResultsViz(start_all: int, outfile: str, chrom: str, chrom_start: int, 
 
             used[i] = 0
             i += 1
+
+    #prints json file with confidence values for each annotation
+    with open(outfile_json, 'w') as out_json:
+        out_json.write(json.dumps(json_dict_id))
+
 
 
 # -----------------------------------------------------------------------------------#
@@ -1717,6 +1815,8 @@ if __name__ == "__main__":
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
     printSeqPos = "--seqpos" in opts
+
+    outfile_conf = outfile_viz + ".json"
 
     if help:
         print(helpMessage)
@@ -1816,6 +1916,7 @@ if __name__ == "__main__":
     # for graph/node part
     NumNodes: int = 0
     NodeConfidence: Dict[Tuple[str, int], float] = {}
+    NodeConfidenceOrig: Dict[Tuple[str, int], float] = {}
     PathGraph: List[int] = []
     total: int = 0
     loop: int = 1
@@ -1942,6 +2043,9 @@ if __name__ == "__main__":
         # initializes and fills node confidence matrix
         NodeConfidence = FillNodeConfidence(NumNodes, ChunkSize, Lamb, infile_prior_counts, NonEmptyColumns, ChangesPosition, Subfams, SubfamCounts, AlignMatrix)
 
+        if count == 1:
+            NodeConfidenceOrig = NodeConfidence.copy()
+
         PathGraph.clear()
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
                                   ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence)
@@ -1993,9 +2097,9 @@ if __name__ == "__main__":
         PrintResultsChrom(StartAll, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
     if outfile_viz:
-        PrintResultsViz(StartAll, outfile_viz, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
+        PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse)
 
     # print("print results", time.time() - time1)
 
-    print("ALL", time.time()-time2)
+    # print("ALL", time.time()-time2)
