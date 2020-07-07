@@ -16,8 +16,8 @@ from polyA.load_alignments import load_alignments
 # -----------------------------------------------------------------------------------#
 
 
-def PrintMatrixHashCollapse(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[str, int], Union[float, int, str]],
-                            subfams_collapse: Dict[str, int]) -> None:
+def PrintMatrixSupport(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[int, int], float],
+                            subfams_collapse: List[str]) -> None:
     """
     prints support matrix to outfile for heatmap
     """
@@ -33,30 +33,17 @@ def PrintMatrixHashCollapse(num_col: int, start_all: int, chrom_start: int, outf
             j += 1
         out.write("\n")
 
-        # Subfams_collapse is not ordered, so prints the skip state first
-        out.write("skip\t")
-        j: int = 0
-        while j < num_col:
-            if ("skip", j) in matrix:
-                out.write(str(matrix["skip", j]))
-            else:
-                out.write(f"{-inf}")
-            out.write("\t")
-            j += 1
-        out.write("\n")
-
-        for k in subfams_collapse:
-            if k != "skip":
-                out.write(f"{k}\t")
-                j: int = 0
-                while j < num_col:
-                    if (k, j) in matrix:
-                        out.write(str(matrix[k, j]))
-                    else:
-                        out.write(f"{-inf}")
-                    out.write("\t")
-                    j += 1
-                out.write("\n")
+        for k in range(len(subfams_collapse)):
+            out.write(f"{subfams_collapse[k]}\t")
+            j: int = 0
+            while j < num_col:
+                if (k, j) in matrix:
+                    out.write(str(matrix[k, j]))
+                else:
+                    out.write(f"{-inf}")
+                out.write("\t")
+                j += 1
+            out.write("\n")
 
 
 def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
@@ -74,13 +61,13 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
 
     i: int = 0
     while i < num_row:
-        stdout.write(f"{subfams[i]:<20s}\t")
+        stdout.write(f"{subfams[i]}\t")
         j: int = 0
         while j < num_col:
             if (i, j) in matrix:
                 stdout.write(f"{matrix[i, j]}")
             else:
-                stdout.write(f"{-inf:5.3g}")
+                stdout.write(f"{-inf}")
             stdout.write("\t")
             j += 1
         stdout.write("\n")
@@ -845,9 +832,9 @@ Dict[Tuple[int, int], float]:
 
 def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
                      support_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]) -> \
-        Tuple[int, Dict[Tuple[str, int], int], Dict[Tuple[str, int], str], Dict[Tuple[str, int], float], Dict[str, int],
+        Tuple[int, Dict[Tuple[int, int], int], Dict[Tuple[int, int], str], Dict[Tuple[int, int], float], List[str],
               Dict[
-                  int, List[str]]]:
+                  int, List[int]], Dict[str, int]]:
     """
     collapse and combine rows that are the same subfam
     also creates a bookkeeping dict that has all the cols as keys and their values
@@ -902,17 +889,26 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     # time1: float = time.time()
 
-    consensus_matrix_collapse: Dict[Tuple[str, int], int] = {}
-    strand_matrix_collapse: Dict[Tuple[str, int], str] = {}
-    support_matrix_collapse: Dict[Tuple[str, int], float] = {}
-    subfams_collapse: Dict[str, int] = {}
-    active_cells_collapse: Dict[int, List[str]] = {}
+    consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
+    strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
+    support_matrix_collapse: Dict[Tuple[int, int], float] = {}
+    subfams_collapse_temp: Dict[str, int] = {}
+    subfams_collapse: List[str] = []
+    active_cells_collapse: Dict[int, List[int]] = {}
+
+    #assigns row num to subfams strings
+    count_i: int = 0
+    for i in range(row_num):
+        if subfams[i] not in subfams_collapse_temp:
+            subfams_collapse_temp[subfams[i]] = count_i
+            subfams_collapse.append(subfams[i])
+            count_i += 1
 
     for col in range(len(columns)):
         col_index: int = columns[col]
         dup_max_support: Dict[str, float] = {}
 
-        active_cols: List[str] = []
+        active_cols: List[int] = []
         active_cells_collapse[col_index] = active_cols
 
         # find max support score for collapsed row_nums and use that row for collapsed matrices
@@ -921,35 +917,32 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
             if (subfams[row_index]) in dup_max_support:
                 if support_matrix[row_index, col_index] > dup_max_support[subfams[row_index]]:
                     dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                    consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[
+                    consensus_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = consensus_matrix[
                             row_index, col_index]
-                    strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
-                    support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
+                    strand_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = strands[row_index]
+                    support_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = support_matrix[row_index, col_index]
             else:
                 dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                consensus_matrix_collapse[subfams[row_index], col_index] = consensus_matrix[row_index, col_index]
-                strand_matrix_collapse[subfams[row_index], col_index] = strands[row_index]
-                support_matrix_collapse[subfams[row_index], col_index] = support_matrix[row_index, col_index]
-                active_cells_collapse[col_index].append(subfams[row_index])
-
-    for i in range(row_num):
-        subfams_collapse[subfams[i]] = 0
+                consensus_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = consensus_matrix[row_index, col_index]
+                strand_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = strands[row_index]
+                support_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = support_matrix[row_index, col_index]
+                active_cells_collapse[col_index].append(subfams_collapse_temp[subfams[row_index]])
 
     # update var row_nums after collapse
     row_num_update: int = len(subfams_collapse)
 
     # print("CollapseMatrices", time.time() - time1)
 
-    return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse
+    return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse, subfams_collapse_temp
 
 #FIXME - can we make this faster? numpy arrays instead of hashes?
 def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
-                          columns: List[int], subfams_collapse: Dict[str, int],
-                          active_cells_collapse: Dict[int, List[str]],
-                          support_matrix_collapse: Dict[Tuple[str, int], float],
-                          strand_matrix_collapse: Dict[Tuple[str, int], str],
-                          consensus_matrix_collapse: Dict[Tuple[str, int], int]) -> Tuple[
-    Dict[Tuple[str, int], float], Dict[Tuple[str, int], str], Dict[Tuple[str, int], int]]:
+                          columns: List[int], subfams_collapse: List[str],
+                          active_cells_collapse: Dict[int, List[int]],
+                          support_matrix_collapse: Dict[Tuple[int, int], float],
+                          strand_matrix_collapse: Dict[Tuple[int, int], str],
+                          consensus_matrix_collapse: Dict[Tuple[int, int], int]) -> Tuple[
+    Dict[Tuple[int, int], float], Dict[Tuple[int, int], int], Dict[Tuple[int, int], int]]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
     the origin matrix for convenience.
@@ -994,12 +987,12 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
     time1: float = time.time()
 
-    prob_matrix: Dict[Tuple[str, int], float] = {}
-    origin_matrix: Dict[Tuple[str, int], str] = {}
-    same_subfam_change_matrix: Dict[Tuple[str, int], int] = {}
+    prob_matrix: Dict[Tuple[int, int], float] = {}
+    origin_matrix: Dict[Tuple[int, int], int] = {}
+    same_subfam_change_matrix: Dict[Tuple[int, int], int] = {}
 
     # fill first col of prob_matrix with 0s
-    for k in subfams_collapse:
+    for k in range(len(subfams_collapse)):
         prob_matrix[k, columns[0]] = 0
 
     for columns_index in range(1, len(columns)):
@@ -1008,7 +1001,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
         for row_index in active_cells_collapse[curr_column]:
             max: float = -inf
-            max_index: str = ''
+            max_index: int = 0
             support_log: float = log(support_matrix_collapse[row_index, curr_column])
             same_subfam_change: int = 0  # if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()
 
@@ -1021,7 +1014,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
                 if prev_row_index == row_index:  # staying in same row
                     prob = same_prob
-                    if prev_row_index == 'skip':  # staying in skip
+                    if prev_row_index == 0:  # staying in skip
                         prob = same_prob_skip
 
                     # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
@@ -1043,7 +1036,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
                 else:  # jumping rows
                     prob = change_prob
-                    if prev_row_index == 'skip' or row_index == 'skip':  # jumping in or out of skip
+                    if prev_row_index == 0 or row_index == 0:  # jumping in or out of skip
                         prob = change_prob_skip
 
                 score = score + prob
@@ -1065,9 +1058,9 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
 
 def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str],
-            changes_position_orig: List[int], columns_orig: List[int], subfams: List[str],
-            active_cells_collapse: Dict[int, List[str]], prob_matrix: Dict[Tuple[str, int], float],
-            origin_matrix: Dict[Tuple[str, int], str], same_subfam_change_matrix: Dict[Tuple[str, int], int]) -> Tuple[
+            changes_position_orig: List[int], columns_orig: List[int], subfams_collapse: List[str],
+            active_cells_collapse: Dict[int, List[int]], prob_matrix: Dict[Tuple[int, int], float],
+            origin_matrix: Dict[Tuple[int, int], int], same_subfam_change_matrix: Dict[Tuple[int, int], int]) -> Tuple[
     int, List[int], List[str]]:
     """
     using origin matrix, back traces through the 2D array to get the subfam path (most probable
@@ -1116,7 +1109,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     time1: float = time.time()
 
     maxxx: float = -inf
-    max_row_index: str = ''
+    max_row_index: int = 0
 
     changes_position: List[int] = []
     changes: List[str] = []
@@ -1126,7 +1119,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
             maxxx = prob_matrix[i, num_col - 1]
             max_row_index = i
 
-    prev_row_index: str = origin_matrix[max_row_index, num_col - 1]
+    prev_row_index: int = origin_matrix[max_row_index, num_col - 1]
 
     ids[columns[-1]] = temp_id
 
@@ -1143,23 +1136,23 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
         # updates the original node labels if they change when being stitched
         for i in range(len(changes_position_orig) - 1):
             if columns_orig[changes_position_orig[i]] == prev_column:
-                changes_orig[i] = origin_matrix[prev_row_index, curr_column]
+                changes_orig[i] = subfams_collapse[origin_matrix[prev_row_index, curr_column]]
 
         if prev_row_index != origin_matrix[prev_row_index, prev_column]:
             temp_id += 1234
             changes_position.append(columns_index - 1)
-            changes.append(prev_row_index)
+            changes.append(subfams_collapse[prev_row_index])
         else:
             if (prev_row_index, prev_column) in same_subfam_change_matrix:
                 temp_id += 1234
                 changes_position.append(columns_index - 1)
-                changes.append(prev_row_index)
+                changes.append(subfams_collapse[prev_row_index])
 
         prev_row_index = origin_matrix[prev_row_index, prev_column]
 
     ids[columns[0]] = temp_id
     changes_position.append(0)
-    changes.append(prev_row_index)
+    changes.append(subfams_collapse[prev_row_index])
 
     changes.reverse()
     changes_position.reverse()
@@ -1324,8 +1317,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
             align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
                                                 sub_matrix)
-            # print(subfam2, chrom2)
-            # print(begin_node2, end_node2)
 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
@@ -1356,6 +1347,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                     row_index3 * nodes + node_index5]
 
     # print("node confidence", time.time() - time1)
+
     return node_confidence
 
 
@@ -1376,9 +1368,8 @@ def PrintPathGraph(nodes: int, changes: List[str], path_graph: List[int]) -> Non
     stdout.write("\n")
 
 
-def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_position: List[int],
-                  subfams_collapse: Dict[str, int], consensus_matrix_collapse: Dict[Tuple[str, int], int],
-                  strand_matrix_collapse: Dict[Tuple[str, int], str], node_confidence: Dict[Tuple[str, int], float]) -> \
+def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_position: List[int], consensus_matrix_collapse: Dict[Tuple[int, int], int],
+                  strand_matrix_collapse: Dict[Tuple[int, int], str], node_confidence: Dict[Tuple[str, int], float], subfams_collapse_index: Dict[str, int]) -> \
         List[int]:
     """
     finds alternative paths through the nodes - used for stitching to find nested elements
@@ -1424,8 +1415,8 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
 
     for sink_node_index in range(2, nodes):  # don't need to add edges between first 2 nodes because already there
         sink_subfam: str = str(changes[sink_node_index])
-        sink_subfam_start: int = consensus_matrix_collapse[sink_subfam, columns[changes_position[sink_node_index]]]
-        sink_strand: str = strand_matrix_collapse[sink_subfam, columns[changes_position[sink_node_index]]]
+        sink_subfam_start: int = consensus_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
+        sink_strand: str = strand_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
 
         if sink_subfam != "skip":  # don't want to add alternative edges to skip nodes
             for source_node_index in range(sink_node_index - 1):
@@ -1435,12 +1426,12 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                 sinkConf: float = node_confidence[
                     source_subfam, sink_node_index]  # source subfam confidence in sink node
 
-                if (source_subfam, columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
+                if (subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
 
                     source_subfam_stop = consensus_matrix_collapse[
-                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                        subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]]
                     source_strand = strand_matrix_collapse[
-                        source_subfam, columns[changes_position[source_node_index + 1] - 1]]
+                        subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]]
 
                     # adds in edge if the subfam of the sink is at the source node and if it's
                     # confidence >= 30%, and if the source is before the sink in the consensus sequence
@@ -1597,8 +1588,8 @@ def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str],
 
 def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str, chrom_start: int, changes_orig: List[str], changes_position_orig: List[int],
                     columns_orig: List[int], consensus_lengths: Dict[str, int],
-                    strand_matrix_collapse: Dict[Tuple[str, int], str],
-                    consensus_matrix_collapse: Dict[Tuple[str, int], int]):
+                    strand_matrix_collapse: Dict[Tuple[int, int], str],
+                    consensus_matrix_collapse: Dict[Tuple[int, int], int], subfams_collapse_index: Dict[str, int]):
     """
     prints the results in the proper format to input into the SODA visualization tool
 
@@ -1625,7 +1616,7 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
             if changes_orig[i] != 'skip' and used[i]:
                 subfam: str = changes_orig[i]
-                strand: str = strand_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]]
+                strand: str = strand_matrix_collapse[subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]]
                 consensus_start: int
                 consensus_stop: int
 
@@ -1634,13 +1625,13 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
                 if strand == "-":
                     left_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                        subfam, columns_orig[changes_position_orig[i]]]
+                        subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]]
                     right_flank = consensus_matrix_collapse[
-                                      changes_orig[i], columns_orig[changes_position_orig[i + 1] - 1]] - 1
+                                      subfams_collapse_index[subfam], columns_orig[changes_position_orig[i + 1] - 1]] - 1
                 else:
-                    left_flank = consensus_matrix_collapse[subfam, columns_orig[changes_position_orig[i]]] - 1
+                    left_flank = consensus_matrix_collapse[subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]] - 1
                     right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                        subfam, columns_orig[changes_position_orig[i + 1] - 1]]
+                        subfams_collapse_index[subfam], columns_orig[changes_position_orig[i + 1] - 1]]
 
                 align_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all)
                 feature_start: int = align_start - left_flank
@@ -1682,10 +1673,10 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
                             if strand == "-":
                                 right_flank = consensus_matrix_collapse[
-                                                  changes_orig[j], columns_orig[changes_position_orig[j + 1] - 1]] - 1
+                                                  subfams_collapse_index[changes_orig[j]], columns_orig[changes_position_orig[j + 1] - 1]] - 1
                             else:
                                 right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                                    subfam, columns_orig[changes_position_orig[j + 1] - 1]]
+                                    subfams_collapse_index[subfam], columns_orig[changes_position_orig[j + 1] - 1]]
 
                             del block_size[-1]
                             block_size.append("0")
@@ -1896,10 +1887,10 @@ if __name__ == "__main__":
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
-    ProbMatrix: Dict[Tuple[str, int], float] = {}
-    OriginMatrix: Dict[Tuple[str, int], str] = {}
+    ProbMatrix: Dict[Tuple[int, int], float] = {}
+    OriginMatrix: Dict[Tuple[int, int], int] = {}
     ConsensusMatrix: Dict[Tuple[int, int], int] = {}
-    SameSubfamChangeMatrix: Dict[Tuple[str, int], int] = {}
+    SameSubfamChangeMatrix: Dict[Tuple[int, int], int] = {}
 
     NonEmptyColumns: List[int] = []
     ActiveCells: Dict[int, List[int]] = {}
@@ -1912,11 +1903,18 @@ if __name__ == "__main__":
     ChangesPositionOrig: List[int] = []
     NonEmptyColumnsOrig: List[int] = []
 
-    SupportMatrixCollapse: Dict[Tuple[str, int], int] = {}
-    ActiveCellsCollapse: Dict[int, List[str]] = {}
-    SubfamsCollapse: Dict[str, int] = {}
-    ConsensusMatrixCollapse: Dict[Tuple[str, int], int] = {}
-    StrandMatrixCollapse: Dict[Tuple[str, int], str] = {}
+    # SupportMatrixCollapse: Dict[Tuple[str, int], int] = {}
+    # ActiveCellsCollapse: Dict[int, List[str]] = {}
+    # SubfamsCollapse: Dict[str, int] = {}
+    # ConsensusMatrixCollapse: Dict[Tuple[str, int], int] = {}
+    # StrandMatrixCollapse: Dict[Tuple[str, int], str] = {}
+
+    SupportMatrixCollapse: Dict[Tuple[int, int], int] = {}
+    ActiveCellsCollapse: Dict[int, List[int]] = {}
+    SubfamsCollapse: List[str] = []
+    SubfamsCollapseIndex: Dict[str, int] = {}
+    ConsensusMatrixCollapse: Dict[Tuple[int, int], int] = {}
+    StrandMatrixCollapse: Dict[Tuple[int, int], str] = {}
 
     # for graph/node part
     NumNodes: int = 0
@@ -1998,10 +1996,10 @@ if __name__ == "__main__":
     SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
-     ActiveCellsCollapse) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
+     ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
     if outfile_heatmap:
-        PrintMatrixHashCollapse(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
+        PrintMatrixSupport(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
 
     (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
                                                                                ChangeProbSkip,
@@ -2014,7 +2012,7 @@ if __name__ == "__main__":
     IDs = [0] * cols
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                             NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
+                                             NonEmptyColumnsOrig, SubfamsCollapse, ActiveCellsCollapse, ProbMatrix,
                                              OriginMatrix, SameSubfamChangeMatrix)
 
     # keep the original annotation for reporting results
@@ -2052,8 +2050,8 @@ if __name__ == "__main__":
             NodeConfidenceOrig = NodeConfidence.copy()
 
         PathGraph.clear()
-        PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition, SubfamsCollapse,
-                                  ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence)
+        PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
+                                  ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
 
         # test to see if there nodes in the graph that have more that one incoming or outgoing edge,
         # if so keep looping, if not break out of the loop
@@ -2088,7 +2086,7 @@ if __name__ == "__main__":
         ChangesPosition.clear()
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                                 NonEmptyColumnsOrig, Subfams, ActiveCellsCollapse, ProbMatrix,
+                                                 NonEmptyColumnsOrig, SubfamsCollapse, ActiveCellsCollapse, ProbMatrix,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
     # print("graph stitching", time.time() - time1)
@@ -2103,8 +2101,8 @@ if __name__ == "__main__":
 
     if outfile_viz:
         PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
-                        StrandMatrixCollapse, ConsensusMatrixCollapse)
+                        StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
 
     # print("print results", time.time() - time1)
 
-    # print("ALL", time.time()-time2)
+    print("ALL", time.time()-time2)
