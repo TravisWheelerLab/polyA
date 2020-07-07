@@ -871,19 +871,21 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     >>> strandss = ["+", "-", "-"]
     >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
     >>> con_mat = {(0, 0): 0, (0, 2): 1, (0, 3): 2, (1, 0): 0, (1, 2): 1, (1, 3): 2, (2, 0): 0, (2, 2): 3, (2, 3): 10}
-    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col) = CollapseMatrices(3, non_cols, subs, strandss, active, sup_mat, con_mat)
+    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = CollapseMatrices(3, non_cols, subs, strandss, active, sup_mat, con_mat)
     >>> r
     2
     >>> con_mat_col
-    {('s1', 0): 0, ('s2', 0): 0, ('s1', 2): 1, ('s2', 2): 1, ('s1', 3): 10, ('s2', 3): 2}
+    {(0, 0): 0, (1, 0): 0, (0, 2): 1, (1, 2): 1, (0, 3): 10, (1, 3): 2}
     >>> strand_mat_col
-    {('s1', 0): '+', ('s2', 0): '-', ('s1', 2): '+', ('s2', 2): '-', ('s1', 3): '-', ('s2', 3): '-'}
+    {(0, 0): '+', (1, 0): '-', (0, 2): '+', (1, 2): '-', (0, 3): '-', (1, 3): '-'}
     >>> sup_mat_col
-    {('s1', 0): 0.5, ('s2', 0): 0.2, ('s1', 2): 0.5, ('s2', 2): 0.2, ('s1', 3): 0.9, ('s2', 3): 0.2}
+    {(0, 0): 0.5, (1, 0): 0.2, (0, 2): 0.5, (1, 2): 0.2, (0, 3): 0.9, (1, 3): 0.2}
     >>> sub_col
-    {'s1': 0, 's2': 0}
+    ['s1', 's2']
     >>> active_col
-    {0: ['s1', 's2'], 2: ['s1', 's2'], 3: ['s1', 's2']}
+    {0: [0, 1], 2: [0, 1], 3: [0, 1]}
+    >>> sub_col_ind
+    {'s1': 0, 's2': 1}
 
     """
 
@@ -1091,9 +1093,9 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     >>> non_cols = [0, 1, 2, 3]
     >>> idss = [0, 0, 0, 0]
     >>> subs = ["s1", "s2"]
-    >>> active_col = {0: ['s1', 's2'], 1: ['s1', 's2'], 2: ['s1', 's2'], 3: ['s1', 's2']}
-    >>> prob_mat = {('s1', 0): 0, ('s2', 0): 0, ('s1', 1): 0, ('s2', 1): 0, ('s1', 2): 1, ('s2', 2): 1, ('s1', 3): -100, ('s2', 3): -10}
-    >>> orig_mat = {('s1', 0): "s1", ('s2', 0): "s2", ('s1', 1): "s1", ('s2', 1): "s1", ('s1', 2): "s1", ('s2', 2): "s1", ('s1', 3): "s1", ('s2', 3): "s2"}
+    >>> active_col = {0: [0, 1], 1: [0, 1], 2: [0, 1], 3: [0, 1]}
+    >>> prob_mat = {(0, 0): 0, (1, 0): 0, (0, 1): 0, (1, 1): 0, (0, 2): 1, (1, 2): 1, (0, 3): -100, (1, 3): -10}
+    >>> orig_mat = {(0, 0): 0, (1, 0): 1, (0, 1): 0, (1, 1): 0, (0, 2): 0, (1, 2): 0, (0, 3): 0, (1, 3): 1}
     >>> same_sub_mat = {}
     >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, [], [], [], subs, active_col, prob_mat, orig_mat, same_sub_mat)
     >>> temp_idd
@@ -1396,11 +1398,11 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     >>> changess = ["s1", "s2", "s1"]
     >>> changes_pos = [0, 3, 6, 10]
-    >>> subs_col = {"s1": 0, "s2": 0}
-    >>> con_mat_col = {('s1', 0): 0, ('s1', 1): 1, ('s1', 2): 2, ('s1', 3): 3, ('s1', 6): 6, ('s1', 7): 7, ('s1', 8): 8, ('s1', 9): 9, ('s2', 3): 1, ('s2', 4): 2, ('s2', 5): 3, ('s2', 6): 4}
-    >>> strand_mat_col = {('s1', 0): '+', ('s1', 1): '+', ('s1', 2): '+', ('s1', 3): '+', ('s1', 6): '+', ('s1', 7): '+', ('s1', 8): '+', ('s1', 9): '+', ('s2', 3): '-', ('s2', 4): '-', ('s2', 5): '-', ('s2', 6): '-'}
-    >>> node_conf = {('s1', 0): 0.9, ('s1', 1): 0.5, ('s1', 2): 0.9, ('s2', 0): 0.1, ('s2', 1): 0.5, ('s2', 2): 0.1}
-    >>> FillPathGraph(3, non_cols, changess, changes_pos, subs_col, con_mat_col, strand_mat_col, node_conf)
+    >>> con_mat_col = {(0, 0): 0, (0, 1): 1, (0, 2): 2, (0, 3): 3, (0, 6): 6, (0, 7): 7, (0, 8): 8, (0, 9): 9, (1, 3): 1, (1, 4): 2, (1, 5): 3, (1, 6): 4}
+    >>> strand_mat_col = {(0, 0): '+', (0, 1): '+', (0, 2): '+', (0, 3): '+', (0, 6): '+', (0, 7): '+', (0, 8): '+', (0, 9): '+', (1, 3): '-', (1, 4): '-', (1, 5): '-', (1, 6): '-'}
+    >>> node_conf = {('s1', 0): 0.9, ('s1', 1): 0.5, ('s1', 2): 0.9, ('s1', 0): 0.1, ('s2', 1): 0.5, ('s2', 2): 0.1}
+    >>> sub_col_ind = {'s1': 0, 's2': 1}
+    >>> FillPathGraph(3, non_cols, changess, changes_pos, con_mat_col, strand_mat_col, node_conf, sub_col_ind)
     [0, 1, 1, 0, 0, 1, 0, 0, 0]
     """
 
