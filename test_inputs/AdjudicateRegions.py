@@ -298,11 +298,14 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     {(1, 2): 31.0, (1, 3): 31.0, (1, 4): 31.0, (1, 5): 31.0, (1, 6): 31.0, (1, 7): 31.0, (1, 8): 31.0, (1, 9): 31.0, (1, 10): 31.0, (1, 11): 31.0, (1, 12): 31.0, (1, 13): 31.0, (1, 14): 31.0, (1, 15): 31.0, (1, 16): 31.0, (1, 17): 31.0, (1, 18): 31.0, (1, 19): 31.0, (1, 20): 31.0, (1, 21): 31.0, (1, 22): 31.0, (1, 23): 31.0, (1, 24): 29.0, (1, 25): 28.933333333333334, (1, 26): 28.862068965517242, (1, 27): 28.78571428571429, (1, 28): 28.703703703703702, (1, 29): 28.615384615384617, (1, 30): 28.52, (1, 31): 28.416666666666664, (1, 32): 28.304347826086953, (1, 33): 28.18181818181818, (1, 34): 28.047619047619047, (1, 35): 27.900000000000002, (1, 36): 27.736842105263158, (1, 37): 27.555555555555554, (1, 38): 27.352941176470587, (1, 39): 27.125, (2, 0): 27.125, (2, 1): 27.352941176470587, (2, 2): 27.555555555555557, (2, 3): 27.736842105263158, (2, 4): 27.9, (2, 5): 28.047619047619047, (2, 6): 28.181818181818183, (2, 7): 28.304347826086957, (2, 8): 28.416666666666668, (2, 9): 28.52, (2, 10): 28.615384615384617, (2, 11): 28.703703703703702, (2, 12): 28.785714285714285, (2, 13): 28.862068965517242, (2, 14): 28.933333333333334, (2, 15): 29.0, (2, 16): 31.0, (2, 17): 31.0, (2, 18): 31.0, (2, 19): 31.0, (2, 20): 31.0, (2, 21): 31.0, (2, 22): 5.0, (2, 23): 0.0, (2, 24): 0.0, (2, 25): 0.0, (2, 26): 0.0, (2, 27): 0.0, (2, 28): 0.0, (2, 29): 0.0, (2, 30): 0.0, (2, 31): 0.0, (2, 32): 0.0, (2, 33): 0.0, (2, 34): 0.0, (2, 35): 0.0, (2, 36): 0.0, (2, 37): 0.0, (2, 38): 0.0, (2, 39): 0.0, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     num_cols: int = 0
 
     align_matrix: Dict[Tuple[int, int], float] = {}
+    # align_matrix: List[float] = []
+    # row_starts: List[int] = []
+    # column: List[int] = []
 
     # chunks can't start on gaps and gaps don't count when getting to the 30 bps
     for i in range(1, len(chroms)):
@@ -329,7 +332,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             temp_index += 1
 
         offset: int = temp_index - seq_index
-        prev_offset: int = offset
 
         # grabs first chunk - here seq_index = pos of first non '.' char
         chrom_slice: str = chrom_seq[seq_index:seq_index + offset]
@@ -339,6 +341,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         align_score: float = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
         align_matrix[i, col_index - k] = align_score * chunk_size / (
                     chunk_size - k)  # already to scale so don't need to * 31 and / 31
+        # align_matrix.append(align_score * chunk_size / (chunk_size - k))
+        # column.append(col_index - k)
 
         for k in range(int((chunk_size - 1) / 2) - 1, -1, -1):
 
@@ -354,6 +358,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                         subfams[i][seq_index + offset] + chroms[i][seq_index + offset]]
 
                 align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
+                # align_matrix.append(align_score * chunk_size / (chunk_size - k))
+                # column.append(col_index - k)
 
                 offset += 1
             else:
@@ -367,7 +373,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                     temp_index += 1
 
                 offset = temp_index - seq_index
-                prev_offset = offset
 
                 chrom_slice: str = chrom_seq[seq_index:seq_index + offset]
                 subfam_slice: str = subfam_seq[seq_index:seq_index + offset]
@@ -375,6 +380,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                 align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, subfams[i][seq_index - 1],
                                         chroms[i][seq_index - 1], sub_matrix)
                 align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
+                # align_matrix.append(align_score * chunk_size / (chunk_size - k))
+                # column.append(col_index - k)
 
         col_index += 1
 
@@ -388,15 +395,15 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             if chrom_seq[seq_index + 1] == ".":
                 break
 
-            while temp_count < chunk_size:
-                if chrom_seq[temp_index + 1] != "-":
-                    temp_count += 1
-                temp_index += 1
+            if chrom_seq[seq_index + 1] != "-":  #skip over gap and not calc a score for the matrix
+                if chrom_seq[seq_index + offset] == '-' or chrom_seq[seq_index] == '-':  #if new gap introduced, or gets rid of old gap, recalc offset
+                    while temp_count < chunk_size:
+                        if chrom_seq[temp_index + 1] != "-":
+                            temp_count += 1
+                        temp_index += 1
 
-            offset = temp_index - seq_index
+                    offset = temp_index - seq_index
 
-            if chrom_seq[seq_index + 1] != "-":
-                if prev_offset != offset:  # there is a new gap, or a gap was removed from beginning
                     chrom_slice = chrom_seq[seq_index + 1:seq_index + offset + 1]
                     subfam_slice = subfam_seq[seq_index + 1:seq_index + offset + 1]
                     align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
@@ -446,11 +453,17 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
                 if align_score <= 0:
                     align_matrix[i, col_index] = 0.0
+                    # align_matrix.append(0.0)
+                    # column.append(col_index)
                 else:
                     align_matrix[i, col_index] = align_score / num_nucls * chunk_size
+                    # align_matrix.append(align_score / num_nucls * chunk_size)
+                    # column.append(col_index)
 
                 if align_score == -inf:
                     del align_matrix[i, col_index]
+                    # align_matrix.pop()
+                    # column.pop()
                     break
 
                 col_index += 1
@@ -462,11 +475,21 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         if num_cols < col_index:
             num_cols = col_index
 
+        # row_starts.append(len(align_matrix))
+
     # assigns skip states an alignment score
-    for j in range(num_cols):
+    for j in range(num_cols-1, -1, -1):
+        # align_matrix.insert(0,0)
+        # column.insert(0,j)
         align_matrix[0, j] = float(skip_align_score)
 
-    # print("FillAlignScoreMatrix", time.time() - time1)
+    # for i in range(len(row_starts)):
+    #     row_starts[i] += num_cols
+    #
+    # row_starts.insert(0, num_cols)
+    # row_starts.insert(0, 0)
+
+    print("FillAlignScoreMatrix", time.time() - time1)
     # print()
 
     return (num_cols, align_matrix)
@@ -588,12 +611,10 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
         i: int = 1
         active_rows: List[int] = []
         active_rows.append(0)
-        while i < num_rows:
+        for i in range(1, num_rows):
             if (i, j) in align_matrix:
                 active_rows.append(i)
                 empty = 0
-                # i = num_rows
-            i += 1
 
         if not empty:
             active_cells[j] = active_rows
@@ -753,35 +774,36 @@ Dict[Tuple[int, int], float]:
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
+    half_chunk: int = int((chunk_size - 1) / 2)
+
     #skip state
     for col in range(len(columns)):
         col_index: int = columns[col]
 
         summ: float = 0
         num_segments: int = 0
-        sum_index: int = col_index - int((chunk_size - 1) / 2)
 
-        while sum_index <= col_index + int((chunk_size - 1) / 2):
+        for sum_index in range(col_index - half_chunk, col_index + half_chunk + 1):
             if (0, sum_index) in confidence_matrix:
                 num_segments += 1
                 summ += confidence_matrix[0, sum_index]
-            sum_index += 1
 
         support_matrix[0, col_index] = summ / num_segments
-
 
     #rest of rows
     for row_index in range(1, row_num):
 
+        start: int = starts[row_index] - start_all
+        stop: int = stops[row_index] - start_all
         #first chunk_size/2
         left_index: int = 0
-        for col_index in range(starts[row_index] - start_all, starts[row_index] - start_all + int((chunk_size - 1) / 2)):
+        for col_index in range(start, starts[row_index] - start_all + half_chunk):
 
             summ: float = 0.0
             sum_index: int = col_index - left_index
             num_segments: int = 0
 
-            while sum_index <= col_index + int((chunk_size - 1) / 2):
+            while sum_index <= col_index + half_chunk:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
                 num_segments += 1
@@ -791,19 +813,19 @@ Dict[Tuple[int, int], float]:
 
         # middle part where num segments is chunk_size
         #calc first chunk_size average
-        col_index: int = (starts[row_index] - start_all + int((chunk_size - 1) / 2))
+        col_index: int = (start + half_chunk)
         summ: float = 0.0
-        sum_index: int = col_index - int((chunk_size - 1) / 2)
-        while sum_index <= col_index + int((chunk_size - 1) / 2):
+        sum_index: int = col_index - half_chunk
+        while sum_index <= col_index + half_chunk:
             summ += confidence_matrix[row_index, sum_index]
             sum_index += 1
 
         support_matrix[row_index, col_index] = summ / chunk_size
 
         #to get next bp average subtract previous confidence, add next confidence
-        for col_index in range((1+ starts[row_index] - start_all + int((chunk_size - 1) / 2)), (stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2)):
-            last_index: int = col_index - int((chunk_size - 1) / 2) - 1
-            next_index: int = col_index + int((chunk_size - 1) / 2)
+        for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
+            last_index: int = col_index - half_chunk - 1
+            next_index: int = col_index + half_chunk
 
             summ -= confidence_matrix[row_index, last_index]
             summ += confidence_matrix[row_index, next_index]
@@ -811,11 +833,11 @@ Dict[Tuple[int, int], float]:
             support_matrix[row_index, col_index] = summ / chunk_size
 
         # last chunk_size/2
-        right_index: int = int((chunk_size - 1) / 2)
-        for col_index in range((stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2), stops[row_index] - start_all + 1):
+        right_index: int = half_chunk
+        for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
 
             summ: float = 0.0
-            sum_index: int = col_index - int((chunk_size - 1) / 2)
+            sum_index: int = col_index - half_chunk
             num_segments: int = 0
 
             while sum_index < col_index + right_index:
@@ -826,7 +848,8 @@ Dict[Tuple[int, int], float]:
             support_matrix[row_index, col_index] = summ / num_segments
             right_index -= 1
 
-    # print("FillSupportMatrix", time.time() - time1)
+    print("FillSupportMatrix", time.time() - time1)
+    # exit()
     return support_matrix
 
 
@@ -989,31 +1012,45 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
     time1: float = time.time()
 
+    # time_total: float = 0.0
+
     prob_matrix: Dict[Tuple[int, int], float] = {}
     origin_matrix: Dict[Tuple[int, int], int] = {}
     same_subfam_change_matrix: Dict[Tuple[int, int], int] = {}
 
+    prev_col_list = []
     # fill first col of prob_matrix with 0s
-    for k in range(len(subfams_collapse)):
+    for k in active_cells_collapse[columns[0]]:
         prob_matrix[k, columns[0]] = 0
+        prev_col_list.append(0.0)
 
+    # print(active_cells_collapse[columns[0]])
     for columns_index in range(1, len(columns)):
         curr_column: int = columns[columns_index]
         prev_column: int = columns[columns_index - 1]
+
+        #speed up by storing previous column (that was just calculated) in a short list for quicker access
+        col_list = []
 
         for row_index in active_cells_collapse[curr_column]:
             max: float = -inf
             max_index: int = 0
             support_log: float = log(support_matrix_collapse[row_index, curr_column])
             same_subfam_change: int = 0  # if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()
-
             # row = prev_row_index
             # loop through all the rows in the previous column that have a value - active_cells_collapse
             # specifies which rows have a value for each column
-            for prev_row_index in active_cells_collapse[prev_column]:
-                score: float = support_log + prob_matrix[prev_row_index, prev_column]
-                prob: float = 0.0
 
+            temp_index: int = 0
+            for prev_row_index in active_cells_collapse[prev_column]:
+                # time_s = time.time()
+                #just this lookup in prob_matrix is 40% of the runtime of the whole function
+                score: float = support_log + prev_col_list[temp_index]#prob_matrix[prev_row_index, prev_column]
+                temp_index += 1
+                # time_total += time.time() - time_s
+                prob: float = 0.0
+                # time_s = time.time()
+                #this chunk is 35% of the runtime
                 if prev_row_index == row_index:  # staying in same row
                     prob = same_prob
                     if prev_row_index == 0:  # staying in skip
@@ -1041,21 +1078,28 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                     if prev_row_index == 0 or row_index == 0:  # jumping in or out of skip
                         prob = change_prob_skip
 
+                # time_total += time.time() - time_s
+
                 score = score + prob
 
                 if score > max:
                     max = score
                     max_index = prev_row_index
 
+            col_list.append(max)
             prob_matrix[row_index, curr_column] = max
             origin_matrix[row_index, curr_column] = max_index
 
             if same_subfam_change == 1 and max_index == row_index:
                 same_subfam_change_matrix[row_index, curr_column] = 1
 
+        prev_col_list = col_list.copy()
 
-    # print("FillProbabilityMatrix", time.time() - time1)
+    print("FillProbabilityMatrix", time.time() - time1)
+    # print(time_total)
+    # print(100 * time_total / (time.time() - time1), "%")
 
+    # exit()
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
 
