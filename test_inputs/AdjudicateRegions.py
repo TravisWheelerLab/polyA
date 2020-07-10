@@ -589,7 +589,6 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     # print()
 
     # PrintMatrixHash(cols, rows, Subfams, consensus_matrix)
-    # exit()
     return consensus_matrix
 
 
@@ -618,18 +617,16 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     time1: float = time.time()
 
     columns: List[int] = []
+
     active_cells: Dict[int, List[int]] = {}
     for j in range(num_cols):
         empty = 1
-        i: int = 1
         active_rows: List[int] = []
         active_rows.append(0)
-        while i < num_rows:
+        for i in range(1, num_rows):
             if (i, j) in align_matrix:
                 active_rows.append(i)
                 empty = 0
-                # i = num_rows
-            i += 1
 
         if not empty:
             active_cells[j] = active_rows
@@ -749,8 +746,8 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
     # PrintMatrixHash(cols, rows, Subfams, confidence_matrix)
+
     print("FillConfidenceMatrix", time.time() - time1)
-    # exit()
 
     return confidence_matrix
 
@@ -789,35 +786,36 @@ Dict[Tuple[int, int], float]:
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
+    half_chunk: int = int((chunk_size - 1) / 2)
+
     #skip state
     for col in range(len(columns)):
         col_index: int = columns[col]
 
         summ: float = 0
         num_segments: int = 0
-        sum_index: int = col_index - int((chunk_size - 1) / 2)
 
-        while sum_index <= col_index + int((chunk_size - 1) / 2):
+        for sum_index in range(col_index - half_chunk, col_index + half_chunk + 1):
             if (0, sum_index) in confidence_matrix:
                 num_segments += 1
                 summ += confidence_matrix[0, sum_index]
-            sum_index += 1
 
         support_matrix[0, col_index] = summ / num_segments
-
 
     #rest of rows
     for row_index in range(1, row_num):
 
+        start: int = starts[row_index] - start_all
+        stop: int = stops[row_index] - start_all
         #first chunk_size/2
         left_index: int = 0
-        for col_index in range(starts[row_index] - start_all, starts[row_index] - start_all + int((chunk_size - 1) / 2)):
+        for col_index in range(start, starts[row_index] - start_all + half_chunk):
 
             summ: float = 0.0
             sum_index: int = col_index - left_index
             num_segments: int = 0
 
-            while sum_index <= col_index + int((chunk_size - 1) / 2):
+            while sum_index <= col_index + half_chunk:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
                 num_segments += 1
@@ -827,19 +825,19 @@ Dict[Tuple[int, int], float]:
 
         # middle part where num segments is chunk_size
         #calc first chunk_size average
-        col_index: int = (starts[row_index] - start_all + int((chunk_size - 1) / 2))
+        col_index: int = (start + half_chunk)
         summ: float = 0.0
-        sum_index: int = col_index - int((chunk_size - 1) / 2)
-        while sum_index <= col_index + int((chunk_size - 1) / 2):
+        sum_index: int = col_index - half_chunk
+        while sum_index <= col_index + half_chunk:
             summ += confidence_matrix[row_index, sum_index]
             sum_index += 1
 
         support_matrix[row_index, col_index] = summ / chunk_size
 
         #to get next bp average subtract previous confidence, add next confidence
-        for col_index in range((1+ starts[row_index] - start_all + int((chunk_size - 1) / 2)), (stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2)):
-            last_index: int = col_index - int((chunk_size - 1) / 2) - 1
-            next_index: int = col_index + int((chunk_size - 1) / 2)
+        for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
+            last_index: int = col_index - half_chunk - 1
+            next_index: int = col_index + half_chunk
 
             summ -= confidence_matrix[row_index, last_index]
             summ += confidence_matrix[row_index, next_index]
@@ -847,11 +845,11 @@ Dict[Tuple[int, int], float]:
             support_matrix[row_index, col_index] = summ / chunk_size
 
         # last chunk_size/2
-        right_index: int = int((chunk_size - 1) / 2)
-        for col_index in range((stops[row_index] - start_all + 1) - int((chunk_size - 1) / 2), stops[row_index] - start_all + 1):
+        right_index: int = half_chunk
+        for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
 
             summ: float = 0.0
-            sum_index: int = col_index - int((chunk_size - 1) / 2)
+            sum_index: int = col_index - half_chunk
             num_segments: int = 0
 
             while sum_index < col_index + right_index:
@@ -863,10 +861,11 @@ Dict[Tuple[int, int], float]:
             right_index -= 1
 
     print("FillSupportMatrix", time.time() - time1)
+    # exit()
     return support_matrix
 
 
-def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
+def CollapseMatrices_old(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
                      support_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]) -> \
         Tuple[int, Dict[Tuple[int, int], int], Dict[Tuple[int, int], str], Dict[Tuple[int, int], float], List[str],
               Dict[
@@ -969,12 +968,73 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     # update var row_nums after collapse
     row_num_update: int = len(subfams_collapse)
 
-    print("CollapseMatrices", time.time() - time1)
+    print("CollapseMatrices old", time.time() - time1)
+    exit()
 
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse, subfams_collapse_temp
 
+
+def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
+                     support_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]): # -> Tuple[int, List[Tuple[int, int, int]], List[Tuple[int, int, str]], List[Tuple[int, int, float]], List[str], Dict[int, List[int]], Dict[str, int], List[int]]:
+
+    time1: float = time.time()
+
+    np_len: int = len(support_matrix)
+
+    support_matrix_collapse = np.empty(np_len, dtype=tuple) #: List[Tuple[int, int, float]] = []  #row, col, value #  = np.array(((0,0,0) for _ in range(np_len)))
+    consensus_matrix_collapse = np.empty(np_len, dtype=tuple) #: List[Tuple[int, int, int]] = [] # = np.array((Tuple[int, int, int] for _ in range(np_len)))
+    strand_matrix_collapse = np.empty(np_len, dtype=tuple) #: List[Tuple[int, int, str]] = [] # np.array((Tuple[int, int, str] for _ in range(np_len)))
+    subfams_collapse_temp: Dict[str, int] = {}
+    subfams_collapse: List[str] = []
+    active_cells_collapse: Dict[int, List[int]] = {}
+    col_starts: List[int] = []
+
+    # assigns row num to subfams strings
+    count_i: int = 0
+    for i in range(row_num):
+        if subfams[i] not in subfams_collapse_temp:
+            subfams_collapse_temp[subfams[i]] = count_i
+            subfams_collapse.append(subfams[i])
+            count_i += 1
+
+    np_index: int = 0
+    for col in range(len(columns)):
+        col_index: int = columns[col]
+        dup_max_support: Dict[int, Tuple[float, str, int]] = {}  #support, strand, consensus
+
+        # active_cols: List[int] = []
+        # active_cells_collapse[col_index] = active_cols
+
+        # find max support score for collapsed row_nums and use that row for collapsed matrices
+        # for row_index in range(row_num):
+        for row_index in active_cells[col_index]:
+
+            if (subfams_collapse_temp[subfams[row_index]]) in dup_max_support:
+                if support_matrix[row_index, col_index] > dup_max_support[subfams_collapse_temp[subfams[row_index]]][0]:
+                    dup_max_support[subfams_collapse_temp[subfams[row_index]]] = (support_matrix[row_index, col_index], strands[row_index], consensus_matrix[row_index, col_index])
+            else:
+                dup_max_support[subfams_collapse_temp[subfams[row_index]]] = (support_matrix[row_index, col_index], strands[row_index], consensus_matrix[row_index, col_index])
+
+        col_starts.append(np_index)
+        for key_row in dup_max_support:
+            support_matrix_collapse[np_index] = ((key_row, col_index, dup_max_support[key_row][0]))
+            strand_matrix_collapse[np_index] = ((key_row, col_index, dup_max_support[key_row][1]))
+            consensus_matrix_collapse[np_index] = ((key_row, col_index, dup_max_support[key_row][2]))
+            np_index += 1
+
+    col_starts.append(np_index)
+
+    row_num_update = np_index
+
+    print("CollapseMatrices", time.time() - time1)
+
+    return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse, subfams_collapse_temp, col_starts
+
+
+
+
 #FIXME - can we make this faster? numpy arrays instead of hashes?
-def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
+def FillProbabilityMatrix_old(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
                           columns: List[int], subfams_collapse: List[str],
                           active_cells_collapse: Dict[int, List[int]],
                           support_matrix_collapse: Dict[Tuple[int, int], float],
@@ -1093,6 +1153,142 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     print("FillProbabilityMatrix", time.time() - time1)
 
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
+
+
+def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
+                          columns: List[int], subfams_collapse: List[str],
+                          active_cells_collapse: Dict[int, List[int]],
+                          support_matrix_collapse: np.array(tuple),
+                          strand_matrix_collapse: np.array(tuple),
+                          consensus_matrix_collapse: np.array(tuple), col_starts: List[int]) -> Tuple[
+    List[Tuple[int, int, float]], List[Tuple[int, int, int]], List[Tuple[int, int, int]]]:
+    """
+    Fills in the probability score matrix from the support matrix. Also fills
+    the origin matrix for convenience.
+
+    We omit filling the first column because we want its probabilities to be zero anyway.
+
+    The basic algorithm is described below. All calculations happen in log space.
+    look at all i's in j-1
+        mult by confidence in current cell
+        if comes from same i, mult by higher prob
+        else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
+     return max
+
+     NOTE:
+        all probabilities are in log space
+        row indices are subfam names
+
+    input:
+    same_prob_skip: penalty given to staying in the skip state
+    same_prob: penalty given to staying in the same row
+    change_prob: penalty given for channging rows
+    change_prob_skip: penalty given for changinr rows in or out of skip state
+    columns: list that holds all non empty columns in matrices
+    active_cells_collapse: holds which rows have values for all columns - using this making it so don't have to
+    loop through all cells in the previous column when filling a cell, just loop though cells that hold a value
+    support_matrix_collapse: probabilites are calculated form support scores
+    strand_matrix_collapse: used when testing if some collapsed seqs are continuous - can't be if they aren't
+    on same strand
+    consensus_matrix_collapse: used when testing if some collapsed seqs are continuous - positions in consensus
+    sequence have to be contiguous
+
+    output:
+    probability_matrix: Hash implementation of sparse 2D DP matrix. This is a collapsed matrix. Holds DP
+    probabilies when finding most probable path through the matrix. Dict that hols subfam name as row and col number
+    and maps it to probability in cell
+    origin_matrix: Hash implementation of sparse 2D DP matrix. This is a collapsed matrix. Holds which cell in
+    previous column the probability in the DP matrix came from. Used when doing backtrace through the DP matrix.
+    Dict that hols subfam name as row and col number and maps it to value in cell
+
+    TODO: larger test needed for this function
+    """
+
+    time1: float = time.time()
+    time_total: float = 0.0
+    np_len = col_starts[-1]
+    np_index: int = 0
+
+    prob_matrix = np.empty(np_len, dtype=tuple)#List[Tuple[int, int, float]] = [(0,0,0.0)] * len(support_matrix_collapse)
+    origin_matrix = np.empty(np_len, dtype=tuple) #List[Tuple[int, int, int]] = [(0,0,0.0)] * len(support_matrix_collapse)
+    same_subfam_change_matrix = np.empty(np_len, dtype=tuple) #List[Tuple[int, int, int]] = [(0,0,0.0)] * len(support_matrix_collapse)
+
+    # fill first col of prob_matrix with 0s
+    for k in range(col_starts[0], col_starts[1]):
+        prob_matrix[np_index] = ((support_matrix_collapse[k][0], support_matrix_collapse[k][1], 0.0))
+        np_index += 1
+
+    for columns_index in range(1, len(columns)):
+        # curr_column: int = columns[columns_index]
+        # prev_column: int = columns[columns_index - 1]
+
+        for row_curr in range(col_starts[columns_index], col_starts[columns_index+1]):
+            max: float = -inf
+            max_index: int = 0
+
+            support_log: float = log(support_matrix_collapse[row_curr][2])
+            same_subfam_change: int = 0  # if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()
+
+            # row = prev_row_index
+            # loop through all the rows in the previous column that have a value - active_cells_collapse
+            # specifies which rows have a value for each column
+
+            for row_prev in range(col_starts[columns_index-1], col_starts[columns_index]):
+                score: float = support_log + prob_matrix[row_prev][2]
+                prob: float = 0.0
+
+                # time_s = time.time()
+                if prob_matrix[row_prev][0] == support_matrix_collapse[row_curr][0]:  # staying in same row
+                    prob = same_prob
+                    if prob_matrix[row_prev][0] == 0:  # staying in skip
+                        prob = same_prob_skip
+
+                    # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
+                    if strand_matrix_collapse[row_prev][2] != strand_matrix_collapse[row_curr][2]:
+                        # if not on same strand give change prob
+                        prob = change_prob
+                    else:  # if on same strand
+                        if strand_matrix_collapse[row_prev][2] == '+':
+                            if consensus_matrix_collapse[row_prev][2] > \
+                                    consensus_matrix_collapse[row_curr][2] + 50:
+                                prob = change_prob
+                                same_subfam_change = 1
+                        if strand_matrix_collapse[row_prev][2] == '-':
+                            if consensus_matrix_collapse[row_prev][2] + 50 < \
+                                    consensus_matrix_collapse[row_curr][2]:
+                                prob = change_prob
+                                same_subfam_change = 1
+
+                else:  # jumping rows
+                    prob = change_prob
+                    if prob_matrix[row_prev][0] == 0 or support_matrix_collapse[row_curr][0] == 0:  # jumping in or out of skip
+                        prob = change_prob_skip
+
+
+                # time_total += time.time() - time_s
+
+                score = score + prob
+
+                if score > max:
+                    max = score
+                    max_index = support_matrix_collapse[row_prev][0]
+
+            prob_matrix[np_index] = (support_matrix_collapse[row_curr][0], support_matrix_collapse[row_curr][1], max)
+            origin_matrix[np_index] = (support_matrix_collapse[row_curr][0], support_matrix_collapse[row_curr][1], max_index)
+
+
+            if same_subfam_change == 1 and max_index == support_matrix_collapse[row_curr][0]:
+                same_subfam_change_matrix[row_curr] = (support_matrix_collapse[row_curr][0], support_matrix_collapse[row_curr][1], 1)
+
+            np_index += 1
+
+    print("FillProbabilityMatrix", time.time() - time1)
+    # print("time total", time_total)
+
+    exit()
+
+    return (prob_matrix, origin_matrix, same_subfam_change_matrix)
+
 
 
 def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str],
@@ -1944,12 +2140,21 @@ if __name__ == "__main__":
     ChangesPositionOrig: List[int] = []
     NonEmptyColumnsOrig: List[int] = []
 
-    SupportMatrixCollapse: Dict[Tuple[int, int], int] = {}
     ActiveCellsCollapse: Dict[int, List[int]] = {}
     SubfamsCollapse: List[str] = []
     SubfamsCollapseIndex: Dict[str, int] = {}
-    ConsensusMatrixCollapse: Dict[Tuple[int, int], int] = {}
-    StrandMatrixCollapse: Dict[Tuple[int, int], str] = {}
+    # SupportMatrixCollapse: Dict[Tuple[int, int], int] = {}
+    # ConsensusMatrixCollapse: Dict[Tuple[int, int], int] = {}
+    # StrandMatrixCollapse: Dict[Tuple[int, int], str] = {}
+
+    # SupportMatrixCollapse: List[Tuple[int, int, float]] = []  # row, col, value
+    # ConsensusMatrixCollapse: List[Tuple[int, int, int]] = []
+    # StrandMatrixCollapse: List[Tuple[int, int, str]] = []
+    ColStarts: List[int] = []
+
+    SupportMatrixCollapse: np.array(tuple) = []
+    ConsensusMatrixCollapse: np.array(tuple) = []
+    StrandMatrixCollapse: np.array(tuple) = []
 
     # for graph/node part
     NumNodes: int = 0
@@ -2031,7 +2236,7 @@ if __name__ == "__main__":
     SupportMatrix = FillSupportMatrix(rows, cols, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
-     ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
+     ActiveCellsCollapse, SubfamsCollapseIndex, ColStarts) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
     if outfile_heatmap:
         PrintMatrixSupport(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
@@ -2042,7 +2247,7 @@ if __name__ == "__main__":
                                                                                ActiveCellsCollapse,
                                                                                SupportMatrixCollapse,
                                                                                StrandMatrixCollapse,
-                                                                               ConsensusMatrixCollapse)
+                                                                               ConsensusMatrixCollapse, ColStarts)
 
     IDs = [0] * cols
 
