@@ -11,6 +11,7 @@ import json
 from polyA.load_alignments import load_alignments
 
 
+
 # -----------------------------------------------------------------------------------#
 #			FUNCTIONS													   			#
 # -----------------------------------------------------------------------------------#
@@ -210,6 +211,8 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
     >>> CalcScore(-5, -25, "-T", "AT", "-", "", sub_mat)
     -4.0
     """
+
+    # time1: float = time.time()
 
     chunk_score: int = 0
 
@@ -490,8 +493,10 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     # row_starts.insert(0, 0)
 
     print("FillAlignScoreMatrix", time.time() - time1)
-    # print()
 
+
+    # PrintMatrixHash(num_cols, rows, Subfams, align_matrix)
+    # exit()
     return (num_cols, align_matrix)
 
 
@@ -572,7 +577,7 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 
                 seq_index2 += 1
 
-    # print("FillConsensusPositionMatrix", time.time() - time1)
+    print("FillConsensusPositionMatrix", time.time() - time1)
     # print()
 
     # PrintMatrixHash(cols, rows, Subfams, consensus_matrix)
@@ -602,7 +607,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     {0: [0, 1, 2], 2: [0, 1]}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     columns: List[int] = []
     active_cells: Dict[int, List[int]] = {}
@@ -620,7 +625,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
             active_cells[j] = active_rows
             columns.append(j)
 
-    # print("FillColumns", time.time() - time1)
+    print("FillColumns", time.time() - time1)
     # exit()
     return (columns, active_cells)
 
@@ -716,7 +721,7 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
     '0.5212'
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     confidence_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -734,7 +739,7 @@ def FillConfidenceMatrix(row_num: int, lamb: float, infilee: str, columns: List[
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
     # PrintMatrixHash(cols, rows, Subfams, confidence_matrix)
-    # print("FillConfidenceMatrix", time.time() - time1)
+    print("FillConfidenceMatrix", time.time() - time1)
     # exit()
 
     return confidence_matrix
@@ -849,7 +854,7 @@ Dict[Tuple[int, int], float]:
             right_index -= 1
 
     print("FillSupportMatrix", time.time() - time1)
-    # exit()
+
     return support_matrix
 
 
@@ -912,7 +917,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
@@ -956,7 +961,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     # update var row_nums after collapse
     row_num_update: int = len(subfams_collapse)
 
-    # print("CollapseMatrices", time.time() - time1)
+    print("CollapseMatrices", time.time() - time1)
 
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse, subfams_collapse_temp
 
@@ -1096,8 +1101,6 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
         prev_col_list = col_list.copy()
 
     print("FillProbabilityMatrix", time.time() - time1)
-    # print(time_total)
-    # print(100 * time_total / (time.time() - time1), "%")
 
     # exit()
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
@@ -1206,7 +1209,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     # changes ID for next round of stitching, so when starts stitching will have unique ID
     temp_id += 1234
 
-    # print("GetPath", time.time() - time1)
+    print("GetPath", time.time() - time1)
 
     return (temp_id, changes_position, changes)
 
@@ -1277,7 +1280,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     {('skip', 0): 0.0, ('n1', 0): 0.3751243838973974, ('n2', 0): 0.6248756161026026, ('skip', 1): 0.0, ('n1', 1): 0.09874227070127324, ('n2', 1): 0.9012577292987267, ('skip', 2): 0.0, ('n1', 2): 0.09874227070127327, ('n2', 2): 0.9012577292987267}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
@@ -1392,7 +1395,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
 
-    # print("node confidence", time.time() - time1)
+    print("FillNodeConfidence", time.time() - time1)
 
     return node_confidence
 
@@ -1450,6 +1453,8 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
     [0, 1, 1, 0, 0, 1, 0, 0, 0]
     """
 
+    time1: float = time.time()
+
     path_graph: List[int] = []
 
     for i in range(nodes * nodes):
@@ -1492,7 +1497,7 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                         elif sink_strand == '-' and sink_strand == source_strand:
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
-    # print("FillPathGraph", time.time()- time1)
+    print("FillPathGraph", time.time()- time1)
 
     return path_graph
 
@@ -1525,7 +1530,7 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
     [0, 1, 2, 7, 8, 9]
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     remove_starts: List[int] = []
     remove_stops: List[int] = []
@@ -1569,7 +1574,7 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
         # 	helps with offset, when first part is spliced out need an offset to know where to splice out for second part
         total += (remove_stops[i] - remove_starts[i])
 
-    # print("ExtractNodes", time.time() - time1)
+    print("ExtractNodes", time.time() - time1)
     return updated_num_col
 
 
@@ -1931,6 +1936,7 @@ if __name__ == "__main__":
     Flanks: List[int] = []
 
     AlignMatrix: Dict[Tuple[int, int], float] = {}
+    # AlignMatrix: List[float] = []
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
     ProbMatrix: Dict[Tuple[int, int], float] = {}
@@ -1948,12 +1954,6 @@ if __name__ == "__main__":
     ChangesOrig: List[str] = []
     ChangesPositionOrig: List[int] = []
     NonEmptyColumnsOrig: List[int] = []
-
-    # SupportMatrixCollapse: Dict[Tuple[str, int], int] = {}
-    # ActiveCellsCollapse: Dict[int, List[str]] = {}
-    # SubfamsCollapse: Dict[str, int] = {}
-    # ConsensusMatrixCollapse: Dict[Tuple[str, int], int] = {}
-    # StrandMatrixCollapse: Dict[Tuple[str, int], str] = {}
 
     SupportMatrixCollapse: Dict[Tuple[int, int], int] = {}
     ActiveCellsCollapse: Dict[int, List[int]] = {}
@@ -2152,3 +2152,4 @@ if __name__ == "__main__":
     # print("print results", time.time() - time1)
 
     print("ALL", time.time()-time2)
+
