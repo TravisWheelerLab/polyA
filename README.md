@@ -69,16 +69,16 @@ For a more detailed description view the [poster](/supporting_materials/Algorith
 
 **TODO:** Kaitlin, George
 
+### Input File Format
+	
+#### Alignment Files
 
-### Input file format
-	
-Alignment files
-	-RM of CM alignment files 
-	-links to RM and CM alignment file formats
-	-add hmmer eventually?
-	
-Score matrix files
-example format:		
+  - RM of CM alignment files 
+  - Links to RM and CM alignment file formats
+  - Add hmmer eventually?
+
+Score matrix files example format:
+
 ```
   A   R   G   C   Y   T   K   M   S   W   N   H   V   X
   8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
@@ -99,8 +99,8 @@ example format:
 
 ### Output file format
 
-genomic location
-----------------
+#### Genomic Location
+
 ```
 start stop	IDnum	query
 0	362		1111	L1PREC2_3end
@@ -110,10 +110,11 @@ start stop	IDnum	query
 965	980	6047	L1MA4A_3end
 981	1497	1111	L1PREC2_3end
 ```
-**FIXME - switch these postions to genomic locations not matrix pos 
 
-matching IDnums correspond to sequences involved in nesting that have been stitched back to 
-the original sequence 
+**FIXME** - switch these postions to genomic locations not matrix pos 
+
+Matching IDnums correspond to sequences involved in nesting that have been
+stitched back to the original sequence.
 
 
 ### Additional software
@@ -124,6 +125,7 @@ esl_scorematrix as a part of the esl package in the hammer software suite
 
 ### Using at the command line
 
+```
 usage: $0 alignFile matrixFile
 ARGUMENTS
 	--gapInit [-25]
@@ -136,46 +138,48 @@ OPTIONS
 	--help - display help message
 	--printmatrices - output all dynamic programming matrices
 	--matrixpos - prints subfam changes in matrix position instead of genomic position
-	
-
+```
 
 ## Development
 
-This project uses [Pipenv](https://pipenv.readthedocs.io/en/latest/). It must be installed before
-any of the Makefile targets or the commands described later in this section will work.
+This project uses [Poetry](https://python-poetry.org), which can be installed
+through Homebrew for Mac users. It must be installed before the Makefile targets
+or the other commands listed in this document will work.
 
 ### Makefile
 
-A Makefile is available, run `make` or `make help` in the project root to see the available targets.
+A Makefile is available, run `make` or `make help` in the project root to see
+the available targets.
 
 ### Dependencies
 
-If you prefer not to use the Makefile, the following commands will allow you to manage dependencies.
+If you prefer not to use the Makefile, the following commands will allow you to
+manage dependencies.
 
 ```
 # Get to work (from within project directory)
-# This drops you into a shell inside the project virtual environment
-pipenv shell
+# This drops you into a shell inside the project virtual environment which means
+# that commands that "poetry run" may be elided from other commands.
+poetry shell
 
 # Fetch runtime dependencies
-pipenv install
+poetry install --no-dev
 
 # Fetch runtime and development dependencies
-pipenv install --dev
+poetry install
 
 # Add a runtime dependency
-pipenv install <package>
+poetry install <package>
 
 # Add a development dependency
-pipenv install --dev package
+poetry install --dev package
 ```
 
 ### Running Perl-to-Python Tests
 
 ```
-pipenv install # in the root
-pipenv shell
-pip install -e . # in the root
+poetry install # in the root
+poetry shell
 ```
 
 Then you should be able to run `RunTests.sh` in `test_inputs` successfully.
@@ -191,7 +195,7 @@ Documentation tests are also fine for simple cases.
 
 ```
 # Run tests
-pipenv run python -m pytest
+poetry run python -m pytest
 
 # or
 make check-fast check-slow
@@ -208,3 +212,4 @@ MIT license. See `LICENSE`.
   - Kaitlin Carey
   - George Lesica
   - Travis Wheeler
+
