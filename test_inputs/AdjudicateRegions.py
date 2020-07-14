@@ -74,33 +74,6 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         stdout.write("\n")
         i += 1
 
-def PrintMatrix(num_col: int, num_row: int, subfams: List[str],
-                    matrix: np.array(Union[int, float, str])) -> None:
-    """
-    just for debugging
-    prints values inside matrices (non collapsed)
-    """
-    stdout.write("\t")
-    j: int = 0
-    while j < num_col:
-        stdout.write(f"{j}\t")
-        j += 1
-    stdout.write("\n")
-
-    i: int = 0
-    while i < num_row:
-        stdout.write(f"{subfams[i]:<20s}\t")
-        j: int = 0
-        while j < num_col:
-            if matrix[i * num_col + j] != 0.0:
-                stdout.write(f"{matrix[i * num_col + j]}")
-            else:
-                stdout.write(f"{-inf:5.3g}")
-            stdout.write("\t")
-            j += 1
-        stdout.write("\n")
-        i += 1
-
 
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     """
@@ -971,8 +944,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                           active_cells_collapse: Dict[int, List[int]],
                           support_matrix_collapse: Dict[Tuple[int, int], float],
                           strand_matrix_collapse: Dict[Tuple[int, int], str],
-                          consensus_matrix_collapse: Dict[Tuple[int, int], int]) -> Tuple[
-    Dict[Tuple[int, int], float], Dict[Tuple[int, int], int], Dict[Tuple[int, int], int]]:
+                          consensus_matrix_collapse: Dict[Tuple[int, int], int]) -> Tuple[Dict[Tuple[int, int], int], Dict[Tuple[int, int], int]]:
     """
     Fills in the probability score matrix from the support matrix. Also fills
     the origin matrix for convenience.
@@ -1017,16 +989,16 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
     time1: float = time.time()
 
-    # time_total: float = 0.0
+    time_total: float = 0.0
 
-    prob_matrix: Dict[Tuple[int, int], float] = {}
+    # prob_matrix: Dict[Tuple[int, int], float] = {}
     origin_matrix: Dict[Tuple[int, int], int] = {}
     same_subfam_change_matrix: Dict[Tuple[int, int], int] = {}
 
     prev_col_list = []
     # fill first col of prob_matrix with 0s
     for k in active_cells_collapse[columns[0]]:
-        prob_matrix[k, columns[0]] = 0
+        # prob_matrix[k, columns[0]] = 0
         prev_col_list.append(0.0)
 
     # print(active_cells_collapse[columns[0]])
@@ -1092,7 +1064,7 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                     max_index = prev_row_index
 
             col_list.append(max)
-            prob_matrix[row_index, curr_column] = max
+            # prob_matrix[row_index, curr_column] = max
             origin_matrix[row_index, curr_column] = max_index
 
             if same_subfam_change == 1 and max_index == row_index:
@@ -1101,14 +1073,17 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
         prev_col_list = col_list.copy()
 
     print("FillProbabilityMatrix", time.time() - time1)
+    print(time_total)
 
     # exit()
+
+    return (col_list, origin_matrix, same_subfam_change_matrix)
     return (prob_matrix, origin_matrix, same_subfam_change_matrix)
 
 
 def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str],
             changes_position_orig: List[int], columns_orig: List[int], subfams_collapse: List[str],
-            active_cells_collapse: Dict[int, List[int]], prob_matrix: Dict[Tuple[int, int], float],
+            last_column: List[float], active_cells_collapse: Dict[int, List[int]],
             origin_matrix: Dict[Tuple[int, int], int], same_subfam_change_matrix: Dict[Tuple[int, int], int]) -> Tuple[
     int, List[int], List[str]]:
     """
@@ -1163,10 +1138,10 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     changes_position: List[int] = []
     changes: List[str] = []
 
-    for i in active_cells_collapse[num_col - 1]:
-        if maxxx < prob_matrix[i, num_col - 1]:
-            maxxx = prob_matrix[i, num_col - 1]
-            max_row_index = i
+    for i in range(len(active_cells_collapse[num_col - 1])):
+        if maxxx < last_column[i]:
+            maxxx = last_column[i]
+            max_row_index = active_cells_collapse[num_col - 1][i]
 
     prev_row_index: int = origin_matrix[max_row_index, num_col - 1]
 
@@ -1939,10 +1914,11 @@ if __name__ == "__main__":
     # AlignMatrix: List[float] = []
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
-    ProbMatrix: Dict[Tuple[int, int], float] = {}
+    # ProbMatrix: Dict[Tuple[int, int], float] = {}
     OriginMatrix: Dict[Tuple[int, int], int] = {}
     ConsensusMatrix: Dict[Tuple[int, int], int] = {}
     SameSubfamChangeMatrix: Dict[Tuple[int, int], int] = {}
+    ProbMatrixLastColumn: List[float] = []
 
     NonEmptyColumns: List[int] = []
     ActiveCells: Dict[int, List[int]] = {}
@@ -2047,7 +2023,7 @@ if __name__ == "__main__":
     if outfile_heatmap:
         PrintMatrixSupport(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
 
-    (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
+    (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
                                                                                ChangeProbSkip,
                                                                                NonEmptyColumns, SubfamsCollapse,
                                                                                ActiveCellsCollapse,
@@ -2058,7 +2034,7 @@ if __name__ == "__main__":
     IDs = [0] * cols
 
     (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                             NonEmptyColumnsOrig, SubfamsCollapse, ActiveCellsCollapse, ProbMatrix,
+                                             NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
 
     # keep the original annotation for reporting results
@@ -2120,7 +2096,7 @@ if __name__ == "__main__":
         # using prob matrix and origin matrix, just skip the cols I'm not interested in and annotate
         # without the removed node - ignores removed nodes because they are not in NonEmptyColumns
         # using old prob matrix and origin matrix
-        (ProbMatrix, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog,
+        (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog,
                                                                                    ChangeProbLog, ChangeProbSkip,
                                                                                    NonEmptyColumns, SubfamsCollapse,
                                                                                    ActiveCellsCollapse,
@@ -2132,7 +2108,7 @@ if __name__ == "__main__":
         ChangesPosition.clear()
 
         (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                                 NonEmptyColumnsOrig, SubfamsCollapse, ActiveCellsCollapse, ProbMatrix,
+                                                 NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
     # print("graph stitching", time.time() - time1)
