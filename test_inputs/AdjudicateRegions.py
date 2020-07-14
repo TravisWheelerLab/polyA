@@ -5,7 +5,6 @@ from sys import argv, stderr, stdout
 from typing import Dict, List, Tuple, Union
 import time
 import os
-import numpy as np
 import json
 
 from polyA.load_alignments import load_alignments
