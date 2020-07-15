@@ -1708,8 +1708,6 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
 if __name__ == "__main__":
 
-    # time1: float = time.time()
-
     GapInit: int = -25
     GapExt: int = -5
     Lamb: float = 0.0
@@ -1946,9 +1944,6 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    # print("initialization and reading in files", time.time()-time1)
-    # time1 = time.time()
-
     (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
@@ -1996,9 +1991,6 @@ if __name__ == "__main__":
     # 4.extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
     # 5.annotate again with removed subfams
     #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
-
-    # print("original DP calculations", time.time() - time1)
-    # time1 = time.time()
 
     count: int = 0
     while (True):
@@ -2057,9 +2049,6 @@ if __name__ == "__main__":
                                                  NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
-    # print("graph stitching", time.time() - time1)
-    # time1 = time.time()
-
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
     elif printSeqPos:
@@ -2070,6 +2059,3 @@ if __name__ == "__main__":
     if outfile_viz:
         PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
-
-    # print("print results", time.time() - time1)
-
