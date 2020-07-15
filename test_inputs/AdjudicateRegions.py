@@ -1087,12 +1087,12 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     changes_position: List[int] = []
     changes: List[str] = []
 
-    for i in range(len(active_cells_collapse[num_col - 1])):
+    for i in range(len(active_cells_collapse[columns[-1]])):
         if maxxx < last_column[i]:
             maxxx = last_column[i]
-            max_row_index = active_cells_collapse[num_col - 1][i]
+            max_row_index = active_cells_collapse[columns[-1]][i]
 
-    prev_row_index: int = origin_matrix[max_row_index, num_col - 1]
+    prev_row_index: int = origin_matrix[max_row_index, columns[-1]]
 
     ids[columns[-1]] = temp_id
 
@@ -1709,7 +1709,6 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 if __name__ == "__main__":
 
     # time1: float = time.time()
-    time2: float = time.time()
 
     GapInit: int = -25
     GapExt: int = -5
@@ -1860,10 +1859,8 @@ if __name__ == "__main__":
     Flanks: List[int] = []
 
     AlignMatrix: Dict[Tuple[int, int], float] = {}
-    # AlignMatrix: List[float] = []
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
-    # ProbMatrix: Dict[Tuple[int, int], float] = {}
     OriginMatrix: Dict[Tuple[int, int], int] = {}
     ConsensusMatrix: Dict[Tuple[int, int], int] = {}
     SameSubfamChangeMatrix: Dict[Tuple[int, int], int] = {}
@@ -2075,6 +2072,4 @@ if __name__ == "__main__":
                         StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
 
     # print("print results", time.time() - time1)
-
-    print("ALL", time.time()-time2)
 
