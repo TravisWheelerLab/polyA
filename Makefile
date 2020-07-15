@@ -1,14 +1,19 @@
 .PHONY: help
 help:
-	@echo "help           print this message"
-	@echo "check          run all tests and validations"
-	@echo "check-fast     run tests and validations that finish quickly"
-	@echo "check-format   verify that the code formatter has been run"
-	@echo "check-slow     run tests and validations that take awhile"
-	@echo "container      build and push the CI container"
-	@echo "format         run the code formatter"
-	@echo "setup          install runtime dependencies"
-	@echo "setup-dev      install development dependencies"
+	@echo "help             print this message"
+	@echo "check            run all tests and validations"
+	@echo "check-fast       run tests and validations that finish quickly"
+	@echo "check-format     verify that the code formatter has been run"
+	@echo "check-slow       run tests and validations that take awhile"
+	@echo "container-build  build the testing container"
+	@echo "container-push   push the testing container to Docker Hub"
+	@echo "format           run the code formatter"
+	@echo "setup            install runtime dependencies"
+	@echo "setup-dev        install development dependencies"
+
+ifndef CONTAINER_VERSION
+override CONTAINER_VERSION := latest
+endif
 
 .PHONY: check
 check: check-fast check-slow check-format
@@ -26,10 +31,13 @@ check-slow:
 	poetry run python -m pytest -m slow tests/ polyA/
 	cd test_inputs && ./RunTests.sh
 
-.PHONY: container
-container:
-	docker build -t traviswheelerlab/polya-build:latest .
-	docker push traviswheelerlab/polya-build:latest
+.PHONY: container-build
+container-build:
+	docker build -t traviswheelerlab/polya-build:${CONTAINER_VERSION} .
+
+.PHONY: container-push
+container-push:
+	docker push traviswheelerlab/polya-build:${CONTAINER_VERSION}
 
 .PHONY: format
 format:

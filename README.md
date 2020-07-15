@@ -146,6 +146,11 @@ This project uses [Poetry](https://python-poetry.org), which can be installed
 through Homebrew for Mac users. It must be installed before the Makefile targets
 or the other commands listed in this document will work.
 
+In order to run a command which relies on the project virtual environment, such
+as `python foo.py`, it is necessary to either run `poetry shell` first, which
+will put you into a shell that has the correct Python in its `PATH`, or prefix
+the command with `poetry run` (e.g. `poetry run python foo.py`).
+
 ### Makefile
 
 A Makefile is available, run `make` or `make help` in the project root to see
@@ -175,7 +180,7 @@ poetry install <package>
 poetry install --dev package
 ```
 
-### Running Perl-to-Python Tests
+### Perl-to-Python Tests
 
 ```
 poetry install # in the root
