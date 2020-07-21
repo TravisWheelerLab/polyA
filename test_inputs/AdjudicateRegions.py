@@ -225,6 +225,10 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
         else:
             break
 
+    # print(seq1)
+    # print(seq2)
+    # print(chunk_score)
+    # exit()
     return float(chunk_score)
 
 
@@ -446,7 +450,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
 def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int], stops: List[int],
                                 consensus_starts: List[int],
-                                strands: List[str]) -> Dict[Tuple[int, int], int]:
+                                strands: List[str]) -> Tuple[List[int], Dict[int, List[int]], Dict[Tuple[int, int], int]]:
     """
     Fills parallel array to the AlignScoreMatrix that holds the consensus position for each subfam
     at that position in the alignment. Walks along the alignments one nucleotide at a time adding
@@ -474,7 +478,12 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
+
+    columns = set()
+
+    #columns number and what rows are active
+    active_cells: Dict[int, List[int]] = {}
 
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
@@ -499,8 +508,16 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                 # put consensus pos corresponding to pos in matrix in hash
                 consensus_matrix[row_index, col_index] = consensus_pos
 
+                columns.add(col_index)
+
+
+
                 # matrix position only advances when there is not a gap in the chrom seq
                 if chroms[row_index][seq_index] != "-":
+                    if col_index in active_cells:
+                        active_cells[col_index].append(row_index)
+                    else:
+                        active_cells[col_index] = [0, row_index]
                     col_index += 1
 
                 seq_index += 1
@@ -516,18 +533,23 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                     consensus_pos2 -= 1
                 consensus_matrix[row_index, col_index2] = consensus_pos2
 
+                columns.add(col_index2)
+
                 if chroms[row_index][seq_index2] != "-":
+                    if col_index2 in active_cells:
+                        active_cells[col_index2].append(row_index)
+                    else:
+                        active_cells[col_index2] = [0, row_index]
                     col_index2 += 1
 
                 seq_index2 += 1
 
-    # print("FillConsensusPositionMatrix", time.time() - time1)
+    print("FillConsensusPositionMatrix", time.time() - time1)
 
-    return consensus_matrix
+    return (list(columns), active_cells, consensus_matrix)
 
 
-def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Tuple[
-    List[int], Dict[int, List[int]]]:
+def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Dict[int, List[int]]:
     """
     in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
     so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
@@ -548,7 +570,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
     {0: [0, 1, 2], 2: [0, 1]}
     """
 
-    # time1: float = time.time()
+    time1: float = time.time()
 
     columns: List[int] = []
     active_cells: Dict[int, List[int]] = {}
@@ -566,8 +588,9 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
             active_cells[j] = active_rows
             columns.append(j)
 
-    # print("FillColumns", time.time() - time1)
-    return (columns, active_cells)
+    print("FillColumns", time.time() - time1)
+
+    return active_cells
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
@@ -617,6 +640,9 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
         confidence_list.append(confidence)
 
+    # print(region)
+    # print(confidence_list)
+    # exit()
     return confidence_list
 
 
@@ -983,34 +1009,31 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                 #just this lookup in prob_matrix is 40% of the runtime of the whole function
                 score: float = support_log + prev_col_list[temp_index]#prob_matrix[prev_row_index, prev_column]
                 temp_index += 1
-                prob: float = 0.0
+                prob: float = change_prob
 
-                if prev_row_index == row_index:  # staying in same row
-                    prob = same_prob
-                    if prev_row_index == 0:  # staying in skip
+                if row_index == 0 or prev_row_index == 0:
+                    prob = change_prob_skip
+                    if row_index == prev_row_index:
                         prob = same_prob_skip
+                else:
+                    if prev_row_index == row_index:  # staying in same row
+                        prob = same_prob
 
-                    # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
-                    if strand_matrix_collapse[prev_row_index, prev_column] != strand_matrix_collapse[
-                        row_index, columns[columns_index]]:
-                        # if not on same strand give change prob
-                        prob = change_prob
-                    else:  # if on same strand
-                        if strand_matrix_collapse[prev_row_index, prev_column] == '+':
+                        if strand_matrix_collapse[prev_row_index, prev_column] != strand_matrix_collapse[
+                            row_index, columns[columns_index]]:
+                            # if not on same strand give change prob
+                            prob = change_prob
+
+                        elif strand_matrix_collapse[prev_row_index, prev_column] == '+':
                             if consensus_matrix_collapse[prev_row_index, prev_column] > \
                                     consensus_matrix_collapse[row_index, curr_column] + 50:
                                 prob = change_prob
                                 same_subfam_change = 1
-                        if strand_matrix_collapse[prev_row_index, prev_column] == '-':
+                        else:
                             if consensus_matrix_collapse[prev_row_index, prev_column] + 50 < \
                                     consensus_matrix_collapse[row_index, curr_column]:
                                 prob = change_prob
                                 same_subfam_change = 1
-
-                else:  # jumping rows
-                    prob = change_prob
-                    if prev_row_index == 0 or row_index == 0:  # jumping in or out of skip
-                        prob = change_prob_skip
 
                 score = score + prob
 
@@ -1708,6 +1731,8 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
 if __name__ == "__main__":
 
+    time_all: float = time.time()
+
     GapInit: int = -25
     GapExt: int = -5
     Lamb: float = 0.0
@@ -1944,14 +1969,14 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
+    (StartAll, StopAll) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
+    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
-    (NonEmptyColumns, ActiveCells) = FillColumns(cols, rows, AlignMatrix)
+    # ActiveCells = FillColumns(cols, rows, AlignMatrix)
 
     ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
@@ -2059,3 +2084,5 @@ if __name__ == "__main__":
     if outfile_viz:
         PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
+
+    print(time.time() - time_all)
