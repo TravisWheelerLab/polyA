@@ -510,8 +510,6 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 
                 columns.add(col_index)
 
-
-
                 # matrix position only advances when there is not a gap in the chrom seq
                 if chroms[row_index][seq_index] != "-":
                     if col_index in active_cells:
@@ -544,53 +542,9 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 
                 seq_index2 += 1
 
-    print("FillConsensusPositionMatrix", time.time() - time1)
+    # print("FillConsensusPositionMatrix", time.time() - time1)
 
     return (list(columns), active_cells, consensus_matrix)
-
-
-def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Dict[int, List[int]]:
-    """
-    in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
-    so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
-
-    input:
-    num_cols: number of columns in matrices
-    num_rows: number of rows in matrices
-    align_matrix: alignment matrix - will look here to see which columns are empty
-
-    output:
-    columns: list of columns that are not empty
-
-    >>> align_mat = {(0, 0): 100, (0, 2): 100, (1, 0): 100, (1, 2): 100, (2, 0): 100}
-    >>> (non_cols, active) = FillColumns(3, 3, align_mat)
-    >>> non_cols
-    [0, 2]
-    >>> active
-    {0: [0, 1, 2], 2: [0, 1]}
-    """
-
-    time1: float = time.time()
-
-    columns: List[int] = []
-    active_cells: Dict[int, List[int]] = {}
-    for j in range(num_cols):
-        empty = 1
-        i: int = 1
-        active_rows: List[int] = []
-        active_rows.append(0)
-        for i in range(1, num_rows):
-            if (i, j) in align_matrix:
-                active_rows.append(i)
-                empty = 0
-
-        if not empty:
-            active_cells[j] = active_rows
-            columns.append(j)
-
-    print("FillColumns", time.time() - time1)
-
-    return active_cells
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
@@ -640,9 +594,6 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
         confidence_list.append(confidence)
 
-    # print(region)
-    # print(confidence_list)
-    # exit()
     return confidence_list
 
 
@@ -1975,8 +1926,6 @@ if __name__ == "__main__":
                                           ChromSeqs, Starts, SubMatrix)
 
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
-
-    # ActiveCells = FillColumns(cols, rows, AlignMatrix)
 
     ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
