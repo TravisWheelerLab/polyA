@@ -474,11 +474,16 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     >>> stps = [0, 2, 2]
     >>> con_strts = [-1, 0, 10]
     >>> strandss = ["", "+", "-"]
-    >>> FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
+    >>> (col, active, con_mat) = FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
+    >>> con_mat
     {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    >>> col
+    [0, 1, 2]
+    >>> active
+    {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
     """
 
-    time1: float = time.time()
+    # time1: float = time.time()
 
     columns = set()
 
