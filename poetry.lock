@@ -355,6 +355,14 @@ dev = ["pre-commit", "tox"]
 
 [[package]]
 category = "dev"
+description = "Line-granularity, thread-aware deterministic and statistic pure-python profiler"
+name = "pprofile"
+optional = false
+python-versions = "*"
+version = "2.0.5"
+
+[[package]]
+category = "dev"
 description = "Library for building powerful interactive command lines in Python"
 name = "prompt-toolkit"
 optional = false
@@ -545,7 +553,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "1755de70dd502623708307460d30934c3393ef201ae5b757d89448c3a2873f06"
+content-hash = "2adda26401e5cc8124975112d9c95a8401c7669f27683a8a0d7f66fbc6486b58"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -765,6 +773,9 @@ pickleshare = [
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
+]
+pprofile = [
+    {file = "pprofile-2.0.5.tar.gz", hash = "sha256:c2787af57c44c48e6c7e518d522fd0f93983892bfaae74ed340da02ed500ec5f"},
 ]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.4-py3-none-any.whl", hash = "sha256:859e1b205b6cf6a51fa57fa34202e45365cf58f8338f0ee9f4e84a4165b37d5b"},
