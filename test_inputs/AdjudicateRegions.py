@@ -234,38 +234,31 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
 
 def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: float,
                     subfams: List[str], chroms: List[str], starts: List[int],
-                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], float], Dict[Tuple[int, int], int]]:
+                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
     for every segment of size chunksize for all seqs in alignments
-
     Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
     matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
-
     Starting and trailing cells are different - column 0 in matrix holds alignment score for
     nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Score are weighted based on number
     of nucleotides that contribute to the score - so beginning and trailing positions with less
     than chunksize nucleotides don't have lower scores
-
     computes score for the first segment that does not start with a '.' by calling CalcScore()
     and from there keeps the base score and adds new chars score and subtracts old chars
     score - if a new gap is introduced, calls CalcScore() instead of adding onto base score
-
     ** padding of (chunksize-1)/2 added to right pad.. this way we can go all the way to the
     end of the sequence and calc alignscores without doing anything special
-
     input:
     everything needed for CalcScore()
     edge_start: where alignment starts on the target/chrom sequence
     chunk_size: size of nucletide chunks that are scored
-
     output:
     align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
     are  subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
     Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
     for that particular subfamily.
-
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
@@ -277,12 +270,11 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     {(1, 2): 31.0, (1, 3): 31.0, (1, 4): 31.0, (1, 5): 31.0, (1, 6): 31.0, (1, 7): 31.0, (1, 8): 31.0, (1, 9): 31.0, (1, 10): 31.0, (1, 11): 31.0, (1, 12): 31.0, (1, 13): 31.0, (1, 14): 31.0, (1, 15): 31.0, (1, 16): 31.0, (1, 17): 31.0, (1, 18): 31.0, (1, 19): 31.0, (1, 20): 31.0, (1, 21): 31.0, (1, 22): 31.0, (1, 23): 31.0, (1, 24): 29.0, (1, 25): 28.933333333333334, (1, 26): 28.862068965517242, (1, 27): 28.78571428571429, (1, 28): 28.703703703703702, (1, 29): 28.615384615384617, (1, 30): 28.52, (1, 31): 28.416666666666664, (1, 32): 28.304347826086953, (1, 33): 28.18181818181818, (1, 34): 28.047619047619047, (1, 35): 27.900000000000002, (1, 36): 27.736842105263158, (1, 37): 27.555555555555554, (1, 38): 27.352941176470587, (1, 39): 27.125, (2, 0): 27.125, (2, 1): 27.352941176470587, (2, 2): 27.555555555555557, (2, 3): 27.736842105263158, (2, 4): 27.9, (2, 5): 28.047619047619047, (2, 6): 28.181818181818183, (2, 7): 28.304347826086957, (2, 8): 28.416666666666668, (2, 9): 28.52, (2, 10): 28.615384615384617, (2, 11): 28.703703703703702, (2, 12): 28.785714285714285, (2, 13): 28.862068965517242, (2, 14): 28.933333333333334, (2, 15): 29.0, (2, 16): 31.0, (2, 17): 31.0, (2, 18): 31.0, (2, 19): 31.0, (2, 20): 31.0, (2, 21): 31.0, (2, 22): 5.0, (2, 23): 0.0, (2, 24): 0.0, (2, 25): 0.0, (2, 26): 0.0, (2, 27): 0.0, (2, 28): 0.0, (2, 29): 0.0, (2, 30): 0.0, (2, 31): 0.0, (2, 32): 0.0, (2, 33): 0.0, (2, 34): 0.0, (2, 35): 0.0, (2, 36): 0.0, (2, 37): 0.0, (2, 38): 0.0, (2, 39): 0.0, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
     """
 
-    half_chunk: int = int((chunk_size - 1) / 2)
-
     num_cols: int = 0
 
+    half_chunk: int = int((chunk_size - 1) / 2)
+
     align_matrix: Dict[Tuple[int, int], float] = {}
-    single_align_matrix: Dict[Tuple[int, int], int] = {}
 
     # chunks can't start on gaps and gaps don't count when getting to the 30 bps
     for i in range(1, len(chroms)):
@@ -295,7 +287,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
         # calculates score for the first (chunksize-1)/2 chunks, chunk ((chunksize-1)/2)+1 is the first one that is 31nt
         seq_index: int = starts[i] - edge_start
-        # col_index is the col we are in the align score matrix, seq_index is the place in subfam_seq and chrom_seq
+        # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
         col_index = seq_index + half_chunk
 
         k = int((chunk_size - 1) / 2)
@@ -319,7 +311,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         align_matrix[i, col_index - k] = align_score * chunk_size / (
                     chunk_size - k)  # already to scale so don't need to * 31 and / 31
 
-        for k in range(half_chunk - 1, -1, -1):
+        for k in range(int((chunk_size - 1) / 2) - 1, -1, -1):
 
             if chroms[i][seq_index + offset] != '-':
 
@@ -366,6 +358,10 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             if chrom_seq[seq_index + 1] == ".":
                 break
 
+            #update offset if removing a gap
+            if chrom_seq[seq_index] == '-':
+                offset -= 1
+
             if chrom_seq[seq_index + 1] != "-":  #skip over gap and not calc a score for the matrix
                 if chrom_seq[seq_index + offset] == '-' or chrom_seq[seq_index] == '-':  #if new gap introduced, or gets rid of old gap, recalc offset
                     while temp_count < chunk_size:
@@ -389,55 +385,61 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                     num_nucls = temp_count2  # resetting num_nucls to chunk_size
 
                     if num_nucls <= half_chunk:
-                        # align_score = -inf
-                        break
-                        # print(num_nucls)
+                        align_score = -inf
 
                 else:
                     # align_score from previous segment - prev chars score + next chars score
                     # subtracting prev  chars score - tests if its a gap in the subfam as well
 
-                    score_sub: int = 0
-                    score_add: int = 0
                     if subfam_seq[seq_index] == "-":
                         num_nucls -= 1
                         if subfam_seq[seq_index - 1] == "-":
-                            score_sub = gap_ext
+                            align_score = align_score - gap_ext
                         else:
-                            score_sub = gap_init
+                            align_score = align_score - gap_init
                     else:
-                        score_sub = sub_matrix[subfam_seq[seq_index] + chrom_seq[seq_index]]
+                        align_score = align_score - sub_matrix[subfam_seq[seq_index] + chrom_seq[seq_index]]
                         num_nucls -= 1
 
                     # adding next chars score - tests if its a gap in the subfam as well
                     if subfam_seq[seq_index + offset - half_chunk] == ".":
+                        align_score = -inf
                         break
                     elif subfam_seq[seq_index + offset] == "-":
                         num_nucls += 1
                         if subfam_seq[seq_index + offset - 1] == "-":
-                            score_add = gap_ext
+                            align_score = align_score + gap_ext
                         else:
-                            score_add = gap_init
+                            align_score = align_score + gap_init
                     elif subfam_seq[seq_index + offset] == ".":
-                        score_add = 0
+                        align_score = align_score
                     else:
-                        score_add = sub_matrix[subfam_seq[seq_index + offset] + chrom_seq[seq_index + offset]]
+                        align_score = align_score + sub_matrix[
+                            subfam_seq[seq_index + offset] + chrom_seq[seq_index + offset]]
                         num_nucls += 1
-
-                    align_score = align_score - score_sub + score_add
 
                 if align_score <= 0:
                     align_matrix[i, col_index] = 0.0
                 else:
                     align_matrix[i, col_index] = align_score / num_nucls * chunk_size
 
-                single_align_matrix[i, col_index + half_chunk] = score_add
-                #rewrites same entries sometimes, but faster than an if statement
-                single_align_matrix[i, col_index - (half_chunk + 1)] = score_sub
+                if align_score == -inf:
+                    del align_matrix[i, col_index]
+                    break
 
                 col_index += 1
 
             seq_index += 1
+
+        #fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
+        if chrom_seq[-1 * (chunk_size + 1)] == '-' and chrom_seq[-1 * chunk_size] != '-':
+            chrom_slice = chrom_seq[(-1 * chunk_size)::]
+            subfam_slice = subfam_seq[(-1 * chunk_size)::]
+
+            align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
+                                    subfam_seq[-1 * (chunk_size + 1)], chrom_seq[-1 * (chunk_size + 1)], sub_matrix)
+            align_matrix[i, col_index] = align_score / (half_chunk + 1) * chunk_size
+            col_index += 1
 
         # max col_index is assigned to cols
         if num_cols < col_index:
@@ -445,9 +447,12 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
     # assigns skip states an alignment score
     for j in range(num_cols):
-        align_matrix[0, j] = skip_align_score
+        align_matrix[0, j] = float(skip_align_score)
 
-    return (num_cols, align_matrix, single_align_matrix)
+    return (num_cols, align_matrix)
+
+
+
 
 def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int], stops: List[int],
                                 consensus_starts: List[int],
@@ -1208,6 +1213,8 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     #middle nodes
     for node_index in range(1, nodes-1):
 
+        # print(node_index)
+
         for subfam_index in range(1, len(subfams)):
 
             begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
@@ -1262,6 +1269,15 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
+    # for i in range(NumNodes):
+    #     stdout.write(Changes[i] + " ")
+    #
+    # for i in range(len(Subfams)):
+    #     stdout.write(Subfams[i] + " ")
+    #     for j in range(NumNodes):
+    #         stdout.write(str(node_confidence_temp[i * NumNodes + j]) + " ")
+    #     print()
+    # exit()
 
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
@@ -1288,6 +1304,8 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
 
+    # PrintNodeConfidence(NumNodes, Changes, SubfamsCollapse, node_confidence)
+    # exit()
     # print("FillNodeConfidence", time.time() - time1)
 
     return node_confidence
@@ -1334,17 +1352,31 @@ def FillNodeConfidence_new(nodes: int, start_all: int, lamb: float, infilee: str
         begin_node0: int = columns[changes_position[node_index]]
         end_node0: int = columns[changes_position[node_index+1]-1]
 
+        # print(begin_node0 + start_all, end_node0 + start_all)
+
         for subfam_index0 in range(1, len(subfams)):
 
             align_score: int = 0
 
             if end_node0 >= starts[subfam_index0] - start_all and begin_node0 <= stops[subfam_index0] - start_all:
 
-                for col_index in range(begin_node0, end_node0):
+                for col_index in range(begin_node0, end_node0+1):
                     if (subfam_index0, col_index) in single_align_matrix:
                         align_score += single_align_matrix[subfam_index0, col_index]
 
             node_confidence_temp[subfam_index0 * nodes + node_index] = float(align_score)
+
+    # for i in range(NumNodes):
+    #     stdout.write(Changes[i] + " ")
+    #
+    # for i in range(len(Subfams)):
+    #     stdout.write(Subfams[i] + " ")
+    #     for j in range(NumNodes):
+    #         stdout.write(str(node_confidence_temp[i * NumNodes + j]) + " ")
+    #     print()
+
+    # print(ChangesPosition)
+    # exit()
 
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
@@ -1371,6 +1403,8 @@ def FillNodeConfidence_new(nodes: int, start_all: int, lamb: float, infilee: str
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
 
+    # PrintNodeConfidence(NumNodes, Changes, SubfamsCollapse, node_confidence)
+    # exit()
     # print("FillNodeConfidence", time.time() - time1)
     # exit()
 
@@ -1574,8 +1608,8 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
     prints final results
     prints start and stop in terms of input chrom sequence
     """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
+    # stdout.write("start\tstop\tID\tname\n")
+    # stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != 'skip':
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart))
@@ -1996,7 +2030,7 @@ if __name__ == "__main__":
 
     (StartAll, StopAll) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
 
-    (cols, AlignMatrix, SingleAlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
+    (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
@@ -2043,6 +2077,7 @@ if __name__ == "__main__":
     # 5.annotate again with removed subfams
     #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
 
+
     count: int = 0
     while (True):
         count += 1
@@ -2059,6 +2094,8 @@ if __name__ == "__main__":
         # NodeConfidence = FillNodeConfidence_new(NumNodes, StartAll, Lamb, infile_prior_counts,
         #                                     NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs,
         #                                     ChromSeqs, SubfamCounts, SingleAlignMatrix)
+
+        # exit()
 
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
@@ -2117,4 +2154,4 @@ if __name__ == "__main__":
         PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
                         StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
 
-    print(time.time() - time_all)
+    # print(time.time() - time_all)
