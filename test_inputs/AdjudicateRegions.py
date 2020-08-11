@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Union
 import time
 import os
 import json
+import subprocess
 
 from polyA.load_alignments import load_alignments
 
@@ -72,6 +73,72 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
             j += 1
         stdout.write("\n")
         i += 1
+
+
+def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int, float]:
+    """
+    Fills UltraMatrix by calculating score (according to ULTRA scoring) for every
+    segment of size chunksize for all tandem repeats found in the target sequence.
+    Scores are of the surrounding chunksize nucleotides in the sequence.
+
+    input:
+    ultra_path: path to ultra executable
+    seq_file: path to sequence file for ultra input
+    chunk_size: size of nucleotide chunks that are scored
+
+    output:
+    ultra_matrix: Hash implementation of sparse 2D matrix. Key is int that
+    maps col to the value held in that cell of matrix. Cols are nucleotide
+    positions in the target sequence. Each cell in matrix is the score of
+    the surrounding chunk_size number of nucleotides for that particular
+    tandem repeat region.
+    """
+    # json keys to use: PositionScoreDelta, Start, Length
+    pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE,
+                           universal_newlines=True)
+    out, err = pop.communicate()
+    ultra_out = json.loads(out)  # returns dict
+    ultra_repeats = ultra_out['Repeats']  # list of repeats
+    ultra_matrix: Dict[int, float] = {}
+    # for each repeat, get overlapping windowed score
+    for i in range(len(ultra_repeats)):
+        rep = ultra_repeats[i]
+        start = rep['Start']
+        length = rep['Length']
+        end = start + length
+        pos_scores = rep['PositionScoreDelta'].split(":")
+
+        # calc score for first chunk
+        score: float = 0
+        j = 0
+        k = int((ChunkSize - 1) / 2)
+        # get 0 to 15
+        while j <= k and j < length:
+            score += float(pos_scores[j])
+            j += 1
+        window_size = j
+        # scaled score
+        ultra_matrix[start] = score * chunk_size / window_size
+        # raw score
+        # ultra_matrix[start] = score
+        # print(ultra_matrix[start])
+
+        # calc other chunks
+        for j in range(1, length):
+            # check to remove last score in window
+            if j - k - 1 >= 0:
+                score -= float(pos_scores[j - k - 1])
+                window_size -= 1
+            # check to add new score in window
+            if j + k < len(pos_scores):
+                score += float(pos_scores[j + k])
+                window_size += 1
+            # scaled score
+            ultra_matrix[j + start] = score * chunk_size / window_size
+            # raw score
+            # ultra_matrix[j + start] = score
+            # print(ultra_matrix[j + start])
+    return ultra_matrix
 
 
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
@@ -1719,6 +1786,8 @@ if __name__ == "__main__":
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
     SkipAlignScore: float = 0.0
+    UltraPath = ""
+    SeqFile = ""
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -1743,6 +1812,8 @@ if __name__ == "__main__":
         --segmentsize[30]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
+        --ultraPath PathToUltra
+        --ultraFile UltraInputFile
     
     OPTIONS
         --help - display help message
@@ -1764,6 +1835,8 @@ if __name__ == "__main__":
         "priorCounts=",
         "viz=",
         "heatmap=",
+        "ultraPath=",
+        "seqFile=",
 
         "help",
         "matrixpos",
@@ -1780,6 +1853,9 @@ if __name__ == "__main__":
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+    UltraPath = str(opts["--ultraPath"]) if "--ultraPath" in opts else UltraPath # gets path to exe
+    SeqFile = str(opts["--seqFile"]) if "--seqFile" in opts else SeqFile
+
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
     printSeqPos = "--seqpos" in opts
@@ -1809,6 +1885,13 @@ if __name__ == "__main__":
         esl_output_list = re.split(r"\n+", esl_output)
         lambda_list = re.split(r"\s+", esl_output_list[1])
         Lamb = float(lambda_list[2])
+
+    if UltraPath and SeqFile:
+        # for testing
+        SeqFile = '/Users/audrey/tar.txt'
+        UltraPath = "/Users/audrey/ULTRA/ultra"
+        UltraMatrix = FillUltraMatrix(UltraPath, SeqFile, ChunkSize)
+    exit()
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
