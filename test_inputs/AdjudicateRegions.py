@@ -313,6 +313,7 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
         #scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
+
             if chroms[i][seq_index + offset] != '-':  #if no new gap introduced, move along seq and add next nucl into score
                 if subfams[i][seq_index + offset] == '-':
                     if subfams[i][seq_index + offset - 1] == '-':
@@ -432,13 +433,19 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
             seq_index += 1
 
+
         #fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
-        if chrom_seq[-1 * (chunk_size + 1)] == '-' and chrom_seq[-1 * chunk_size] != '-':
-            chrom_slice = chrom_seq[(-1 * chunk_size)::]
-            subfam_slice = subfam_seq[(-1 * chunk_size)::]
+        # if chrom_seq[-1 * (chunk_size + 1)] == '-' and chrom_seq[-1 * chunk_size] != '-':
+        prev_seq_index: int = seq_index
+        while chrom_seq[seq_index] == '-':
+            seq_index += 1
+
+        if prev_seq_index != seq_index:
+            chrom_slice = chrom_seq[seq_index::]
+            subfam_slice = subfam_seq[seq_index::]
 
             align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
-                                    subfam_seq[-1 * (chunk_size + 1)], chrom_seq[-1 * (chunk_size + 1)], sub_matrix)
+                                    subfam_seq[seq_index-1], chrom_seq[seq_index-1], sub_matrix)
             align_matrix[i, col_index] = align_score / (half_chunk + 1) * chunk_size
             col_index += 1
 
@@ -741,7 +748,7 @@ Dict[Tuple[int, int], float]:
             sum_index: int = col_index - left_index
             num_segments: int = 0
 
-            while sum_index <= col_index + half_chunk:
+            while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
                 num_segments += 1
