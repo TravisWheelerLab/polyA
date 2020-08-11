@@ -94,8 +94,7 @@ def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int
     tandem repeat region.
     """
     # json keys to use: PositionScoreDelta, Start, Length
-    pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE,
-                           universal_newlines=True)
+    pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE)
     out, err = pop.communicate()
     ultra_out = json.loads(out)  # returns dict
     ultra_repeats = ultra_out['Repeats']  # list of repeats
@@ -638,7 +637,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str]) -> List[float]:
+                 subfams: List[str], ultra: bool) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -664,9 +663,20 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
     '0.29'
     """
     confidence_list: List[float] = []
-
     score_total: int = 0
-    for index in range(len(region)):
+    reg_length: int = len(region)
+    ultra_score: float = 0
+
+    # add ultra score to score_total, will be last in list
+    if ultra:
+        ultra_score = region[reg_length - 1]
+        if infile:
+            score_total += (2 ** ultra_score) * subfam_counts["tandem_repeat"]
+        else:
+            score_total += (2 ** ultra_score)
+        reg_length -= 1
+
+    for index in range(reg_length):
         score: float = region[index]
         converted_score = score * lambdaa
         if infile:
@@ -674,14 +684,21 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
         else:
             score_total += (2 ** converted_score)
 
-    for index in range(len(region)):
+    for index in range(reg_length):
         score: float = region[index]
         converted_score = score * lambdaa
         if infile:
             confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
         else:
             confidence = (2 ** converted_score) / score_total
+        confidence_list.append(confidence)
 
+    # add ultra score to confidence_list
+    if ultra:
+        if infile:
+            confidence = (2 ** ultra_score) * subfam_counts["tandem_repeat"] / score_total
+        else:
+            confidence = (2 ** ultra_score) / score_total
         confidence_list.append(confidence)
 
     return confidence_list
@@ -738,9 +755,11 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
         temp_region: List[float] = []
 
         for row_index in active_cells[col_index]:
-            temp_region.append(align_matrix[row_index, col_index])
+            temp_region.append(align_matrix[row_index, col_index]) # scores at that nuc pos
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
+        # if using ultra and there is a score at col_index in UltraMatrix, append to list, pass in true
+        ultra = False
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, ultra)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -1242,7 +1261,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                        starts: List[int], stops: List[int], changes_position: List[int], subfams: List[str], subfam_seqs: List[str], chrom_seqs: List[str],
                        subfam_countss: Dict[str, float], sub_matrix: Dict[str, int]) -> Dict[Tuple[str, int], float]:
     """
-    finds completing annoations, alignment scores and confidence values for each node
+    finds competing annotations, alignment scores and confidence values for each node
     identified in GetPath()
 
     first fills matrix with node alignment scores, then reuses matrix for confidence scores
@@ -1367,7 +1386,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
+        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams, False)
 
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
@@ -1886,12 +1905,13 @@ if __name__ == "__main__":
         lambda_list = re.split(r"\s+", esl_output_list[1])
         Lamb = float(lambda_list[2])
 
+    Ultra: bool = False
     if UltraPath and SeqFile:
-        # for testing
+        Ultra = True
+        # hard coded files for testing
         SeqFile = '/Users/audrey/tar.txt'
-        UltraPath = "/Users/audrey/ULTRA/ultra"
+        # UltraPath = "/Users/audrey/ULTRA/ultra"
         UltraMatrix = FillUltraMatrix(UltraPath, SeqFile, ChunkSize)
-    exit()
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
@@ -1915,7 +1935,13 @@ if __name__ == "__main__":
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
     prob_skip = 0.4  # about 60% of genome is TE derived #FIXME - do we want to hard code this in?
+    prob_tr = 0.06  # ~6% of genome exepcted to be tandem repeat
     if infile_prior_counts:
+        SubfamCounts["skip"] = prob_skip
+        if Ultra:
+            SubfamCounts["tandem_repeat"] = prob_tr
+            prob_skip += prob_tr
+
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
             info = re.split(r"\s+", line)
@@ -1924,8 +1950,6 @@ if __name__ == "__main__":
 
         for key in SubfamCounts:
             SubfamCounts[key] = (1 - prob_skip) * SubfamCounts[key] / PriorTotal
-
-        SubfamCounts["skip"] = prob_skip
 
     Subfams: List[str] = []
     Chroms: List[str] = []
