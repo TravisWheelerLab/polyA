@@ -433,7 +433,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
 
         #fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
-        # if chrom_seq[-1 * (chunk_size + 1)] == '-' and chrom_seq[-1 * chunk_size] != '-':
         prev_seq_index: int = seq_index
         while chrom_seq[seq_index] == '-':
             seq_index += 1
@@ -738,57 +737,77 @@ Dict[Tuple[int, int], float]:
         start: int = starts[row_index] - start_all
         stop: int = stops[row_index] - start_all
 
-        #first chunk_size/2 before getting to full chunks
-        left_index: int = 0
-        for col_index in range(start, starts[row_index] - start_all + half_chunk):
+        #if the alignment is small, do it the easy way to avoid out of bound errors
+        if stop - start + 1 < chunk_size:
+            for col in range(len(columns)):
+                j = columns[col]
 
+                if (row_index, j) in confidence_matrix:
+                    num: int = j
+                    summ: float = 0.0
+                    numsegments: int = 0
+                    while num >= 0 and num >= j:
+                        if (row_index, num) in confidence_matrix:
+                            summ = summ + confidence_matrix[row_index, num]
+                            numsegments += 1
+                        num -= 1
+
+                    if numsegments > 0:
+                        support_matrix[row_index, j] = summ / numsegments
+
+        #if the alignment is large, do it the fast way
+        else:
+            #first chunk_size/2 before getting to full chunks
+            left_index: int = 0
+            for col_index in range(start, starts[row_index] - start_all + half_chunk):
+
+                summ: float = 0.0
+                sum_index: int = col_index - left_index
+                num_segments: int = 0
+
+                while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
+                    summ += confidence_matrix[row_index, sum_index]
+                    sum_index += 1
+                    num_segments += 1
+
+                support_matrix[row_index, col_index] = summ / num_segments
+                left_index += 1
+
+            # middle part where num segments is chunk_size
+            col_index: int = (start + half_chunk)
             summ: float = 0.0
-            sum_index: int = col_index - left_index
-            num_segments: int = 0
-
-            while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
+            sum_index: int = col_index - half_chunk
+            while sum_index <= col_index + half_chunk:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
-                num_segments += 1
-
-            support_matrix[row_index, col_index] = summ / num_segments
-            left_index += 1
-
-        # middle part where num segments is chunk_size
-        col_index: int = (start + half_chunk)
-        summ: float = 0.0
-        sum_index: int = col_index - half_chunk
-        while sum_index <= col_index + half_chunk:
-            summ += confidence_matrix[row_index, sum_index]
-            sum_index += 1
-
-        support_matrix[row_index, col_index] = summ / chunk_size
-
-        #to get next bp average subtract previous confidence, add next confidence
-        for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
-            last_index: int = col_index - half_chunk - 1
-            next_index: int = col_index + half_chunk
-
-            summ -= confidence_matrix[row_index, last_index]
-            summ += confidence_matrix[row_index, next_index]
 
             support_matrix[row_index, col_index] = summ / chunk_size
 
-        # last chunk_size/2
-        right_index: int = half_chunk
-        for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
+            #to get next bp average subtract previous confidence, add next confidence
+            for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
+                last_index: int = col_index - half_chunk - 1
+                next_index: int = col_index + half_chunk
 
-            summ: float = 0.0
-            sum_index: int = col_index - half_chunk
-            num_segments: int = 0
+                summ -= confidence_matrix[row_index, last_index]
+                summ += confidence_matrix[row_index, next_index]
 
-            while sum_index < col_index + right_index:
-                summ += confidence_matrix[row_index, sum_index]
-                sum_index += 1
-                num_segments += 1
+                support_matrix[row_index, col_index] = summ / chunk_size
 
-            support_matrix[row_index, col_index] = summ / num_segments
-            right_index -= 1
+            # last chunk_size/2
+            right_index: int = half_chunk
+            for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
+
+                summ: float = 0.0
+                sum_index: int = col_index - half_chunk
+                num_segments: int = 0
+
+                while sum_index < col_index + right_index:
+                    summ += confidence_matrix[row_index, sum_index]
+                    sum_index += 1
+                    num_segments += 1
+
+                support_matrix[row_index, col_index] = summ / num_segments
+                right_index -= 1
 
     return support_matrix
 
