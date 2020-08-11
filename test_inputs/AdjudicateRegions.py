@@ -1,7 +1,7 @@
 from getopt import getopt
 from math import inf, log
 import re
-from sys import argv, stdout
+from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple, Union
 import time
 import os
@@ -1902,9 +1902,24 @@ if __name__ == "__main__":
             stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
         exit()
 
-    match = re.search(r"(.+):(\d+)-.+", Chroms[1])
+    match = re.search(r"(.+):(\d+)-(\d+)", Chroms[1])
     Chrom: str = match.groups()[0]
     ChromStart: int = int(match.groups()[1])
+    ChromEnd: int = int(match.groups()[2])
+    TargetLen: int = ChromEnd - ChromStart
+
+    print(ChromStart, ChromEnd, TargetLen)
+
+    #bail out if target sq is < 25 nucls
+    #warning if less than 1000 nucls
+    #warning if no chrom info given - okay for artificial seq inputs
+    if TargetLen == 0:
+        stderr.write("WARNING - No chromosome position information given.\nThis is okay if running on artificial sequences, but cannot use command line options --viz or --heatmap.\n\n")
+    elif TargetLen <= 25:
+        stderr.write("ERROR - Target sequence length needs to be > 25 nucleotides.\n\n")
+        exit()
+    elif TargetLen < 1000:
+        stderr.write("WARNING - Did you mean to run this on a target region < 1000 nucleotides?\n\n")
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
     ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
