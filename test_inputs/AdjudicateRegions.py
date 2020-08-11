@@ -199,8 +199,6 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
             chunk_score += gap_ext
         else:
             chunk_score += gap_init
-    elif seq1[0] == ".":
-        chunk_score = chunk_score
     else:
         chunk_score += sub_matrix[seq1[0] + seq2[0]]
 
@@ -1804,6 +1802,7 @@ if __name__ == "__main__":
         for i in range(len(subScores)):
             SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
+    SubMatrix['..'] = 0
 
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
@@ -1907,8 +1906,6 @@ if __name__ == "__main__":
     ChromStart: int = int(match.groups()[1])
     ChromEnd: int = int(match.groups()[2])
     TargetLen: int = ChromEnd - ChromStart
-
-    print(ChromStart, ChromEnd, TargetLen)
 
     #bail out if target sq is < 25 nucls
     #warning if less than 1000 nucls
