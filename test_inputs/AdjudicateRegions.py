@@ -637,7 +637,7 @@ def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int]
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str], ultra: bool) -> List[float]:
+                 subfams: List[str]) -> List[float]:
     """
     computes confidence values for competing annotations using alignment scores
     Loops through the array once to find sum of 2^every_hit_score in region, then
@@ -663,43 +663,69 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
     '0.29'
     """
     confidence_list: List[float] = []
+
     score_total: int = 0
-    reg_length: int = len(region)
-    ultra_score: float = 0
 
-    # add ultra score to score_total, will be last in list
-    if ultra:
-        ultra_score = region[reg_length - 1]
-        if infile:
-            score_total += (2 ** ultra_score) * subfam_counts["tandem_repeat"]
-        else:
-            score_total += (2 ** ultra_score)
-        reg_length -= 1
+    #if command line option to include subfam_counts
+    if infile:
+        for index in range(len(region)):
+            converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
+            confidence_list.append(converted_score)
+            score_total += converted_score
 
-    for index in range(reg_length):
-        score: float = region[index]
-        converted_score = score * lambdaa
-        if infile:
-            score_total += (2 ** converted_score) * subfam_counts[subfams[index]]
-        else:
-            score_total += (2 ** converted_score)
+        for index in range(len(region)):
+            confidence_list[index] = confidence_list[index] / score_total
 
-    for index in range(reg_length):
-        score: float = region[index]
-        converted_score = score * lambdaa
-        if infile:
-            confidence = ((2 ** converted_score) * subfam_counts[subfams[index]]) / score_total
-        else:
-            confidence = (2 ** converted_score) / score_total
-        confidence_list.append(confidence)
+    #don't include subfam counts (default)
+    else:
+        for index in range(len(region)):
+            converted_score = 2**(region[index] * lambdaa)
+            confidence_list.append(converted_score)
+            score_total += converted_score
 
-    # add ultra score to confidence_list
-    if ultra:
-        if infile:
-            confidence = (2 ** ultra_score) * subfam_counts["tandem_repeat"] / score_total
-        else:
-            confidence = (2 ** ultra_score) / score_total
-        confidence_list.append(confidence)
+        for index in range(len(region)):
+            confidence_list[index] = confidence_list[index] / score_total
+
+    return confidence_list
+
+
+def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
+                 subfams: List[str]) -> List[float]:
+    """
+
+    :param lambdaa:
+    :param infile:
+    :param region:
+    :param subfam_counts:
+    :param subfams:
+    :return:
+    """
+    confidence_list: List[float] = []
+    score_total: int = 0
+    ultra_score: float = region[len(region) - 1]
+
+    if infile:
+        for index in range(len(region) - 1):
+            converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
+            confidence_list.append(converted_score)
+            score_total += converted_score
+        tr_score = (2 ** region[len(region) - 1]) * subfam_counts["tandem_repeat"]
+        confidence_list.append(tr_score)
+        score_total += tr_score
+        for index in range(len(region)):
+            confidence_list[index] = confidence_list[index] / score_total
+
+    #don't include subfam counts (default)
+    else:
+        for index in range(len(region) - 1):
+            converted_score = 2**(region[index] * lambdaa)
+            confidence_list.append(converted_score)
+            score_total += converted_score
+        tr_score = (2 ** region[len(region) - 1])
+        confidence_list.append(tr_score)
+        score_total += tr_score
+        for index in range(len(region)):
+            confidence_list[index] = confidence_list[index] / score_total
 
     return confidence_list
 
@@ -759,7 +785,10 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
 
         # if using ultra and there is a score at col_index in UltraMatrix, append to list, pass in true
         ultra = False
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, ultra)
+        if ultra:
+            temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss)
+        else:
+          temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -1386,7 +1415,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams, False)
+        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
 
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
