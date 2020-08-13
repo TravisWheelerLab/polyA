@@ -1,7 +1,7 @@
 from getopt import getopt
 from math import inf, log
 import re
-from sys import argv, stderr, stdout
+from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple, Union
 import time
 import os
@@ -15,7 +15,6 @@ from polyA.load_alignments import load_alignments
 # -----------------------------------------------------------------------------------#
 #			FUNCTIONS													   			#
 # -----------------------------------------------------------------------------------#
-
 
 def PrintMatrixSupport(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[int, int], float],
                             subfams_collapse: List[str]) -> None:
@@ -142,7 +141,7 @@ def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int
 
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     """
-    Find and return the min and max stop positions for the entire region
+    Find and return the min start and max stop positions for the entire region
     included in the alignments.
 
     input:
@@ -173,12 +172,12 @@ def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     return min_start, max_stop
 
 
-def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seqs: List[str]) -> Tuple[int, int]:
+def PadSeqs(chunk_size: int, start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seqs: List[str]) -> Tuple[int, int]:
     """
     Pad out sequences with "." to allow regions where sequences do not all
     have the same start and stop positions.
 
-    padd with an extra (chunk_size-1)/2 at the end
+    pad with an extra (chunk_size-1)/2 at the end
 
     input:
     start: start positions on the target sequence from the input alignment
@@ -194,7 +193,7 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     >>> stp = [0, 1, 5]
     >>> s_seq = ['', 'a', 'aaa']
     >>> c_seq = ['', 'a', 't-t']
-    >>> (b, e) = PadSeqs(strt, stp, s_seq, c_seq)
+    >>> (b, e) = PadSeqs(31, strt, stp, s_seq, c_seq)
     >>> b
     1
     >>> e
@@ -208,14 +207,16 @@ def PadSeqs(start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seq
     edge_start: int
     edge_stop: int
 
+    half_chunk: int = int((chunk_size-1)/2)
+
     (edge_start, edge_stop) = Edges(start, stop)
 
     for i in range(1, len(subfam_seqs)):
         left_pad: int = start[i] - edge_start
         right_pad: int = edge_stop - stop[i]
 
-        chrom_seqs[i] = ("." * left_pad) + f"{chrom_seqs[i]}" + ("." * (right_pad + 15))
-        subfam_seqs[i] = ("." * left_pad) + f"{subfam_seqs[i]}" + ("." * (right_pad + 15))
+        chrom_seqs[i] = ("." * left_pad) + f"{chrom_seqs[i]}" + ("." * (right_pad + half_chunk))
+        subfam_seqs[i] = ("." * left_pad) + f"{subfam_seqs[i]}" + ("." * (right_pad + half_chunk))
 
     return (edge_start, edge_stop)
 
@@ -227,7 +228,7 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
     Scores are calculated based on input SubstitutionMatrix, gap_ext, and gap_init.
 
     prev_char_seq1, prev_char_seq2 are the single nucleotides in the alignment before the chunk - if
-    chunk starts with '-' these tell us to use gap_init_score or gap_extend_score as the penalty
+    chunk starts with '-' these tell us to use gap_init or gap_ext as the penalty
 
     input:
     gap_ext: penalty to extend a gap
@@ -250,8 +251,6 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
     -4.0
     """
 
-    # time1: float = time.time()
-
     chunk_score: int = 0
 
     # deals with the first character of a segment being a gap character - have to look at last
@@ -266,28 +265,29 @@ def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1:
             chunk_score += gap_ext
         else:
             chunk_score += gap_init
-    elif seq1[0] == ".":
-        chunk_score = chunk_score
     else:
         chunk_score += sub_matrix[seq1[0] + seq2[0]]
 
     for j in range(1, len(seq1)):
-        if seq1[j] != ".":
-            if seq1[j] == "-":
+
+        seq1_char: str = seq1[j]
+        seq2_char: str = seq2[j]
+
+        if seq1_char != ".":
+            if seq1_char == "-":
                 if seq1[j - 1] == "-":
                     chunk_score += gap_ext
                 else:
                     chunk_score += gap_init
-            elif seq2[j] == "-":
+            elif seq2_char == "-":
                 if seq2[j - 1] == "-":
                     chunk_score += gap_ext
                 else:
                     chunk_score += gap_init
-            # elif seq1[j] == ".":
-            #     chunk_score = chunk_score
             else:
-                if (seq1[j] + seq2[j]) in sub_matrix:  # just incase the char isn't in the input substitution matrix
-                    chunk_score += sub_matrix[seq1[j] + seq2[j]]
+                #FIXME - do I really need this check? Can check earlier if needed and declare inadequte sub matrix input
+                # if (seq1_char + seq2_char) in sub_matrix:  # just incase the char isn't in the input substitution matrix
+                chunk_score += sub_matrix[seq1_char + seq2_char]
         else:
             break
 
@@ -300,19 +300,16 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
     for every segment of size chunksize for all seqs in alignments
-
     Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
     matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
-
     Starting and trailing cells are different - column 0 in matrix holds alignment score for
-    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Score are weighted based on number
+    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Scores are weighted based on number
     of nucleotides that contribute to the score - so beginning and trailing positions with less
     than chunksize nucleotides don't have lower scores
 
-    computes score for the first segment that does not start with a '.' by calling CalcScore()
+    Computes score for the first segment that does not start with a '.' by calling CalcScore()
     and from there keeps the base score and adds new chars score and subtracts old chars
     score - if a new gap is introduced, calls CalcScore() instead of adding onto base score
-
     ** padding of (chunksize-1)/2 added to right pad.. this way we can go all the way to the
     end of the sequence and calc alignscores without doing anything special
 
@@ -320,14 +317,18 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     everything needed for CalcScore()
     edge_start: where alignment starts on the target/chrom sequence
     chunk_size: size of nucletide chunks that are scored
+    skip_align_score: alignment score to give the skip state (default = 0)
+    subfams: alignments to calculate scores from
+    chroms: alignments to calculate scores from
+    starts: where in the target sequence the competing alignments start
 
     output:
+    num_cols: number of columns in the matrix
     align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
-    are  subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
+    are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
     Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
     for that particular subfamily.
-
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
@@ -339,14 +340,11 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     {(1, 2): 31.0, (1, 3): 31.0, (1, 4): 31.0, (1, 5): 31.0, (1, 6): 31.0, (1, 7): 31.0, (1, 8): 31.0, (1, 9): 31.0, (1, 10): 31.0, (1, 11): 31.0, (1, 12): 31.0, (1, 13): 31.0, (1, 14): 31.0, (1, 15): 31.0, (1, 16): 31.0, (1, 17): 31.0, (1, 18): 31.0, (1, 19): 31.0, (1, 20): 31.0, (1, 21): 31.0, (1, 22): 31.0, (1, 23): 31.0, (1, 24): 29.0, (1, 25): 28.933333333333334, (1, 26): 28.862068965517242, (1, 27): 28.78571428571429, (1, 28): 28.703703703703702, (1, 29): 28.615384615384617, (1, 30): 28.52, (1, 31): 28.416666666666664, (1, 32): 28.304347826086953, (1, 33): 28.18181818181818, (1, 34): 28.047619047619047, (1, 35): 27.900000000000002, (1, 36): 27.736842105263158, (1, 37): 27.555555555555554, (1, 38): 27.352941176470587, (1, 39): 27.125, (2, 0): 27.125, (2, 1): 27.352941176470587, (2, 2): 27.555555555555557, (2, 3): 27.736842105263158, (2, 4): 27.9, (2, 5): 28.047619047619047, (2, 6): 28.181818181818183, (2, 7): 28.304347826086957, (2, 8): 28.416666666666668, (2, 9): 28.52, (2, 10): 28.615384615384617, (2, 11): 28.703703703703702, (2, 12): 28.785714285714285, (2, 13): 28.862068965517242, (2, 14): 28.933333333333334, (2, 15): 29.0, (2, 16): 31.0, (2, 17): 31.0, (2, 18): 31.0, (2, 19): 31.0, (2, 20): 31.0, (2, 21): 31.0, (2, 22): 5.0, (2, 23): 0.0, (2, 24): 0.0, (2, 25): 0.0, (2, 26): 0.0, (2, 27): 0.0, (2, 28): 0.0, (2, 29): 0.0, (2, 30): 0.0, (2, 31): 0.0, (2, 32): 0.0, (2, 33): 0.0, (2, 34): 0.0, (2, 35): 0.0, (2, 36): 0.0, (2, 37): 0.0, (2, 38): 0.0, (2, 39): 0.0, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
     """
 
-
-    # time1: float = time.time()
-
     num_cols: int = 0
-
+    half_chunk: int = int((chunk_size - 1) / 2)
     align_matrix: Dict[Tuple[int, int], float] = {}
 
-    # chunks can't start on gaps and gaps don't count when getting to the 30 bps
+    # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
@@ -355,13 +353,9 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        # calculates score for the first (chunksize-1)/2 chunks, chunk ((chunksize-1)/2)+1 is the first one that is 31nt
-        seq_index: int = starts[i] - edge_start
-        # col_index is the col we are in the align score matrix, $seq_index is the place in @subfam_seq and @chrom_seq
-        col_index = seq_index + int((chunk_size - 1) / 2)
-
-        k = int((chunk_size - 1) / 2)
-
+        seq_index: int = starts[i] - edge_start #place in subfam_seq and chrom_seq
+        col_index = seq_index + half_chunk #col in align_matrix
+        k = half_chunk
         temp_index = seq_index
         temp_count = 0
 
@@ -376,15 +370,15 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
         chrom_slice: str = chrom_seq[seq_index:seq_index + offset]
         subfam_slice: str = subfam_seq[seq_index:seq_index + offset]
 
-        # calculates score for first chunk and puts score in align_matrix
+        # calculates score for first chunk and puts in align_matrix
         align_score: float = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
         align_matrix[i, col_index - k] = align_score * chunk_size / (
-                    chunk_size - k)  # already to scale so don't need to * 31 and / 31
+                    chunk_size - k)  # already to scale so don't need to * chunk_size and / chunk_size
 
-        for k in range(int((chunk_size - 1) / 2) - 1, -1, -1):
+        #scores for first part, until we get to full sized chunks
+        for k in range(half_chunk - 1, -1, -1):
 
-            if chroms[i][seq_index + offset] != '-':
-
+            if chroms[i][seq_index + offset] != '-':  #if no new gap introduced, move along seq and add next nucl into score
                 if subfams[i][seq_index + offset] == '-':
                     if subfams[i][seq_index + offset - 1] == '-':
                         align_score = align_score + gap_ext
@@ -397,8 +391,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                 align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
 
                 offset += 1
-            else:
 
+            else: #if new gap introduced, recalculate offset and call CalcScore again
                 temp_index = seq_index
                 temp_count = 0
 
@@ -417,7 +411,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                 align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
 
         col_index += 1
-
         num_nucls: int = chunk_size  # how many nucls contributed to align score
 
         # move to next chunk by adding next chars score and subtracting prev chars score
@@ -425,11 +418,18 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
             temp_index = seq_index
             temp_count = 0
 
+            #stop when get to end of alignment and padding starts
             if chrom_seq[seq_index + 1] == ".":
                 break
 
-            if chrom_seq[seq_index + 1] != "-":  #skip over gap and not calc a score for the matrix
-                if chrom_seq[seq_index + offset] == '-' or chrom_seq[seq_index] == '-':  #if new gap introduced, or gets rid of old gap, recalc offset
+            #update offset if removing a gap
+            if chrom_seq[seq_index] == '-':
+                offset -= 1
+
+            # skip over gap and not calc a score for the matrix
+            if chrom_seq[seq_index + 1] != "-":
+                # if new gap introduced, or gets rid of old gap, recalc offset, rerun CalcScore
+                if chrom_seq[seq_index + offset] == '-' or chrom_seq[seq_index] == '-':
                     while temp_count < chunk_size:
                         if chrom_seq[temp_index + 1] != "-":
                             temp_count += 1
@@ -448,15 +448,15 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                             break
                         if nuc != '-' and nuc != '.':
                             temp_count2 += 1
-                    num_nucls = temp_count2  # resetting num_nucls to chunk_size
+                    num_nucls = temp_count2
 
-                    if num_nucls <= int((chunk_size - 1) / 2):
+                    if num_nucls <= half_chunk:
                         align_score = -inf
 
                 else:
                     # align_score from previous segment - prev chars score + next chars score
-                    # subtracting prev  chars score - tests if its a gap in the subfam as well
 
+                    #subtracting prev chars score
                     if subfam_seq[seq_index] == "-":
                         num_nucls -= 1
                         if subfam_seq[seq_index - 1] == "-":
@@ -467,8 +467,8 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
                         align_score = align_score - sub_matrix[subfam_seq[seq_index] + chrom_seq[seq_index]]
                         num_nucls -= 1
 
-                    # adding next chars score - tests if its a gap in the subfam as well
-                    if subfam_seq[seq_index + offset - int((chunk_size - 1) / 2)] == ".":
+                    # adding next chars score
+                    if subfam_seq[seq_index + offset - half_chunk] == ".":
                         align_score = -inf
                         break
                     elif subfam_seq[seq_index + offset] == "-":
@@ -497,6 +497,21 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
 
             seq_index += 1
 
+
+        #fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
+        prev_seq_index: int = seq_index
+        while chrom_seq[seq_index] == '-':
+            seq_index += 1
+
+        if prev_seq_index != seq_index:
+            chrom_slice = chrom_seq[seq_index::]
+            subfam_slice = subfam_seq[seq_index::]
+
+            align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
+                                    subfam_seq[seq_index-1], chrom_seq[seq_index-1], sub_matrix)
+            align_matrix[i, col_index] = align_score / (half_chunk + 1) * chunk_size
+            col_index += 1
+
         # max col_index is assigned to cols
         if num_cols < col_index:
             num_cols = col_index
@@ -505,27 +520,35 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     for j in range(num_cols):
         align_matrix[0, j] = float(skip_align_score)
 
-    # print("FillAlignScoreMatrix", time.time() - time1)
-
     return (num_cols, align_matrix)
 
 
 def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int], stops: List[int],
                                 consensus_starts: List[int],
-                                strands: List[str]) -> Dict[Tuple[int, int], int]:
+                                strands: List[str]) -> Tuple[List[int], Dict[int, List[int]], Dict[Tuple[int, int], int]]:
     """
-    Fills parallel array to the AlignScoreMatrix that holds the consensus position for each subfam
-    at that position in the alignment. Walks along the alignments one nucleotide at a time adding
+    Fills parallel to AlignMatrix that holds the consensus position for each subfam at that
+    position in the alignment. Walks along the alignments one nucleotide at a time adding
     the consensus position to the matrix.
+
+    At same time, fills NonEmptyColumns and ActiveCells.
 
     input:
     col_num: number of columns in alignment matrix - will be same number of columns in consensus_matrix
+    row_num: number of rows in matrices
+    start_all: min start position on chromosome/target sequences for whole alignment
     subfams: actual subfamily/consensus sequences from alignment
     chroms: actual target/chromosome sequences from alignment
+    starts: start positions for all competing alignments (on target)
+    stops: stop positions for all competing alignments (on target)
     consensus_starts: where alignment starts in the subfam/consensus sequence
     strands: what strand each of the alignments are on - reverse strand will count down instead of up
 
     output:
+    columns: all columns in matrix that are not empty, allows us to avoid looping
+    through unecessary columns
+    active_cells: dictionary that maps column number in matrix, so a list of rows that are
+    active in that column, allows us to avoid looping through unecessary rows
     consensus_matrix: Hash implementation of sparse 2D matrix used along with DP matrices. Key is
     tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
     holds the alignment position in the consensus subfamily sequence.
@@ -536,12 +559,17 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     >>> stps = [0, 2, 2]
     >>> con_strts = [-1, 0, 10]
     >>> strandss = ["", "+", "-"]
-    >>> FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
+    >>> (col, active, con_mat) = FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
+    >>> con_mat
     {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    >>> col
+    [0, 1, 2]
+    >>> active
+    {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
     """
 
-    # time1: float = time.time()
-
+    columns = set()
+    active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
     # 0s for consensus pos of skip state
@@ -562,11 +590,16 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                 if subfams[row_index][seq_index] != "-":
                     consensus_pos += 1
 
-                # put consensus pos corresponding to pos in matrix in hash
                 consensus_matrix[row_index, col_index] = consensus_pos
+
+                columns.add(col_index)
 
                 # matrix position only advances when there is not a gap in the chrom seq
                 if chroms[row_index][seq_index] != "-":
+                    if col_index in active_cells:
+                        active_cells[col_index].append(row_index)
+                    else:
+                        active_cells[col_index] = [0, row_index]
                     col_index += 1
 
                 seq_index += 1
@@ -582,71 +615,36 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
                     consensus_pos2 -= 1
                 consensus_matrix[row_index, col_index2] = consensus_pos2
 
+                columns.add(col_index2)
+
                 if chroms[row_index][seq_index2] != "-":
+                    if col_index2 in active_cells:
+                        active_cells[col_index2].append(row_index)
+                    else:
+                        active_cells[col_index2] = [0, row_index]
                     col_index2 += 1
 
                 seq_index2 += 1
 
-    # print("FillConsensusPositionMatrix", time.time() - time1)
-
-    return consensus_matrix
-
-
-def FillColumns(num_cols: int, num_rows: int, align_matrix: Dict[Tuple[int, int], float]) -> Tuple[
-    List[int], Dict[int, List[int]]]:
-    """
-    in input alignment some of the columns will be empty - puts all columns that are not empty into NonEmptyColumns,
-    so when looping through hash I can use the vals in NonEmptyColumns - this will skip over empty columns
-
-    input:
-    num_cols: number of columns in matrices
-    num_rows: number of rows in matrices
-    align_matrix: alignment matrix - will look here to see which columns are empty
-
-    output:
-    columns: list of columns that are not empty
-
-    >>> align_mat = {(0, 0): 100, (0, 2): 100, (1, 0): 100, (1, 2): 100, (2, 0): 100}
-    >>> (non_cols, active) = FillColumns(3, 3, align_mat)
-    >>> non_cols
-    [0, 2]
-    >>> active
-    {0: [0, 1, 2], 2: [0, 1]}
-    """
-
-    # time1: float = time.time()
-
-    columns: List[int] = []
-    active_cells: Dict[int, List[int]] = {}
-    for j in range(num_cols):
-        empty = 1
-        i: int = 1
-        active_rows: List[int] = []
-        active_rows.append(0)
-        for i in range(1, num_rows):
-            if (i, j) in align_matrix:
-                active_rows.append(i)
-                empty = 0
-
-        if not empty:
-            active_cells[j] = active_rows
-            columns.append(j)
-
-    # print("FillColumns", time.time() - time1)
-    return (columns, active_cells)
+    return (list(columns), active_cells, consensus_matrix)
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
                  subfams: List[str]) -> List[float]:
     """
-    computes confidence values for competing annotations using alignment scores
+    computes confidence values for competing annotations using alignment scores.
     Loops through the array once to find sum of 2^every_hit_score in region, then
     loops back through to calculate confidence. Converts the score to account for
     lambda before summing.
 
+    If command line option for subfam_counts, this is included in confidence math.
+
     input:
     lambdaa: lambda value for input sub_matrix (scaling factor)
+    infile: test if subfam_counts infile included at command line
     region: list of scores for competing annotations
+    subfam_counts: dict that maps subfam name to it's count info
+    subfams: list of subfam names
 
     output:
     confidence_list: list of confidence values for competing annotations, each input alignment
@@ -702,7 +700,6 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
     """
     confidence_list: List[float] = []
     score_total: int = 0
-    ultra_score: float = region[len(region) - 1]
 
     if infile:
         for index in range(len(region) - 1):
@@ -712,8 +709,6 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
         tr_score = (2 ** region[len(region) - 1]) * subfam_counts["tandem_repeat"]
         confidence_list.append(tr_score)
         score_total += tr_score
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
 
     #don't include subfam counts (default)
     else:
@@ -724,8 +719,9 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
         tr_score = (2 ** region[len(region) - 1])
         confidence_list.append(tr_score)
         score_total += tr_score
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
+
+    for index in range(len(region)):
+        confidence_list[index] = confidence_list[index] / score_total
 
     return confidence_list
 
@@ -735,13 +731,12 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
         Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
-    annotations that are input into confidence_cm, the output confidence values are used to populate the confidence
-    matrix.
+    annotations that are input into ConfidenceCM, the output confidence values are used to populate confidence_matrix.
 
     input:
-    row_num: number of rows in align_matrix
-    lamb: lamda value for input substitution matrix
+    everything needed for ConfidenceCM()
     columns: array that holds all non empty columns in align matrix
+    active_cells: maps col numbers to all active rows in that col
     align_matrix: alignment matrix - used to calculate confidence
 
     output:
@@ -771,8 +766,6 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
     '0.5212'
     """
 
-    # time1: float = time.time()
-
     confidence_matrix: Dict[Tuple[int, int], float] = {}
 
     for i in range(len(columns)):
@@ -793,32 +786,34 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
-    # print("FillConfidenceMatrix", time.time() - time1)
-
     return confidence_matrix
 
 
 def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
 Dict[Tuple[int, int], float]:
     """
-    Fills support score matrix using values in conf matrix. Score for subfam row
-    at position col is sum of all confidences for subfam row for that column and
-    the following chunksize-1 columns - normalized by dividing by number of segments
+    Fills support_matrix using values in confidence_matrix. Average confidence values
+    for surrounding chunk_size confidence values - normalized by dividing by number of
+    segments.
 
     score for subfam x at position i is sum of all confidences for subfam x for all segments that
     overlap position i - divided by number of segments
 
     input:
     row_num: number of rows in matrices
+    chunk_size: number of nucleotides that make up a chunk
+    start_all: min start position on chromosome/target sequences for whole alignment
     columns: list of non empty columns in matrices
-    confidence_matrix: confidence matrix - used to calculate support scores
+    starts: chrom/target start positions of all alignments
+    stops: chrom/target stop positions of all alignments
+    confidence_matrix: Hash implementation of sparse 2D matrix that holds confidence values
 
     output:
     support_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
     tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
     subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
-    Each cell in matrix is the support score (or average confidence value) for the following
-    chunksize cells in the confidence matrix.
+    Each cell in matrix is the support score (or average confidence value) for the surrounding
+    chunk_size cells in the confidence matrix.
 
     >>> non_cols = [0,1,2]
     >>> strts = [0, 0]
@@ -827,8 +822,6 @@ Dict[Tuple[int, int], float]:
     >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat)
     {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
     """
-
-    # time1: float = time.time()
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -853,60 +846,78 @@ Dict[Tuple[int, int], float]:
 
         start: int = starts[row_index] - start_all
         stop: int = stops[row_index] - start_all
-        #first chunk_size/2
-        left_index: int = 0
-        for col_index in range(start, starts[row_index] - start_all + half_chunk):
 
+        #if the alignment is small, do it the easy way to avoid out of bound errors
+        if stop - start + 1 < chunk_size:
+            for col in range(len(columns)):
+                j = columns[col]
+
+                if (row_index, j) in confidence_matrix:
+                    num: int = j
+                    summ: float = 0.0
+                    numsegments: int = 0
+                    while num >= 0 and num >= j:
+                        if (row_index, num) in confidence_matrix:
+                            summ = summ + confidence_matrix[row_index, num]
+                            numsegments += 1
+                        num -= 1
+
+                    if numsegments > 0:
+                        support_matrix[row_index, j] = summ / numsegments
+
+        #if the alignment is large, do it the fast way
+        else:
+            #first chunk_size/2 before getting to full chunks
+            left_index: int = 0
+            for col_index in range(start, starts[row_index] - start_all + half_chunk):
+
+                summ: float = 0.0
+                sum_index: int = col_index - left_index
+                num_segments: int = 0
+
+                while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
+                    summ += confidence_matrix[row_index, sum_index]
+                    sum_index += 1
+                    num_segments += 1
+
+                support_matrix[row_index, col_index] = summ / num_segments
+                left_index += 1
+
+            # middle part where num segments is chunk_size
+            col_index: int = (start + half_chunk)
             summ: float = 0.0
-            sum_index: int = col_index - left_index
-            num_segments: int = 0
-
+            sum_index: int = col_index - half_chunk
             while sum_index <= col_index + half_chunk:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
-                num_segments += 1
-
-            support_matrix[row_index, col_index] = summ / num_segments
-            left_index += 1
-
-        # middle part where num segments is chunk_size
-        #calc first chunk_size average
-        col_index: int = (start + half_chunk)
-        summ: float = 0.0
-        sum_index: int = col_index - half_chunk
-        while sum_index <= col_index + half_chunk:
-            summ += confidence_matrix[row_index, sum_index]
-            sum_index += 1
-
-        support_matrix[row_index, col_index] = summ / chunk_size
-
-        #to get next bp average subtract previous confidence, add next confidence
-        for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
-            last_index: int = col_index - half_chunk - 1
-            next_index: int = col_index + half_chunk
-
-            summ -= confidence_matrix[row_index, last_index]
-            summ += confidence_matrix[row_index, next_index]
 
             support_matrix[row_index, col_index] = summ / chunk_size
 
-        # last chunk_size/2
-        right_index: int = half_chunk
-        for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
+            #to get next bp average subtract previous confidence, add next confidence
+            for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
+                last_index: int = col_index - half_chunk - 1
+                next_index: int = col_index + half_chunk
 
-            summ: float = 0.0
-            sum_index: int = col_index - half_chunk
-            num_segments: int = 0
+                summ -= confidence_matrix[row_index, last_index]
+                summ += confidence_matrix[row_index, next_index]
 
-            while sum_index < col_index + right_index:
-                summ += confidence_matrix[row_index, sum_index]
-                sum_index += 1
-                num_segments += 1
+                support_matrix[row_index, col_index] = summ / chunk_size
 
-            support_matrix[row_index, col_index] = summ / num_segments
-            right_index -= 1
+            # last chunk_size/2
+            right_index: int = half_chunk
+            for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
 
-    # print("FillSupportMatrix", time.time() - time1)
+                summ: float = 0.0
+                sum_index: int = col_index - half_chunk
+                num_segments: int = 0
+
+                while sum_index < col_index + right_index:
+                    summ += confidence_matrix[row_index, sum_index]
+                    sum_index += 1
+                    num_segments += 1
+
+                support_matrix[row_index, col_index] = summ / num_segments
+                right_index -= 1
 
     return support_matrix
 
@@ -917,20 +928,19 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
               Dict[
                   int, List[int]], Dict[str, int]]:
     """
-    collapse and combine rows that are the same subfam
-    also creates a bookkeeping dict that has all the cols as keys and their values
-    are arrays that hold all the active subfams in that col - used so that don't have
-    to loop through all the i's just to see if a column exists
+    In all preceding matrices, collapse and combine rows that are the same subfam.
 
     input:
     row_num: number of rows in matrices
     columns: list of non empty cols in matrices
     subfams: subfamily names for rows in matrices - each row is a different alignment
     strands: which strand each alignment is on
+    active_cells: maps column number with rows that are active in that column
     support_matrix: uncollapsed support matrix - rows are number indices
     consensus_matrix: uncollapsed consensus matrix - rows are number indices
 
     output:
+    row_num_update: updates number of rows in matrices
     consensus_matrix_collapse: collapsed version
     strand_matrix_collapse: Hash implementation of sparse 2D matrix used along with DP matrices.
     Tuple[str, int] as key. String is the subfamily name of the row, int is the column in matrix.
@@ -945,6 +955,7 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
     into one.
     active_cells_collapse: Not all rows in each column hold values. Dictionary that holds column
     number as the key, and an array of which rows hold values for that column.
+    subfams_collapse_temp: maps subfam names to it's new row number
 
     >>> non_cols = [0, 2, 3]
     >>> active = {0: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
@@ -970,8 +981,6 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
 
     """
 
-    # time1: float = time.time()
-
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
     support_matrix_collapse: Dict[Tuple[int, int], float] = {}
@@ -995,30 +1004,28 @@ def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], stran
         active_cells_collapse[col_index] = active_cols
 
         # find max support score for collapsed row_nums and use that row for collapsed matrices
-        # for row_index in range(row_num):
         for row_index in active_cells[col_index]:
-            if (subfams[row_index]) in dup_max_support:
-                if support_matrix[row_index, col_index] > dup_max_support[subfams[row_index]]:
-                    dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                    consensus_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = consensus_matrix[
-                            row_index, col_index]
-                    strand_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = strands[row_index]
-                    support_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = support_matrix[row_index, col_index]
+            subfam: str = subfams[row_index]
+            support_score: float = support_matrix[row_index, col_index]
+            if (subfam) in dup_max_support:
+                if support_score > dup_max_support[subfam]:
+                    dup_max_support[subfam] = support_score
+                    consensus_matrix_collapse[subfams_collapse_temp[subfam], col_index] = consensus_matrix[row_index, col_index]
+                    strand_matrix_collapse[subfams_collapse_temp[subfam], col_index] = strands[row_index]
+                    support_matrix_collapse[subfams_collapse_temp[subfam], col_index] = support_score
             else:
-                dup_max_support[subfams[row_index]] = support_matrix[row_index, col_index]
-                consensus_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = consensus_matrix[row_index, col_index]
-                strand_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = strands[row_index]
-                support_matrix_collapse[subfams_collapse_temp[subfams[row_index]], col_index] = support_matrix[row_index, col_index]
-                active_cells_collapse[col_index].append(subfams_collapse_temp[subfams[row_index]])
+                dup_max_support[subfam] = support_score
+                consensus_matrix_collapse[subfams_collapse_temp[subfam], col_index] = consensus_matrix[row_index, col_index]
+                strand_matrix_collapse[subfams_collapse_temp[subfam], col_index] = strands[row_index]
+                support_matrix_collapse[subfams_collapse_temp[subfam], col_index] = support_score
+                active_cells_collapse[col_index].append(subfams_collapse_temp[subfam])
 
     # update var row_nums after collapse
     row_num_update: int = len(subfams_collapse)
 
-    # print("CollapseMatrices", time.time() - time1)
-
     return row_num_update, consensus_matrix_collapse, strand_matrix_collapse, support_matrix_collapse, subfams_collapse, active_cells_collapse, subfams_collapse_temp
 
-#FIXME - can we make this faster? numpy arrays instead of hashes?
+
 def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: float, change_prob_skip: float,
                           columns: List[int],
                           active_cells_collapse: Dict[int, List[int]],
@@ -1026,10 +1033,8 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
                           strand_matrix_collapse: Dict[Tuple[int, int], str],
                           consensus_matrix_collapse: Dict[Tuple[int, int], int]) -> Tuple[List[float], Dict[Tuple[int, int], int], Dict[Tuple[int, int], int]]:
     """
-    Fills in the probability score matrix from the support matrix. Also fills
-    the origin matrix for convenience.
-
-    We omit filling the first column because we want its probabilities to be zero anyway.
+    Calculates the probability score matrix to find most probable path through the support
+    matrix. Fills the origin matrix for easier backtrace.
 
     The basic algorithm is described below. All calculations happen in log space.
     look at all i's in j-1
@@ -1040,7 +1045,6 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
      NOTE:
         all probabilities are in log space
-        row indices are subfam names
 
     input:
     same_prob_skip: penalty given to staying in the skip state
@@ -1057,17 +1061,15 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     sequence have to be contiguous
 
     output:
-    probability_matrix: Hash implementation of sparse 2D DP matrix. This is a collapsed matrix. Holds DP
-    probabilies when finding most probable path through the matrix. Dict that hols subfam name as row and col number
-    and maps it to probability in cell
+    col_list: last column of prob matrix, needed to find max to know where to start the backtrace.
     origin_matrix: Hash implementation of sparse 2D DP matrix. This is a collapsed matrix. Holds which cell in
     previous column the probability in the DP matrix came from. Used when doing backtrace through the DP matrix.
-    Dict that hols subfam name as row and col number and maps it to value in cell
+    same_subfam_chamge_matrix: parallel to origin_matrix, if 1 - came from same subfam, but
+    got a change probability. When doing backtrace, have to note this is same subfam name, but
+    different annotation.
 
     TODO: larger test needed for this function
     """
-
-    # time1: float = time.time()
 
     origin_matrix: Dict[Tuple[int, int], int] = {}
     same_subfam_change_matrix: Dict[Tuple[int, int], int] = {}
@@ -1075,9 +1077,14 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
     col_list: List[float] = []
 
     prev_col_list: List[float] = []
-    # fill first col of prob_matrix with 0s
+    #first col of prob_matrix is 0s
     for k in active_cells_collapse[columns[0]]:
         prev_col_list.append(0.0)
+
+    consensus_curr: int
+    consensus_prev: int
+    strand_curr: str
+    strand_prev: str
 
     for columns_index in range(1, len(columns)):
         curr_column: int = columns[columns_index]
@@ -1089,43 +1096,38 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
             max_index: int = 0
             support_log: float = log(support_matrix_collapse[row_index, curr_column])
             same_subfam_change: int = 0  # if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()
-            # row = prev_row_index
-            # loop through all the rows in the previous column that have a value - active_cells_collapse
-            # specifies which rows have a value for each column
 
+            strand_curr = strand_matrix_collapse[row_index, columns[columns_index]]
+            consensus_curr = consensus_matrix_collapse[row_index, curr_column]
+
+            # loop through all the rows in the previous column that have a value
+            # active_cells_collapse specifies which rows have a value for each column
             temp_index: int = 0
             for prev_row_index in active_cells_collapse[prev_column]:
-                #just this lookup in prob_matrix is 40% of the runtime of the whole function
-                score: float = support_log + prev_col_list[temp_index]#prob_matrix[prev_row_index, prev_column]
+
+                score: float = support_log + prev_col_list[temp_index]
                 temp_index += 1
-                prob: float = 0.0
+                prob: float = change_prob
 
-                if prev_row_index == row_index:  # staying in same row
-                    prob = same_prob
-                    if prev_row_index == 0:  # staying in skip
+                if row_index == 0 or prev_row_index == 0:
+                    prob = change_prob_skip
+                    if row_index == prev_row_index:
                         prob = same_prob_skip
+                else:
+                    if prev_row_index == row_index:  # staying in same row
+                        prob = same_prob
 
-                    # because rows are collapsed, if the consensus seqs are NOT contiguous - treat as if they are not the same row and get the jump penalty
-                    if strand_matrix_collapse[prev_row_index, prev_column] != strand_matrix_collapse[
-                        row_index, columns[columns_index]]:
-                        # if not on same strand give change prob
-                        prob = change_prob
-                    else:  # if on same strand
-                        if strand_matrix_collapse[prev_row_index, prev_column] == '+':
-                            if consensus_matrix_collapse[prev_row_index, prev_column] > \
-                                    consensus_matrix_collapse[row_index, curr_column] + 50:
+                        if strand_matrix_collapse[prev_row_index, prev_column] != strand_curr:
+                            prob = change_prob
+
+                        elif strand_matrix_collapse[prev_row_index, prev_column] == '+':
+                            if consensus_matrix_collapse[prev_row_index, prev_column] > consensus_curr + 50:
                                 prob = change_prob
                                 same_subfam_change = 1
-                        if strand_matrix_collapse[prev_row_index, prev_column] == '-':
-                            if consensus_matrix_collapse[prev_row_index, prev_column] + 50 < \
-                                    consensus_matrix_collapse[row_index, curr_column]:
+                        else:
+                            if consensus_matrix_collapse[prev_row_index, prev_column] + 50 < consensus_curr:
                                 prob = change_prob
                                 same_subfam_change = 1
-
-                else:  # jumping rows
-                    prob = change_prob
-                    if prev_row_index == 0 or row_index == 0:  # jumping in or out of skip
-                        prob = change_prob_skip
 
                 score = score + prob
 
@@ -1141,11 +1143,10 @@ def FillProbabilityMatrix(same_prob_skip: float, same_prob: float, change_prob: 
 
         prev_col_list = col_list.copy()
 
-    # print("FillProbabilityMatrix", time.time() - time1)
-
     return (col_list, origin_matrix, same_subfam_change_matrix)
 
-def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str],
+
+def GetPath(temp_id: int, columns: List[int], ids: List[int], changes_orig: List[str],
             changes_position_orig: List[int], columns_orig: List[int], subfams_collapse: List[str],
             last_column: List[float], active_cells_collapse: Dict[int, List[int]],
             origin_matrix: Dict[Tuple[int, int], int], same_subfam_change_matrix: Dict[Tuple[int, int], int]) -> Tuple[
@@ -1161,14 +1162,17 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     sequence) - cols with same ID are part of same initial subfam
 
     input:
-    num_col: number of cols in matrices
     temp_id: current id number being used - makes it so new ids are unique
     columns: list of non empty columns in matrices
     ids: list of ids for each column in matrices
-    subfams: subfamily names for the rows
+    changes_orig: original changes from first DP trace
+    changes_pos_orig: original changes_position from first DP trace
+    subfams_collapse: subfamily names for the rows
+    last_column: last column in probability matrix. Used to find where to start backtrace.
     active_cells_collapse: holds which rows haves values for each column
-    prob_matrix: probability matrix
     origin_matrix: origin matrix
+    same_subfam_change_matrix: parallel to origin_matrix, if 1 - came from the same subfam, but
+    got a change transition probability
 
     output:
     temp_id: updated current id number being used after function completes
@@ -1183,7 +1187,7 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     >>> last_col = [-100, -10]
     >>> orig_mat = {(0, 0): 0, (1, 0): 1, (0, 1): 0, (1, 1): 0, (0, 2): 0, (1, 2): 0, (0, 3): 0, (1, 3): 1}
     >>> same_sub_mat = {}
-    >>> (temp_idd, changes_pos, changess) = GetPath(4, 1111, non_cols, idss, [], [], [], subs, last_col, active_col, orig_mat, same_sub_mat)
+    >>> (temp_idd, changes_pos, changess) = GetPath(1111, non_cols, idss, [], [], [], subs, last_col, active_col, orig_mat, same_sub_mat)
     >>> temp_idd
     3579
     >>> changes_pos
@@ -1194,14 +1198,13 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     [2345, 2345, 1111, 1111]
     """
 
-    # time1: float = time.time()
-
     maxxx: float = -inf
     max_row_index: int = 0
 
     changes_position: List[int] = []
     changes: List[str] = []
 
+    #which row to start backtrace
     for i in range(len(active_cells_collapse[columns[-1]])):
         if maxxx < last_column[i]:
             maxxx = last_column[i]
@@ -1248,8 +1251,6 @@ def GetPath(num_col: int, temp_id: int, columns: List[int], ids: List[int], chan
     # changes ID for next round of stitching, so when starts stitching will have unique ID
     temp_id += 1234
 
-    # print("GetPath", time.time() - time1)
-
     return (temp_id, changes_position, changes)
 
 
@@ -1261,6 +1262,8 @@ def PrintChanges(columns: List[int], changes: List[str], changes_position: List[
     i: int = 0
     while i < len(changes):
         stdout.write(str(columns[changes_position[i]]))
+        stdout.write("\t")
+        stdout.write(str(IDs[columns[changes_position[i]]]))
         stdout.write("\t")
         stdout.write(f"{changes[i]}\n")
         i = i + 1
@@ -1294,11 +1297,15 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     identified in GetPath()
 
     first fills matrix with node alignment scores, then reuses matrix for confidence scores
+    Using changes_position indentified boundaries for all nodes, and computes confidence
+    values for each node. First fills matrix with node alignment scores, then reuses matrix
+    for confidence scores.
 
     input:
     all input needed for CalcScore() and ConfidenceCM()
     nodes: number of nodes
     changes_pos: node boundaries
+    columns: all non empty columns in matrices
 
     output:
     node_confidence: Hash implementation of sparse 2D matrix that holds confidence values
@@ -1318,8 +1325,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.3751243838973974, ('n2', 0): 0.6248756161026026, ('skip', 1): 0.0, ('n1', 1): 0.09874227070127324, ('n2', 1): 0.9012577292987267, ('skip', 2): 0.0, ('n1', 2): 0.09874227070127327, ('n2', 2): 0.9012577292987267}
     """
-
-    # time1: float = time.time()
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
@@ -1408,7 +1413,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
-
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
         temp: List[float] = []
@@ -1422,9 +1426,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     # collapse node_confidence down same way supportmatrix is collapsed - all seqs of
     # the same subfam are put in the same row
-    # not a sparse hash - holds the 0s, but I think this is okay because it won't ever
-    # be a very large matrix, and this way we don't have to test if anything exists
-
+    # not a sparse hash - holds the 0s
     for node_index5 in range(nodes):
         for row_index3 in range(len(subfams)):
             if (subfams[row_index3], node_index5) in node_confidence:
@@ -1433,8 +1435,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
             else:
                 node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
                     row_index3 * nodes + node_index5]
-
-    # print("FillNodeConfidence", time.time() - time1)
 
     return node_confidence
 
@@ -1461,14 +1461,16 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
         List[int]:
     """
     finds alternative paths through the nodes - used for stitching to find nested elements
-    and stitch back together elements that have been inserted into
+    and to stitch back together elements that have been inserted into.
+
+    Alternative edges only added when confidence of other node label is above a certain
+    threshold and when the alignments are relatively contiguous in the consensus sequence.
 
     input:
     nodes: number of nodes
     columns: list with all non empty columns in matrices
     changes: list of node boundaries
     changes_position: list of subfams identified for each node
-    subfams_collapse: list of all non duplicate subfams
     consensus_matrix_collapse: matrix holding alignment position in consensus/subfam seqs -
     used to identify whether nodes are spacially close enough for an alternative edge
     strand_matrix_collapse: matrix holding strand for alignments - nodes can only be connected
@@ -1476,9 +1478,10 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
     node_confidence: competing annoation confidence for nodes - nodes can only be connected
     with alternative edge if subfam identified for sink node is a competing annotation in
     source node and is above a certain confidence
+    subfams_collapse_index: maps subfam names to their row indices in collapsed matrices
 
     output:
-    path_graph: 2D matrix. Graph used during stitching. Maps nodes to all other nodes and holds
+    path_graph: Flat array reprepsentation of 2D matrix. Graph used during stitching. Maps nodes to all other nodes and holds
     values for if there is an alternative edge between the nodes.
 
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -1491,8 +1494,6 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
     >>> FillPathGraph(3, non_cols, changess, changes_pos, con_mat_col, strand_mat_col, node_conf, sub_col_ind)
     [0, 1, 1, 0, 0, 1, 0, 0, 0]
     """
-
-    # time1: float = time.time()
 
     path_graph: List[int] = []
 
@@ -1511,24 +1512,21 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
         if sink_subfam != "skip":  # don't want to add alternative edges to skip nodes
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
-                sourceConf: float = node_confidence[
-                    sink_subfam, source_node_index]  # sink subfam confidence in source node
-                sinkConf: float = node_confidence[
-                    source_subfam, sink_node_index]  # source subfam confidence in sink node
+                sourceConf: float = node_confidence[sink_subfam, source_node_index]  # sink subfam confidence in source node
+                sinkConf: float = node_confidence[source_subfam, sink_node_index]  # source subfam confidence in sink node
+                source_subfam_index = subfams_collapse_index[source_subfam]
+                source_col: int = columns[changes_position[source_node_index + 1] - 1]
 
-                if (subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]) in consensus_matrix_collapse:
+                if (source_subfam_index, source_col) in consensus_matrix_collapse:
 
-                    source_subfam_stop = consensus_matrix_collapse[
-                        subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]]
-                    source_strand = strand_matrix_collapse[
-                        subfams_collapse_index[source_subfam], columns[changes_position[source_node_index + 1] - 1]]
+                    source_subfam_stop = consensus_matrix_collapse[source_subfam_index, source_col]
+                    source_strand = strand_matrix_collapse[source_subfam_index, source_col]
 
                     # adds in edge if the subfam of the sink is at the source node and if it's
-                    # confidence >= 30%, and if the source is before the sink in the consensus sequence
+                    # confidence >= 20%, and if the source is before the sink in the consensus sequence
 
                     # FIXME - not sure what this confidence threshold should be
                     if sourceConf >= 0.2 or sinkConf >= 0.2:
-                        # print(source_subfam, sink_subfam)
                         if sink_strand == '+' and sink_strand == source_strand:
                             # FIXME- not sure what this overlap should be .. just allowed 50 for now
                             if source_subfam_stop <= sink_subfam_start + 50:
@@ -1536,7 +1534,6 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
                         elif sink_strand == '-' and sink_strand == source_strand:
                             if source_subfam_stop + 50 >= sink_subfam_start:
                                 path_graph[source_node_index * nodes + sink_node_index] = 1
-    # print("FillPathGraph", time.time()- time1)
 
     return path_graph
 
@@ -1545,9 +1542,9 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
                  path_graph: List[int]) -> int:
     """
     finds nodes that only have one (or less) incoming and one (or less) outgoing edge and adds
-    them to RemoveStarts and RemoveStops so they can be extracted from the alignment - all columns
-    in removed nodes are removed from NonEmptyColumns (columns) so during next round of DP calculations
-    those nodes are ignored and surrounding nodes can be stitched if necessary
+    them to remove_starts and remove_stops so they can be extracted from the alignment - all columns
+    in removed nodes are removed from NonEmptyColumns (columns) so during next round of DP calculations,
+    those nodes are ignored and surrounding nodes can be stitched if necessary,
 
     input:
     num_col: number of columns in matrices
@@ -1557,7 +1554,7 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
     path_graph: 2D array that represents edges in the graph
 
     output:
-    updates columns
+    updates columns (NonEmptyColumns)
     updated_num_col: updated number of columns in matrices after nodes have been removed
 
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -1568,8 +1565,6 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
     >>> non_cols
     [0, 1, 2, 7, 8, 9]
     """
-
-    # time1: float = time.time()
 
     remove_starts: List[int] = []
     remove_stops: List[int] = []
@@ -1613,7 +1608,6 @@ def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position:
         # 	helps with offset, when first part is spliced out need an offset to know where to splice out for second part
         total += (remove_stops[i] - remove_starts[i])
 
-    # print("ExtractNodes", time.time() - time1)
     return updated_num_col
 
 
@@ -1642,8 +1636,8 @@ def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_ori
     prints final results
     prints start and stop in terms of input chrom sequence
     """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
+    # stdout.write("start\tstop\tID\tname\n")
+    # stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != 'skip':
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart))
@@ -1660,7 +1654,7 @@ def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str],
                          ids: List[int]) -> None:
     """
     prints final results
-    prints start and stop in terms of chromosome
+    prints start and stop in terms of chromosome/target position
     """
     stdout.write("start\tstop\tID\tname\n")
     stdout.write("----------------------------------------\n")
@@ -1676,10 +1670,10 @@ def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str],
             stdout.write("\n")
 
 
-def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str, chrom_start: int, changes_orig: List[str], changes_position_orig: List[int],
+def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str, chrom_start: int, subfams: List[str], changes_orig: List[str], changes_position_orig: List[int],
                     columns_orig: List[int], consensus_lengths: Dict[str, int],
                     strand_matrix_collapse: Dict[Tuple[int, int], str],
-                    consensus_matrix_collapse: Dict[Tuple[int, int], int], subfams_collapse_index: Dict[str, int]):
+                    consensus_matrix_collapse: Dict[Tuple[int, int], int], subfams_collapse_index: Dict[str, int], node_confidence_orig: Dict[Tuple[str, int], float]):
     """
     prints the results in the proper format to input into the SODA visualization tool
 
@@ -1735,8 +1729,8 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
 
                 json_dict_subfam_i: Dict[str, float] = {}
 
-                for subfam_i in range(1, len(Subfams)):
-                    subfamm = Subfams[subfam_i]
+                for subfam_i in range(1, len(subfams)):
+                    subfamm = subfams[subfam_i]
                     if NodeConfidenceOrig[subfamm, i] > 0.001:
                         json_dict_subfam_i[subfamm] = NodeConfidenceOrig[subfamm, i]
 
@@ -1792,7 +1786,7 @@ def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str,
                             for subfam_i in range(1, len(Subfams)):
                                 subfamm = Subfams[subfam_i]
                                 if NodeConfidenceOrig[subfamm, j] > 0.001:
-                                    json_dict_subfam_j[subfamm] = NodeConfidenceOrig[subfamm, j]
+                                    json_dict_subfam_j[subfamm] = node_confidence_orig[subfamm, j]
 
                             json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(json_dict_subfam_j.items(), key=lambda x: x[1], reverse=True)
                             sub_id += 1
@@ -1857,7 +1851,7 @@ if __name__ == "__main__":
         --getExt[-5]
         --lambda [will calc from matrix if not included]
         --eslPath [specify path to easel]
-        --segmentsize[30]
+        --segmentsize (must be odd) [31]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
         --ultraPath PathToUltra
@@ -1865,7 +1859,6 @@ if __name__ == "__main__":
     
     OPTIONS
         --help - display help message
-        --printmatrices - output all matrices
         --matrixpos - prints subfam changes in matrix position instead of genomic position
         --sequencepos - prints subfam changes in sequence position instead of genomic position
         --viz outfile - prints output format for SODA visualization
@@ -1922,6 +1915,7 @@ if __name__ == "__main__":
     with open(infile_matrix) as _infile_matrix:
         in_matrix: List[str] = _infile_matrix.readlines()
 
+    #if command line option included to use prior counts into in confidence calculations
     if infile_prior_counts:
         with open(infile_prior_counts) as _infile_prior_counts:
             in_counts: List[str] = _infile_prior_counts.readlines()
@@ -1958,12 +1952,13 @@ if __name__ == "__main__":
         for i in range(len(subScores)):
             SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
+    SubMatrix['..'] = 0
 
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
-    prob_skip = 0.4  # about 60% of genome is TE derived #FIXME - do we want to hard code this in?
+    prob_skip = 0.4  # about 60% of genome is TE derived
     prob_tr = 0.06  # ~6% of genome exepcted to be tandem repeat
     if infile_prior_counts:
         SubfamCounts["skip"] = prob_skip
@@ -1993,6 +1988,7 @@ if __name__ == "__main__":
     Flanks: List[int] = []
 
     AlignMatrix: Dict[Tuple[int, int], float] = {}
+    SingleAlignMatrix: Dict[Tuple[int, int], int] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
     SupportMatrix: Dict[Tuple[int, int], float] = {}
     OriginMatrix: Dict[Tuple[int, int], int] = {}
@@ -2046,7 +2042,7 @@ if __name__ == "__main__":
             Flanks.append(alignment.flank)
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
-    # that subfam is what's there
+    # that subfam is the annotation
     # numseqs = 2 because of the skip state
     if numseqs == 2:
         if printMatrixPos:
@@ -2059,15 +2055,28 @@ if __name__ == "__main__":
             stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
         exit()
 
-    match = re.search(r"(.+):(\d+)-.+", Chroms[1])
+    match = re.search(r"(.+):(\d+)-(\d+)", Chroms[1])
     Chrom: str = match.groups()[0]
     ChromStart: int = int(match.groups()[1])
+    ChromEnd: int = int(match.groups()[2])
+    TargetLen: int = ChromEnd - ChromStart
+
+    #bail out if target sq is < 25 nucls
+    #warning if less than 1000 nucls
+    #warning if no chrom info given - okay for artificial seq inputs
+    if TargetLen == 0:
+        stderr.write("WARNING - No chromosome position information given.\nThis is okay if running on artificial sequences, but cannot use command line options --viz or --heatmap.\n\n")
+    elif TargetLen <= 25:
+        stderr.write("ERROR - Target sequence length needs to be > 25 nucleotides.\n\n")
+        exit()
+    elif TargetLen < 1000:
+        stderr.write("WARNING - Did you mean to run this on a target region < 1000 nucleotides?\n\n")
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
     ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
     SameProbSkip = ChangeProbLog / 20  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
-    # precomputes number of rows and cols in matrices
+    # precomputes number of rows in matrices
     rows: int = len(Subfams)
     cols: int = 0  # assign cols in FillAlignMatrix
 
@@ -2080,14 +2089,12 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    (StartAll, Stopall) = PadSeqs(Starts, Stops, SubfamSeqs, ChromSeqs)
+    (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    ConsensusMatrix = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
-
-    (NonEmptyColumns, ActiveCells) = FillColumns(cols, rows, AlignMatrix)
+    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
     ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
@@ -2097,6 +2104,7 @@ if __name__ == "__main__":
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
+    #if command line option included to output support matrix for heatmap
     if outfile_heatmap:
         PrintMatrixSupport(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
 
@@ -2108,9 +2116,10 @@ if __name__ == "__main__":
                                                                                StrandMatrixCollapse,
                                                                                ConsensusMatrixCollapse)
 
+    #IDs for each nucleotide will be assigned during DP backtrace
     IDs = [0] * cols
 
-    (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
+    (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                              NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
 
@@ -2119,14 +2128,13 @@ if __name__ == "__main__":
     ChangesPositionOrig = ChangesPosition.copy()
     NonEmptyColumnsOrig = NonEmptyColumns.copy()
 
+    # Finding inserted elements and stitching original elements
     # Steps-
-    # 1.create confidence for nodes
-    #	will be in a matrix that is #subfams x #nodes
-    # 2.create path graph
-    # 3.find alternative paths through graph and add those edges
-    # 4.extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
-    # 5.annotate again with removed subfams
-    #   --stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
+    # 1. Find confidence for nodes
+    # 2. Create path graph - Find alternative paths through graph and add those edges
+    # 3. Extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
+    # 5. Annotate again with removed nodes
+    #   ** stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
 
     count: int = 0
     while (True):
@@ -2137,20 +2145,20 @@ if __name__ == "__main__":
         if (NumNodes <= 2):
             break
 
-        NodeConfidence.clear()
+        NodeConfidence.clear() #reuse old NodeConfidence matrix
 
-        # initializes and fills node confidence matrix
         NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
 
+        # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
-        PathGraph.clear()
+        PathGraph.clear() #reuse old PathGraph
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
                                   ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
 
-        # test to see if there nodes in the graph that have more that one incoming or outgoing edge,
-        # if so keep looping, if not break out of the loop
+        # test to see if there are nodes in the graph that have more that one incoming or outgoing edge,
+        # if so - keep looping, if not - break out of the loop
         # if they are all 0, break out of the loop
         test: bool = False
         j: int = 0
@@ -2167,9 +2175,8 @@ if __name__ == "__main__":
 
         cols = ExtractNodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
 
-        # using prob matrix and origin matrix, just skip the cols I'm not interested in and annotate
-        # without the removed node - ignores removed nodes because they are not in NonEmptyColumns
-        # using old prob matrix and origin matrix
+        # run DP calculations again with nodes corresponding to inserted elements removed
+        # ignores removed nodes because they are no longer in NonEmptyColumns
         (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog,
                                                                                    ChangeProbLog, ChangeProbSkip,
                                                                                    NonEmptyColumns,
@@ -2181,10 +2188,12 @@ if __name__ == "__main__":
         Changes.clear()
         ChangesPosition.clear()
 
-        (ID, ChangesPosition, Changes) = GetPath(cols, ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
+        (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                                  NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                                  OriginMatrix, SameSubfamChangeMatrix)
 
+
+    #prints results
     if printMatrixPos:
         PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
     elif printSeqPos:
@@ -2193,5 +2202,6 @@ if __name__ == "__main__":
         PrintResultsChrom(StartAll, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
 
     if outfile_viz:
-        PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
-                        StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex)
+        PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, Subfams, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
+                        StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex, NodeConfidenceOrig)
+
