@@ -4,31 +4,22 @@ on: [push, pull_request]
 
 jobs:
   check-fast:
-    runs-on: ubuntu-18.04
-    container:
-      image: traviswheelerlab/polya-build
-      volumes:
-        - ${{ github.workspace }}:/code
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
+      - run: pip3 install poetry
       - run: make setup-dev check-fast
 
   check-slow:
-    runs-on: ubuntu-18.04
-    container:
-      image: traviswheelerlab/polya-build
-      volumes:
-        - ${{ github.workspace }}:/code
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
+      - run: pip3 install poetry
       - run: make setup-dev check-slow
 
   check-format:
-    runs-on: ubuntu-18.04
-    container:
-      image: traviswheelerlab/polya-build
-      volumes:
-        - ${{ github.workspace }}:/code
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
+      - run: pip3 install poetry
       - run: make setup-dev check-format
