@@ -174,10 +174,10 @@ poetry install --no-dev
 poetry install
 
 # Add a runtime dependency
-poetry install <package>
+poetry add <package>
 
 # Add a development dependency
-poetry install --dev package
+poetry add --dev package
 ```
 
 ### Perl-to-Python Tests
