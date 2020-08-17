@@ -1,5 +1,7 @@
 from typing import Dict, List, Tuple
 
+from polyA.matrices import ConsensusMatrixContainer
+
 
 def fill_consensus_position_matrix(
     col_num: int,
@@ -11,7 +13,7 @@ def fill_consensus_position_matrix(
     stops: List[int],
     consensus_starts: List[int],
     strands: List[str],
-) -> Tuple[List[int], Dict[int, List[int]], Dict[Tuple[int, int], int]]:
+) -> ConsensusMatrixContainer:
     """
     Fills parallel to AlignMatrix that holds the consensus position for each subfam at that
     position in the alignment. Walks along the alignments one nucleotide at a time adding
@@ -30,15 +32,6 @@ def fill_consensus_position_matrix(
     consensus_starts: where alignment starts in the subfam/consensus sequence
     strands: what strand each of the alignments are on - reverse strand will count down instead of up
 
-    output:
-    columns: all columns in matrix that are not empty, allows us to avoid looping
-    through unecessary columns
-    active_cells: dictionary that maps column number in matrix, so a list of rows that are
-    active in that column, allows us to avoid looping through unecessary rows
-    consensus_matrix: Hash implementation of sparse 2D matrix used along with DP matrices. Key is
-    tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
-    holds the alignment position in the consensus subfamily sequence.
-
     >>> subs = ["", ".AA", "TT-"]
     >>> chrs = ["", ".AA", "TTT"]
     >>> strts = [0, 1, 0]
@@ -53,7 +46,6 @@ def fill_consensus_position_matrix(
     >>> active
     {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
     """
-
     columns = set()
     active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
@@ -112,4 +104,6 @@ def fill_consensus_position_matrix(
 
                 seq_index2 += 1
 
-    return list(columns), active_cells, consensus_matrix
+    return ConsensusMatrixContainer(
+        list(columns), active_cells, consensus_matrix,
+    )
