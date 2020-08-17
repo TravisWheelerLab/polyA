@@ -20,15 +20,15 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	poetry run python -m pytest -m 'not slow' tests/ polyA/ test_inputs/AdjudicateRegions.py
+	python3 -m poetry run python -m pytest -m 'not slow' tests/ polyA/ test_inputs/AdjudicateRegions.py
 
 .PHONY: check-format
 check-format:
-	poetry run python -m black --check -t py38 -l 80 polyA/ tests/
+	python3 -m poetry run python -m black --check -t py38 -l 80 polyA/ tests/
 
 .PHONY: check-slow
 check-slow:
-	poetry run python -m pytest -m slow tests/ polyA/
+	python3 -m poetry run python -m pytest -m slow tests/ polyA/
 	cd test_inputs && ./RunTests.sh
 
 .PHONY: container-build
@@ -41,12 +41,12 @@ container-push:
 
 .PHONY: format
 format:
-	poetry run python -m black -t py38 -l 80 polyA/ tests/
+	python3 -m poetry run python -m black -t py38 -l 80 polyA/ tests/
 
 .PHONY: setup
 setup:
-	poetry install --no-dev
+	python3 -m poetry install --no-dev
 
 .PHONY: setup-dev
 setup-dev:
-	poetry install
+	python3 -m poetry install
