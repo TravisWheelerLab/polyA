@@ -1,42 +1,65 @@
-import logging
-from typing import Iterable
-from .alignment import Alignment
-from .edges import edges
+from typing import List, Tuple
 
-_logger = logging.getLogger(__name__)
+from polyA.edges import edges
 
 
-def pad_sequences(alignments: Iterable[Alignment]):
+def pad_sequences(
+    chunk_size: int,
+    start: List[int],
+    stop: List[int],
+    subfam_seqs: List[str],
+    chrom_seqs: List[str],
+) -> Tuple[int, int]:
     """
     Pad out sequences with "." to allow regions where sequences do not all
     have the same start and stop positions.
 
-    >>> a0 = Alignment(sequences=["a", "b"],
-    ...     start=1, stop=1, subfamily='', chrom='', score=0,
-    ...     consensus_start=0, consensus_stop=0, strand='', flank=0)
-    >>> a1 = Alignment(sequences=["aaa", "bbb"],
-    ...     start=0, stop=2, subfamily='', chrom='', score=0,
-    ...     consensus_start=0, consensus_stop=0, strand='',flank=0)
-    >>> pad_sequences([a0, a1])
-    >>> a0.sequence
-    '.a.'
-    >>> a0.subfamily_sequence
-    '.b.'
-    >>> a1.sequence
-    'aaa'
-    >>> a1.subfamily_sequence
-    'bbb'
+    pad with an extra (chunk_size-1)/2 at the end
+
+    input:
+    start: start positions on the target sequence from the input alignment
+    stop: stop positions on the target sequence from the input alignment
+    subfam_seqs: actual subfamily/consensus sequences from alignment
+    chrom_seqs: actual target/chromosome sequences from alignment
+
+    output:
+    updates subfam_seqs and chrom_seqs with padded sequences
+    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+
+    >>> starts = [0, 1, 3]
+    >>> stops = [0, 1, 5]
+    >>> s_seq = ['', 'a', 'aaa']
+    >>> c_seq = ['', 'a', 't-t']
+    >>> (b, e) = pad_sequences(31, starts, stops, s_seq, c_seq)
+    >>> b
+    1
+    >>> e
+    5
+    >>> s_seq
+    ['', 'a...................', '..aaa...............']
+    >>> c_seq
+    ['', 'a...................', '..t-t...............']
     """
-    edge_start, edge_stop = edges(alignments)
+    edge_start: int
+    edge_stop: int
 
-    for alignment in alignments:
-        if alignment.sequence == "":
-            continue
+    half_chunk: int = int((chunk_size - 1) / 2)
 
-        left_pad = (alignment.start - edge_start) * "."
-        right_pad = (edge_stop - alignment.stop) * "."
+    edge_start, edge_stop = edges(start, stop)
 
-        alignment.sequence = left_pad + alignment.sequence + right_pad
-        alignment.subfamily_sequence = (
-            left_pad + alignment.subfamily_sequence + right_pad
+    for i in range(1, len(subfam_seqs)):
+        left_pad: int = start[i] - edge_start
+        right_pad: int = edge_stop - stop[i]
+
+        chrom_seqs[i] = (
+            ("." * left_pad)
+            + f"{chrom_seqs[i]}"
+            + ("." * (right_pad + half_chunk))
         )
+        subfam_seqs[i] = (
+            ("." * left_pad)
+            + f"{subfam_seqs[i]}"
+            + ("." * (right_pad + half_chunk))
+        )
+
+    return edge_start, edge_stop

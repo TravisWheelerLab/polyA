@@ -1,22 +1,33 @@
-from typing import Iterable, Tuple
-from .alignment import Alignment
+from typing import List, Tuple
 
 
-def edges(alignments: Iterable[Alignment]) -> Tuple[int, int]:
+def edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     """
-    Find and return the min and max stop positions for the entire region
+    Find and return the min start and max stop positions for the entire region
     included in the alignments.
 
-    >>> a0 = Alignment("sub", "chrom", 0, 3, 4, 3, 4, ["foobar", "foobaz"], '', 0)
-    >>> a1 = Alignment("sub", "chrom", 0, 2, 3, 2, 3, ["foobar", "foobaz"], '', 0)
-    >>> a2 = Alignment("sub", "chrom", 0, 1, 2, 1, 2, ["", ""], '', 0)
-    >>> n, x = edges((a0, a1, a2))
-    >>> n
-    2
-    >>> x
-    4
+    input:
+    starts: start positions on the target sequence from the input alignment
+    stops: stop positions on the target sequence from the input alignment
+
+    output:
+    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+
+    >>> starts = [0, 1, 4, 7]
+    >>> stops = [0, 3, 10, 9]
+    >>> b, e = edges(starts, stops)
+    >>> b
+    1
+    >>> e
+    10
     """
-    return (
-        min([a.start for a in alignments if a.sequence != ""]),
-        max([a.stop for a in alignments if a.sequence != ""]),
-    )
+    min_start: int = starts[1]
+    max_stop: int = stops[1]
+
+    for i in range(1, len(starts)):
+        if starts[i] < min_start:
+            min_start = starts[i]
+        if stops[i] > max_stop:
+            max_stop = stops[i]
+
+    return min_start, max_stop

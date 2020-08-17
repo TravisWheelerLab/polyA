@@ -2,814 +2,25 @@ from getopt import getopt
 from math import inf, log
 import re
 from sys import argv, stdout, stderr
-from typing import Dict, List, Tuple, Union
-import time
+from typing import Dict, List, Tuple
 import os
 import json
 
+from polyA.calculate_score import calculate_score
+from polyA.confidence_cm import confidence_cm
+from polyA.fill_align_matrix import fill_align_matrix
+from polyA.fill_confidence_matrix import fill_confidence_matrix
+from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
+from polyA.fill_support_matrix import fill_support_matrix
 from polyA.load_alignments import load_alignments
+from polyA.pad_sequences import pad_sequences
+from polyA.printers import print_matrix_support
 
 
 
 # -----------------------------------------------------------------------------------#
 #			FUNCTIONS													   			#
 # -----------------------------------------------------------------------------------#
-
-def PrintMatrixSupport(num_col: int, start_all: int, chrom_start: int, outfile: str, matrix: Dict[Tuple[int, int], float],
-                            subfams_collapse: List[str]) -> None:
-    """
-    prints support matrix to outfile for heatmap
-    """
-
-    with open(outfile, 'w') as out:
-        out.write("\t")
-
-        start: int = chrom_start + start_all
-        j: int = 0
-        while j < num_col:
-            out.write(f"{start}\t")
-            start += 1
-            j += 1
-        out.write("\n")
-
-        for k in range(len(subfams_collapse)):
-            out.write(f"{subfams_collapse[k]}\t")
-            j: int = 0
-            while j < num_col:
-                if (k, j) in matrix:
-                    out.write(str(matrix[k, j]))
-                else:
-                    out.write(f"{-inf}")
-                out.write("\t")
-                j += 1
-            out.write("\n")
-
-
-def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
-                    matrix: Dict[Tuple[int, int], Union[float, int, str]]) -> None:
-    """
-    just for debugging
-    prints values inside matrices (non collapsed)
-    """
-    stdout.write("\t")
-    j: int = 0
-    while j < num_col:
-        stdout.write(f"{j}\t")
-        j += 1
-    stdout.write("\n")
-
-    i: int = 0
-    while i < num_row:
-        stdout.write(f"{subfams[i]}\t")
-        j: int = 0
-        while j < num_col:
-            if (i, j) in matrix:
-                stdout.write(f"{matrix[i, j]}")
-            else:
-                stdout.write(f"{-inf}")
-            stdout.write("\t")
-            j += 1
-        stdout.write("\n")
-        i += 1
-
-
-def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
-    """
-    Find and return the min start and max stop positions for the entire region
-    included in the alignments.
-
-    input:
-    starts: start positions on the target sequence from the input alignment
-    stops: stop positions on the target sequence from the input alignment
-
-    output:
-    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
-
-    >>> strt = [0, 1, 4, 7]
-    >>> stp = [0, 3, 10, 9]
-    >>> b, e = Edges(strt, stp)
-    >>> b
-    1
-    >>> e
-    10
-    """
-
-    min_start: int = starts[1]
-    max_stop: int = stops[1]
-
-    for i in range(1, len(starts)):
-        if starts[i] < min_start:
-            min_start = starts[i]
-        if stops[i] > max_stop:
-            max_stop = stops[i]
-
-    return min_start, max_stop
-
-
-def PadSeqs(chunk_size: int, start: List[int], stop: List[int], subfam_seqs: List[str], chrom_seqs: List[str]) -> Tuple[int, int]:
-    """
-    Pad out sequences with "." to allow regions where sequences do not all
-    have the same start and stop positions.
-
-    pad with an extra (chunk_size-1)/2 at the end
-
-    input:
-    start: start positions on the target sequence from the input alignment
-    stop: stop positions on the target sequence from the input alignment
-    subfam_seqs: actual subfamily/consensus sequences from alignment
-    chrom_seqs: actual target/chromosome sequences from alignment
-
-    output:
-    updates subfam_seqs and chrom_seqs with padded sequences
-    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
-
-    >>> strt = [0, 1, 3]
-    >>> stp = [0, 1, 5]
-    >>> s_seq = ['', 'a', 'aaa']
-    >>> c_seq = ['', 'a', 't-t']
-    >>> (b, e) = PadSeqs(31, strt, stp, s_seq, c_seq)
-    >>> b
-    1
-    >>> e
-    5
-    >>> s_seq
-    ['', 'a...................', '..aaa...............']
-    >>> c_seq
-    ['', 'a...................', '..t-t...............']
-    """
-
-    edge_start: int
-    edge_stop: int
-
-    half_chunk: int = int((chunk_size-1)/2)
-
-    (edge_start, edge_stop) = Edges(start, stop)
-
-    for i in range(1, len(subfam_seqs)):
-        left_pad: int = start[i] - edge_start
-        right_pad: int = edge_stop - stop[i]
-
-        chrom_seqs[i] = ("." * left_pad) + f"{chrom_seqs[i]}" + ("." * (right_pad + half_chunk))
-        subfam_seqs[i] = ("." * left_pad) + f"{subfam_seqs[i]}" + ("." * (right_pad + half_chunk))
-
-    return (edge_start, edge_stop)
-
-
-def CalcScore(gap_ext: int, gap_init: int, seq1: str, seq2: str, prev_char_seq1: str,
-              prev_char_seq2: str, sub_matrix: Dict[str, int]) -> float:
-    """
-    Calculate the score for a particular alignment between a subfamily and a target/chromsome sequence.
-    Scores are calculated based on input SubstitutionMatrix, gap_ext, and gap_init.
-
-    prev_char_seq1, prev_char_seq2 are the single nucleotides in the alignment before the chunk - if
-    chunk starts with '-' these tell us to use gap_init or gap_ext as the penalty
-
-    input:
-    gap_ext: penalty to extend a gap
-    gap_init: penalty to start a gap
-    seq1: sequence chunk from alignment
-    seq2: sequence chunk from alignment
-    prev_char_seq1: character before alignment - tells if should use gap_ext or gap_init
-    prev_char_seq2: character before alignment - tells if should use gap_ext or gap_init
-    sub_matrix: input substitution matrix - dict that maps 2 chars being aligned to the score
-
-    output:
-    alignment score
-
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> CalcScore(-5, -25, "AT", "AT", "", "", sub_mat)
-    2.0
-    >>> CalcScore(-5, -25, "-T", "AT", "A", "A", sub_mat)
-    -24.0
-    >>> CalcScore(-5, -25, "-T", "AT", "-", "", sub_mat)
-    -4.0
-    """
-
-    chunk_score: int = 0
-
-    # deals with the first character of a segment being a gap character - have to look at last
-    # segment to see if this is a gap init or ext
-    if seq1[0] == "-":
-        if prev_char_seq1 == "-":
-            chunk_score += gap_ext
-        else:
-            chunk_score += gap_init
-    elif seq2[0] == "-":
-        if prev_char_seq2 == "-":
-            chunk_score += gap_ext
-        else:
-            chunk_score += gap_init
-    else:
-        chunk_score += sub_matrix[seq1[0] + seq2[0]]
-
-    for j in range(1, len(seq1)):
-
-        seq1_char: str = seq1[j]
-        seq2_char: str = seq2[j]
-
-        if seq1_char != ".":
-            if seq1_char == "-":
-                if seq1[j - 1] == "-":
-                    chunk_score += gap_ext
-                else:
-                    chunk_score += gap_init
-            elif seq2_char == "-":
-                if seq2[j - 1] == "-":
-                    chunk_score += gap_ext
-                else:
-                    chunk_score += gap_init
-            else:
-                #FIXME - do I really need this check? Can check earlier if needed and declare inadequte sub matrix input
-                # if (seq1_char + seq2_char) in sub_matrix:  # just incase the char isn't in the input substitution matrix
-                chunk_score += sub_matrix[seq1_char + seq2_char]
-        else:
-            break
-
-    return float(chunk_score)
-
-
-def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: int, skip_align_score: float,
-                    subfams: List[str], chroms: List[str], starts: List[int],
-                    sub_matrix: Dict[str, int]) -> Tuple[int, Dict[Tuple[int, int], float]]:
-    """
-    fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
-    for every segment of size chunksize for all seqs in alignments
-    Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
-    matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
-    Starting and trailing cells are different - column 0 in matrix holds alignment score for
-    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Scores are weighted based on number
-    of nucleotides that contribute to the score - so beginning and trailing positions with less
-    than chunksize nucleotides don't have lower scores
-
-    Computes score for the first segment that does not start with a '.' by calling CalcScore()
-    and from there keeps the base score and adds new chars score and subtracts old chars
-    score - if a new gap is introduced, calls CalcScore() instead of adding onto base score
-    ** padding of (chunksize-1)/2 added to right pad.. this way we can go all the way to the
-    end of the sequence and calc alignscores without doing anything special
-
-    input:
-    everything needed for CalcScore()
-    edge_start: where alignment starts on the target/chrom sequence
-    chunk_size: size of nucletide chunks that are scored
-    skip_align_score: alignment score to give the skip state (default = 0)
-    subfams: alignments to calculate scores from
-    chroms: alignments to calculate scores from
-    starts: where in the target sequence the competing alignments start
-
-    output:
-    num_cols: number of columns in the matrix
-    align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
-    Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
-    are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
-    Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
-    for that particular subfamily.
-    >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
-    >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
-    >>> strts = [0, 2, 0]
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> (c, m) = FillAlignMatrix(0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
-    >>> c
-    40
-    >>> m
-    {(1, 2): 31.0, (1, 3): 31.0, (1, 4): 31.0, (1, 5): 31.0, (1, 6): 31.0, (1, 7): 31.0, (1, 8): 31.0, (1, 9): 31.0, (1, 10): 31.0, (1, 11): 31.0, (1, 12): 31.0, (1, 13): 31.0, (1, 14): 31.0, (1, 15): 31.0, (1, 16): 31.0, (1, 17): 31.0, (1, 18): 31.0, (1, 19): 31.0, (1, 20): 31.0, (1, 21): 31.0, (1, 22): 31.0, (1, 23): 31.0, (1, 24): 29.0, (1, 25): 28.933333333333334, (1, 26): 28.862068965517242, (1, 27): 28.78571428571429, (1, 28): 28.703703703703702, (1, 29): 28.615384615384617, (1, 30): 28.52, (1, 31): 28.416666666666664, (1, 32): 28.304347826086953, (1, 33): 28.18181818181818, (1, 34): 28.047619047619047, (1, 35): 27.900000000000002, (1, 36): 27.736842105263158, (1, 37): 27.555555555555554, (1, 38): 27.352941176470587, (1, 39): 27.125, (2, 0): 27.125, (2, 1): 27.352941176470587, (2, 2): 27.555555555555557, (2, 3): 27.736842105263158, (2, 4): 27.9, (2, 5): 28.047619047619047, (2, 6): 28.181818181818183, (2, 7): 28.304347826086957, (2, 8): 28.416666666666668, (2, 9): 28.52, (2, 10): 28.615384615384617, (2, 11): 28.703703703703702, (2, 12): 28.785714285714285, (2, 13): 28.862068965517242, (2, 14): 28.933333333333334, (2, 15): 29.0, (2, 16): 31.0, (2, 17): 31.0, (2, 18): 31.0, (2, 19): 31.0, (2, 20): 31.0, (2, 21): 31.0, (2, 22): 5.0, (2, 23): 0.0, (2, 24): 0.0, (2, 25): 0.0, (2, 26): 0.0, (2, 27): 0.0, (2, 28): 0.0, (2, 29): 0.0, (2, 30): 0.0, (2, 31): 0.0, (2, 32): 0.0, (2, 33): 0.0, (2, 34): 0.0, (2, 35): 0.0, (2, 36): 0.0, (2, 37): 0.0, (2, 38): 0.0, (2, 39): 0.0, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
-    """
-
-    num_cols: int = 0
-    half_chunk: int = int((chunk_size - 1) / 2)
-    align_matrix: Dict[Tuple[int, int], float] = {}
-
-    # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
-    for i in range(1, len(chroms)):
-        subfam_seq: str = subfams[i]
-        chrom_seq: str = chroms[i]
-
-        # starts at the first non '.' char, but offsets it in the matrix based on where
-        # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
-        # will offset by 10
-
-        seq_index: int = starts[i] - edge_start #place in subfam_seq and chrom_seq
-        col_index = seq_index + half_chunk #col in align_matrix
-        k = half_chunk
-        temp_index = seq_index
-        temp_count = 0
-
-        while temp_count < chunk_size - k:
-            if chrom_seq[temp_index] != "-":
-                temp_count += 1
-            temp_index += 1
-
-        offset: int = temp_index - seq_index
-
-        # grabs first chunk - here seq_index = pos of first non '.' char
-        chrom_slice: str = chrom_seq[seq_index:seq_index + offset]
-        subfam_slice: str = subfam_seq[seq_index:seq_index + offset]
-
-        # calculates score for first chunk and puts in align_matrix
-        align_score: float = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix)
-        align_matrix[i, col_index - k] = align_score * chunk_size / (
-                    chunk_size - k)  # already to scale so don't need to * chunk_size and / chunk_size
-
-        #scores for first part, until we get to full sized chunks
-        for k in range(half_chunk - 1, -1, -1):
-
-            if chroms[i][seq_index + offset] != '-':  #if no new gap introduced, move along seq and add next nucl into score
-                if subfams[i][seq_index + offset] == '-':
-                    if subfams[i][seq_index + offset - 1] == '-':
-                        align_score = align_score + gap_ext
-                    else:
-                        align_score = align_score + gap_init
-                else:
-                    align_score = align_score + sub_matrix[
-                        subfams[i][seq_index + offset] + chroms[i][seq_index + offset]]
-
-                align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
-
-                offset += 1
-
-            else: #if new gap introduced, recalculate offset and call CalcScore again
-                temp_index = seq_index
-                temp_count = 0
-
-                while temp_count < chunk_size - k:
-                    if chrom_seq[temp_index] != "-":
-                        temp_count += 1
-                    temp_index += 1
-
-                offset = temp_index - seq_index
-
-                chrom_slice: str = chrom_seq[seq_index:seq_index + offset]
-                subfam_slice: str = subfam_seq[seq_index:seq_index + offset]
-
-                align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice, subfams[i][seq_index - 1],
-                                        chroms[i][seq_index - 1], sub_matrix)
-                align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
-
-        col_index += 1
-        num_nucls: int = chunk_size  # how many nucls contributed to align score
-
-        # move to next chunk by adding next chars score and subtracting prev chars score
-        while seq_index + offset < len(chrom_seq):
-            temp_index = seq_index
-            temp_count = 0
-
-            #stop when get to end of alignment and padding starts
-            if chrom_seq[seq_index + 1] == ".":
-                break
-
-            #update offset if removing a gap
-            if chrom_seq[seq_index] == '-':
-                offset -= 1
-
-            # skip over gap and not calc a score for the matrix
-            if chrom_seq[seq_index + 1] != "-":
-                # if new gap introduced, or gets rid of old gap, recalc offset, rerun CalcScore
-                if chrom_seq[seq_index + offset] == '-' or chrom_seq[seq_index] == '-':
-                    while temp_count < chunk_size:
-                        if chrom_seq[temp_index + 1] != "-":
-                            temp_count += 1
-                        temp_index += 1
-
-                    offset = temp_index - seq_index
-
-                    chrom_slice = chrom_seq[seq_index + 1:seq_index + offset + 1]
-                    subfam_slice = subfam_seq[seq_index + 1:seq_index + offset + 1]
-                    align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
-                                            subfam_seq[seq_index], chrom_seq[seq_index], sub_matrix)
-
-                    temp_count2: int = 0
-                    for nuc in chrom_slice:
-                        if nuc == '.':
-                            break
-                        if nuc != '-' and nuc != '.':
-                            temp_count2 += 1
-                    num_nucls = temp_count2
-
-                    if num_nucls <= half_chunk:
-                        align_score = -inf
-
-                else:
-                    # align_score from previous segment - prev chars score + next chars score
-
-                    #subtracting prev chars score
-                    if subfam_seq[seq_index] == "-":
-                        num_nucls -= 1
-                        if subfam_seq[seq_index - 1] == "-":
-                            align_score = align_score - gap_ext
-                        else:
-                            align_score = align_score - gap_init
-                    else:
-                        align_score = align_score - sub_matrix[subfam_seq[seq_index] + chrom_seq[seq_index]]
-                        num_nucls -= 1
-
-                    # adding next chars score
-                    if subfam_seq[seq_index + offset - half_chunk] == ".":
-                        align_score = -inf
-                        break
-                    elif subfam_seq[seq_index + offset] == "-":
-                        num_nucls += 1
-                        if subfam_seq[seq_index + offset - 1] == "-":
-                            align_score = align_score + gap_ext
-                        else:
-                            align_score = align_score + gap_init
-                    elif subfam_seq[seq_index + offset] == ".":
-                        align_score = align_score
-                    else:
-                        align_score = align_score + sub_matrix[
-                            subfam_seq[seq_index + offset] + chrom_seq[seq_index + offset]]
-                        num_nucls += 1
-
-                if align_score <= 0:
-                    align_matrix[i, col_index] = 0.0
-                else:
-                    align_matrix[i, col_index] = align_score / num_nucls * chunk_size
-
-                if align_score == -inf:
-                    del align_matrix[i, col_index]
-                    break
-
-                col_index += 1
-
-            seq_index += 1
-
-
-        #fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
-        prev_seq_index: int = seq_index
-        while chrom_seq[seq_index] == '-':
-            seq_index += 1
-
-        if prev_seq_index != seq_index:
-            chrom_slice = chrom_seq[seq_index::]
-            subfam_slice = subfam_seq[seq_index::]
-
-            align_score = CalcScore(gap_ext, gap_init, subfam_slice, chrom_slice,
-                                    subfam_seq[seq_index-1], chrom_seq[seq_index-1], sub_matrix)
-            align_matrix[i, col_index] = align_score / (half_chunk + 1) * chunk_size
-            col_index += 1
-
-        # max col_index is assigned to cols
-        if num_cols < col_index:
-            num_cols = col_index
-
-    # assigns skip states an alignment score
-    for j in range(num_cols):
-        align_matrix[0, j] = float(skip_align_score)
-
-    return (num_cols, align_matrix)
-
-
-def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subfams: List[str], chroms: List[str], starts: List[int], stops: List[int],
-                                consensus_starts: List[int],
-                                strands: List[str]) -> Tuple[List[int], Dict[int, List[int]], Dict[Tuple[int, int], int]]:
-    """
-    Fills parallel to AlignMatrix that holds the consensus position for each subfam at that
-    position in the alignment. Walks along the alignments one nucleotide at a time adding
-    the consensus position to the matrix.
-
-    At same time, fills NonEmptyColumns and ActiveCells.
-
-    input:
-    col_num: number of columns in alignment matrix - will be same number of columns in consensus_matrix
-    row_num: number of rows in matrices
-    start_all: min start position on chromosome/target sequences for whole alignment
-    subfams: actual subfamily/consensus sequences from alignment
-    chroms: actual target/chromosome sequences from alignment
-    starts: start positions for all competing alignments (on target)
-    stops: stop positions for all competing alignments (on target)
-    consensus_starts: where alignment starts in the subfam/consensus sequence
-    strands: what strand each of the alignments are on - reverse strand will count down instead of up
-
-    output:
-    columns: all columns in matrix that are not empty, allows us to avoid looping
-    through unecessary columns
-    active_cells: dictionary that maps column number in matrix, so a list of rows that are
-    active in that column, allows us to avoid looping through unecessary rows
-    consensus_matrix: Hash implementation of sparse 2D matrix used along with DP matrices. Key is
-    tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
-    holds the alignment position in the consensus subfamily sequence.
-
-    >>> subs = ["", ".AA", "TT-"]
-    >>> chrs = ["", ".AA", "TTT"]
-    >>> strts = [0, 1, 0]
-    >>> stps = [0, 2, 2]
-    >>> con_strts = [-1, 0, 10]
-    >>> strandss = ["", "+", "-"]
-    >>> (col, active, con_mat) = FillConsensusPositionMatrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
-    >>> con_mat
-    {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
-    >>> col
-    [0, 1, 2]
-    >>> active
-    {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
-    """
-
-    columns = set()
-    active_cells: Dict[int, List[int]] = {}
-    consensus_matrix: Dict[Tuple[int, int], int] = {}
-
-    # 0s for consensus pos of skip state
-    for j in range(col_num):
-        consensus_matrix[0, j] = 0
-
-    # start at 1 to ignore 'skip state'
-    for row_index in range(1, row_num):
-
-        if strands[row_index] == "+":
-            consensus_pos = consensus_starts[row_index] - 1
-            col_index: int = starts[row_index] - start_all
-            seq_index: int = starts[row_index] - start_all
-
-            while col_index < stops[row_index] - start_all + 1:
-
-                # consensus pos only advances when there is not a gap in the subfam seq
-                if subfams[row_index][seq_index] != "-":
-                    consensus_pos += 1
-
-                consensus_matrix[row_index, col_index] = consensus_pos
-
-                columns.add(col_index)
-
-                # matrix position only advances when there is not a gap in the chrom seq
-                if chroms[row_index][seq_index] != "-":
-                    if col_index in active_cells:
-                        active_cells[col_index].append(row_index)
-                    else:
-                        active_cells[col_index] = [0, row_index]
-                    col_index += 1
-
-                seq_index += 1
-
-        else:  # reverse strand
-            consensus_pos2 = consensus_starts[row_index] + 1
-            col_index2: int = starts[row_index] - start_all
-            seq_index2: int = starts[row_index] - start_all
-
-            while col_index2 < stops[row_index] - start_all + 1:
-
-                if subfams[row_index][seq_index2] != "-":
-                    consensus_pos2 -= 1
-                consensus_matrix[row_index, col_index2] = consensus_pos2
-
-                columns.add(col_index2)
-
-                if chroms[row_index][seq_index2] != "-":
-                    if col_index2 in active_cells:
-                        active_cells[col_index2].append(row_index)
-                    else:
-                        active_cells[col_index2] = [0, row_index]
-                    col_index2 += 1
-
-                seq_index2 += 1
-
-    return (list(columns), active_cells, consensus_matrix)
-
-
-def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str]) -> List[float]:
-    """
-    computes confidence values for competing annotations using alignment scores.
-    Loops through the array once to find sum of 2^every_hit_score in region, then
-    loops back through to calculate confidence. Converts the score to account for
-    lambda before summing.
-
-    If command line option for subfam_counts, this is included in confidence math.
-
-    input:
-    lambdaa: lambda value for input sub_matrix (scaling factor)
-    infile: test if subfam_counts infile included at command line
-    region: list of scores for competing annotations
-    subfam_counts: dict that maps subfam name to it's count info
-    subfams: list of subfam names
-
-    output:
-    confidence_list: list of confidence values for competing annotations, each input alignment
-    score will have one output confidence score
-
-    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
-    >>> subs = ["s1", "s2", "s3"]
-    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs)
-    >>> f"{conf[0]:.2f}"
-    '0.41'
-    >>> f"{conf[1]:.2f}"
-    '0.29'
-    >>> f"{conf[2]:.2f}"
-    '0.29'
-    """
-    confidence_list: List[float] = []
-
-    score_total: int = 0
-
-    #if command line option to include subfam_counts
-    if infile:
-        for index in range(len(region)):
-            converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
-            confidence_list.append(converted_score)
-            score_total += converted_score
-
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
-
-    #don't include subfam counts (default)
-    else:
-        for index in range(len(region)):
-            converted_score = 2**(region[index] * lambdaa)
-            confidence_list.append(converted_score)
-            score_total += converted_score
-
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
-
-    return confidence_list
-
-
-def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
-                         subfamss: List[str], active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float]) -> \
-        Dict[Tuple[int, int], float]:
-    """
-    Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
-    annotations that are input into ConfidenceCM, the output confidence values are used to populate confidence_matrix.
-
-    input:
-    everything needed for ConfidenceCM()
-    columns: array that holds all non empty columns in align matrix
-    active_cells: maps col numbers to all active rows in that col
-    align_matrix: alignment matrix - used to calculate confidence
-
-    output:
-    confidence_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
-    subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
-    Each cell in matrix is the confidence score calculated from all the alignment scores in a
-    column of the AlignHash
-
-    >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
-    >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
-    >>> non_cols = [0, 1, 2]
-    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
-    >>> subs = ["s1", "s2"]
-    >>> conf_mat = FillConfidenceMatrix(0.1227, "infile", non_cols, counts, subs, active, align_mat)
-    >>> f"{conf_mat[0,0]:.4f}"
-    '0.0002'
-    >>> f"{conf_mat[1,0]:.4f}"
-    '0.9998'
-    >>> f"{conf_mat[0,1]:.4f}"
-    '0.5000'
-    >>> f"{conf_mat[1,1]:.4f}"
-    '0.5000'
-    >>> f"{conf_mat[0,2]:.4f}"
-    '0.4788'
-    >>> f"{conf_mat[1,2]:.4f}"
-    '0.5212'
-    """
-
-    confidence_matrix: Dict[Tuple[int, int], float] = {}
-
-    for i in range(len(columns)):
-
-        col_index: int = columns[i]
-        temp_region: List[float] = []
-
-        for row_index in active_cells[col_index]:
-            temp_region.append(align_matrix[row_index, col_index])
-
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
-
-        for row_index2 in range(len(active_cells[col_index])):
-            confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
-
-    return confidence_matrix
-
-
-def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
-Dict[Tuple[int, int], float]:
-    """
-    Fills support_matrix using values in confidence_matrix. Average confidence values
-    for surrounding chunk_size confidence values - normalized by dividing by number of
-    segments.
-
-    score for subfam x at position i is sum of all confidences for subfam x for all segments that
-    overlap position i - divided by number of segments
-
-    input:
-    row_num: number of rows in matrices
-    chunk_size: number of nucleotides that make up a chunk
-    start_all: min start position on chromosome/target sequences for whole alignment
-    columns: list of non empty columns in matrices
-    starts: chrom/target start positions of all alignments
-    stops: chrom/target stop positions of all alignments
-    confidence_matrix: Hash implementation of sparse 2D matrix that holds confidence values
-
-    output:
-    support_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
-    subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
-    Each cell in matrix is the support score (or average confidence value) for the surrounding
-    chunk_size cells in the confidence matrix.
-
-    >>> non_cols = [0,1,2]
-    >>> strts = [0, 0]
-    >>> stps = [0, 2]
-    >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
-    >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat)
-    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
-    """
-
-    support_matrix: Dict[Tuple[int, int], float] = {}
-
-    half_chunk: int = int((chunk_size - 1) / 2)
-
-    #skip state
-    for col in range(len(columns)):
-        col_index: int = columns[col]
-
-        summ: float = 0
-        num_segments: int = 0
-
-        for sum_index in range(col_index - half_chunk, col_index + half_chunk + 1):
-            if (0, sum_index) in confidence_matrix:
-                num_segments += 1
-                summ += confidence_matrix[0, sum_index]
-
-        support_matrix[0, col_index] = summ / num_segments
-
-    #rest of rows
-    for row_index in range(1, row_num):
-
-        start: int = starts[row_index] - start_all
-        stop: int = stops[row_index] - start_all
-
-        #if the alignment is small, do it the easy way to avoid out of bound errors
-        if stop - start + 1 < chunk_size:
-            for col in range(len(columns)):
-                j = columns[col]
-
-                if (row_index, j) in confidence_matrix:
-                    num: int = j
-                    summ: float = 0.0
-                    numsegments: int = 0
-                    while num >= 0 and num >= j:
-                        if (row_index, num) in confidence_matrix:
-                            summ = summ + confidence_matrix[row_index, num]
-                            numsegments += 1
-                        num -= 1
-
-                    if numsegments > 0:
-                        support_matrix[row_index, j] = summ / numsegments
-
-        #if the alignment is large, do it the fast way
-        else:
-            #first chunk_size/2 before getting to full chunks
-            left_index: int = 0
-            for col_index in range(start, starts[row_index] - start_all + half_chunk):
-
-                summ: float = 0.0
-                sum_index: int = col_index - left_index
-                num_segments: int = 0
-
-                while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
-                    summ += confidence_matrix[row_index, sum_index]
-                    sum_index += 1
-                    num_segments += 1
-
-                support_matrix[row_index, col_index] = summ / num_segments
-                left_index += 1
-
-            # middle part where num segments is chunk_size
-            col_index: int = (start + half_chunk)
-            summ: float = 0.0
-            sum_index: int = col_index - half_chunk
-            while sum_index <= col_index + half_chunk:
-                summ += confidence_matrix[row_index, sum_index]
-                sum_index += 1
-
-            support_matrix[row_index, col_index] = summ / chunk_size
-
-            #to get next bp average subtract previous confidence, add next confidence
-            for col_index in range((1 + start + half_chunk), (stop + 1) - half_chunk):
-                last_index: int = col_index - half_chunk - 1
-                next_index: int = col_index + half_chunk
-
-                summ -= confidence_matrix[row_index, last_index]
-                summ += confidence_matrix[row_index, next_index]
-
-                support_matrix[row_index, col_index] = summ / chunk_size
-
-            # last chunk_size/2
-            right_index: int = half_chunk
-            for col_index in range((stop + 1) - half_chunk, stops[row_index] - start_all + 1):
-
-                summ: float = 0.0
-                sum_index: int = col_index - half_chunk
-                num_segments: int = 0
-
-                while sum_index < col_index + right_index:
-                    summ += confidence_matrix[row_index, sum_index]
-                    sum_index += 1
-                    num_segments += 1
-
-                support_matrix[row_index, col_index] = summ / num_segments
-                right_index -= 1
-
-    return support_matrix
 
 
 def CollapseMatrices(row_num: int, columns: List[int], subfams: List[str], strands: List[str], active_cells: Dict[int, List[int]],
@@ -1188,7 +399,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     for confidence scores.
 
     input:
-    all input needed for CalcScore() and ConfidenceCM()
+    all input needed for CalcScore() and confidence_cm()
     nodes: number of nodes
     changes_pos: node boundaries
     columns: all non empty columns in matrices
@@ -1239,7 +450,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         align_score0: float = 0.0
         #if whole alignment is padding - don't run CalcScore
         if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
-            align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
+            align_score0 = calculate_score(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
 
     #middle nodes
@@ -1266,7 +477,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
             align_score: float = 0.0
             # if whole alignment is padding - don't run CalcScore
             if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
-                align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
+                align_score = calculate_score(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
 
             node_confidence_temp[subfam_index * nodes + node_index] = align_score
 
@@ -1294,7 +505,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         align_score2: float = 0.0
         # if whole alignment is padding - don't run CalcScore
         if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
-            align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
+            align_score2 = calculate_score(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
                                                 sub_matrix)
 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
@@ -1305,7 +516,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
+        confidence_temp: List[float] = confidence_cm(lamb, infilee, temp, subfam_countss, subfams)
 
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
@@ -1954,24 +1165,25 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
+    StartAll, StopAll = pad_sequences(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
-    (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
+    (cols, AlignMatrix) = fill_align_matrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
-    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
+    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = fill_consensus_position_matrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
-    ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
+    ConfidenceMatrix = fill_confidence_matrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
 
-    SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
+    SupportMatrix = fill_support_matrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
     #if command line option included to output support matrix for heatmap
     if outfile_heatmap:
-        PrintMatrixSupport(cols, StartAll, ChromStart, outfile_heatmap, SupportMatrixCollapse, SubfamsCollapse)
+        with open(outfile_heatmap, "w") as outfile:
+            print_matrix_support(cols, StartAll, ChromStart, SupportMatrixCollapse, SubfamsCollapse, file = outfile)
 
     (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = FillProbabilityMatrix(SameProbSkip, SameProbLog, ChangeProbLog,
                                                                                ChangeProbSkip,
