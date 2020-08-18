@@ -1,18 +1,9 @@
-  #!/usr/bin/env bash
+#!/usr/bin/env bash
 
-if [ `uname -s` == Darwin ]; then
-  DATECMD=gdate
-else
-  DATECMD=date
-fi
-
-## ---------
-## UTILITIES
-## ---------
+set -e
 
  for f in *.align.format ;
- 	do echo $f;
+ 	do echo "$f";
  		poetry run python3 AdjudicateRegions.py --seqpos --lambda .1227 $f 25p41g_edited.matrix;
- 		echo "-------------------------------------------------------------\n";
+ 		printf -- "-------------------------------------------------------------\n";
  	done
-
