@@ -1850,6 +1850,7 @@ if __name__ == "__main__":
     outfile_heatmap: str = ""
 
     # running ultra
+    esl_sfetch_path: str = ""
     ultra_path: str = ""
     seq_file: str = "" # .ta file
     start_pos: int = 0
@@ -1873,7 +1874,7 @@ if __name__ == "__main__":
         --segmentsize (must be odd) [31]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
-        --ultraPath [specify path to ULTRA]
+        --ultraPath [specify path to ULTRA executable]
         --seqFile [specify path to genome file]
         --startPos [start of sequence region]
         --endPos [end of sequence region]
@@ -1900,6 +1901,7 @@ if __name__ == "__main__":
         "viz=",
         "heatmap=",
         "ultraPath=",
+        "eslSfetch=",
         "seqFile=",
         "startPos=",
         "endPos=",
@@ -1921,6 +1923,8 @@ if __name__ == "__main__":
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+
+    esl_sfetch_path = str(opts["--eslSfetch"]) if "--eslSfetch" in opts else esl_sfetch_path
     ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path # gets path to exe
     seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
     start_pos = str(opts["--startPos"]) if "--startPos" in opts else start_pos
@@ -1979,22 +1983,23 @@ if __name__ == "__main__":
 
     Ultra: bool = False
     # running esl and ultra
-    if ultra_path and EslPath and seq_file and start_pos and end_pos and chrom_name:
+    if ultra_path and esl_sfetch_path and seq_file and start_pos and end_pos and chrom_name:
         Ultra = True
         # pre-processing
-        subprocess.Popen([EslPath, 'esl-sfetch', '--index', seq_file]).wait()
-        # run esl
-        small_output = tempfile.TemporaryFile()
-        pop = subprocess.Popen([EslPath, 'esl-sfetch', '-c',
-                               start_pos + '..' + end_pos, seq_file],
-                               stdout=small_output, universal_newlines=True).wait()
-        small_output.flush()
+        subprocess.call([esl_sfetch_path, '--index', seq_file])
+        # get smaller region
+        file, small_region = tempfile.mkstemp()
+        print(small_region)
+        subprocess.call([esl_sfetch_path, '-o', small_region, '-c',
+                         start_pos + '..' + end_pos, seq_file, chrom_name])
         # run ULTRA
-        pop = subprocess.Popen([ultra_path, '-ss', small_output], stdout=subprocess.PIPE,
+        pop = subprocess.Popen([ultra_path, '-ss', small_region], stdout=subprocess.PIPE,
                                universal_newlines=True)
         ultra_out, err = pop.communicate() # ultra_out is string
+        print(ultra_out)
         ultra_output = json.loads(ultra_out)
-        small_output.close()
+        # subprocess.call(['rm', 'small_region'])  # no file found?
+        os.remove(small_region)
     elif ultra_output_path:  # works!
         Ultra = True
         # my path: /Users/audrey/tr.json
