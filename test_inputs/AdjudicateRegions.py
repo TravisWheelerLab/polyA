@@ -75,32 +75,31 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         i += 1
 
 
-def FillUltraMatrix(ultra_out, chunk_size: int, start_all: int) -> Dict[int, float]:
+def FillRepeatMatrix(ultra_output, chunk_size: int, start_all: int) -> Dict[int, float]:
     """
-    Fills UltraMatrix by calculating score (according to ULTRA scoring) for every
+    Fills RepeatMatrix by calculating score (according to ULTRA scoring) for every
     segment of size chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
     input:
-    ultra_path: path to ultra executable
-    seq_file: path to sequence file for ultra input
+    ultra_output:
     chunk_size: size of nucleotide chunks that are scored
+    start_all: minimum starting nucleotide position
 
     output:
-    ultra_matrix: Hash implementation of sparse 2D matrix. Key is int that
+    repeat_matrix: Hash implementation of sparse 2D matrix. Key is int that
     maps col to the value held in that cell of matrix. Cols are nucleotide
     positions in the target sequence. Each cell in matrix is the score of
     the surrounding chunk_size number of nucleotides for that particular
     tandem repeat region.
     """
-    tandem_repeats = ultra_out['Repeats']  # list of repeats
-    ultra_matrix: Dict[int, float] = {}
-    # for each repeat, get overlapping windowed score
+    tandem_repeats = ultra_output['Repeats']  # list of repeats
+    repeat_matrix: Dict[int, float] = {}
+    # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
         rep = tandem_repeats[i]
         start = rep['Start']
         length = rep['Length']
-        end = start + length
         pos_scores = rep['PositionScoreDelta'].split(":")
 
         # calc score for first chunk
@@ -113,7 +112,7 @@ def FillUltraMatrix(ultra_out, chunk_size: int, start_all: int) -> Dict[int, flo
             j += 1
         window_size = j
         # scaled score
-        ultra_matrix[start] = score * chunk_size / window_size
+        repeat_matrix[start - start_all] = score * chunk_size / window_size
         # raw score
         # ultra_matrix[start] = score
         # print(ultra_matrix[start])
@@ -129,11 +128,11 @@ def FillUltraMatrix(ultra_out, chunk_size: int, start_all: int) -> Dict[int, flo
                 score += float(pos_scores[j + k])
                 window_size += 1
             # scaled score
-            ultra_matrix[j + start] = score * chunk_size / window_size
+            repeat_matrix[j + start - start_all] = score * chunk_size / window_size
             # raw score
             # ultra_matrix[j + start] = score
             # print(ultra_matrix[j + start])
-    return ultra_matrix
+    return repeat_matrix
 
 
 def EdgesTR(ultra_output) -> Tuple[int, int]:
@@ -2148,12 +2147,10 @@ if __name__ == "__main__":
         Stops.append(tr_end)
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
-    exit()
 
-    # dictionary value should not be raw target seq but use start all value
     if Ultra:
-        UltraMatrix = FillUltraMatrix(ultra_output, ChunkSize, StartAll)
-        print(UltraMatrix)
+        RepeatMatrix = FillRepeatMatrix(ultra_output, ChunkSize, StartAll)
+        print(RepeatMatrix)
         exit()
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
@@ -2161,11 +2158,7 @@ if __name__ == "__main__":
 
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
-    if Ultra:
-        ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
-                                            AlignMatrix, UltraMatrix)
-    else:
-        ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
+    ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
