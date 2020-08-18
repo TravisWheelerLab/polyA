@@ -15,20 +15,29 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
+PYTHON_CMD := python3 -m poetry run python
+
+FMT_CMD := ${PYTHON_CMD} -m black
+FMT_TARGETS := polyA/ tests/ test_inputs/
+FMT_OPTS := -t py38 -l 80
+
+TEST_CMD := ${PYTHON_CMD} -m pytest
+TEST_TARGETS := tests/ polyA/ test_inputs/AdjudicateRegions.py
+
 .PHONY: check
 check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	python3 -m poetry run python -m pytest -m 'not slow' tests/ polyA/ test_inputs/AdjudicateRegions.py
+	${TEST_CMD} -m 'not slow' ${TEST_TARGETS}
 
 .PHONY: check-format
 check-format:
-	python3 -m poetry run python -m black --check -t py38 -l 80 polyA/ tests/
+	${FMT_CMD} --check ${FMT_OPTS} ${FMT_TARGETS}
 
 .PHONY: check-slow
 check-slow:
-	python3 -m poetry run python -m pytest -m slow tests/ polyA/
+	${TEST_CMD} -m slow ${TEST_TARGETS}
 	cd test_inputs && ./RunTests.sh
 
 .PHONY: container-build
@@ -41,7 +50,7 @@ container-push:
 
 .PHONY: format
 format:
-	python3 -m poetry run python -m black -t py38 -l 80 polyA/ tests/
+	${FMT_CMD} ${FMT_OPTS} ${FMT_TARGETS}
 
 .PHONY: setup
 setup:

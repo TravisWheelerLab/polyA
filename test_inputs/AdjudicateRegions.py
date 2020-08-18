@@ -1,10 +1,9 @@
 from getopt import getopt
-from math import inf, log
+from math import log
 import re
 from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple
 import os
-import json
 
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
@@ -18,221 +17,15 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.load_alignments import load_alignments
 from polyA.pad_sequences import pad_sequences
-from polyA.printers import print_matrix_support
-
-
-
-# -----------------------------------------------------------------------------------#
-#			FUNCTIONS													   			#
-# -----------------------------------------------------------------------------------#
-
-
-def PrintResults(changes_orig: List[str], changespos_orig: List[int], columns_orig: List[int], ids: List[int]) -> None:
-    """
-    prints the final results
-    prints start and stop in terms of position in matrix
-    """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
-    for i in range(len(changes_orig)):
-        if str(changes_orig[i]) != 'skip':
-            stdout.write(str(columns_orig[changespos_orig[i]]))
-            stdout.write("\t")
-            stdout.write(str(columns_orig[changespos_orig[i + 1] - 1]))
-            stdout.write("\t")
-            stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
-            stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
-            stdout.write("\n")
-
-
-def PrintResultsSequence(edgestart: int, changes_orig: List[str], changespos_orig: List[int], columns_orig: List[int],
-                         ids: List[int]) -> None:
-    """
-    prints final results
-    prints start and stop in terms of input chrom sequence
-    """
-    # stdout.write("start\tstop\tID\tname\n")
-    # stdout.write("----------------------------------------\n")
-    for i in range(len(changes_orig)):
-        if str(changes_orig[i]) != 'skip':
-            stdout.write(str(columns_orig[changespos_orig[i]] + edgestart))
-            stdout.write("\t")
-            stdout.write(str(columns_orig[changespos_orig[i + 1] - 1] + edgestart))
-            stdout.write("\t")
-            stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
-            stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
-            stdout.write("\n")
-
-
-def PrintResultsChrom(edgestart: int, chrom_start: int, changes_orig: List[str], changespos_orig: List[int], columns_orig: List[int],
-                         ids: List[int]) -> None:
-    """
-    prints final results
-    prints start and stop in terms of chromosome/target position
-    """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
-    for i in range(len(changes_orig)):
-        if str(changes_orig[i]) != 'skip':
-            stdout.write(str(columns_orig[changespos_orig[i]] + edgestart + chrom_start))
-            stdout.write("\t")
-            stdout.write(str(columns_orig[changespos_orig[i + 1] - 1] + edgestart + chrom_start))
-            stdout.write("\t")
-            stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
-            stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
-            stdout.write("\n")
-
-
-def PrintResultsViz(start_all: int, outfile: str, outfile_json: str, chrom: str, chrom_start: int, subfams: List[str], changes_orig: List[str], changes_position_orig: List[int],
-                    columns_orig: List[int], consensus_lengths: Dict[str, int],
-                    strand_matrix_collapse: Dict[Tuple[int, int], str],
-                    consensus_matrix_collapse: Dict[Tuple[int, int], int], subfams_collapse_index: Dict[str, int], node_confidence_orig: Dict[Tuple[str, int], float]):
-    """
-    prints the results in the proper format to input into the SODA visualization tool
-
-    format described here:
-    https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
-
-    """
-
-    id: int = 0
-
-    length = len(changes_position_orig) - 1
-
-    used: List[int] = [1] * length  # wont print out the results of the same thing twice
-
-    json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
-
-    with open(outfile, 'w') as out:
-
-        i = 0
-        while i < length:
-
-            sub_id: int = 0
-            json_dict_subid: Dict[str, Dict[str, float]] = {}
-
-            if changes_orig[i] != 'skip' and used[i]:
-                subfam: str = changes_orig[i]
-                strand: str = strand_matrix_collapse[subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]]
-                consensus_start: int
-                consensus_stop: int
-
-                left_flank: int
-                right_flank: int
-
-                if strand == "-":
-                    left_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                        subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]]
-                    right_flank = consensus_matrix_collapse[
-                                      subfams_collapse_index[subfam], columns_orig[changes_position_orig[i + 1] - 1]] - 1
-                else:
-                    left_flank = consensus_matrix_collapse[subfams_collapse_index[subfam], columns_orig[changes_position_orig[i]]] - 1
-                    right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                        subfams_collapse_index[subfam], columns_orig[changes_position_orig[i + 1] - 1]]
-
-                align_start: int = chrom_start + (columns_orig[changes_position_orig[i]] + start_all)
-                feature_start: int = align_start - left_flank
-                align_stop: int = chrom_start + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)
-                feature_stop: int = align_stop + right_flank
-
-                block_start_matrix: int = columns_orig[changes_position_orig[i]]
-
-                block_count: int = 3
-                id += 1
-
-                json_dict_subfam_i: Dict[str, float] = {}
-
-                for subfam_i in range(1, len(subfams)):
-                    subfamm = subfams[subfam_i]
-                    if NodeConfidenceOrig[subfamm, i] > 0.001:
-                        json_dict_subfam_i[subfamm] = NodeConfidenceOrig[subfamm, i]
-
-                json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(json_dict_subfam_i.items(), key=lambda x: x[1], reverse=True)
-                sub_id += 1
-
-                block_start: List[str] = []
-                block_size: List[str] = []
-
-                block_start.append("-1")
-                block_start.append(str(left_flank + 1))
-                block_start.append("-1")
-
-                block_size.append(str(left_flank))
-                block_size.append(
-                    str(columns_orig[changes_position_orig[i + 1] - 1] - columns_orig[changes_position_orig[i]] + 1))
-                block_size.append(str(right_flank))
-
-                j: int = i + 1
-                while j < length:
-                    if changes_orig[j] != 'skip':
-
-                        if IDs[columns_orig[changes_position_orig[i]]] == IDs[columns_orig[changes_position_orig[j]]]:
-
-                            if strand == "-":
-                                right_flank = consensus_matrix_collapse[
-                                                  subfams_collapse_index[changes_orig[j]], columns_orig[changes_position_orig[j + 1] - 1]] - 1
-                            else:
-                                right_flank = consensus_lengths[subfam] - consensus_matrix_collapse[
-                                    subfams_collapse_index[subfam], columns_orig[changes_position_orig[j + 1] - 1]]
-
-                            del block_size[-1]
-                            block_size.append("0")
-
-                            align_stop: int = chrom_start + (columns_orig[changes_position_orig[j + 1] - 1] + start_all)
-                            feature_stop: int = align_stop + right_flank
-
-                            block_start.append(
-                                str(columns_orig[changes_position_orig[j]] + 1 - block_start_matrix + left_flank))
-                            block_start.append("-1")
-
-                            block_size.append(str(columns_orig[changes_position_orig[j + 1] - 1] - columns_orig[
-                                changes_position_orig[j]] + 1))
-
-                            block_size.append(str(right_flank))
-
-                            block_count += 2
-
-                            used[j] = 0
-
-                            json_dict_subfam_j: Dict[str, float] = {}
-
-                            for subfam_i in range(1, len(Subfams)):
-                                subfamm = Subfams[subfam_i]
-                                if NodeConfidenceOrig[subfamm, j] > 0.001:
-                                    json_dict_subfam_j[subfamm] = node_confidence_orig[subfamm, j]
-
-                            json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(json_dict_subfam_j.items(), key=lambda x: x[1], reverse=True)
-                            sub_id += 1
-
-                    j += 1
-
-                json_dict_id[str(id)] = json_dict_subid
-
-                out.write("000 " + chrom + " " + str(feature_start) + " " + str(
-                    feature_stop) + " " + subfam + " 0 " + strand + " " + str(align_start) + " " + str(
-                    align_stop) + " 0 " + str(block_count) + " " + (",".join(block_size)) + " " + (
-                              ",".join(block_start)) + " " + str(id))
-                out.write("\n")
-
-            used[i] = 0
-            i += 1
-
-    #prints json file with confidence values for each annotation
-    with open(outfile_json, 'w') as out_json:
-        out_json.write(json.dumps(json_dict_id))
-
-
-
-# -----------------------------------------------------------------------------------#
-#			   MAIN														   			#
-# -----------------------------------------------------------------------------------#
-
+from polyA.printers import (
+    print_matrix_support,
+    print_results,
+    print_results_chrom,
+    print_results_sequence,
+    print_results_soda,
+)
 
 if __name__ == "__main__":
-
     GapInit: int = -25
     GapExt: int = -5
     Lamb: float = 0.0
@@ -277,33 +70,46 @@ if __name__ == "__main__":
         --heatmap outfile - prints probability file for input into heatmap
     """
 
-    raw_opts, args = getopt(argv[1:], "", [
-        "GapInit=",
-        "GapExt=",
-        "skipScore=",
-        "lambda=",
-        "eslPath=",
-        "segmentsize=",
-        "changeprob=",
-        "priorCounts=",
-        "viz=",
-        "heatmap=",
-
-        "help",
-        "matrixpos",
-        "seqpos",
-    ])
+    raw_opts, args = getopt(
+        argv[1:],
+        "",
+        [
+            "GapInit=",
+            "GapExt=",
+            "skipScore=",
+            "lambda=",
+            "eslPath=",
+            "segmentsize=",
+            "changeprob=",
+            "priorCounts=",
+            "viz=",
+            "heatmap=",
+            "help",
+            "matrixpos",
+            "seqpos",
+        ],
+    )
     opts = dict(raw_opts)
 
     GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
     GapExt = int(opts["--GapExt"]) if "--GapExt" in opts else GapExt
     Lamb = float(opts["--lambda"]) if "--lambda" in opts else Lamb
     EslPath = str(opts["--eslPath"]) if "--eslPath" in opts else EslPath
-    ChunkSize = int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
-    ChangeProb = float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
-    infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
+    ChunkSize = (
+        int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
+    )
+    ChangeProb = (
+        float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
+    )
+    infile_prior_counts = (
+        str(opts["--priorCounts"])
+        if "--priorCounts" in opts
+        else infile_prior_counts
+    )
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
-    outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+    outfile_heatmap = (
+        str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+    )
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
     printSeqPos = "--seqpos" in opts
@@ -322,14 +128,16 @@ if __name__ == "__main__":
     with open(infile_matrix) as _infile_matrix:
         in_matrix: List[str] = _infile_matrix.readlines()
 
-    #if command line option included to use prior counts into in confidence calculations
+    # if command line option included to use prior counts into in confidence calculations
     if infile_prior_counts:
         with open(infile_prior_counts) as _infile_prior_counts:
             in_counts: List[str] = _infile_prior_counts.readlines()
 
-    #if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
+    # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
     if not Lamb:
-        esl_stream = os.popen(EslPath + 'esl_scorematrix --dna 25p41g_edited.matrix')
+        esl_stream = os.popen(
+            EslPath + "esl_scorematrix --dna 25p41g_edited.matrix"
+        )
         esl_output = esl_stream.read()
         esl_output_list = re.split(r"\n+", esl_output)
         lambda_list = re.split(r"\s+", esl_output_list[1])
@@ -351,7 +159,7 @@ if __name__ == "__main__":
         for i in range(len(subScores)):
             SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
-    SubMatrix['..'] = 0
+    SubMatrix[".."] = 0
 
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
@@ -449,20 +257,30 @@ if __name__ == "__main__":
     ChromEnd: int = int(match.groups()[2])
     TargetLen: int = ChromEnd - ChromStart
 
-    #bail out if target sq is < 25 nucls
-    #warning if less than 1000 nucls
-    #warning if no chrom info given - okay for artificial seq inputs
+    # bail out if target sq is < 25 nucls
+    # warning if less than 1000 nucls
+    # warning if no chrom info given - okay for artificial seq inputs
     if TargetLen == 0:
-        stderr.write("WARNING - No chromosome position information given.\nThis is okay if running on artificial sequences, but cannot use command line options --viz or --heatmap.\n\n")
+        stderr.write(
+            "WARNING - No chromosome position information given.\nThis is okay if running on artificial sequences, but cannot use command line options --viz or --heatmap.\n\n"
+        )
     elif TargetLen <= 25:
-        stderr.write("ERROR - Target sequence length needs to be > 25 nucleotides.\n\n")
+        stderr.write(
+            "ERROR - Target sequence length needs to be > 25 nucleotides.\n\n"
+        )
         exit()
     elif TargetLen < 1000:
-        stderr.write("WARNING - Did you mean to run this on a target region < 1000 nucleotides?\n\n")
+        stderr.write(
+            "WARNING - Did you mean to run this on a target region < 1000 nucleotides?\n\n"
+        )
 
     ChangeProbLog = log(ChangeProb / (numseqs - 1))
-    ChangeProbSkip = (ChangeProbLog / 2)  # jumping in and then out of the skip state counts as 1 jump
-    SameProbSkip = ChangeProbLog / 20  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+    ChangeProbSkip = (
+        ChangeProbLog / 2
+    )  # jumping in and then out of the skip state counts as 1 jump
+    SameProbSkip = (
+        ChangeProbLog / 20
+    )  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows in matrices
     rows: int = len(Subfams)
@@ -477,19 +295,67 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    StartAll, StopAll = pad_sequences(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
+    StartAll, StopAll = pad_sequences(
+        ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs
+    )
 
-    (cols, AlignMatrix) = fill_align_matrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
-                                          ChromSeqs, Starts, SubMatrix)
+    (cols, AlignMatrix) = fill_align_matrix(
+        StartAll,
+        ChunkSize,
+        GapExt,
+        GapInit,
+        SkipAlignScore,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        SubMatrix,
+    )
 
-    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = fill_consensus_position_matrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
+    (
+        NonEmptyColumns,
+        ActiveCells,
+        ConsensusMatrix,
+    ) = fill_consensus_position_matrix(
+        cols,
+        rows,
+        StartAll,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        Stops,
+        ConsensusStarts,
+        Strands,
+    )
 
-    ConfidenceMatrix = fill_confidence_matrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
-                                            AlignMatrix)
+    ConfidenceMatrix = fill_confidence_matrix(
+        Lamb,
+        infile_prior_counts,
+        NonEmptyColumns,
+        SubfamCounts,
+        Subfams,
+        ActiveCells,
+        AlignMatrix,
+    )
 
-    SupportMatrix = fill_support_matrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
+    SupportMatrix = fill_support_matrix(
+        rows,
+        ChunkSize,
+        StartAll,
+        NonEmptyColumns,
+        Starts,
+        Stops,
+        ConfidenceMatrix,
+    )
 
-    collapsed_matrices = collapse_matrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
+    collapsed_matrices = collapse_matrices(
+        rows,
+        NonEmptyColumns,
+        Subfams,
+        Strands,
+        ActiveCells,
+        SupportMatrix,
+        ConsensusMatrix,
+    )
 
     SupportMatrixCollapse = collapsed_matrices.support_matrix
     SubfamsCollapse = collapsed_matrices.subfamilies
@@ -498,22 +364,47 @@ if __name__ == "__main__":
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
 
-    #if command line option included to output support matrix for heatmap
+    # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
         with open(outfile_heatmap, "w") as outfile:
-            print_matrix_support(cols, StartAll, ChromStart, SupportMatrixCollapse, SubfamsCollapse, file = outfile)
+            print_matrix_support(
+                cols,
+                StartAll,
+                ChromStart,
+                SupportMatrixCollapse,
+                SubfamsCollapse,
+                file=outfile,
+            )
 
-    (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = fill_probability_matrix(SameProbSkip, SameProbLog, ChangeProbLog,
-                                                                               ChangeProbSkip,
-                                                                               NonEmptyColumns,
-                                                                                         collapsed_matrices,)
+    (
+        ProbMatrixLastColumn,
+        OriginMatrix,
+        SameSubfamChangeMatrix,
+    ) = fill_probability_matrix(
+        SameProbSkip,
+        SameProbLog,
+        ChangeProbLog,
+        ChangeProbSkip,
+        NonEmptyColumns,
+        collapsed_matrices,
+    )
 
-    #IDs for each nucleotide will be assigned during DP backtrace
+    # IDs for each nucleotide will be assigned during DP backtrace
     IDs = [0] * cols
 
-    (ID, ChangesPosition, Changes) = get_path(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                             NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
-                                             OriginMatrix, SameSubfamChangeMatrix)
+    (ID, ChangesPosition, Changes) = get_path(
+        ID,
+        NonEmptyColumns,
+        IDs,
+        ChangesOrig,
+        ChangesPositionOrig,
+        NonEmptyColumnsOrig,
+        SubfamsCollapse,
+        ProbMatrixLastColumn,
+        ActiveCellsCollapse,
+        OriginMatrix,
+        SameSubfamChangeMatrix,
+    )
 
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
@@ -529,25 +420,49 @@ if __name__ == "__main__":
     #   ** stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
 
     count: int = 0
-    while (True):
+    while True:
         count += 1
         NumNodes = len(Changes)
 
         # breakout of loop if there are 2 or less nodes left
-        if (NumNodes <= 2):
+        if NumNodes <= 2:
             break
 
-        NodeConfidence.clear() #reuse old NodeConfidence matrix
+        NodeConfidence.clear()  # reuse old NodeConfidence matrix
 
-        NodeConfidence = fill_node_confidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
+        NodeConfidence = fill_node_confidence(
+            NumNodes,
+            StartAll,
+            GapInit,
+            GapExt,
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            Starts,
+            Stops,
+            ChangesPosition,
+            Subfams,
+            SubfamSeqs,
+            ChromSeqs,
+            SubfamCounts,
+            SubMatrix,
+        )
 
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
-        PathGraph.clear() #reuse old PathGraph
-        PathGraph = fill_path_graph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
-                                  ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
+        PathGraph.clear()  # reuse old PathGraph
+        PathGraph = fill_path_graph(
+            NumNodes,
+            NonEmptyColumns,
+            Changes,
+            ChangesPosition,
+            ConsensusMatrixCollapse,
+            StrandMatrixCollapse,
+            NodeConfidence,
+            SubfamsCollapseIndex,
+        )
 
         # test to see if there are nodes in the graph that have more that one incoming or outgoing edge,
         # if so - keep looping, if not - break out of the loop
@@ -557,7 +472,7 @@ if __name__ == "__main__":
         while j < NumNodes:
             i: int = 0
             while i < j - 1:
-                if (PathGraph[i * NumNodes + j] == 1):
+                if PathGraph[i * NumNodes + j] == 1:
                     test = True
                 i += 1
             j += 1
@@ -565,32 +480,75 @@ if __name__ == "__main__":
         if not test:
             break
 
-        cols = extract_nodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
+        cols = extract_nodes(
+            cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph
+        )
 
         # run DP calculations again with nodes corresponding to inserted elements removed
         # ignores removed nodes because they are no longer in NonEmptyColumns
-        (ProbMatrixLastColumn, OriginMatrix, SameSubfamChangeMatrix) = fill_probability_matrix(SameProbSkip, SameProbLog,
-                                                                                   ChangeProbLog, ChangeProbSkip,
-                                                                                   NonEmptyColumns,
-                                                                                               collapsed_matrices,)
+        (
+            ProbMatrixLastColumn,
+            OriginMatrix,
+            SameSubfamChangeMatrix,
+        ) = fill_probability_matrix(
+            SameProbSkip,
+            SameProbLog,
+            ChangeProbLog,
+            ChangeProbSkip,
+            NonEmptyColumns,
+            collapsed_matrices,
+        )
 
         Changes.clear()
         ChangesPosition.clear()
 
-        (ID, ChangesPosition, Changes) = get_path(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                                 NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
-                                                 OriginMatrix, SameSubfamChangeMatrix)
+        (ID, ChangesPosition, Changes) = get_path(
+            ID,
+            NonEmptyColumns,
+            IDs,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            SubfamsCollapse,
+            ProbMatrixLastColumn,
+            ActiveCellsCollapse,
+            OriginMatrix,
+            SameSubfamChangeMatrix,
+        )
 
-
-    #prints results
+    # prints results
     if printMatrixPos:
-        PrintResults(ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+        print_results(
+            ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+        )
     elif printSeqPos:
-        PrintResultsSequence(StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+        print_results_sequence(
+            StartAll, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+        )
     else:
-        PrintResultsChrom(StartAll, ChromStart, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs)
+        print_results_chrom(
+            StartAll,
+            ChromStart,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            IDs,
+        )
 
     if outfile_viz:
-        PrintResultsViz(StartAll, outfile_viz, outfile_conf, Chrom, ChromStart, Subfams, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, ConsensusLengths,
-                        StrandMatrixCollapse, ConsensusMatrixCollapse, SubfamsCollapseIndex, NodeConfidenceOrig)
-
+        print_results_soda(
+            StartAll,
+            outfile_viz,
+            outfile_conf,
+            Chrom,
+            ChromStart,
+            Subfams,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            ConsensusLengths,
+            StrandMatrixCollapse,
+            ConsensusMatrixCollapse,
+            SubfamsCollapseIndex,
+            NodeConfidenceOrig,
+        )
