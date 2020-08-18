@@ -6,15 +6,16 @@ from typing import Dict, List, Tuple
 import os
 import json
 
-from polyA.get_path import get_path
-from polyA.calculate_score import calculate_score
 from polyA.collapse_matrices import collapse_matrices
-from polyA.confidence_cm import confidence_cm
+from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
 from polyA.fill_confidence_matrix import fill_confidence_matrix
 from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
+from polyA.fill_node_confidence import fill_node_confidence
+from polyA.fill_path_graph import fill_path_graph
 from polyA.fill_probability_matrix import fill_probability_matrix
 from polyA.fill_support_matrix import fill_support_matrix
+from polyA.get_path import get_path
 from polyA.load_alignments import load_alignments
 from polyA.pad_sequences import pad_sequences
 from polyA.printers import print_matrix_support
@@ -24,359 +25,6 @@ from polyA.printers import print_matrix_support
 # -----------------------------------------------------------------------------------#
 #			FUNCTIONS													   			#
 # -----------------------------------------------------------------------------------#
-
-
-def PrintChanges(columns: List[int], changes: List[str], changes_position: List[int]) -> None:
-    """
-    just for debugging
-    prints out the changes positions and subfams in the matrices, use for each iteration of the node extraction
-    """
-    i: int = 0
-    while i < len(changes):
-        stdout.write(str(columns[changes_position[i]]))
-        stdout.write("\t")
-        stdout.write(str(IDs[columns[changes_position[i]]]))
-        stdout.write("\t")
-        stdout.write(f"{changes[i]}\n")
-        i = i + 1
-
-
-def PrintNodeConfidence(nodes: int, changes: List[str], subfams_collapse: Dict[str, int],
-                        node_confidence: Dict[Tuple[str, int], float]) -> None:
-    """
-    used for debugging
-    prints out matrix that holds node confidence
-    """
-    for i in range(nodes):
-        stdout.write(f"{changes[i]} ")
-    stdout.write("\n")
-
-    for subfam in subfams_collapse:
-        stdout.write(f"{subfam} ")
-        for j in range(nodes):
-            if (subfam, j) in node_confidence:
-                stdout.write(f"{node_confidence[subfam, j]} ")
-            else:
-                stdout.write(f"-inf ")
-        stdout.write("\n")
-
-
-def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, lamb: float, infilee: str, columns: List[int],
-                       starts: List[int], stops: List[int], changes_position: List[int], subfams: List[str], subfam_seqs: List[str], chrom_seqs: List[str],
-                       subfam_countss: Dict[str, float], sub_matrix: Dict[str, int]) -> Dict[Tuple[str, int], float]:
-    """
-    Using changes_position indentified boundaries for all nodes, and computes confidence
-    values for each node. First fills matrix with node alignment scores, then reuses matrix
-    for confidence scores.
-
-    input:
-    all input needed for CalcScore() and confidence_cm()
-    nodes: number of nodes
-    changes_pos: node boundaries
-    columns: all non empty columns in matrices
-
-    output:
-    node_confidence: Hash implementation of sparse 2D matrix that holds confidence values
-    for whole nodes. Used during stitching process. Tuple[str, int] is key that maps a subfamily
-    and node number to a confidence score.
-
-    >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    >>> strts = [0, 0, 0]
-    >>> stps = [10, 10, 10]
-    >>> change_pos = [0, 3, 7, 10]
-    >>> names = ["skip", "n1", "n2"]
-    >>> s_seqs = ['', 'AAA-TTTTT-', 'TTTTTTTTTT']
-    >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
-    >>> counts = {"skip": .33, "n1": .33, "n2": .33}
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> node_conf = FillNodeConfidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat)
-    >>> node_conf
-    {('skip', 0): 0.0, ('n1', 0): 0.3751243838973974, ('n2', 0): 0.6248756161026026, ('skip', 1): 0.0, ('n1', 1): 0.09874227070127324, ('n2', 1): 0.9012577292987267, ('skip', 2): 0.0, ('n1', 2): 0.09874227070127327, ('n2', 2): 0.9012577292987267}
-    """
-
-    node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
-    node_confidence: Dict[Tuple[str, int], float] = {}
-
-    #holds all chrom seqs and the offset needed to get to the correct position in the chrom
-    #seq - remember gaps in chrom seq are skipped over for matrix position
-    chrom_seq_offset: Dict[int, int] = {}
-
-    #first node
-    begin_node0: int = columns[changes_position[0]]
-
-    for subfam_index0 in range(1, len(subfams)):
-
-        count: int = 0
-        for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
-            if chrom_seqs[subfam_index0][i] == '-':
-                count += 1
-
-        chrom_seq_offset[subfam_index0] = count
-
-        end_node0: int = columns[changes_position[1]] + count
-
-        subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
-        chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
-
-        align_score0: float = 0.0
-        #if whole alignment is padding - don't run CalcScore
-        if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
-            align_score0 = calculate_score(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
-        node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
-
-    #middle nodes
-    for node_index in range(1, nodes-1):
-
-        for subfam_index in range(1, len(subfams)):
-
-            begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
-
-            count: int = 0
-            for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
-                if chrom_seqs[subfam_index][i] == '-':
-                    count += 1
-
-            chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
-
-            end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
-
-            lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
-            lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
-            subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
-            chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
-
-            align_score: float = 0.0
-            # if whole alignment is padding - don't run CalcScore
-            if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
-                align_score = calculate_score(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
-
-            node_confidence_temp[subfam_index * nodes + node_index] = align_score
-
-
-    # does last node
-    for subfam_index2 in range(1, len(subfams)):
-        begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
-
-        count: int = 0
-        for i in range(begin_node2,
-                       begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
-            if chrom_seqs[subfam_index2][i] == '-':
-                count += 1
-
-        chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
-
-        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
-
-        lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
-        lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
-
-        subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
-        chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
-
-        align_score2: float = 0.0
-        # if whole alignment is padding - don't run CalcScore
-        if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
-            align_score2 = calculate_score(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
-                                                sub_matrix)
-
-        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
-
-    # reuse same matrix and compute confidence scores for the nodes
-    for node_index4 in range(nodes):
-        temp: List[float] = []
-        for row_index in range(1, len(subfams)):
-            temp.append(node_confidence_temp[row_index * nodes + node_index4])
-
-        confidence_temp: List[float] = confidence_cm(lamb, infilee, temp, subfam_countss, subfams)
-
-        for row_index2 in range(len(confidence_temp)):
-            node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
-
-    # collapse node_confidence down same way supportmatrix is collapsed - all seqs of
-    # the same subfam are put in the same row
-    # not a sparse hash - holds the 0s
-    for node_index5 in range(nodes):
-        for row_index3 in range(len(subfams)):
-            if (subfams[row_index3], node_index5) in node_confidence:
-                node_confidence[subfams[row_index3], node_index5] += node_confidence_temp[
-                    row_index3 * nodes + node_index5]
-            else:
-                node_confidence[subfams[row_index3], node_index5] = node_confidence_temp[
-                    row_index3 * nodes + node_index5]
-
-    return node_confidence
-
-
-def PrintPathGraph(nodes: int, changes: List[str], path_graph: List[int]) -> None:
-    """
-    used for debugging
-    prints out the matrix that holds the path graph - 1 means there is an edge, 0 means no edge
-    """
-    stdout.write(" ")
-    for i in range(nodes):
-        stdout.write(f"{changes[i]} ")
-    stdout.write("\n")
-
-    for i in range(nodes):
-        for j in range(nodes):
-            stdout.write(f"{path_graph[i * nodes + j]}\t")
-        stdout.write(f"{changes[i]}\n")
-    stdout.write("\n")
-
-
-def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_position: List[int], consensus_matrix_collapse: Dict[Tuple[int, int], int],
-                  strand_matrix_collapse: Dict[Tuple[int, int], str], node_confidence: Dict[Tuple[str, int], float], subfams_collapse_index: Dict[str, int]) -> \
-        List[int]:
-    """
-    finds alternative paths through the nodes - used for stitching to find nested elements
-    and to stitch back together elements that have been inserted into.
-
-    Alternative edges only added when confidence of other node label is above a certain
-    threshold and when the alignments are relatively contiguous in the consensus sequence.
-
-    input:
-    nodes: number of nodes
-    columns: list with all non empty columns in matrices
-    changes: list of node boundaries
-    changes_position: list of subfams identified for each node
-    consensus_matrix_collapse: matrix holding alignment position in consensus/subfam seqs -
-    used to identify whether nodes are spacially close enough for an alternative edge
-    strand_matrix_collapse: matrix holding strand for alignments - nodes can only be connected
-    with alternative edge if on same strand
-    node_confidence: competing annoation confidence for nodes - nodes can only be connected
-    with alternative edge if subfam identified for sink node is a competing annotation in
-    source node and is above a certain confidence
-    subfams_collapse_index: maps subfam names to their row indices in collapsed matrices
-
-    output:
-    path_graph: Flat array reprepsentation of 2D matrix. Graph used during stitching. Maps nodes to all other nodes and holds
-    values for if there is an alternative edge between the nodes.
-
-    >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    >>> changess = ["s1", "s2", "s1"]
-    >>> changes_pos = [0, 3, 6, 10]
-    >>> con_mat_col = {(0, 0): 0, (0, 1): 1, (0, 2): 2, (0, 3): 3, (0, 6): 6, (0, 7): 7, (0, 8): 8, (0, 9): 9, (1, 3): 1, (1, 4): 2, (1, 5): 3, (1, 6): 4}
-    >>> strand_mat_col = {(0, 0): '+', (0, 1): '+', (0, 2): '+', (0, 3): '+', (0, 6): '+', (0, 7): '+', (0, 8): '+', (0, 9): '+', (1, 3): '-', (1, 4): '-', (1, 5): '-', (1, 6): '-'}
-    >>> node_conf = {('s1', 0): 0.9, ('s1', 1): 0.5, ('s1', 2): 0.9, ('s1', 0): 0.1, ('s2', 1): 0.5, ('s2', 2): 0.1}
-    >>> sub_col_ind = {'s1': 0, 's2': 1}
-    >>> FillPathGraph(3, non_cols, changess, changes_pos, con_mat_col, strand_mat_col, node_conf, sub_col_ind)
-    [0, 1, 1, 0, 0, 1, 0, 0, 0]
-    """
-
-    path_graph: List[int] = []
-
-    for i in range(nodes * nodes):
-        path_graph.append(0)
-
-    # filling beginning path graph with straight line through the nodes
-    for i in range(nodes - 1):
-        path_graph[i * nodes + i + 1] = 1
-
-    for sink_node_index in range(2, nodes):  # don't need to add edges between first 2 nodes because already there
-        sink_subfam: str = str(changes[sink_node_index])
-        sink_subfam_start: int = consensus_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
-        sink_strand: str = strand_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
-
-        if sink_subfam != "skip":  # don't want to add alternative edges to skip nodes
-            for source_node_index in range(sink_node_index - 1):
-                source_subfam: str = changes[source_node_index]
-                sourceConf: float = node_confidence[sink_subfam, source_node_index]  # sink subfam confidence in source node
-                sinkConf: float = node_confidence[source_subfam, sink_node_index]  # source subfam confidence in sink node
-                source_subfam_index = subfams_collapse_index[source_subfam]
-                source_col: int = columns[changes_position[source_node_index + 1] - 1]
-
-                if (source_subfam_index, source_col) in consensus_matrix_collapse:
-
-                    source_subfam_stop = consensus_matrix_collapse[source_subfam_index, source_col]
-                    source_strand = strand_matrix_collapse[source_subfam_index, source_col]
-
-                    # adds in edge if the subfam of the sink is at the source node and if it's
-                    # confidence >= 20%, and if the source is before the sink in the consensus sequence
-
-                    # FIXME - not sure what this confidence threshold should be
-                    if sourceConf >= 0.2 or sinkConf >= 0.2:
-                        if sink_strand == '+' and sink_strand == source_strand:
-                            # FIXME- not sure what this overlap should be .. just allowed 50 for now
-                            if source_subfam_stop <= sink_subfam_start + 50:
-                                path_graph[source_node_index * nodes + sink_node_index] = 1
-                        elif sink_strand == '-' and sink_strand == source_strand:
-                            if source_subfam_stop + 50 >= sink_subfam_start:
-                                path_graph[source_node_index * nodes + sink_node_index] = 1
-
-    return path_graph
-
-
-def ExtractNodes(num_col: int, nodes: int, columns: List[int], changes_position: List[int],
-                 path_graph: List[int]) -> int:
-    """
-    finds nodes that only have one (or less) incoming and one (or less) outgoing edge and adds
-    them to remove_starts and remove_stops so they can be extracted from the alignment - all columns
-    in removed nodes are removed from NonEmptyColumns (columns) so during next round of DP calculations,
-    those nodes are ignored and surrounding nodes can be stitched if necessary,
-
-    input:
-    num_col: number of columns in matrices
-    nodes: number of nodes in graph
-    columns: non empty columns in matrices
-    changes_position: node boundaries
-    path_graph: 2D array that represents edges in the graph
-
-    output:
-    updates columns (NonEmptyColumns)
-    updated_num_col: updated number of columns in matrices after nodes have been removed
-
-    >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    >>> change_pos = [0, 3, 7]
-    >>> path_graph = [0, 1, 1, 0, 0, 1, 0, 0, 0]
-    >>> ExtractNodes(10, 3, non_cols, change_pos, path_graph)
-    10
-    >>> non_cols
-    [0, 1, 2, 7, 8, 9]
-    """
-
-    remove_starts: List[int] = []
-    remove_stops: List[int] = []
-
-    updated_num_col: int = num_col
-
-    # boolean for which nodes will be removed
-    remove_nodes: List[bool] = [False for _ in range(nodes)]
-
-    # extracting nodes that only have one incoming and one outgoing edge
-    num_edges_in: List[int] = [0 for _ in range(nodes)]
-    num_edges_out: List[int] = [0 for _ in range(nodes)]
-
-    for row in range(nodes):
-        for col in range(nodes):
-            num_edges_in[col] += path_graph[row * nodes + col]
-            num_edges_out[row] += path_graph[row * nodes + col]
-
-    for node in range(nodes - 1):
-        if num_edges_in[node] <= 1 and num_edges_out[node] <= 1:
-            remove_starts.append(changes_position[node])
-            remove_stops.append(changes_position[node + 1])
-            remove_nodes[node] = True
-
-    # deals with last node, so when NumNodes-1 the last remove stop is the end of the matrix
-    if num_edges_in[nodes - 1] <= 1 and num_edges_out[nodes - 1] <= 1:
-        remove_starts.append(changes_position[nodes - 1])
-        remove_stops.append(len(columns) - 1)
-        remove_nodes[nodes - 1] = True
-
-    # when removing from the end, have to update num_cols because don't want the end of the matrix anymore
-    col_index: int = nodes - 1
-    while remove_nodes[col_index]:
-        updated_num_col = columns[changes_position[col_index] - 1]
-        col_index -= 1
-
-    # removing inserted elements from NonEmptyColumns so they can be ignored
-    total: int = 0
-    for i in range(len(remove_stops)):
-        del columns[remove_starts[i] - total:remove_stops[i] - total]
-        # 	helps with offset, when first part is spliced out need an offset to know where to splice out for second part
-        total += (remove_stops[i] - remove_starts[i])
-
-    return updated_num_col
 
 
 def PrintResults(changes_orig: List[str], changespos_orig: List[int], columns_orig: List[int], ids: List[int]) -> None:
@@ -891,14 +539,14 @@ if __name__ == "__main__":
 
         NodeConfidence.clear() #reuse old NodeConfidence matrix
 
-        NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
+        NodeConfidence = fill_node_confidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
 
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
         PathGraph.clear() #reuse old PathGraph
-        PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
+        PathGraph = fill_path_graph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
                                   ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
 
         # test to see if there are nodes in the graph that have more that one incoming or outgoing edge,
@@ -917,7 +565,7 @@ if __name__ == "__main__":
         if not test:
             break
 
-        cols = ExtractNodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
+        cols = extract_nodes(cols, NumNodes, NonEmptyColumns, ChangesPosition, PathGraph)
 
         # run DP calculations again with nodes corresponding to inserted elements removed
         # ignores removed nodes because they are no longer in NonEmptyColumns
