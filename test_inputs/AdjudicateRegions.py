@@ -7,6 +7,7 @@ import time
 import os
 import json
 import subprocess
+import tempfile
 
 from polyA.load_alignments import load_alignments
 
@@ -74,7 +75,7 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         i += 1
 
 
-def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int, float]:
+def FillUltraMatrix(ultra_out, chunk_size: int, start_all: int) -> Dict[int, float]:
     """
     Fills UltraMatrix by calculating score (according to ULTRA scoring) for every
     segment of size chunksize for all tandem repeats found in the target sequence.
@@ -92,15 +93,11 @@ def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int
     the surrounding chunk_size number of nucleotides for that particular
     tandem repeat region.
     """
-    # json keys to use: PositionScoreDelta, Start, Length
-    pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE)
-    out, err = pop.communicate()
-    ultra_out = json.loads(out)  # returns dict
-    ultra_repeats = ultra_out['Repeats']  # list of repeats
+    tandem_repeats = ultra_out['Repeats']  # list of repeats
     ultra_matrix: Dict[int, float] = {}
     # for each repeat, get overlapping windowed score
-    for i in range(len(ultra_repeats)):
-        rep = ultra_repeats[i]
+    for i in range(len(tandem_repeats)):
+        rep = tandem_repeats[i]
         start = rep['Start']
         length = rep['Length']
         end = start + length
@@ -137,6 +134,22 @@ def FillUltraMatrix(ultra_path: str, seq_file: str, chunk_size: int) -> Dict[int
             # ultra_matrix[j + start] = score
             # print(ultra_matrix[j + start])
     return ultra_matrix
+
+
+def EdgesTR(ultra_output) -> Tuple[int, int]:
+    tandem_repeats = ultra_output['Repeats']
+    if len(tandem_repeats) == 0:
+        return -1, -1
+    rep = tandem_repeats[0]
+    min_start: int = rep['Start']
+    max_stop: int = rep['Start'] + rep['Length']
+    for i in range(1, len(tandem_repeats)):
+        rep = tandem_repeats[i]
+        if rep['Start'] < min_start:
+            min_start = rep['Start']
+        if rep['Start'] + rep['Length'] > max_stop:
+            max_stop = rep['Start'] + rep['Length']
+    return min_start, max_stop
 
 
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
@@ -776,12 +789,12 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index]) # scores at that nuc pos
 
-        # if using ultra and there is a score at col_index in UltraMatrix, append to list, pass in true
+        # if using ultra and there is a score at col_index in UltraMatrix, append to list
         ultra = False
         if ultra:
             temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss)
         else:
-          temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
+            temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -1828,8 +1841,6 @@ if __name__ == "__main__":
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
     SkipAlignScore: float = 0.0
-    UltraPath = ""
-    SeqFile = ""
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -1838,6 +1849,15 @@ if __name__ == "__main__":
     infile_prior_counts: str = ""
     outfile_viz: str = ""
     outfile_heatmap: str = ""
+
+    # running ultra
+    ultra_path: str = ""
+    seq_file: str = "" # .ta file
+    start_pos: int = 0
+    end_pos: int = 0
+    chrom_name: str = ""
+    # using ultra
+    ultra_output_path: str = ""  # json file
 
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
@@ -1854,8 +1874,12 @@ if __name__ == "__main__":
         --segmentsize (must be odd) [31]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
-        --ultraPath PathToUltra
-        --ultraFile UltraInputFile
+        --ultraPath [specify path to ULTRA]
+        --seqFile [specify path to genome file]
+        --startPos [start of sequence region]
+        --endPos [end of sequence region]
+        --chromName [name of chromosome] (must match genome file name)
+        --ultraOut [specify path to ULTRA output file]
     
     OPTIONS
         --help - display help message
@@ -1878,6 +1902,10 @@ if __name__ == "__main__":
         "heatmap=",
         "ultraPath=",
         "seqFile=",
+        "startPos=",
+        "endPos=",
+        "chromName=",
+        "ultraOut=",
 
         "help",
         "matrixpos",
@@ -1894,8 +1922,12 @@ if __name__ == "__main__":
     infile_prior_counts = str(opts["--priorCounts"]) if "--priorCounts" in opts else infile_prior_counts
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
-    UltraPath = str(opts["--ultraPath"]) if "--ultraPath" in opts else UltraPath # gets path to exe
-    SeqFile = str(opts["--seqFile"]) if "--seqFile" in opts else SeqFile
+    ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path # gets path to exe
+    seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
+    start_pos = str(opts["--startPos"]) if "--startPos" in opts else start_pos
+    end_pos = str(opts["--endPos"]) if "--endPos" in opts else end_pos
+    chrom_name = str(opts["--chromName"]) if "--chromName" in opts else chrom_name
+    ultra_output_path = str(opts["--ultraOut"]) if "--ultraOut" in opts else ultra_output_path
 
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
@@ -1928,14 +1960,6 @@ if __name__ == "__main__":
         lambda_list = re.split(r"\s+", esl_output_list[1])
         Lamb = float(lambda_list[2])
 
-    Ultra: bool = False
-    if UltraPath and SeqFile:
-        Ultra = True
-        # hard coded files for testing
-        SeqFile = '/Users/audrey/tar.txt'
-        # UltraPath = "/Users/audrey/ULTRA/ultra"
-        UltraMatrix = FillUltraMatrix(UltraPath, SeqFile, ChunkSize)
-
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
     SubMatrix: Dict[str, int] = {}
@@ -1953,6 +1977,34 @@ if __name__ == "__main__":
             SubMatrix[chars[count] + chars[i]] = int(subScores[i])
         count += 1
     SubMatrix['..'] = 0
+
+    Ultra: bool = False
+    # running esl and ultra
+    if ultra_path and EslPath and seq_file and start_pos and end_pos and chrom_name:
+        Ultra = True
+        # pre-processing
+        subprocess.Popen([EslPath, 'esl-sfetch', '--index', seq_file]).wait()
+        # run esl
+        small_output = tempfile.TemporaryFile()
+        pop = subprocess.Popen([EslPath, 'esl-sfetch', '-c',
+                               start_pos + '..' + end_pos, seq_file],
+                               stdout=small_output, universal_newlines=True).wait()
+        small_output.flush()
+        # run ULTRA
+        pop = subprocess.Popen([ultra_path, '-ss', small_output], stdout=subprocess.PIPE,
+                               universal_newlines=True)
+        ultra_out, err = pop.communicate() # ultra_out is string
+        ultra_output = json.loads(ultra_out)
+        small_output.close()
+    elif ultra_output_path:  # works!
+        Ultra = True
+        # my path: /Users/audrey/tr.json
+        with open(ultra_output_path) as f:
+            ultra_output = json.load(f)
+
+    # Check if any repeats found
+    if Ultra and len(ultra_output['Repeats']) == 0:
+        Ultra = False
 
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
@@ -2089,14 +2141,31 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
+    # Find edges of TR's
+    if Ultra:
+        tr_start, tr_end = EdgesTR(ultra_output)
+        Starts.append(tr_start)
+        Stops.append(tr_end)
+
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
+    exit()
+
+    # dictionary value should not be raw target seq but use start all value
+    if Ultra:
+        UltraMatrix = FillUltraMatrix(ultra_output, ChunkSize, StartAll)
+        print(UltraMatrix)
+        exit()
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
-    ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
+    if Ultra:
+        ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
+                                            AlignMatrix, UltraMatrix)
+    else:
+        ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
                                             AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
