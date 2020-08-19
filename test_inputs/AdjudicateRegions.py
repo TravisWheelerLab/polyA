@@ -15,6 +15,7 @@ from polyA.fill_path_graph import fill_path_graph
 from polyA.fill_probability_matrix import fill_probability_matrix
 from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
+from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
 from polyA.pad_sequences import pad_sequences
 from polyA.printers import (
@@ -135,13 +136,8 @@ if __name__ == "__main__":
 
     # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
     if not Lamb:
-        esl_stream = os.popen(
-            EslPath + "esl_scorematrix --dna 25p41g_edited.matrix"
-        )
-        esl_output = esl_stream.read()
-        esl_output_list = re.split(r"\n+", esl_output)
-        lambda_list = re.split(r"\s+", esl_output_list[1])
-        Lamb = float(lambda_list[2])
+        provider = EaselLambdaProvider(EslPath)
+        Lamb = provider()
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
