@@ -75,14 +75,14 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         i += 1
 
 
-def FillRepeatMatrix(ultra_output, chunk_size: int, start_all: int) -> Dict[int, float]:
+def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int) -> Dict[int, float]:
     """
     Fills RepeatMatrix by calculating score (according to ULTRA scoring) for every
     segment of size chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
     input:
-    ultra_output:
+    tandem_repeats: list of tandem repeats from ULTRA output
     chunk_size: size of nucleotide chunks that are scored
     start_all: minimum starting nucleotide position
 
@@ -93,10 +93,11 @@ def FillRepeatMatrix(ultra_output, chunk_size: int, start_all: int) -> Dict[int,
     the surrounding chunk_size number of nucleotides for that particular
     tandem repeat region.
     """
-    tandem_repeats = ultra_output['Repeats']  # list of repeats
+
     repeat_matrix: Dict[int, float] = {}
     # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
+        # get repeat info
         rep = tandem_repeats[i]
         start = rep['Start']
         length = rep['Length']
@@ -111,13 +112,10 @@ def FillRepeatMatrix(ultra_output, chunk_size: int, start_all: int) -> Dict[int,
             score += float(pos_scores[j])
             j += 1
         window_size = j
-        # scaled score
+        # scale score
         repeat_matrix[start - start_all] = score * chunk_size / window_size
-        # raw score
-        # ultra_matrix[start] = score
-        # print(ultra_matrix[start])
 
-        # calc other chunks
+        # calc score for the rest of the chunks
         for j in range(1, length):
             # check to remove last score in window
             if j - k - 1 >= 0:
@@ -127,21 +125,28 @@ def FillRepeatMatrix(ultra_output, chunk_size: int, start_all: int) -> Dict[int,
             if j + k < len(pos_scores):
                 score += float(pos_scores[j + k])
                 window_size += 1
-            # scaled score
+            # scale score
             repeat_matrix[j + start - start_all] = score * chunk_size / window_size
-            # raw score
-            # ultra_matrix[j + start] = score
-            # print(ultra_matrix[j + start])
     return repeat_matrix
 
 
-def EdgesTR(ultra_output) -> Tuple[int, int]:
-    tandem_repeats = ultra_output['Repeats']
-    if len(tandem_repeats) == 0:
-        return -1, -1
+def EdgesTR(tandem_repeats) -> Tuple[int, int]:
+    """
+    Find and return the min start and max stop positions for the entire
+    region included in the tandem repeats
+
+    input:
+    tandem_repeats: list of tandem repeats from ULTRA output
+
+    output:
+    minimum and maximum start and stop positions of tandem repeats regions
+    on the target sequence
+    """
+    # get first repeats
     rep = tandem_repeats[0]
     min_start: int = rep['Start']
     max_stop: int = rep['Start'] + rep['Length']
+    # search for min start and max stop positions
     for i in range(1, len(tandem_repeats)):
         rep = tandem_repeats[i]
         if rep['Start'] < min_start:
@@ -702,14 +707,25 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
                  subfams: List[str]) -> List[float]:
     """
+    Computes confidence values for competing annotations using alignment and tandem
+    repeat scores. Loops through the array once to find sum of 2^every_hit_score in
+    region, then loops back through to calculate confidence. Converts the alignment
+    score to account for lambda before summing.
 
-    :param lambdaa:
-    :param infile:
-    :param region:
-    :param subfam_counts:
-    :param subfams:
-    :return:
+    If command line option for subfam_counts, this is included in confidence math.
+
+    input:
+    lambdaa: lambda value for input sub_matrix (scaling factor)
+    infile: test if subfam_counts infile included at command line
+    region: list of scores for competing annotations
+    subfam_counts: dict that maps subfam name to it's count info
+    subfams: list of subfam names
+
+    output:
+    confidence_list: list of confidence values for competing annotations, each input alignment
+    and tandem repeat score will have one output confidence score
     """
+
     confidence_list: List[float] = []
     score_total: int = 0
 
@@ -722,7 +738,7 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
         confidence_list.append(tr_score)
         score_total += tr_score
 
-    #don't include subfam counts (default)
+    # don't include subfam counts (default)
     else:
         for index in range(len(region) - 1):
             converted_score = 2**(region[index] * lambdaa)
@@ -1879,7 +1895,7 @@ if __name__ == "__main__":
         --startPos [start of sequence region]
         --endPos [end of sequence region]
         --chromName [name of chromosome] (must match genome file name)
-        --ultraOut [specify path to ULTRA output file]
+        --ultraOutput [specify path to ULTRA output file]
     
     OPTIONS
         --help - display help message
@@ -1906,7 +1922,7 @@ if __name__ == "__main__":
         "startPos=",
         "endPos=",
         "chromName=",
-        "ultraOut=",
+        "ultraOutput=",
 
         "help",
         "matrixpos",
@@ -1930,7 +1946,7 @@ if __name__ == "__main__":
     start_pos = str(opts["--startPos"]) if "--startPos" in opts else start_pos
     end_pos = str(opts["--endPos"]) if "--endPos" in opts else end_pos
     chrom_name = str(opts["--chromName"]) if "--chromName" in opts else chrom_name
-    ultra_output_path = str(opts["--ultraOut"]) if "--ultraOut" in opts else ultra_output_path
+    ultra_output_path = str(opts["--ultraOutput"]) if "--ultraOutput" in opts else ultra_output_path
 
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
@@ -1981,44 +1997,44 @@ if __name__ == "__main__":
         count += 1
     SubMatrix['..'] = 0
 
-    Ultra: bool = False
+    TR: bool = False
     # running esl and ultra
     if ultra_path and esl_sfetch_path and seq_file and start_pos and end_pos and chrom_name:
-        Ultra = True
+        TR = True
         # pre-processing
         subprocess.call([esl_sfetch_path, '--index', seq_file])
         # get smaller region
         file, small_region = tempfile.mkstemp()
-        print(small_region)
         subprocess.call([esl_sfetch_path, '-o', small_region, '-c',
                          start_pos + '..' + end_pos, seq_file, chrom_name])
         # run ULTRA
         pop = subprocess.Popen([ultra_path, '-ss', small_region], stdout=subprocess.PIPE,
                                universal_newlines=True)
         ultra_out, err = pop.communicate() # ultra_out is string
-        print(ultra_out)
         ultra_output = json.loads(ultra_out)
         # subprocess.call(['rm', 'small_region'])  # no file found?
         os.remove(small_region)
     elif ultra_output_path:  # works!
-        Ultra = True
+        TR = True
         # my path: /Users/audrey/tr.json
         with open(ultra_output_path) as f:
             ultra_output = json.load(f)
 
-    # Check if any repeats found
-    if Ultra and len(ultra_output['Repeats']) == 0:
-        Ultra = False
+    # Get Tandem Repeats from ULTRA output
+    if TR:
+        TandemRepeats = ultra_output['Repeats']
+        if len(TandemRepeats) == 0:
+            TR = False
 
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
     prob_skip = 0.4  # about 60% of genome is TE derived
-    prob_tr = 0.06  # ~6% of genome exepcted to be tandem repeat
+    prob_tr = 0.06  # ~6% of genome exepected to be tandem repeat
     if infile_prior_counts:
         SubfamCounts["skip"] = prob_skip
-        if Ultra:
+        if TR:
             SubfamCounts["tandem_repeat"] = prob_tr
             prob_skip += prob_tr
 
@@ -2146,15 +2162,15 @@ if __name__ == "__main__":
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
     # Find edges of TR's
-    if Ultra:
-        tr_start, tr_end = EdgesTR(ultra_output)
+    if TR:
+        tr_start, tr_end = EdgesTR(TandemRepeats)
         Starts.append(tr_start)
         Stops.append(tr_end)
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
-    if Ultra:
-        RepeatMatrix = FillRepeatMatrix(ultra_output, ChunkSize, StartAll)
+    if TR:
+        RepeatMatrix = FillRepeatMatrix(TandemRepeats, ChunkSize, StartAll)
         print(RepeatMatrix)
         exit()
 
