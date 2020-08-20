@@ -75,16 +75,22 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         i += 1
 
 
-def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int) -> Dict[int, float]:
+def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int, row_num: int, columns: List[int],
+                     active_cells: Dict[int, List[int]]) -> Dict[int, float]:
     """
     Fills RepeatMatrix by calculating score (according to ULTRA scoring) for every
     segment of size chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
+    At same time, updates NonEmptyColumns and ActiveCells to include tandem repeat scores.
+
     input:
     tandem_repeats: list of tandem repeats from ULTRA output
     chunk_size: size of nucleotide chunks that are scored
     start_all: minimum starting nucleotide position
+    row_num: number of rows in matrices
+    columns: all columns that are not empty from alignment scores
+    active_cells: dictionary that maps column number to a list of active rows
 
     output:
     repeat_matrix: Hash implementation of sparse 2D matrix. Key is int that
@@ -99,7 +105,7 @@ def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int) -> Dict[in
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start = rep['Start']
+        col_index = rep['Start'] - start_all
         length = rep['Length']
         pos_scores = rep['PositionScoreDelta'].split(":")
 
@@ -113,8 +119,13 @@ def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int) -> Dict[in
             j += 1
         window_size = j
         # scale score
-        repeat_matrix[start - start_all] = score * chunk_size / window_size
-
+        repeat_matrix[col_index] = score * chunk_size / window_size
+        # add to non empty cols and active cells
+        columns.append(col_index) if col_index not in columns else columns
+        if col_index in active_cells:
+            active_cells[col_index].append(row_num)
+        else:
+            active_cells[col_index] = [0, row_num]
         # calc score for the rest of the chunks
         for j in range(1, length):
             # check to remove last score in window
@@ -126,7 +137,13 @@ def FillRepeatMatrix(tandem_repeats, chunk_size: int, start_all: int) -> Dict[in
                 score += float(pos_scores[j + k])
                 window_size += 1
             # scale score
-            repeat_matrix[j + start - start_all] = score * chunk_size / window_size
+            repeat_matrix[col_index + j] = score * chunk_size / window_size
+            # add to non empty cols and active cells
+            columns.append(col_index + j) if col_index + j not in columns else columns
+            if col_index + j in active_cells:
+                active_cells[col_index + j].append(row_num)
+            else:
+                active_cells[col_index + j] = [0, row_num]
     return repeat_matrix
 
 
@@ -142,6 +159,7 @@ def EdgesTR(tandem_repeats) -> Tuple[int, int]:
     minimum and maximum start and stop positions of tandem repeats regions
     on the target sequence
     """
+
     # get first repeats
     rep = tandem_repeats[0]
     min_start: int = rep['Start']
@@ -567,7 +585,7 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     active_cells: dictionary that maps column number in matrix, so a list of rows that are
     active in that column, allows us to avoid looping through unecessary rows
     consensus_matrix: Hash implementation of sparse 2D matrix used along with DP matrices. Key is
-    tuple[int, int] that maps row and column to value help in that cell of matrix. Each cell
+    tuple[int, int] that maps row and column to value held in that cell of matrix. Each cell
     holds the alignment position in the consensus subfamily sequence.
 
     >>> subs = ["", ".AA", "TT-"]
@@ -815,6 +833,12 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
     return confidence_matrix
+
+
+def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
+                         subfamss: List[str], active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float],
+                           repeat_matrix: Dict[int, float]) -> Dict[Tuple[int, int], float]:
+    return NULL
 
 
 def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
@@ -2161,7 +2185,6 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    # Find edges of TR's
     if TR:
         tr_start, tr_end = EdgesTR(TandemRepeats)
         Starts.append(tr_start)
@@ -2169,18 +2192,23 @@ if __name__ == "__main__":
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
-    if TR:
-        RepeatMatrix = FillRepeatMatrix(TandemRepeats, ChunkSize, StartAll)
-        print(RepeatMatrix)
-        exit()
-
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
 
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
-    ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams, ActiveCells,
-                                            AlignMatrix)
+    if TR:
+        rows += 1
+        Subfams.append("Tandem Repeat")
+        # update consensus matrix - ConsensusMatrix[rows, col_index] = consensus_pos
+        RepeatMatrix = FillRepeatMatrix(TandemRepeats, ChunkSize, StartAll, rows,
+                                        NonEmptyColumns, ActiveCells)
+        exit()
+        ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
+                                                  ActiveCells, AlignMatrix, RepeatMatrix)
+    else:
+        ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
+                                                ActiveCells, AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
