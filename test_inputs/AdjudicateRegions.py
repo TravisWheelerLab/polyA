@@ -75,110 +75,6 @@ def PrintMatrixHash(num_col: int, num_row: int, subfams: List[str],
         i += 1
 
 
-def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, columns: List[int],
-                     active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float],
-                     skip_align_score: float):
-    """
-    Fills RepeatMatrix by calculating score (according to ULTRA scoring) for every
-    segment of size chunksize for all tandem repeats found in the target sequence.
-    Scores are of the surrounding chunksize nucleotides in the sequence.
-
-    At same time, updates ALignMatrix, NonEmptyColumns and ActiveCells to include tandem repeat scores.
-
-    input:
-    tandem_repeats: list of tandem repeats from ULTRA output
-    chunk_size: size of nucleotide chunks that are scored
-    start_all: minimum starting nucleotide position
-    row_num: number of rows in matrices
-    columns: all columns that are not empty from alignment scores
-    active_cells: dictionary that maps column number to a list of active rows
-    align_matrix
-
-    output:
-    repeat_matrix: Hash implementation of sparse 2D matrix. Key is int that
-    maps col to the value held in that cell of matrix. Cols are nucleotide
-    positions in the target sequence. Each cell in matrix is the score of
-    the surrounding chunk_size number of nucleotides for that particular
-    tandem repeat region.
-    """
-
-    # for each tandem repeat, get overlapping windowed score
-    for i in range(len(tandem_repeats)):
-        # get repeat info
-        rep = tandem_repeats[i]
-        col_index = rep['Start'] - start_all
-        length = rep['Length']
-        pos_scores = rep['PositionScoreDelta'].split(":")
-
-        # calc score for first chunk
-        score: float = 0
-        j = 0
-        k = int((ChunkSize - 1) / 2)
-        # get 0 to 15
-        while j <= k and j < length:
-            score += float(pos_scores[j])
-            j += 1
-        window_size = j
-        # scale score
-        align_matrix[row_num, col_index] = score * chunk_size / window_size
-        # update non empty cols and active cells
-        if col_index not in columns:
-            columns.append(col_index)
-            align_matrix[0, col_index] = float(skip_align_score)
-        if col_index in active_cells:
-            active_cells[col_index].append(row_num)
-        else:
-            active_cells[col_index] = [0, row_num]
-
-        # calc score for the rest of the chunks
-        for j in range(1, length):
-            # check to remove last score in window
-            if j - k - 1 >= 0:
-                score -= float(pos_scores[j - k - 1])
-                window_size -= 1
-            # check to add new score in window
-            if j + k < len(pos_scores):
-                score += float(pos_scores[j + k])
-                window_size += 1
-            # scale score
-            align_matrix[row_num, col_index + j] = score * chunk_size / window_size
-            # add to non empty cols and active cells
-            if col_index + j not in columns:
-                columns.append(col_index + j)
-                align_matrix[0, col_index + j] = float(skip_align_score)
-            if col_index + j in active_cells:
-                active_cells[col_index + j].append(row_num)
-            else:
-                active_cells[col_index + j] = [0, row_num]
-
-
-def EdgesTR(tandem_repeats) -> Tuple[int, int]:
-    """
-    Find and return the min start and max stop positions for the entire
-    region included in the tandem repeats
-
-    input:
-    tandem_repeats: list of tandem repeats from ULTRA output
-
-    output:
-    minimum and maximum start and stop positions of tandem repeats regions
-    on the target sequence
-    """
-
-    # get first repeats
-    rep = tandem_repeats[0]
-    min_start: int = rep['Start']
-    max_stop: int = rep['Start'] + rep['Length']
-    # search for min start and max stop positions
-    for i in range(1, len(tandem_repeats)):
-        rep = tandem_repeats[i]
-        if rep['Start'] < min_start:
-            min_start = rep['Start']
-        if rep['Start'] + rep['Length'] > max_stop:
-            max_stop = rep['Start'] + rep['Length']
-    return min_start, max_stop
-
-
 def Edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     """
     Find and return the min start and max stop positions for the entire region
@@ -383,7 +279,6 @@ def FillAlignMatrix(edge_start: int, chunk_size: int, gap_ext: int, gap_init: in
     num_cols: int = 0
     half_chunk: int = int((chunk_size - 1) / 2)
     align_matrix: Dict[Tuple[int, int], float] = {}
-
     # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
         subfam_seq: str = subfams[i]
@@ -669,6 +564,83 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     return (list(columns), active_cells, consensus_matrix)
 
 
+def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, columns: List[int],
+                     active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float],
+                     skip_align_score: float):
+    """
+    Calculates score (according to ULTRA scoring) for every segment of size
+    chunksize for all tandem repeats found in the target sequence.
+    Scores are of the surrounding chunksize nucleotides in the sequence.
+
+    At same time, updates ALignMatrix, NonEmptyColumns and ActiveCells to include tandem repeat scores.
+
+    input:
+    tandem_repeats: list of tandem repeats from ULTRA output
+    chunk_size: size of nucleotide chunks that are scored
+    start_all: minimum starting nucleotide position
+    row_num: number of rows in matrices
+    columns: all columns that are not empty from alignment scores
+    active_cells: dictionary that maps column number to a list of active rows
+    align_matrix
+    skip_align_score: alignment score to give the skip state (default = 0)
+
+    output:
+    repeat_matrix: Hash implementation of sparse 2D matrix. Key is int that
+    maps col to the value held in that cell of matrix. Cols are nucleotide
+    positions in the target sequence. Each cell in matrix is the score of
+    the surrounding chunk_size number of nucleotides for that particular
+    tandem repeat region.
+    """
+    # for each tandem repeat, get overlapping windowed score
+    for i in range(len(tandem_repeats)):
+        # get repeat info
+        rep = tandem_repeats[i]
+        col_index = rep['Start'] - start_all
+        length = rep['Length']
+        pos_scores = rep['PositionScoreDelta'].split(":")
+
+        # calc score for first chunk
+        score: float = 0
+        j = 0
+        k = int((ChunkSize - 1) / 2)
+        # get 0 to 15
+        while j <= k and j < length:
+            score += float(pos_scores[j])
+            j += 1
+        window_size = j
+        # scale score
+        align_matrix[i + row_num, col_index] = score * chunk_size / window_size
+        # update non empty cols and active cells
+        if col_index not in columns:
+            columns.append(col_index)
+            align_matrix[0, col_index] = float(skip_align_score)
+        if col_index in active_cells:
+            active_cells[col_index].append(i + row_num)
+        else:
+            active_cells[col_index] = [0, i + row_num]
+
+        # calc score for the rest of the chunks
+        for j in range(1, length):
+            # check to remove last score in window
+            if j - k - 1 >= 0:
+                score -= float(pos_scores[j - k - 1])
+                window_size -= 1
+            # check to add new score in window
+            if j + k < len(pos_scores):
+                score += float(pos_scores[j + k])
+                window_size += 1
+            # scale score
+            align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
+            # add to non empty cols and active cells
+            if col_index + j not in columns:
+                columns.append(col_index + j)
+                align_matrix[0, col_index + j] = float(skip_align_score)
+            if col_index + j in active_cells:
+                active_cells[col_index + j].append(i + row_num)
+            else:
+                active_cells[col_index + j] = [0, i + row_num]
+
+
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
                  subfams: List[str]) -> List[float]:
     """
@@ -836,33 +808,38 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
 
 
 def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
-                           subfamss: List[str], row_num: int, active_cells: Dict[int, List[int]],
+                           subfamss: List[str], tr_row_index_start: int, active_cells: Dict[int, List[int]],
                            align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
     """
+    Fills confidence matrix from alignment matrix including TR scores. Each column in the alignment matrix is a group of competing
+    annotations that are input into ConfidenceCM or ConfidenceTR.
+    The output confidence values are used to populate confidence_matrix.
 
-    :param lamb:
-    :param infilee:
-    :param columns:
-    :param subfam_countss:
-    :param subfamss:
-    :param active_cells:
-    :param align_matrix:
-    :param repeat_matrix:
-    :return:
+    input:
+    everything needed for ConfidenceCM/ConfidenceTR
+    columns: array that holds all non empty columns in align matrix
+    active_cells: maps col numbers to all active rows in that col
+    align_matrix: alignment matrix - used to calculate confidence
+
+    output:
+    confidence_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
+    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
+    subfamilies in the input alignment file or tandem repeats, cols are nucleotide positions.
+    Each cell in matrix is the confidence score calculated from all the scores in a
+    column of the AlignHash
     """
+
     confidence_matrix: Dict[Tuple[int, int], float] = {}
 
     for i in range(len(columns)):
-
         col_index: int = columns[i]
         temp_region: List[float] = []
 
         for row_index in active_cells[col_index]:
-            # last score won't always be TR
-            # if row index is the last row, then TR score
             temp_region.append(align_matrix[row_index, col_index])
 
-        if row_index == row_num:  # last score is a TR
+        if row_index >= tr_row_index_start:
+            # a TR score is found for this col
             temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss)
         else:
             temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
@@ -873,8 +850,8 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     return confidence_matrix
 
 
-def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int], confidence_matrix: Dict[Tuple[int, int], float]) -> \
-Dict[Tuple[int, int], float]:
+def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int],
+                      confidence_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
     """
     Fills support_matrix using values in confidence_matrix. Average confidence values
     for surrounding chunk_size confidence values - normalized by dividing by number of
@@ -2168,7 +2145,6 @@ if __name__ == "__main__":
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
             Flanks.append(alignment.flank)
-
     # if there is only one subfam in the alignment file, no need to run anything because we know
     # that subfam is the annotation
     # numseqs = 2 because of the skip state
@@ -2218,9 +2194,10 @@ if __name__ == "__main__":
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
     if TR:
-        tr_start, tr_end = EdgesTR(TandemRepeats)
-        Starts.append(tr_start)
-        Stops.append(tr_end)
+        # add all TR starts and stop
+        for rep in TandemRepeats:
+            Starts.append(rep['Start']) # TR start index
+            Stops.append(rep['Start'] + rep['Length'] - 1) # TR stop index
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
@@ -2230,21 +2207,22 @@ if __name__ == "__main__":
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
     if TR:
-        rows += 1
-        Subfams.append("Tandem Repeat")
-        # update consensus matrix - ConsensusMatrix[rows, col_index] = consensus_pos
-
-        CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, NonEmptyColumns, ActiveCells, AlignMatrix, SkipAlignScore)
-
+        TR_row_index_start = rows
+        CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, NonEmptyColumns, ActiveCells, AlignMatrix,
+                         SkipAlignScore)
+        for rep in TandemRepeats:
+            Subfams.append("Tandem Repeat")
+            rows += 1
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
-                                                  rows, ActiveCells, AlignMatrix)
-        exit()
+                                                  TR_row_index_start, ActiveCells, AlignMatrix)
     else:
         ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                 ActiveCells, AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
-
+    # update strands?
+    # update ConsensusMatrix
+    exit()
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
