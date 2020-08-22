@@ -566,13 +566,14 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 
 def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, columns: List[int],
                      active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float],
-                     skip_align_score: float):
+                     consensus_matrix: Dict[Tuple[int, int], int], skip_align_score: float):
     """
     Calculates score (according to ULTRA scoring) for every segment of size
     chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
-    At same time, updates ALignMatrix, NonEmptyColumns and ActiveCells to include tandem repeat scores.
+    At same time, updates AlignMatrix, NonEmptyColumns, ActiveCells, and  ConsensusMatrix
+    to include tandem repeat scores.
 
     input:
     tandem_repeats: list of tandem repeats from ULTRA output
@@ -595,7 +596,8 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        col_index = rep['Start'] - start_all
+        start_rep = rep['Start']
+        col_index = start_rep - start_all
         length = rep['Length']
         pos_scores = rep['PositionScoreDelta'].split(":")
 
@@ -610,10 +612,13 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         window_size = j
         # scale score
         align_matrix[i + row_num, col_index] = score * chunk_size / window_size
-        # update non empty cols and active cells
+        consensus_matrix[i + row_num, col_index] = start_rep
+        # update non empty cols and skip states for new cols
         if col_index not in columns:
             columns.append(col_index)
             align_matrix[0, col_index] = float(skip_align_score)
+            consensus_matrix[0, col_index] = 0
+        # update active_cells
         if col_index in active_cells:
             active_cells[col_index].append(i + row_num)
         else:
@@ -631,10 +636,12 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 window_size += 1
             # scale score
             align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
+            consensus_matrix[i + row_num, col_index + j] = start_rep + j
             # add to non empty cols and active cells
             if col_index + j not in columns:
                 columns.append(col_index + j)
                 align_matrix[0, col_index + j] = float(skip_align_score)
+                consensus_matrix[0, col_index + j] = 0
             if col_index + j in active_cells:
                 active_cells[col_index + j].append(i + row_num)
             else:
@@ -2209,9 +2216,10 @@ if __name__ == "__main__":
     if TR:
         TR_row_index_start = rows
         CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, NonEmptyColumns, ActiveCells, AlignMatrix,
-                         SkipAlignScore)
+                         ConsensusMatrix, SkipAlignScore)
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
+            Strands.append("+")
             rows += 1
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                   TR_row_index_start, ActiveCells, AlignMatrix)
@@ -2220,9 +2228,7 @@ if __name__ == "__main__":
                                                 ActiveCells, AlignMatrix)
 
     SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
-    # update strands?
-    # update ConsensusMatrix
-    exit()
+
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
 
@@ -2237,6 +2243,7 @@ if __name__ == "__main__":
                                                                                SupportMatrixCollapse,
                                                                                StrandMatrixCollapse,
                                                                                ConsensusMatrixCollapse)
+    exit()
 
     #IDs for each nucleotide will be assigned during DP backtrace
     IDs = [0] * cols
@@ -2244,7 +2251,6 @@ if __name__ == "__main__":
     (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                              NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
-
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
     ChangesPositionOrig = ChangesPosition.copy()
