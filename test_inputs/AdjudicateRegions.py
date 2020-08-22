@@ -564,9 +564,10 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     return (list(columns), active_cells, consensus_matrix)
 
 
-def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, columns: List[int],
-                     active_cells: Dict[int, List[int]], align_matrix: Dict[Tuple[int, int], float],
-                     consensus_matrix: Dict[Tuple[int, int], int], skip_align_score: float):
+def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, cols: int,
+                     columns: List[int], active_cells: Dict[int, List[int]],
+                     align_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int],
+                     skip_align_score: float) -> int:
     """
     Calculates score (according to ULTRA scoring) for every segment of size
     chunksize for all tandem repeats found in the target sequence.
@@ -592,6 +593,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     the surrounding chunk_size number of nucleotides for that particular
     tandem repeat region.
     """
+    col_cnt = cols
     # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
         # get repeat info
@@ -615,6 +617,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         consensus_matrix[i + row_num, col_index] = start_rep
         # update non empty cols and skip states for new cols
         if col_index not in columns:
+            col_cnt += 1
             columns.append(col_index)
             align_matrix[0, col_index] = float(skip_align_score)
             consensus_matrix[0, col_index] = 0
@@ -639,6 +642,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
             consensus_matrix[i + row_num, col_index + j] = start_rep + j
             # add to non empty cols and active cells
             if col_index + j not in columns:
+                col_cnt += 1
                 columns.append(col_index + j)
                 align_matrix[0, col_index + j] = float(skip_align_score)
                 consensus_matrix[0, col_index + j] = 0
@@ -646,6 +650,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 active_cells[col_index + j].append(i + row_num)
             else:
                 active_cells[col_index + j] = [0, i + row_num]
+    return col_cnt
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
@@ -2215,12 +2220,14 @@ if __name__ == "__main__":
 
     if TR:
         TR_row_index_start = rows
-        CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, NonEmptyColumns, ActiveCells, AlignMatrix,
+        cols = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns, ActiveCells, AlignMatrix,
                          ConsensusMatrix, SkipAlignScore)
+
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
             Strands.append("+")
             rows += 1
+
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                   TR_row_index_start, ActiveCells, AlignMatrix)
     else:
@@ -2243,14 +2250,13 @@ if __name__ == "__main__":
                                                                                SupportMatrixCollapse,
                                                                                StrandMatrixCollapse,
                                                                                ConsensusMatrixCollapse)
-    exit()
 
     #IDs for each nucleotide will be assigned during DP backtrace
     IDs = [0] * cols
-
     (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                              NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
+    exit()
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
     ChangesPositionOrig = ChangesPosition.copy()
