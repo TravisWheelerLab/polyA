@@ -1,0 +1,7 @@
+FROM ubuntu:20.04
+
+ADD test_inputs/AlignmentFormatFromCM.pl /AlignmentFormatFromCM.pl
+VOLUME /data
+WORKDIR /data
+
+ENTRYPOINT ["perl", "/AlignmentFormatFromCM.pl"]
