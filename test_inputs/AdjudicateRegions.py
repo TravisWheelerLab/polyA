@@ -567,7 +567,7 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
 def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, cols: int,
                      columns: List[int], active_cells: Dict[int, List[int]],
                      align_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int],
-                     skip_align_score: float) -> int:
+                     skip_align_score: float) -> Tuple[Dict[int, float], int]:
     """
     Calculates score (according to ULTRA scoring) for every segment of size
     chunksize for all tandem repeats found in the target sequence.
@@ -587,13 +587,13 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     skip_align_score: alignment score to give the skip state (default = 0)
 
     output:
-    repeat_matrix: Hash implementation of sparse 2D matrix. Key is int that
-    maps col to the value held in that cell of matrix. Cols are nucleotide
-    positions in the target sequence. Each cell in matrix is the score of
-    the surrounding chunk_size number of nucleotides for that particular
-    tandem repeat region.
+    repeat_scores: Hash implementation of sparse 1d array. Key is int that maps col
+    index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
+    cols: updated number of columns in the align_matrix
     """
+
     col_cnt = cols
+    repeat_scores: Dict[int, float] = {} # key is col index
     # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
         # get repeat info
@@ -610,6 +610,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         # get 0 to 15
         while j <= k and j < length:
             score += float(pos_scores[j])
+            repeat_scores[col_index + j] = pos_scores[j]
             j += 1
         window_size = j
         # scale score
@@ -637,6 +638,8 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
             if j + k < len(pos_scores):
                 score += float(pos_scores[j + k])
                 window_size += 1
+                # add new score to repeat_scores
+                repeat_scores[col_index + j + k] = pos_scores[j + k]
             # scale score
             align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
             consensus_matrix[i + row_num, col_index + j] = start_rep + j
@@ -650,7 +653,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 active_cells[col_index + j].append(i + row_num)
             else:
                 active_cells[col_index + j] = [0, i + row_num]
-    return col_cnt
+    return repeat_scores, col_cnt
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
@@ -1411,6 +1414,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     for subfam_index0 in range(1, len(subfams)):
 
+        # check if subfam is a TR
         count: int = 0
         for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
             if chrom_seqs[subfam_index0][i] == '-':
@@ -1428,6 +1432,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
             align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+        # don't scale
 
     #middle nodes
     for node_index in range(1, nodes-1):
@@ -2209,7 +2214,7 @@ if __name__ == "__main__":
         # add all TR starts and stop
         for rep in TandemRepeats:
             Starts.append(rep['Start']) # TR start index
-            Stops.append(rep['Start'] + rep['Length'] - 1) # TR stop index
+            Stops.append(rep['Start'] + rep['Length'] - 1)  # TR stop index
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
@@ -2220,8 +2225,8 @@ if __name__ == "__main__":
 
     if TR:
         TR_row_index_start = rows
-        cols = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns, ActiveCells, AlignMatrix,
-                         ConsensusMatrix, SkipAlignScore)
+        RepeatScores, cols = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns,
+                                              ActiveCells, AlignMatrix, ConsensusMatrix, SkipAlignScore)
 
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
@@ -2256,7 +2261,7 @@ if __name__ == "__main__":
     (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                              NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
-    exit()
+    exit() # end of TR changes
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
     ChangesPositionOrig = ChangesPosition.copy()
@@ -2281,7 +2286,9 @@ if __name__ == "__main__":
 
         NodeConfidence.clear() #reuse old NodeConfidence matrix
 
-        NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts, NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs, ChromSeqs, SubfamCounts, SubMatrix)
+        NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts,
+                                            NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs,
+                                            ChromSeqs, SubfamCounts, SubMatrix)
 
         # store original node confidence for reporting results
         if count == 1:
