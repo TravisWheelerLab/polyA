@@ -593,7 +593,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     """
 
     col_cnt = cols
-    repeat_scores: Dict[int, float] = {} # key is col index
+    repeat_scores: Dict[int, float] = {}  # maps col in target seq to ultra output score
     # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
         # get repeat info
@@ -607,21 +607,24 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         score: float = 0
         j = 0
         k = int((ChunkSize - 1) / 2)
-        # get 0 to 15
+        # gets 0 to 15
         while j <= k and j < length:
             score += float(pos_scores[j])
-            repeat_scores[col_index + j] = pos_scores[j]
+            repeat_scores[col_index + j] = float(pos_scores[j])
             j += 1
         window_size = j
-        # scale score
+
+        # update AlignMatrix and ConsensusMatrix
         align_matrix[i + row_num, col_index] = score * chunk_size / window_size
         consensus_matrix[i + row_num, col_index] = start_rep
-        # update non empty cols and skip states for new cols
+
+        # update non_empty_cols and skip states for new cols
         if col_index not in columns:
             col_cnt += 1
             columns.append(col_index)
             align_matrix[0, col_index] = float(skip_align_score)
             consensus_matrix[0, col_index] = 0
+
         # update active_cells
         if col_index in active_cells:
             active_cells[col_index].append(i + row_num)
@@ -639,8 +642,8 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 score += float(pos_scores[j + k])
                 window_size += 1
                 # add new score to repeat_scores
-                repeat_scores[col_index + j + k] = pos_scores[j + k]
-            # scale score
+                repeat_scores[col_index + j + k] = float(pos_scores[j + k])
+
             align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
             consensus_matrix[i + row_num, col_index + j] = start_rep + j
             # add to non empty cols and active cells
@@ -653,6 +656,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 active_cells[col_index + j].append(i + row_num)
             else:
                 active_cells[col_index + j] = [0, i + row_num]
+
     return repeat_scores, col_cnt
 
 
@@ -715,7 +719,7 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
 
 def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str]) -> List[float]:
+                 subfams: List[str], repeat_indices: List[int]) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment and tandem
     repeat scores. Loops through the array once to find sum of 2^every_hit_score in
@@ -730,6 +734,7 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
     region: list of scores for competing annotations
     subfam_counts: dict that maps subfam name to it's count info
     subfams: list of subfam names
+    repeat_indices: list of indices in region that are tandem repeat scores
 
     output:
     confidence_list: list of confidence values for competing annotations, each input alignment
@@ -740,23 +745,27 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
     score_total: int = 0
 
     if infile:
-        for index in range(len(region) - 1):
-            converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
-            confidence_list.append(converted_score)
-            score_total += converted_score
-        tr_score = (2 ** region[len(region) - 1]) * subfam_counts["tandem_repeat"]
-        confidence_list.append(tr_score)
-        score_total += tr_score
+        for index in range(len(region)):
+            if index in repeat_indices:
+                tr_score = (2 ** region[index]) * subfam_counts["tandem_repeat"]
+                confidence_list.append(tr_score)
+                score_total += tr_score
+            else:
+                converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
+                confidence_list.append(converted_score)
+                score_total += converted_score
 
     # don't include subfam counts (default)
     else:
-        for index in range(len(region) - 1):
-            converted_score = 2**(region[index] * lambdaa)
-            confidence_list.append(converted_score)
-            score_total += converted_score
-        tr_score = (2 ** region[len(region) - 1])
-        confidence_list.append(tr_score)
-        score_total += tr_score
+        for index in range(len(region)):
+            if index in repeat_indices:
+                tr_score = (2 ** region[index])
+                confidence_list.append(tr_score)
+                score_total += tr_score
+            else:
+                converted_score = 2**(region[index] * lambdaa)
+                confidence_list.append(converted_score)
+                score_total += converted_score
 
     for index in range(len(region)):
         confidence_list[index] = confidence_list[index] / score_total
@@ -849,15 +858,16 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     for i in range(len(columns)):
         col_index: int = columns[i]
         temp_region: List[float] = []
+        region_index: int = 0  # track row index in region
+        repeat_indices: List[int] = []
 
         for row_index in active_cells[col_index]:
+            if row_index >= tr_row_index_start:
+                repeat_indices.append(region_index)
             temp_region.append(align_matrix[row_index, col_index])
+            region_index += 1
 
-        if row_index >= tr_row_index_start:
-            # a TR score is found for this col
-            temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss)
-        else:
-            temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
+        temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss, repeat_indices)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -1365,9 +1375,33 @@ def PrintNodeConfidence(nodes: int, changes: List[str], subfams_collapse: Dict[s
         stdout.write("\n")
 
 
-def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, lamb: float, infilee: str, columns: List[int],
-                       starts: List[int], stops: List[int], changes_position: List[int], subfams: List[str], subfam_seqs: List[str], chrom_seqs: List[str],
-                       subfam_countss: Dict[str, float], sub_matrix: Dict[str, int]) -> Dict[Tuple[str, int], float]:
+def SumRepeatScores(start: int, end: int, repeat_scores: Dict[int, float]) -> float:
+    """
+    Sums tandem repeat scores from columns start to end.
+
+    input:
+    start: column index to start sum
+    end: column index to end sum
+    repeat_scores: hash implementation of 1d array that maps column index
+    to tandem repeat score
+
+    output:
+    summ: sum of the tandem repeat scores
+    """
+
+    summ: float = 0.0
+    curr_index = start
+    while curr_index < end:
+        if curr_index in repeat_scores:
+            summ += repeat_scores[curr_index]
+        curr_index += 1
+    return summ
+
+
+def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, lamb: float, infilee: str,
+                       columns: List[int], starts: List[int], stops: List[int], changes_position: List[int],
+                       subfams: List[str], subfam_seqs: List[str], chrom_seqs: List[str], subfam_countss: Dict[str, float],
+                       sub_matrix: Dict[str, int], repeat_scores: Dict[int, float]) -> Dict[Tuple[str, int], float]:
     """
     finds competing annotations, alignment scores and confidence values for each node
     identified in GetPath()
@@ -1404,6 +1438,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
+    repeat_keys: List = []
 
     #holds all chrom seqs and the offset needed to get to the correct position in the chrom
     #seq - remember gaps in chrom seq are skipped over for matrix position
@@ -1414,25 +1449,35 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     for subfam_index0 in range(1, len(subfams)):
 
-        # check if subfam is a TR
         count: int = 0
-        for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
-            if chrom_seqs[subfam_index0][i] == '-':
-                count += 1
+        if subfams[subfam_index0] == "Tandem Repeat":
+            rep_sum_score0: float = 0.0
+            chrom_seq_offset[subfam_index0] = count  # used for middle nodes
 
-        chrom_seq_offset[subfam_index0] = count
+            end_node0 = columns[changes_position[1]] + count
 
-        end_node0: int = columns[changes_position[1]] + count
+            # get confidence from RepeatScores
+            if end_node0 >= starts[subfam_index0] - start_all and begin_node0 <= stops[subfam_index0] - start_all:
+                rep_sum_score0 = SumRepeatScores(begin_node0, end_node0, repeat_scores)
+            node_confidence_temp[subfam_index0 * nodes + 0] = rep_sum_score0
+            repeat_keys.append(subfam_index0 * nodes + 0)
 
-        subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
-        chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
+        else:
+            align_score0: float = 0.0
+            for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
+                if chrom_seqs[subfam_index0][i] == '-':
+                    count += 1
+            chrom_seq_offset[subfam_index0] = count
 
-        align_score0: float = 0.0
-        #if whole alignment is padding - don't run CalcScore
-        if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
-            align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
-        node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
-        # don't scale
+            end_node0: int = columns[changes_position[1]] + count
+
+            subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
+            chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
+
+            #if whole alignment is padding - don't run CalcScore
+            if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
+                align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
+            node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
 
     #middle nodes
     for node_index in range(1, nodes-1):
@@ -1442,25 +1487,38 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
             begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
 
             count: int = 0
-            for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
-                if chrom_seqs[subfam_index][i] == '-':
-                    count += 1
+            if subfams[subfam_index] == "Tandem Repeat":
+                chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
 
-            chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
+                end_node: int = columns[changes_position[node_index + 1]] + chrom_seq_offset[subfam_index] + count
 
-            end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
+                rep_sum_score: float = 0.0
+                if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
+                    rep_sum_score = SumRepeatScores(begin_node, end_node, repeat_scores)
+                node_confidence_temp[subfam_index * nodes + node_index] = rep_sum_score
+                repeat_keys.append(subfam_index * nodes + node_index
+                                   )
+            else:
+                for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
+                    if chrom_seqs[subfam_index][i] == '-':
+                        count += 1
 
-            lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
-            lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
-            subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
-            chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
+                chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
 
-            align_score: float = 0.0
-            # if whole alignment is padding - don't run CalcScore
-            if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
-                align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
+                end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
 
-            node_confidence_temp[subfam_index * nodes + node_index] = align_score
+                # TR check - if last prev subfam was a TR??
+                lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
+                lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
+                subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
+                chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
+
+                align_score: float = 0.0
+                # if whole alignment is padding - don't run CalcScore
+                if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
+                    align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
+
+                node_confidence_temp[subfam_index * nodes + node_index] = align_score
 
 
     # does last node
@@ -1468,36 +1526,51 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
 
         count: int = 0
-        for i in range(begin_node2,
-                       begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
-            if chrom_seqs[subfam_index2][i] == '-':
-                count += 1
+        if subfams[subfam_index2] == "Tandem Repeat":
+            chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
+            end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
 
-        chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
+            rep_sum_score2: float = 0.0
+            if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
+                rep_sum_score2 = SumRepeatScores(begin_node2, end_node2 + 1, repeat_scores)
+            node_confidence_temp[subfam_index2 * nodes + nodes - 1] = rep_sum_score2
+            repeat_keys.append(subfam_index2 * nodes + nodes - 1)
+        else:
+            for i in range(begin_node2,
+                           begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
+                if chrom_seqs[subfam_index2][i] == '-':
+                    count += 1
 
-        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
+            chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
 
-        lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
-        lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
+            end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
 
-        subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
-        chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
+            lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
+            lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
 
-        align_score2: float = 0.0
-        # if whole alignment is padding - don't run CalcScore
-        if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
-            align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
-                                                sub_matrix)
+            subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
+            chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
 
-        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
+            align_score2: float = 0.0
+            # if whole alignment is padding - don't run CalcScore
+            if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
+                align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
+                                         sub_matrix)
+
+            node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
     # reuse same matrix and compute confidence scores for the nodes
     for node_index4 in range(nodes):
         temp: List[float] = []
+        repeat_indices: List[int] = []
         for row_index in range(1, len(subfams)):
+            # if key in tr_keys, then track which rows index it is
+            # needs to be kept in order
+            if row_index * nodes + node_index4 in repeat_keys:
+                repeat_indices.append(row_index)
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
-        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams)
+        confidence_temp: List[float] = ConfidenceTR(lamb, infilee, temp, subfam_countss, subfams, repeat_indices)
 
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
@@ -2109,6 +2182,7 @@ if __name__ == "__main__":
     ChromSeqs: List[str] = []
     Flanks: List[int] = []
 
+    RepeatScores: Dict[int, float] = {}
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     SingleAlignMatrix: Dict[Tuple[int, int], int] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
@@ -2225,8 +2299,8 @@ if __name__ == "__main__":
 
     if TR:
         TR_row_index_start = rows
-        RepeatScores, cols = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns,
-                                              ActiveCells, AlignMatrix, ConsensusMatrix, SkipAlignScore)
+        (RepeatScores, cols) = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns,
+                                                ActiveCells, AlignMatrix, ConsensusMatrix, SkipAlignScore)
 
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
@@ -2261,7 +2335,7 @@ if __name__ == "__main__":
     (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                              NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                              OriginMatrix, SameSubfamChangeMatrix)
-    exit() # end of TR changes
+
     # keep the original annotation for reporting results
     ChangesOrig = Changes.copy()
     ChangesPositionOrig = ChangesPosition.copy()
@@ -2288,8 +2362,8 @@ if __name__ == "__main__":
 
         NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts,
                                             NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs,
-                                            ChromSeqs, SubfamCounts, SubMatrix)
-
+                                            ChromSeqs, SubfamCounts, SubMatrix, RepeatScores)
+        exit()
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
