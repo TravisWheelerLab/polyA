@@ -8,6 +8,7 @@ import os
 import json
 import subprocess
 import tempfile
+import bisect
 
 from polyA.load_alignments import load_alignments
 
@@ -621,7 +622,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         # update non_empty_cols and skip states for new cols
         if col_index not in columns:
             col_cnt += 1
-            columns.append(col_index)
+            bisect.insort(columns, col_index)
             align_matrix[0, col_index] = float(skip_align_score)
             consensus_matrix[0, col_index] = 0
 
@@ -649,7 +650,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
             # add to non empty cols and active cells
             if col_index + j not in columns:
                 col_cnt += 1
-                columns.append(col_index + j)
+                bisect.insort(columns, col_index + j)
                 align_matrix[0, col_index + j] = float(skip_align_score)
                 consensus_matrix[0, col_index + j] = 0
             if col_index + j in active_cells:
@@ -909,16 +910,26 @@ def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[in
             #first chunk_size/2 before getting to full chunks
             left_index: int = 0
             for col_index in range(start, starts[row_index] - start_all + half_chunk):
-
+                # start, start + 1/2 chunk
                 summ: float = 0.0
                 sum_index: int = col_index - left_index
                 num_segments: int = 0
-
                 while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
                     summ += confidence_matrix[row_index, sum_index]
                     sum_index += 1
                     num_segments += 1
 
+                # num segments isn't increasing?? Look at length
+                if (num_segments == 0):
+                    print(starts[row_index] - start_all + half_chunk) # 3484 (15)
+                    print(sum_index) # 3469 = 3469 - 0
+                    print(col_index) # 3469 - first one
+                    print(col_index + half_chunk) # 3484
+                    print(columns[-1]) # 3424  ???? last col is 3424, but cols go up to 3720
+                    #fails sum_index < cols[-1]
+                    print(start) #3469
+                    print(stop) #3720
+                    print(row_index) #17
                 support_matrix[row_index, col_index] = summ / num_segments
                 left_index += 1
 
@@ -2248,7 +2259,6 @@ if __name__ == "__main__":
 
     (cols, AlignMatrix) = FillAlignMatrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
                                           ChromSeqs, Starts, SubMatrix)
-
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = FillConsensusPositionMatrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
     if TR:
