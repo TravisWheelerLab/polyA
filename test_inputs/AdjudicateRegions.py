@@ -684,7 +684,7 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs)
+    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs, [])
     >>> f"{conf[0]:.2f}"
     '0.41'
     >>> f"{conf[1]:.2f}"
@@ -1384,7 +1384,8 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> node_conf = FillNodeConfidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat)
+    >>> rep_scores = {}
+    >>> node_conf = FillNodeConfidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat, rep_scores)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.3751243838973974, ('n2', 0): 0.6248756161026026, ('skip', 1): 0.0, ('n1', 1): 0.09874227070127324, ('n2', 1): 0.9012577292987267, ('skip', 2): 0.0, ('n1', 2): 0.09874227070127327, ('n2', 2): 0.9012577292987267}
     """
