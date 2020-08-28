@@ -573,7 +573,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
-    At same time, updates AlignMatrix, NonEmptyColumns, ActiveCells, and  ConsensusMatrix
+    At same time, updates AlignMatrix, NonEmptyColumns, ActiveCells, and ConsensusMatrix
     to include tandem repeat scores.
 
     input:
@@ -661,64 +661,6 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
 
 
 def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str]) -> List[float]:
-    """
-    computes confidence values for competing annotations using alignment scores.
-    Loops through the array once to find sum of 2^every_hit_score in region, then
-    loops back through to calculate confidence. Converts the score to account for
-    lambda before summing.
-
-    If command line option for subfam_counts, this is included in confidence math.
-
-    input:
-    lambdaa: lambda value for input sub_matrix (scaling factor)
-    infile: test if subfam_counts infile included at command line
-    region: list of scores for competing annotations
-    subfam_counts: dict that maps subfam name to it's count info
-    subfams: list of subfam names
-
-    output:
-    confidence_list: list of confidence values for competing annotations, each input alignment
-    score will have one output confidence score
-
-    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
-    >>> subs = ["s1", "s2", "s3"]
-    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs)
-    >>> f"{conf[0]:.2f}"
-    '0.41'
-    >>> f"{conf[1]:.2f}"
-    '0.29'
-    >>> f"{conf[2]:.2f}"
-    '0.29'
-    """
-    confidence_list: List[float] = []
-
-    score_total: int = 0
-
-    #if command line option to include subfam_counts
-    if infile:
-        for index in range(len(region)):
-            converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[index]]
-            confidence_list.append(converted_score)
-            score_total += converted_score
-
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
-
-    #don't include subfam counts (default)
-    else:
-        for index in range(len(region)):
-            converted_score = 2**(region[index] * lambdaa)
-            confidence_list.append(converted_score)
-            score_total += converted_score
-
-        for index in range(len(region)):
-            confidence_list[index] = confidence_list[index] / score_total
-
-    return confidence_list
-
-
-def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
                  subfams: List[str], repeat_indices: List[int]) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment and tandem
@@ -739,11 +681,22 @@ def ConfidenceTR(lambdaa: float, infile: str, region: List[float], subfam_counts
     output:
     confidence_list: list of confidence values for competing annotations, each input alignment
     and tandem repeat score will have one output confidence score
+
+    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
+    >>> subs = ["s1", "s2", "s3"]
+    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 1], counts, subs)
+    >>> f"{conf[0]:.2f}"
+    '0.41'
+    >>> f"{conf[1]:.2f}"
+    '0.29'
+    >>> f"{conf[2]:.2f}"
+    '0.29'
     """
 
     confidence_list: List[float] = []
     score_total: int = 0
 
+    # if command line option to include subfam_counts
     if infile:
         for index in range(len(region)):
             if index in repeat_indices:
@@ -823,7 +776,7 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index]) # scores at that nuc pos
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, [])
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -836,11 +789,11 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
                            align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix including TR scores. Each column in the alignment matrix is a group of competing
-    annotations that are input into ConfidenceCM or ConfidenceTR.
+    annotations that are input into ConfidenceCM.
     The output confidence values are used to populate confidence_matrix.
 
     input:
-    everything needed for ConfidenceCM/ConfidenceTR
+    everything needed for ConfidenceCM
     columns: array that holds all non empty columns in align matrix
     active_cells: maps col numbers to all active rows in that col
     align_matrix: alignment matrix - used to calculate confidence
@@ -867,7 +820,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
             temp_region.append(align_matrix[row_index, col_index])
             region_index += 1
 
-        temp_confidence: List[float] = ConfidenceTR(lamb, infilee, temp_region, subfam_countss, subfamss, repeat_indices)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, repeat_indices)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -1570,7 +1523,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                 repeat_indices.append(row_index)
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
 
-        confidence_temp: List[float] = ConfidenceTR(lamb, infilee, temp, subfam_countss, subfams, repeat_indices)
+        confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams, repeat_indices)
 
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
@@ -1660,7 +1613,7 @@ def FillPathGraph(nodes: int, columns: List[int], changes: List[str], changes_po
         sink_subfam_start: int = consensus_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
         sink_strand: str = strand_matrix_collapse[subfams_collapse_index[sink_subfam], columns[changes_position[sink_node_index]]]
 
-        if sink_subfam != "skip":  # don't want to add alternative edges to skip nodes
+        if sink_subfam != "skip" or sink_subfam != "Tandem Repeat":  # don't want to add alternative edges to skip nodes or tandem repeats
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
                 sourceConf: float = node_confidence[sink_subfam, source_node_index]  # sink subfam confidence in source node
@@ -1988,14 +1941,14 @@ if __name__ == "__main__":
     outfile_viz: str = ""
     outfile_heatmap: str = ""
 
-    # running ultra
+    # running ultra and esl with raw data
     esl_sfetch_path: str = ""
     ultra_path: str = ""
-    seq_file: str = "" # .ta file
+    seq_file: str = ""
     start_pos: int = 0
     end_pos: int = 0
     chrom_name: str = ""
-    # using ultra
+    # using ultra output
     ultra_output_path: str = ""  # json file
 
     help: bool = False  # Reassigned later
@@ -2063,6 +2016,7 @@ if __name__ == "__main__":
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
 
+    # options for using ultra
     esl_sfetch_path = str(opts["--eslSfetch"]) if "--eslSfetch" in opts else esl_sfetch_path
     ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path # gets path to exe
     seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
@@ -2089,12 +2043,12 @@ if __name__ == "__main__":
     with open(infile_matrix) as _infile_matrix:
         in_matrix: List[str] = _infile_matrix.readlines()
 
-    #if command line option included to use prior counts into in confidence calculations
+    # if command line option included to use prior counts into in confidence calculations
     if infile_prior_counts:
         with open(infile_prior_counts) as _infile_prior_counts:
             in_counts: List[str] = _infile_prior_counts.readlines()
 
-    #if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
+    # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
     if not Lamb:
         esl_stream = os.popen(EslPath + 'esl_scorematrix --dna 25p41g_edited.matrix')
         esl_output = esl_stream.read()
@@ -2133,11 +2087,10 @@ if __name__ == "__main__":
         # run ULTRA
         pop = subprocess.Popen([ultra_path, '-ss', small_region], stdout=subprocess.PIPE,
                                universal_newlines=True)
-        ultra_out, err = pop.communicate() # ultra_out is string
+        ultra_out, err = pop.communicate()
         ultra_output = json.loads(ultra_out)
-        # subprocess.call(['rm', 'small_region'])  # no file found?
         os.remove(small_region)
-    elif ultra_output_path:  # works!
+    elif ultra_output_path:
         TR = True
         # my path: /Users/audrey/tr.json
         with open(ultra_output_path) as f:
@@ -2285,9 +2238,9 @@ if __name__ == "__main__":
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
     if TR:
-        # add all TR starts and stop
+        # add all TR starts and stops
         for rep in TandemRepeats:
-            Starts.append(rep['Start']) # TR start index
+            Starts.append(rep['Start'])  # TR start index
             Stops.append(rep['Start'] + rep['Length'] - 1)  # TR stop index
 
     (StartAll, StopAll) = PadSeqs(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
@@ -2363,16 +2316,16 @@ if __name__ == "__main__":
         NodeConfidence = FillNodeConfidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts,
                                             NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs,
                                             ChromSeqs, SubfamCounts, SubMatrix, RepeatScores)
-        exit()
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
         PathGraph.clear() #reuse old PathGraph
+        # Update for TR's - no alternative edges
         PathGraph = FillPathGraph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
                                   ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
 
-        # test to see if there are nodes in the graph that have more that one incoming or outgoing edge,
+        # test to see if there are nodes in the graph that have more than one incoming or outgoing edge,
         # if so - keep looping, if not - break out of the loop
         # if they are all 0, break out of the loop
         test: bool = False
