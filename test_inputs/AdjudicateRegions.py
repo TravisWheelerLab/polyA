@@ -565,16 +565,14 @@ def FillConsensusPositionMatrix(col_num: int, row_num: int, start_all: int, subf
     return (list(columns), active_cells, consensus_matrix)
 
 
-def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, cols: int,
-                     columns: List[int], active_cells: Dict[int, List[int]],
-                     align_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int],
-                     skip_align_score: float) -> Dict[int, float]:
+def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, active_cells: Dict[int, List[int]],
+                     align_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]) -> Dict[int, float]:
     """
     Calculates score (according to ULTRA scoring) for every segment of size
     chunksize for all tandem repeats found in the target sequence.
     Scores are of the surrounding chunksize nucleotides in the sequence.
 
-    At same time, updates AlignMatrix, NonEmptyColumns, ActiveCells, and ConsensusMatrix
+    At same time, updates AlignMatrix, ActiveCells, and ConsensusMatrix
     to include tandem repeat scores.
 
     input:
@@ -618,12 +616,6 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         align_matrix[i + row_num, col_index] = score * chunk_size / window_size
         consensus_matrix[i + row_num, col_index] = start_rep
 
-        # update non_empty_cols and skip states for new cols
-        if col_index not in columns:
-            bisect.insort(columns, col_index)
-            align_matrix[0, col_index] = float(skip_align_score)
-            consensus_matrix[0, col_index] = 0
-
         # update active_cells
         if col_index in active_cells:
             active_cells[col_index].append(i + row_num)
@@ -645,11 +637,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
 
             align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
             consensus_matrix[i + row_num, col_index + j] = start_rep + j
-            # add to non empty cols and active cells
-            if col_index + j not in columns:
-                bisect.insort(columns, col_index + j)
-                align_matrix[0, col_index + j] = float(skip_align_score)
-                consensus_matrix[0, col_index + j] = 0
+            # add active cells
             if col_index + j in active_cells:
                 active_cells[col_index + j].append(i + row_num)
             else:
@@ -689,6 +677,8 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
     '0.29'
     >>> f"{conf[2]:.2f}"
     '0.29'
+
+    # make TR Cm test too
     """
 
     confidence_list: List[float] = []
@@ -783,7 +773,7 @@ def FillConfidenceMatrix(lamb: float, infilee: str, columns: List[int], subfam_c
 
 
 def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
-                           subfamss: List[str], tr_row_index_start: int, active_cells: Dict[int, List[int]],
+                           subfamss: List[str], active_cells: Dict[int, List[int]], repeat_scores: Dict[int, float],
                            align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix including TR scores. Each column in the alignment matrix is a group of competing
@@ -794,6 +784,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     everything needed for ConfidenceCM
     columns: array that holds all non empty columns in align matrix
     active_cells: maps col numbers to all active rows in that col
+    repeat_score: dict that maps col in target sequence to tandem repeat score
     align_matrix: alignment matrix - used to calculate confidence
 
     output:
@@ -809,16 +800,33 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     for i in range(len(columns)):
         col_index: int = columns[i]
         temp_region: List[float] = []
+
+        #FIXME
+        for row_index in active_cells[col_index]:
+            # not every col will have a TR value
+            # keep track of which cols have TR's from calc rep scores?
+            temp_region.append(align_matrix[row_index, col_index])
+
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, [])
+
+        for row_index2 in range(len(active_cells[col_index])):
+            confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
+
+    # go through non empty TR cols such that the col w/ TR row is always last
+    for tr_col in repeat_scores:
+        col_index: int = tr_col
+        temp_region: List[float] = []
         region_index: int = 0  # track row index in region
         repeat_indices: List[int] = []
 
-        for row_index in active_cells[col_index]:
-            if row_index >= tr_row_index_start:
-                repeat_indices.append(region_index)
+        # last row in col is TR
+        rows: List[int] = active_cells[col_index]
+        for i in range(len(rows) - 1):
+            row_index = rows[i]
             temp_region.append(align_matrix[row_index, col_index])
-            region_index += 1
+        temp_region.append(align_matrix[rows[len(rows) - 1], col_index])
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, repeat_indices)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, [len(rows) - 1])
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
@@ -2085,6 +2093,7 @@ if __name__ == "__main__":
 
     TR: bool = False
     # running esl and ultra
+    # should already have a correct fasta file from getting alignments
     if ultra_path and esl_sfetch_path and seq_file and start_pos and end_pos and chrom_name:
         TR = True
         # pre-processing
@@ -2099,6 +2108,13 @@ if __name__ == "__main__":
         ultra_out, err = pop.communicate()
         ultra_output = json.loads(ultra_out)
         os.remove(small_region)
+    elif ultra_path and seq_file:
+        TR = True
+        # run ULTRA
+        pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE,
+                               universal_newlines=True)
+        ultra_out, err = pop.communicate()
+        ultra_output = json.loads(ultra_out)
     elif ultra_output_path:
         TR = True
         # my path: /Users/audrey/tr.json
@@ -2260,11 +2276,12 @@ if __name__ == "__main__":
 
     if TR:
         TR_row_index_start = rows
-        RepeatScores = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, cols, NonEmptyColumns,
-                                        ActiveCells, AlignMatrix, ConsensusMatrix, SkipAlignScore)
-        # check if TR columns were added after last alignment
-        if NonEmptyColumns[-1] + 1 > cols:
-            cols = NonEmptyColumns[-1] + 1
+        RepeatScores = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, ActiveCells,
+                                        AlignMatrix, ConsensusMatrix)
+        # add skip states for repeat cols
+        for tr_col in RepeatScores:
+            AlignMatrix[0, tr_col] = float(SkipAlignScore)
+            ConsensusMatrix[0, tr_col] = 0
 
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
@@ -2272,7 +2289,19 @@ if __name__ == "__main__":
             rows += 1
 
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
-                                                  TR_row_index_start, ActiveCells, AlignMatrix)
+                                                  ActiveCells, RepeatScores, AlignMatrix)
+
+        max_tr_col = max(RepeatScores)
+        max_align_col = NonEmptyColumns[-1]
+        max_col_index: int = max(max_tr_col, max_align_col)
+
+        for tr_col in RepeatScores:
+            col_set = set(NonEmptyColumns)
+            col_set.add(tr_col)
+            NonEmptyColumns = list(col_set)
+        # check if TR columns were added after last alignment
+        if max_col_index + 1 > cols:
+            cols = max_col_index + 1
     else:
         ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                 ActiveCells, AlignMatrix)
