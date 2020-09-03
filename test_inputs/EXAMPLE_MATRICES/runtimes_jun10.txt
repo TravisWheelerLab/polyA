@@ -1,0 +1,154 @@
+-------------------------------------------------------------
+
+ex10_hg38_alugedon.align.format
+
+1719 nucls
+515 alignments
+
+real    0m7.712s
+user    0m7.685s
+sys     0m0.182s
+
+-------------------------------------------------------------
+
+ex1_hg38_nesting.align.format
+
+4892 nucls
+200 alignments
+
+real    0m3.563s
+user    0m3.952s
+sys     0m0.149s
+
+-------------------------------------------------------------
+
+ex2_hg38_nesting.align.format
+
+6370 nucls
+478 alignments
+
+real    0m10.674s
+user    0m11.030s
+sys     0m0.187s
+
+-------------------------------------------------------------
+
+ex3_hg38_nesting.align.format
+
+1450 nucls
+95 alignments
+
+real    0m1.035s
+user    0m1.509s
+sys     0m0.098s
+
+-------------------------------------------------------------
+
+ex4_hg38_badoverlap.align.format
+
+290 nucls
+13 alignments
+
+real    0m0.214s
+user    0m0.594s
+sys     0m0.080s
+-------------------------------------------------------------
+
+ex5_hg38_composite.align.format
+
+6668 nucls
+625 alignments
+
+real    0m13.264s
+user    0m13.630s
+sys     0m0.188s
+-------------------------------------------------------------
+
+ex6_hg38_ambiguous.align.format
+
+1758 nucls
+247 alignments
+
+real    0m3.163s
+user    0m3.609s
+sys     0m0.121s
+
+-------------------------------------------------------------
+
+ex7_hg38_ambiguous.align.format
+
+3990 nucls
+138 alignments
+
+real    0m1.593s
+user    0m2.056s
+sys     0m0.108s
+
+-------------------------------------------------------------
+
+ex8_hg38_alugedon.align.format
+
+1834 nucls
+597 alignments
+
+real    0m8.636s
+user    0m9.024s
+sys     0m0.170s
+-------------------------------------------------------------
+
+ex9_hg38_alugedon.align.format
+
+1195 nucls
+344 alignments
+
+real    0m4.477s
+user    0m4.905s
+sys     0m0.138s
+
+
+-------------------------------------------------------------
+
+
+
+
+ex5_hg38_composite.align.format
+Edges 6.580352783203125e-05
+
+PadSeqs 0.0053539276123046875
+
+FillAlignScoreMatrix 1.3808059692382812
+
+FillConsensusPositionMatrix 0.7820248603820801
+
+FillColumns 0.5112740993499756
+
+FillConfidenceMatrix 1.8963239192962646
+
+FillSupportMatrix 3.298501968383789
+
+CollapseMatrices 1.3117549419403076
+
+FillProbabilityMatrix 2.4964191913604736
+
+GetPath 0.00734400749206543
+
+FillNodeConfidence 0.7684042453765869
+
+FillPathGraph 0.00030517578125
+
+ExtractNodes 0.00023698806762695312
+
+FillProbabilityMatrix 0.4784810543060303
+
+GetPath 0.017419099807739258
+
+FillNodeConfidence 0.6850879192352295
+
+FillPathGraph 2.4080276489257812e-05
+
+ExtractNodes 5.412101745605469e-05
+
+FillProbabilityMatrix 0.03628396987915039
+
+GetPath 0.00875091552734375
+

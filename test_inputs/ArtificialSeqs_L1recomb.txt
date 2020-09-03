@@ -1,0 +1,175 @@
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_91.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	512	2345	L1HS_3end#LINE/L1
+513	900	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_92.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	514	2345	L1HS_3end#LINE/L1
+515	911	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_93.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	512	2345	L1HS_3end#LINE/L1
+513	898	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_94.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	310	2345	L1HS_3end#LINE/L1
+311	905	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_95.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	535	2345	L1HS_3end#LINE/L1
+536	911	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_96.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	328	2345	L1HS_3end#LINE/L1
+329	913	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA10_3end_97.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	411	2345	L1HS_3end#LINE/L1
+412	899	1111	L1PA10_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_84.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	511	2345	L1HS_3end#LINE/L1
+512	908	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_85.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	285	2345	L1HS_3end#LINE/L1
+286	913	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_86.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	541	2345	L1HS_3end#LINE/L1
+542	917	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_87.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	460	2345	L1HS_3end#LINE/L1
+461	899	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_88.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	594	3579	L1HS_3end#LINE/L1
+595	915	2345	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_89.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	543	2345	L1HS_3end#LINE/L1
+544	923	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA11_3end_90.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	463	2345	L1HS_3end#LINE/L1
+464	911	1111	L1PA11_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_77.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	490	2345	L1HS_3end#LINE/L1
+491	903	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_78.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	496	2345	L1HS_3end#LINE/L1
+497	908	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_79.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	430	2345	L1HS_3end#LINE/L1
+431	905	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_80.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	535	2345	L1HS_3end#LINE/L1
+536	915	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_81.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	462	2345	L1HS_3end#LINE/L1
+463	908	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_82.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	498	2345	L1HS_3end#LINE/L1
+499	906	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA12_3end_83.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	450	2345	L1HS_3end#LINE/L1
+451	903	1111	L1PA12_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA13_3end_70.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	488	2345	L1HS_3end#LINE/L1
+489	904	1111	L1PA13_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA13_3end_71.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	482	2345	L1HS_3end#LINE/L1
+483	903	1111	L1PA13_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA13_3end_72.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	491	2345	L1HS_3end#LINE/L1
+492	899	1111	L1PA13_3end#LINE/L1
+-------------------------------------------------------------
+
+/Users/kaitlincarey/Desktop/NOTEBOOK/2020/Adjudication/Aug25-TestArtificalSeqs/TEST_L1_RECOMB/L1HS_3end-L1PA13_3end_73.fa.cm.align
+start	stop	ID	name
+----------------------------------------
+1	254	2345	L1HS_3end#LINE/L1
+255	893	1111	L1PA13_3end#LINE/L1
+-------------------------------------------------------------
+

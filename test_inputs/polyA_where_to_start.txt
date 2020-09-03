@@ -1,0 +1,137 @@
+input files:
+    25p41g_edited.matrix
+    ex3_hg38_nesting.align.format
+
+
+25p41g_edited.matrix - substitution matrix
+	*tells what score to give 2 aligned letters in an alignment
+	
+ex:
+  A   R   G   C   Y   T   K   M   S   W   N   H   V   X
+  8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
+  2   2   1 -13 -13 -14  -6  -5  -5  -5  -1  -1  -1 -27
+ -2   3  10 -13 -13 -13  -1  -8  -1  -8  -1  -1  -1 -27
+-13 -13 -13  10   3  -2  -8  -1  -1  -8  -1  -1  -1 -27
+-14 -13 -13   1   2   2  -5  -6  -5  -5  -1  -1  -1 -27
+-15 -14 -13  -6   1   8  -2 -11 -10  -3  -1  -1  -1 -27
+ -9  -5  -1  -9  -6  -2  -1  -9  -5  -5  -1  -1  -1 -27
+ -2  -6  -9  -1  -5  -9  -9  -1  -5  -5  -1  -1  -1 -27
+ -8  -4  -1  -1  -4  -8  -4  -4  -1  -8  -1  -1  -1 -27
+ -3  -6 -10 -10  -6  -3  -6  -6 -10  -3  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+-27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27  -1  -1 -27
+
+Fake alignment:
+AAGTACCA
+AGGT--CA
+
+How to score this alignment:
+
+AA = 8
+AG = -2
+GG = 10
+TT = 8
+A- = -25
+C- = -5
+CC = 10
+AA = 8
+-----------------
+Score = total = 8 - 2 + 10 + 8 - 25 - 5 + 10 + 8 = 12
+
+
+
+ex3_hg38_nesting.align.format - input alignment file 
+
+My alignment format:
+	**header line is labeled in powerpoint I sent
+
+Align: L2c_3end#LINE/L2 chr11:11989996-11992119 339     +       649     882     1       243	235
+>chr11:11989996-11992119
+CTGCCTGATCTCATCCCTGCCT-CTCCCCCAGCTTTACTTGCT--GCTCCCC----CACG
+CAC-AT-CTCCAGCTCTGGCATTCTAAATTGTTTAGCGTTCCTCCAACATATT-C--TTA
+TTTCCACATGCCTCCTTGACTTTGAACAAGAAATACTTGTTCAAC---GAATACCCTTTT
+TCCCCAC----AACTGA-GAATTCCTAGACAACATTCAAAATACAGCTCAACTGCCACCT
+CTTCCAGGGAGCCT
+>L2c_3end#LINE/L2
+CTNCACGATCTGGCCCCTGCTTACCTCTCCAGCCTCATCTCCTCCACTCCCCTCCTCGCC
+CACTATGCTCCAGC-----CACACTGAACTNCTT-GCATTCCCCAAACACGCCGCAGTTC
+TTTCC---TGCCTCCGNGCCTTTGCACATGC--TGTTCCCTCTGCCTGGAATGCTCTTCC
+CCCCTCCTTCCACCTGGCTAACTCCTACTCATCCTTCAAGNCTCAGCTCAGATGTCACCT
+CCTCCAGGAAGCCT
+
+
+Original Alignment format:
+
+339 27.78 8.55 4.53 chr11:11989996-11992119 649 882 (1241) L2c_3end#LINE/L2 1 243 (235)
+
+  chr11:1198999        649 CTGCCTGATCTCATCCCTGCCT-CTCCCCCAGCTTTACTTGCT--GCTCC 695
+                             ? vi     vii      i - ii i     i i ii v  --i    
+  L2c_3end#LINE          1 CTNCACGATCTGGCCCCTGCTTACCTCTCCAGCCTCATCTCCTCCACTCC 50
+
+  chr11:1198999        696 CC----CACGCAC-AT-CTCCAGCTCTGGCATTCTAAATTGTTTAGCGTT 739
+                             ---- i v   -  -       -----  iv  i  i ?i  -  i  
+  L2c_3end#LINE         51 CCTCCTCGCCCACTATGCTCCAGC-----CACACTGAACTNCTT-GCATT 94
+
+  chr11:1198999        740 CCTCCAACATATT-C--TTATTTCCACATGCCTCCTTGACTTTGAACAAG 786
+                             i v    iiii- --  v     ---       v? v     v   v 
+  L2c_3end#LINE         95 CCCCAAACACGCCGCAGTTCTTTCC---TGCCTCCGNGCCTTTGCACATG 141
+
+  chr11:1198999        787 AAATACTTGTTCAAC---GAATACCCTTTTTCCCCAC----AACTGA-GA 828
+                           v-- ii ivi  vi ---    i i   iii   iv ---- v   i-v 
+  L2c_3end#LINE        142 C--TGTTCCCTCTGCCTGGAATGCTCTTCCCCCCTCCTTCCACCTGGCTA 189
+
+  chr11:1198999        829 ATTCCTAGACAACATTCAAAATACAGCTCAACTGCCACCTCTTCCAGGGA 878
+                            i     vv  v v     i?iv       iv  i      i      i 
+  L2c_3end#LINE        190 ACTCCTACTCATCCTTCAAGNCTCAGCTCAGATGTCACCTCCTCCAGGAA 239
+
+  chr11:1198999        879 GCCT 882
+                               
+  L2c_3end#LINE        240 GCCT 243
+
+
+
+How to use environment and run the script
+
+instructions in README under Development here:
+https://github.com/TravisWheelerLab/polyA/
+
+% cd polyA/test_inputs/
+% python3 AdjudicateRegions.py --lambda .1227 ex3_hg38_nesting.align.format 25p41g_edited.matrix
+
+
+Functions at the top
+Main starts at line 1566
+
+line 1672
+SubMatrix: Dict[str, int] = {}
+reads in substitution matrix (25p41g_edited.matrix) and holds alignment characters as key and 
+it's score as value
+
+ex: SubMatrix['AA'] = 8
+
+
+lines 1704 - 1714
+arrays that will be filled from input alignment file 
+
+
+line 1750
+reading in alignment file 
+actual code to parse file elsewhere, not important for now
+
+after line 1765
+type exit()
+And before the exit() just start printing all of those parallel matrices to try and understand
+what information in the alignment file corresponds to what parallel array
+
+
+
+
+
+
+
+
+
+
+

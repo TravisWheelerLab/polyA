@@ -1,0 +1,180 @@
+ex10_hg38_alugedon.align.format
+start	stop	ID	name
+----------------------------------------
+1	90	14685	MER33#DNA/hAT-Charlie
+91	229	12217	FLAM_C#SINE/Alu
+230	276	10983	AluSq2#SINE/Alu
+277	516	9749	AluSz#SINE/Alu
+517	815	8515	AluSq#SINE/Alu
+849	1134	7281	AluSx#SINE/Alu
+1135	1169	6047	AluYf1#SINE/Alu
+1170	1454	4813	AluSx#SINE/Alu
+1455	1503	3579	AluSc8#SINE/Alu
+1504	1618	2345	AluJb#SINE/Alu
+1619	1719	14685	MER33#DNA/hAT-Charlie
+-------------------------------------------------------------
+
+ex1_hg38_nesting.align.format
+start	stop	ID	name
+----------------------------------------
+360	498	22089	L2#LINE/L2
+711	950	29493	HAL1#LINE/L1
+982	1094	25791	MER30#DNA/hAT-Charlie
+1096	1402	17153	AluY_short_#SINE/Alu
+1403	1517	25791	MER30#DNA/hAT-Charlie
+1549	1941	14685	LTR16C#LTR/ERVL
+1942	2729	29493	HAL1#LINE/L1
+2973	3101	12217	FLAM_A#SINE/Alu
+3109	3203	10983	L1MB7_3end#LINE/L1
+3209	3461	28259	HAL1#LINE/L1
+3462	3695	8515	HAL1ME#LINE/L1
+3829	4080	28259	HAL1#LINE/L1
+4117	4368	4813	AluSz#SINE/Alu
+4371	4901	28259	HAL1#LINE/L1
+4947	5091	2345	L2c_3end#LINE/L2
+5200	5251	1111	L2d2_3end#LINE/L2
+-------------------------------------------------------------
+
+ex2_hg38_nesting.align.format
+start	stop	ID	name
+----------------------------------------
+2563	2587	33195	L1MC5_3end#LINE/L1
+2588	2951	31961	L1ME4b_3end#LINE/L1
+2957	3026	30727	L2b_3end#LINE/L2
+3258	3706	28259	L1MA3_3end#LINE/L1
+3707	3731	27025	L1MB3_3end#LINE/L1
+3918	4230	25791	AluSq#SINE/Alu
+4386	4521	45535	L4_A_Mam#LINE/RTE-X
+4537	4768	40599	L1M5_orf2#LINE/L1
+4769	4896	22089	MLT2C2#LTR/ERVL
+4993	5076	20855	HY1#scRNA
+5077	5194	19621	MLT1E3#LTR/ERVL-MaLR
+5204	5358	18387	MLT2F#LTR/ERVL
+5362	5584	40599	L1M5_orf2#LINE/L1
+5585	5740	39365	L1ME3B_3end#LINE/L1
+5746	6291	14685	MLT1F1#LTR/ERVL-MaLR
+6292	6392	13451	L1ME3_3end#LINE/L1
+6393	6955	39365	L1ME3B_3end#LINE/L1
+7123	7262	44301	L4_B_Mam#LINE/RTE-X
+7268	7313	36897	MSTC#LTR/ERVL-MaLR
+7314	7619	8515	AluSx1#SINE/Alu
+7620	8014	36897	MSTC#LTR/ERVL-MaLR
+8047	8352	44301	L4_B_Mam#LINE/RTE-X
+8353	8400	43067	L4_A_Mam#LINE/RTE-X
+8730	8889	2345	L1MB7_3end#LINE/L1
+8890	8932	1111	L1MA6_3end#LINE/L1
+-------------------------------------------------------------
+
+ex3_hg38_nesting.align.format
+start	stop	ID	name
+----------------------------------------
+649	882	23323	L2c_3end#LINE/L2
+883	1228	20855	LTR40a#LTR/ERVL
+1229	1269	9749	LTR40b#LTR/ERVL
+1275	1447	15919	MSTB1#LTR/ERVL-MaLR
+1448	1576	6047	AluJr4#SINE/Alu
+1577	1699	4813	MSTA1#LTR/ERVL-MaLR
+1700	1821	15919	MSTB1#LTR/ERVL-MaLR
+1822	1878	20855	LTR40a#LTR/ERVL
+1879	2098	23323	L2c_3end#LINE/L2
+-------------------------------------------------------------
+
+626 798
+
+ex4_hg38_badoverlap.align.format
+start	stop	ID	name
+----------------------------------------
+6	145	3579	MIR#SINE/MIR
+149	295	1111	L2a_3end#LINE/L2
+-------------------------------------------------------------
+
+ex5_hg38_composite.align.format
+start	stop	ID	name
+
+----------------------------------------
+1	218	29493	AluYg6#SINE/Alu
+604	1291	36897	Tigger1#DNA/TcMar-Tigger
+1292	1595	27025	AluYa5#SINE/Alu
+1597	2175	36897	Tigger1#DNA/TcMar-Tigger
+2176	2327	24557	AluSx_short_#SINE/Alu
+2328	2626	23323	AluSx3#SINE/Alu
+2627	2679	22089	AluYa8#SINE/Alu
+2680	2780	20855	AluSz6#SINE/Alu
+2782	3091	36897	Tigger1#DNA/TcMar-Tigger
+3092	3656	34429	SVA_B#Retroposon/SVA
+3657	3687	33195	SVA_B#Retroposon/SVA
+3688	3862	14685	SVA_B#Retroposon/SVA
+3863	3890	13451	SVA_B#Retroposon/SVA
+3891	3924	12217	SVA_B#Retroposon/SVA
+3925	3951	33195	SVA_B#Retroposon/SVA
+3952	4057	9749	SVA_A#Retroposon/SVA
+4058	4624	33195	SVA_B#Retroposon/SVA
+4650	5031	36897	Tigger1#DNA/TcMar-Tigger
+5032	5327	6047	AluSg7#SINE/Alu
+5328	5777	36897	Tigger1#DNA/TcMar-Tigger
+6058	6171	30727	LTR38A1#LTR/ERV1
+6172	6314	2345	L1PA15_3end#LINE/L1
+6315	6668	30727	LTR38A1#LTR/ERV1
+-------------------------------------------------------------
+
+ex6_hg38_ambiguous.align.format
+start	stop	ID	name
+----------------------------------------
+1	155	10983	AluSp#SINE/Alu
+157	198	8515	AluY_short_#SINE/Alu
+199	277	12217	LTR5B#LTR/ERVK
+279	536	4813	AluYb10#SINE/Alu
+537	985	3579	LTR5A#LTR/ERVK
+986	1478	12217	LTR5B#LTR/ERVK
+1479	1758	1111	AluYj4#SINE/Alu
+-------------------------------------------------------------
+
+ex7_hg38_ambiguous.align.format
+start	stop	ID	name
+----------------------------------------
+103	215	25791	L2#LINE/L2
+307	461	24557	L2c_3end#LINE/L2
+616	633	23323	L1MA2_3end#LINE/L1
+634	994	22089	L1MB2_3end#LINE/L1
+1106	1314	28259	L2#LINE/L2
+1356	1436	18387	MER106A#DNA/hAT-Charlie
+1437	1576	17153	MER106B#DNA/hAT-Charlie
+1577	1961	28259	L2#LINE/L2
+1980	2138	14685	MER58A#DNA/hAT-Charlie
+2139	2488	13451	L2a_3end#LINE/L2
+2715	2834	10983	L3#LINE/CR1
+2905	3022	9749	MIRc#SINE/MIR
+3180	3297	7281	FLAM_C_short_#SINE/Alu
+3298	3340	6047	AluSp#SINE/Alu
+3435	3508	27025	MIR3#SINE/MIR
+3509	3684	3579	MER20#DNA/hAT-Charlie
+3685	3785	27025	MIR3#SINE/MIR
+4034	4092	1111	AluSx_short_#SINE/Alu
+-------------------------------------------------------------
+
+ex8_hg38_alugedon.align.format
+start	stop	ID	name
+----------------------------------------
+98	400	12217	AluSx1#SINE/Alu
+402	701	9749	AluSc#SINE/Alu
+702	897	8515	AluSx4#SINE/Alu
+899	1031	6047	AluJo#SINE/Alu
+1032	1201	13451	AluSq4#SINE/Alu
+1202	1501	3579	AluY#SINE/Alu
+1502	1792	2345	AluSg#SINE/Alu
+1793	1931	13451	AluSq4#SINE/Alu
+-------------------------------------------------------------
+
+ex9_hg38_alugedon.align.format
+start	stop	ID	name
+----------------------------------------
+6	13	9749	L1ME2_3end#LINE/L1
+14	86	8515	L1MB5_3end#LINE/L1
+87	382	7281	AluSx#SINE/Alu
+383	533	6047	AluJb#SINE/Alu
+534	697	4813	AluYb10#SINE/Alu
+698	998	3579	AluY#SINE/Alu
+999	1148	2345	AluJo#SINE/Alu
+1149	1200	1111	L1M4_orf2#LINE/L1
+-------------------------------------------------------------
+

@@ -103,14 +103,14 @@ def fill_path_graph(
                     if sourceConf >= 0.2 or sinkConf >= 0.2:
                         if sink_strand == "+" and sink_strand == source_strand:
                             # FIXME- not sure what this overlap should be .. just allowed 50 for now
-                            if source_subfam_stop <= sink_subfam_start + 50:
+                            if source_subfam_stop <= sink_subfam_start + 100:
                                 path_graph[
                                     source_node_index * nodes + sink_node_index
                                 ] = 1
                         elif (
                             sink_strand == "-" and sink_strand == source_strand
                         ):
-                            if source_subfam_stop + 50 >= sink_subfam_start:
+                            if source_subfam_stop + 100 >= sink_subfam_start:
                                 path_graph[
                                     source_node_index * nodes + sink_node_index
                                 ] = 1

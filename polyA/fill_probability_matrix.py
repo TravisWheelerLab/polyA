@@ -119,7 +119,7 @@ def fill_probability_matrix(
                                 consensus_matrix_collapse[
                                     prev_row_index, prev_column
                                 ]
-                                > consensus_curr + 50
+                                > consensus_curr + 100
                             ):
                                 prob = change_prob
                                 same_subfam_change = 1
@@ -128,7 +128,7 @@ def fill_probability_matrix(
                                 consensus_matrix_collapse[
                                     prev_row_index, prev_column
                                 ]
-                                + 50
+                                + 100
                                 < consensus_curr
                             ):
                                 prob = change_prob
