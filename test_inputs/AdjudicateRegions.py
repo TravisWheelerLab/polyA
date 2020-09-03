@@ -677,18 +677,18 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
     '0.29'
     >>> f"{conf[2]:.2f}"
     '0.29'
-
-    # make TR Cm test too
     """
 
     confidence_list: List[float] = []
     score_total: int = 0
 
     # if command line option to include subfam_counts
+    # FIXME: change to take in how many TR indices there are in region to remove loops
+    # TR scores are always at the end of a region - just nned to know how far back
     if infile:
         for index in range(len(region)):
             if index in repeat_indices:
-                tr_score = (2 ** region[index]) * subfam_counts["tandem_repeat"]
+                tr_score = (2 ** region[index]) * subfam_counts[subfams[index]]  # FIXME is this returning the right subfam?
                 confidence_list.append(tr_score)
                 score_total += tr_score
             else:
@@ -801,10 +801,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
         col_index: int = columns[i]
         temp_region: List[float] = []
 
-        #FIXME
         for row_index in active_cells[col_index]:
-            # not every col will have a TR value
-            # keep track of which cols have TR's from calc rep scores?
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, [])
@@ -816,8 +813,6 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     for tr_col in repeat_scores:
         col_index: int = tr_col
         temp_region: List[float] = []
-        region_index: int = 0  # track row index in region
-        repeat_indices: List[int] = []
 
         # last row in col is TR
         rows: List[int] = active_cells[col_index]
@@ -828,6 +823,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
 
         temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, [len(rows) - 1])
 
+        # will override
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
@@ -1466,8 +1462,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
                 if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
                     rep_sum_score = SumRepeatScores(begin_node, end_node, repeat_scores)
                 node_confidence_temp[subfam_index * nodes + node_index] = rep_sum_score
-                repeat_keys.append(subfam_index * nodes + node_index
-                                   )
+                repeat_keys.append(subfam_index * nodes + node_index)
             else:
                 for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
                     if chrom_seqs[subfam_index][i] == '-':
@@ -1477,7 +1472,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
                 end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
 
-                # TR check - if last prev subfam was a TR??
+                # FIXME - what if last prev subfam was a TR?
                 lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
                 lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
                 subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
@@ -1535,13 +1530,11 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         repeat_indices: List[int] = []
         for row_index in range(1, len(subfams)):
             # if key in tr_keys, then track which rows index it is
-            # needs to be kept in order
             if row_index * nodes + node_index4 in repeat_keys:
-                repeat_indices.append(row_index)
+                repeat_indices.append(row_index - 1) # FIXME either row_index or row_index -1 depending on skip state
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
-
+        # FIXME - not including skip state - should this be removed in subfams here?
         confidence_temp: List[float] = ConfidenceCM(lamb, infilee, temp, subfam_countss, subfams, repeat_indices)
-
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[(row_index2+1) * nodes + node_index4] = confidence_temp[row_index2]
 
@@ -2136,7 +2129,7 @@ if __name__ == "__main__":
     if infile_prior_counts:
         SubfamCounts["skip"] = prob_skip
         if TR:
-            SubfamCounts["tandem_repeat"] = prob_tr
+            SubfamCounts["Tandem Repeat"] = prob_tr
             prob_skip += prob_tr
 
         for line in in_counts[1:]:
@@ -2214,6 +2207,7 @@ if __name__ == "__main__":
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
             Flanks.append(alignment.flank)
+
     # if there is only one subfam in the alignment file, no need to run anything because we know
     # that subfam is the annotation
     # numseqs = 2 because of the skip state
@@ -2400,7 +2394,6 @@ if __name__ == "__main__":
         (ID, ChangesPosition, Changes) = GetPath(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
                                                  NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
                                                  OriginMatrix, SameSubfamChangeMatrix)
-
 
     #prints results
     if printMatrixPos:
