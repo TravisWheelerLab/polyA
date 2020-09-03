@@ -251,12 +251,8 @@ def fill_align_matrix(
                         )
                         num_nucls += 1
 
-                if align_score <= 0:
-                    align_matrix[i, col_index] = 0.0
-                else:
-                    align_matrix[i, col_index] = (
-                        align_score / num_nucls * chunk_size
-                    )
+
+                align_matrix[i, col_index] = (align_score / num_nucls * chunk_size)
 
                 if align_score == -inf:
                     del align_matrix[i, col_index]
