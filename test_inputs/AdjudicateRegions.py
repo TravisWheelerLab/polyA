@@ -8,7 +8,6 @@ import os
 import json
 import subprocess
 import tempfile
-import bisect
 
 from polyA.load_alignments import load_alignments
 
@@ -685,10 +684,12 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
     # if command line option to include subfam_counts
     if infile:
+        # alignment scores
         for index in range(len(region) - repeats):
             converted_score = (2 ** (region[index] * lambdaa)) * subfam_counts[subfams[subfam_rows[index]]]
             confidence_list.append(converted_score)
             score_total += converted_score
+        # TR scores
         for index in range(len(region) - repeats, len(region)):
             tr_score = (2 ** region[index]) * subfam_counts[subfams[subfam_rows[index]]]
             confidence_list.append(tr_score)
@@ -696,10 +697,12 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
 
     # don't include subfam counts (default)
     else:
+        # alignment scores
         for index in range(len(region) - repeats):
             converted_score = (2 ** (region[index] * lambdaa))
             confidence_list.append(converted_score)
             score_total += converted_score
+        # TR scores
         for index in range(len(region) - repeats, len(region)):
             tr_score = (2 ** region[index])
             confidence_list.append(tr_score)
@@ -798,32 +801,30 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
     # calculates confidence for alignment only columns
     # cols that feature a TR score will be replaced in next for loop
     for i in range(len(columns)):
-        subfam_rows: List = []
         col_index: int = columns[i]
         temp_region: List[float] = []
 
         for row_index in active_cells[col_index]:
-            subfam_rows.append(row_index)
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, subfam_rows, 0)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss,
+                                                    active_cells[col_index], 0)
 
         for row_index2 in range(len(active_cells[col_index])):
             confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
 
     # go through non empty TR columns
     for tr_col in repeat_scores:
-        subfam_rows: List = []
         col_index: int = tr_col
         temp_region: List[float] = []
 
         # last row in col is TR
         # assumes TRs do not overlap in a column
         for row_index in active_cells[col_index]:
-            subfam_rows.append(row_index)
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss, subfam_rows, 1)
+        temp_confidence: List[float] = ConfidenceCM(lamb, infilee, temp_region, subfam_countss, subfamss,
+                                                    active_cells[col_index], 1)
 
         # will replace cols that had both TR and alignment scores
         for row_index2 in range(len(active_cells[col_index])):
@@ -1406,7 +1407,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     node_confidence_temp: List[float] = [0.0 for _ in range(len(subfams) * nodes)]
     node_confidence: Dict[Tuple[str, int], float] = {}
-    repeat_keys: List = []
 
     #holds all chrom seqs and the offset needed to get to the correct position in the chrom
     #seq - remember gaps in chrom seq are skipped over for matrix position
@@ -1414,10 +1414,8 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     #first node
     begin_node0: int = columns[changes_position[0]]
-
+    # alignment subfams
     for subfam_index0 in range(1, len(subfams) - tr_count):
-        # FIXME - we know how many TRs there are in subfams (tr_count) -> this can be broken into two for loops
-        # instead of if/else
         count: int = 0
         align_score0: float = 0.0
         for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
@@ -1449,7 +1447,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
     #middle nodes
     for node_index in range(1, nodes-1):
-
+        # alignment subfams
         for subfam_index in range(1, len(subfams) - tr_count):
 
             begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
@@ -1486,6 +1484,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
             node_confidence_temp[subfam_index * nodes + node_index] = rep_sum_score
 
     # does last node
+    # alignment subfams
     for subfam_index2 in range(1, len(subfams) - tr_count):
         begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
 
@@ -1498,7 +1497,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
 
         end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
-
+        # FIXME - can these be TRs?
         lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
         lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
 
@@ -1510,7 +1509,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
             align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2, sub_matrix)
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
-
+    # last node TRs
     for subfam_index2 in range(len(subfams) - tr_count, len(subfams)):
         begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
         end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2]
@@ -1521,7 +1520,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = rep_sum_score2
 
     # reuse same matrix and compute confidence scores for the nodes
-    subfam_rows = [i for i in range(1, len(subfams))]  # excludes skip state confidence
+    subfam_rows = [i for i in range(1, len(subfams))]  # excludes skip state
     for node_index4 in range(nodes):
         temp: List[float] = []
         for row_index in range(1, len(subfams)):
