@@ -1415,116 +1415,110 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
     #first node
     begin_node0: int = columns[changes_position[0]]
 
-    for subfam_index0 in range(1, len(subfams)):
+    for subfam_index0 in range(1, len(subfams) - tr_count):
         # FIXME - we know how many TRs there are in subfams (tr_count) -> this can be broken into two for loops
         # instead of if/else
         count: int = 0
-        if subfams[subfam_index0] == "Tandem Repeat":
-            rep_sum_score0: float = 0.0
-            chrom_seq_offset[subfam_index0] = count  # used for middle nodes
+        align_score0: float = 0.0
+        for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
+            if chrom_seqs[subfam_index0][i] == '-':
+                count += 1
+        chrom_seq_offset[subfam_index0] = count
 
-            end_node0 = columns[changes_position[1]] + count
+        end_node0: int = columns[changes_position[1]] + count
 
-            # get confidence from RepeatScores
-            if end_node0 >= starts[subfam_index0] - start_all and begin_node0 <= stops[subfam_index0] - start_all:
-                rep_sum_score0 = SumRepeatScores(begin_node0, end_node0, repeat_scores)
-            node_confidence_temp[subfam_index0 * nodes + 0] = rep_sum_score0
+        subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
+        chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
 
-        else:
-            align_score0: float = 0.0
-            for i in range(begin_node0, columns[changes_position[1]]-columns[changes_position[0]]):
-                if chrom_seqs[subfam_index0][i] == '-':
-                    count += 1
-            chrom_seq_offset[subfam_index0] = count
+        # if whole alignment is padding - don't run CalcScore
+        if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
+            align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
+        node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+    # first node TRs
+    count = 0
+    for subfam_index0 in range(len(subfams) - tr_count, len(subfams)):
+        rep_sum_score0: float = 0.0
+        chrom_seq_offset[subfam_index0] = count  # used for middle nodes
 
-            end_node0: int = columns[changes_position[1]] + count
+        end_node0 = columns[changes_position[1]] + count
 
-            subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
-            chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
-
-            #if whole alignment is padding - don't run CalcScore
-            if end_node0 >= starts[subfam_index0]-start_all and begin_node0 <= stops[subfam_index0] - start_all:
-                align_score0 = CalcScore(gap_ext, gap_init, subfam0, chrom0, '', '', sub_matrix)
-            node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+        # get confidence from RepeatScores
+        if end_node0 >= starts[subfam_index0] - start_all and begin_node0 <= stops[subfam_index0] - start_all:
+            rep_sum_score0 = SumRepeatScores(begin_node0, end_node0, repeat_scores)
+        node_confidence_temp[subfam_index0 * nodes + 0] = rep_sum_score0
 
     #middle nodes
     for node_index in range(1, nodes-1):
 
-        for subfam_index in range(1, len(subfams)):
+        for subfam_index in range(1, len(subfams) - tr_count):
 
             begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
 
             count: int = 0
-            if subfams[subfam_index] == "Tandem Repeat":
-                chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
 
-                end_node: int = columns[changes_position[node_index + 1]] + chrom_seq_offset[subfam_index] + count
+            for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
+                if chrom_seqs[subfam_index][i] == '-':
+                    count += 1
 
-                rep_sum_score: float = 0.0
-                if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
-                    rep_sum_score = SumRepeatScores(begin_node, end_node, repeat_scores)
-                node_confidence_temp[subfam_index * nodes + node_index] = rep_sum_score
+            chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
 
-            else:
-                for i in range(begin_node, begin_node + columns[changes_position[node_index + 1]] - columns[changes_position[node_index]]):
-                    if chrom_seqs[subfam_index][i] == '-':
-                        count += 1
-
-                chrom_seq_offset[subfam_index] = chrom_seq_offset[subfam_index] + count
-
-                end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
+            end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
 
                 # FIXME - what if last prev subfam was a TR?
-                lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
-                lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
-                subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
-                chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
+            lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
+            lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
+            subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
+            chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
 
-                align_score: float = 0.0
-                # if whole alignment is padding - don't run CalcScore
-                if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
-                    align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
+            align_score: float = 0.0
+            # if whole alignment is padding - don't run CalcScore
+            if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
+                align_score = CalcScore(gap_ext, gap_init, subfam, chrom, lastprev_subfam, lastprev_chrom, sub_matrix)
+            node_confidence_temp[subfam_index * nodes + node_index] = align_score
+        # middle nodes TRs
+        for subfam_index in range(len(subfams) - tr_count, len(subfams)):
+            begin_node: int = columns[changes_position[node_index]] + chrom_seq_offset[subfam_index]
+            end_node: int = columns[changes_position[node_index + 1]] + chrom_seq_offset[subfam_index] + count
 
-                node_confidence_temp[subfam_index * nodes + node_index] = align_score
-
+            rep_sum_score: float = 0.0
+            if end_node >= starts[subfam_index] - start_all and begin_node <= stops[subfam_index] - start_all:
+                rep_sum_score = SumRepeatScores(begin_node, end_node, repeat_scores)
+            node_confidence_temp[subfam_index * nodes + node_index] = rep_sum_score
 
     # does last node
-    for subfam_index2 in range(1, len(subfams)):
+    for subfam_index2 in range(1, len(subfams) - tr_count):
         begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
 
         count: int = 0
-        if subfams[subfam_index2] == "Tandem Repeat":
-            chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
-            end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
 
-            rep_sum_score2: float = 0.0
-            if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
-                rep_sum_score2 = SumRepeatScores(begin_node2, end_node2 + 1, repeat_scores)
-            node_confidence_temp[subfam_index2 * nodes + nodes - 1] = rep_sum_score2
+        for i in range(begin_node2, begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
+            if chrom_seqs[subfam_index2][i] == '-':
+                count += 1
 
-        else:
-            for i in range(begin_node2,
-                           begin_node2 + columns[changes_position[-1] - 1] - columns[changes_position[-2]]):
-                if chrom_seqs[subfam_index2][i] == '-':
-                    count += 1
+        chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
 
-            chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
+        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
 
-            end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
+        lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
+        lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
 
-            lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
-            lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
+        subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
+        chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
 
-            subfam2: str = subfam_seqs[subfam_index2][begin_node2:end_node2+1]
-            chrom2: str = chrom_seqs[subfam_index2][begin_node2:end_node2+1]
+        align_score2: float = 0.0
+        # if whole alignment is padding - don't run CalcScore
+        if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
+            align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2, sub_matrix)
+        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
 
-            align_score2: float = 0.0
-            # if whole alignment is padding - don't run CalcScore
-            if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
-                align_score2 = CalcScore(gap_ext, gap_init, subfam2, chrom2, lastprev_subfam2, lastprev_chrom2,
-                                         sub_matrix)
+    for subfam_index2 in range(len(subfams) - tr_count, len(subfams)):
+        begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
+        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2]
 
-            node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
+        rep_sum_score2: float = 0.0
+        if end_node2 >= starts[subfam_index2] - start_all and begin_node0 <= stops[subfam_index2] - start_all:
+            rep_sum_score2 = SumRepeatScores(begin_node2, end_node2 + 1, repeat_scores)
+        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = rep_sum_score2
 
     # reuse same matrix and compute confidence scores for the nodes
     subfam_rows = [i for i in range(1, len(subfams))]  # excludes skip state confidence
