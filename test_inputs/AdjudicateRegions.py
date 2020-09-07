@@ -587,7 +587,16 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     output:
     repeat_scores: Hash implementation of sparse 1d array. Key is int that maps col
     index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
-    cols: updated number of columns in the align_matrix
+
+    tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, {}]
+    >>> repeats = [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]
+    >>> align_mat = {}
+    >>> active_cols = {}
+    >>> rep_scores = CalcRepeatScores(repeats, 5, 4, 1, active_cols, align_mat, {})
+    >>> align_mat
+    {(1, 1): 3.3333333333333335, (1, 2): 3.75, (1, 3): 3.75, (1, 4): 5.833333333333333, (2, 6): 1.6666666666666667, (2, 7): 3.125, (2, 8): 4.0, (2, 9): 5.0, (2, 10): 5.0, (2, 11): 4.0, (2, 12): 3.125, (2, 13): 1.6666666666666667}
+    >>> active_cols
+    {1: [0, 1], 2: [0, 1], 3: [0, 1], 4: [0, 1], 6: [0, 2], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2]}
     """
 
     repeat_scores: Dict[int, float] = {}  # maps col in target seq to ultra output score
@@ -603,7 +612,7 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
         # calc score for first chunk
         score: float = 0
         j = 0
-        k = int((ChunkSize - 1) / 2)
+        k = int((chunk_size - 1) / 2)
         # gets 0 to 15
         while j <= k and j < length:
             score += float(pos_scores[j])
@@ -677,6 +686,16 @@ def ConfidenceCM(lambdaa: float, infile: str, region: List[float], subfam_counts
     '0.29'
     >>> f"{conf[2]:.2f}"
     '0.29'
+
+    >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
+    >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
+    >>> conf = ConfidenceCM(0.5, "infile", [2, 1, 0.5], counts, subs, [0, 1, 3], 1)
+    >>> f"{conf[0]:.2f}"
+    '0.54'
+    >>> f"{conf[1]:.2f}"
+    '0.38'
+    >>> f"{conf[2]:.2f}"
+    '0.07'
     """
 
     confidence_list: List[float] = []
@@ -1462,7 +1481,6 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
 
             end_node: int = columns[changes_position[node_index+1]] + chrom_seq_offset[subfam_index] + count
 
-                # FIXME - what if last prev subfam was a TR?
             lastprev_subfam: str = subfam_seqs[subfam_index][begin_node-1]
             lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
             subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
@@ -1497,7 +1515,7 @@ def FillNodeConfidence(nodes: int, start_all: int, gap_init: int, gap_ext: int, 
         chrom_seq_offset[subfam_index2] = chrom_seq_offset[subfam_index2] + count
 
         end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2] + count
-        # FIXME - can these be TRs?
+
         lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
         lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]
 
