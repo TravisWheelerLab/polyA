@@ -5,6 +5,10 @@ on: [push, pull_request]
 jobs:
   check-fast:
     runs-on: ubuntu-20.04
+    container:
+      image: traviswheelerlab/polya-build
+      volumes:
+        - ${{ github.workspace }}:/code
     steps:
       - uses: actions/checkout@v1
       - run: pip3 install poetry
@@ -12,6 +16,10 @@ jobs:
 
   check-slow:
     runs-on: ubuntu-20.04
+    container:
+      image: traviswheelerlab/polya-build
+      volumes:
+        - ${{ github.workspace }}:/code
     steps:
       - uses: actions/checkout@v1
       - run: pip3 install poetry
@@ -19,6 +27,10 @@ jobs:
 
   check-format:
     runs-on: ubuntu-20.04
+    container:
+      image: traviswheelerlab/polya-build
+      volumes:
+        - ${{ github.workspace }}:/code
     steps:
       - uses: actions/checkout@v1
       - run: pip3 install poetry
