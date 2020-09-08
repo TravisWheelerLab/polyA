@@ -1,7 +1,6 @@
 from itertools import groupby
 from typing import Callable, Iterable, List, TextIO
 from .alignment import Alignment
-from .pad_sequences import pad_sequences
 
 
 def _line_grouper(prefix: str) -> Callable[[str], str]:
@@ -50,7 +49,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             sequences=["", ""],
             strand="",
             flank=0,
-        )
+        ),
     ]
     for meta, lines in groupby(file, _line_grouper("Align:")):
         if meta == "":
