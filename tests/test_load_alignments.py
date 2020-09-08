@@ -6,7 +6,6 @@ from pytest import mark
 # TODO: Add test files where consensus_start > consensus_stop
 
 
-@mark.prob_matrix
 def test_load_alignments_1():
     with open(f"fixtures/alignment1.align", "r") as file:
         skip, first, second = load_alignments(file)

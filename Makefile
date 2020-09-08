@@ -29,7 +29,7 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	${TEST_CMD} -m 'not slow' ${TEST_TARGETS}
+	${TEST_CMD} ${TEST_TARGETS}
 
 .PHONY: check-format
 check-format:
@@ -37,7 +37,6 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	${TEST_CMD} -m slow ${TEST_TARGETS}
 	cd test_inputs && ./RunTests.sh
 
 .PHONY: container-build
