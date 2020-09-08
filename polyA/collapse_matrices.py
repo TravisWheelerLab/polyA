@@ -124,7 +124,7 @@ def collapse_matrices(
     >>> active_col
     {0: [0, 1], 2: [0, 1], 3: [0, 1]}
     >>> sub_col_ind
-    {'s1': 0, 's2': 1}
+    {'s1': 0, 's2'}
 
     """
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
