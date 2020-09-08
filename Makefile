@@ -15,7 +15,8 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
-PYTHON_CMD := python3 -m poetry run python
+RUN_CMD := python3 -m poetry run
+PYTHON_CMD := ${RUN_CMD} python
 
 FMT_CMD := ${PYTHON_CMD} -m black
 FMT_TARGETS := polyA/ tests/ test_inputs/
@@ -37,7 +38,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	cd test_inputs && ./RunTests.sh
+	cd test_inputs && ${RUN_CMD} ./RunTests.sh
 
 .PHONY: container-build
 container-build:
