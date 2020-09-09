@@ -3,9 +3,21 @@ from math import inf, log
 
 from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
 
-from polyA.printers import print_matrix_hash
-
+# TODO: add test for this function once test are up and running
 def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: List[int]) -> (List[int], List[int]):
+    """
+    When there is more than one row with the same subfam label, do a mini DP trace
+    to choose which row to collapse to use in collapsed matrices
+
+    input:
+    dp_rows: rows in original matrices to be collapsed
+    support_matrix: uncollapsed support matrix, use these score for dp
+    columns: list of non empty cols in matrices
+
+    output:
+    path: list with labels for which row to collapse to for each column
+    non_empty: list of non empty cols for this particular subfam (in the mini dp matrix)
+    """
     change: float = log(.001)  #FIXME - what transition penalty to use ??
     stay: float = log(1 - .001)
 
@@ -62,6 +74,7 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
     #get path from origin matrix
     # which row to start backtrace
     maxx = -inf
+    max_row_index = 0
     for i in range(len(prev_col_list)):
         if maxx < prev_col_list[i]:
             maxx = prev_col_list[i]
