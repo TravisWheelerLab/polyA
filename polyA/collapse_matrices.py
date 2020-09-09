@@ -17,6 +17,17 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
     output:
     path: list with labels for which row to collapse to for each column
     non_empty: list of non empty cols for this particular subfam (in the mini dp matrix)
+
+    >>> dp_r = [0, 2]
+    >>> non_cols = [0, 2, 3]
+    >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
+    >>> (p, non) = dp_for_collapse(dp_r, sup_mat, non_cols)
+    >>> p
+    [1, 1, 1]
+    >>> non
+    [0, 2, 3]
+
+
     """
     change: float = log(.001)  #FIXME - what transition penalty to use ??
     stay: float = log(1 - .001)
