@@ -40,7 +40,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	${RUN_CMD} ./test_inputs/Runtests.sh
+	${RUN_CMD} ./test_inputs/RunTests.sh
 
 .PHONY: container-build
 container-build:
