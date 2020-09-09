@@ -15,6 +15,8 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
+TEST_INPUTS := wildcard(test_inputs/*.align.format)
+
 RUN_CMD := python3 -m poetry run
 PYTHON_CMD := ${RUN_CMD} python
 
@@ -38,7 +40,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	cd test_inputs && ${RUN_CMD} ./RunTests.sh
+	${RUN_CMD} ./test_inputs/Runtests.sh
 
 .PHONY: container-build
 container-build:
