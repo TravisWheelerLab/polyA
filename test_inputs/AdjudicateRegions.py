@@ -5,6 +5,7 @@ from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple
 import os
 
+
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix

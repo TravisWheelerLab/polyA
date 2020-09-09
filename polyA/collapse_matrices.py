@@ -124,7 +124,7 @@ def collapse_matrices(
     >>> active_col
     {0: [0, 1], 2: [0, 1], 3: [0, 1]}
     >>> sub_col_ind
-    {'s1': 0, 's2'}
+    {'s1': 0, 's2': 1}
 
     """
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
@@ -151,7 +151,7 @@ def collapse_matrices(
 
     for col in range(len(columns)):
         col_index: int = columns[col]
-        active_cols: set[int] = set()  #use set to don't add duplicates of subfams with mulitple alignments
+        active_cols = set()  #use set to don't add duplicates of subfams with mulitple alignments
         active_cells_collapse[col_index] = active_cols
 
         for row_index in active_cells[col_index]:
