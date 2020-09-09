@@ -15,7 +15,10 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
-PYTHON_CMD := python3 -m poetry run python
+TEST_INPUTS := wildcard(test_inputs/*.align.format)
+
+RUN_CMD := python3 -m poetry run
+PYTHON_CMD := ${RUN_CMD} python
 
 FMT_CMD := ${PYTHON_CMD} -m black
 FMT_TARGETS := polyA/ tests/ test_inputs/
@@ -29,7 +32,7 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	${TEST_CMD} -m 'not slow' ${TEST_TARGETS}
+	${TEST_CMD} ${TEST_TARGETS}
 
 .PHONY: check-format
 check-format:
@@ -37,8 +40,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	${TEST_CMD} -m slow ${TEST_TARGETS}
-	cd test_inputs && ./RunTests.sh
+	./test_inputs/RunTests.sh
 
 .PHONY: container-build
 container-build:

@@ -2,15 +2,16 @@ import math
 
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional, TextIO
-from ._exceptions import ValidationException
-from .constants import (
+
+from polyA._exceptions import ValidationException
+from polyA.constants import (
     DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_GAP_EXT,
     DEFAULT_GAP_INIT,
     DEFAULT_LAMBDA,
 )
-from .support_matrix import SupportMatrix, deserialize_support_matrix
+from polyA.matrices import SupportMatrix
 
 
 # TODO: Can we use reflection to automate calling the _parse methods?
@@ -123,7 +124,6 @@ class Options:
         self._parse_gap_ext(namespace)
         self._parse_gap_init(namespace)
         self._parse_log_file(namespace)
-        self._parse_support_matrix(namespace)
 
     def _parse_benchmark(self, namespace: Namespace) -> None:
         self.benchmark = namespace.benchmark
@@ -184,12 +184,3 @@ class Options:
             return
 
         self.log_file = open(namespace.log_file, "a")
-
-    def _parse_support_matrix(self, namespace: Namespace) -> None:
-        if namespace.support is None:
-            self.support_matrix = {}
-            return
-
-        with open(namespace.support) as supportFile:
-            support_lines = supportFile.readlines()
-        self.support_matrix = deserialize_support_matrix(support_lines)
