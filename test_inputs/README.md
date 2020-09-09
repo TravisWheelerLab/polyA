@@ -10,7 +10,7 @@ The following procedure will run the tests:
 
 ```
 cd polyA
-poetry install
+pipenv install
 brew install coreutils # if on a Mac
 cd test_inputs
 ./RunTests.sh

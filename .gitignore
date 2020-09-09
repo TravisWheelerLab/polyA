@@ -1,6 +1,5 @@
 # Python
 *.pyc
-Pipfile.lock
 .mypy_cache
 *.egg-info/
 
