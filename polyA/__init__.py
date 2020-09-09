@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 from .constants import (
     DEFAULT_CHANGE_PROB,

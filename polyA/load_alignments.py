@@ -25,17 +25,6 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
     """
     Load a set of alignments from a file formatted the way cross_match
     formats its output (see http://www.phrap.org/phredphrapconsed.html).
-    For example::
-
-        Align: AluYj4	1-AluJr_311-AluYb8_629-AluSz6	1049	+	1	309	1	311
-        >1-AluJr_311-AluYb8_629-AluSz6
-        GGCCTTGCGAGGTGGGTCACGNCANNTGTAATCCCACTAATTTGGCCGGCCGAGGGTGGC
-        GGATC----GTTCANNNAGATTTTGAGGCCAGCCTGGGGGACCTANNN--GCGAGAGGCC
-        ...
-        >AluYj4
-        GGCCGGGCGCGGTGGCTCGCGCC---TGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC
-        GGATCACGAGGTCAGG-AGATC--GAGACCATCCTGG-----CTAACACGGTGAAACCCC
-        ...
     """
     alignments: List[Alignment] = [
         Alignment(

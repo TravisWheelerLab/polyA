@@ -105,5 +105,7 @@ def fill_consensus_position_matrix(
                 seq_index2 += 1
 
     return ConsensusMatrixContainer(
-        list(columns), active_cells, consensus_matrix,
+        list(columns),
+        active_cells,
+        consensus_matrix,
     )
