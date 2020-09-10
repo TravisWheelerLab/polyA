@@ -180,14 +180,15 @@ pipenv install <package>
 pipenv install --dev <package>
 ```
 
-### Perl-to-Python Tests
+### Docker Image
 
-```
-pipenv install # in the root
-pipenv shell
-```
+There is a `Dockerfile` in the repo root. The image it describes is
+used for running tests in CI and can be used locally for convenience.
 
-Then you should be able to run `RunTests.sh` in `test_inputs` successfully.
+When dependencies change the image must be rebuilt and the new
+version pushed to Docker Hub. This can be done with `make container`
+if you have the correct permissions. Otherwise, ask a maintainer
+to do it for you.
 
 ### Unit Tests
 
@@ -208,6 +209,17 @@ make check-fast check-slow
 # or
 make check
 ```
+
+### Perl-to-Python Tests
+
+```
+pipenv install # in the repo root
+pipenv shell
+```
+
+Once you are in the virtual environment shell, you can run
+`PYTHONPATH=../ python ./RunTests.sh` in the `test_inputs` directory.
+This is also possible using `make check-slow` and happens in CI.
 
 ## License
 
