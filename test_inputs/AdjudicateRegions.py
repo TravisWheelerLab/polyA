@@ -853,7 +853,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
 
 
 def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int],
-                      confidence_matrix: Dict[Tuple[int, int], float], max_col: int) -> Dict[Tuple[int, int], float]:
+                      confidence_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
     """
     Fills support_matrix using values in confidence_matrix. Average confidence values
     for surrounding chunk_size confidence values - normalized by dividing by number of
@@ -882,7 +882,7 @@ def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[in
     >>> strts = [0, 0]
     >>> stps = [0, 2]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
-    >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat, non_cols[-1])
+    >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat)
     {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
     """
 
@@ -937,15 +937,11 @@ def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[in
                 summ: float = 0.0
                 sum_index: int = col_index - left_index
                 num_segments: int = 0
-                while sum_index <= col_index + half_chunk and sum_index < max_col:
+                while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
                     summ += confidence_matrix[row_index, sum_index]
                     sum_index += 1
                     num_segments += 1
 
-                if num_segments == 0:
-                    print(sum_index)
-                    print(col_index + half_chunk)
-                    print(max_col)
                 support_matrix[row_index, col_index] = summ / num_segments
                 left_index += 1
 
@@ -2295,21 +2291,21 @@ if __name__ == "__main__":
         max_tr_col = max(RepeatScores)
         max_align_col = max(NonEmptyColumns)  # last NonEmptyColumn is not always the max col index
         max_col_index: int = max(max_tr_col, max_align_col)
+        # check if TR columns were added after last alignment
+        # TR cols before alignments were accounted for in PadSeqs
+        if max_col_index + 1 > cols:
+            cols = max_col_index + 1
 
         for tr_col in RepeatScores:
             col_set = set(NonEmptyColumns)  # to only add new columns
             col_set.add(tr_col)
             NonEmptyColumns = list(col_set)
-        # check if TR columns were added after last alignment
-        # TR cols before alignments were accounted for in PadSeqs
-        if max_col_index + 1 > cols:
-            cols = max_col_index + 1
     else:
-        max_col_index = max(NonEmptyColumns)
         ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                 ActiveCells, AlignMatrix)
-        
-    SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix, max_col_index)
+
+    NonEmptyColumns.sort()  # need cols in order for printing seqPos and so that last col is max
+    SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
