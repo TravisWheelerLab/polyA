@@ -853,7 +853,7 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
 
 
 def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[int], starts: List[int], stops:List[int],
-                      confidence_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
+                      confidence_matrix: Dict[Tuple[int, int], float], max_col: int) -> Dict[Tuple[int, int], float]:
     """
     Fills support_matrix using values in confidence_matrix. Average confidence values
     for surrounding chunk_size confidence values - normalized by dividing by number of
@@ -882,7 +882,7 @@ def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[in
     >>> strts = [0, 0]
     >>> stps = [0, 2]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
-    >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat)
+    >>> FillSupportMatrix(2, 3, 0, non_cols, strts, stps, conf_mat, non_cols[-1])
     {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
     """
 
@@ -937,22 +937,15 @@ def FillSupportMatrix(row_num: int, chunk_size, start_all: int, columns: List[in
                 summ: float = 0.0
                 sum_index: int = col_index - left_index
                 num_segments: int = 0
-                while sum_index <= col_index + half_chunk and sum_index < columns[-1]:
+                while sum_index <= col_index + half_chunk and sum_index < max_col:
                     summ += confidence_matrix[row_index, sum_index]
                     sum_index += 1
                     num_segments += 1
 
-                # num segments isn't increasing?? Look at length
-                if (num_segments == 0):
-                    print(starts[row_index] - start_all + half_chunk) # 3484 (15)
-                    print(sum_index) # 3469 = 3469 - 0
-                    print(col_index) # 3469 - first one
-                    print(col_index + half_chunk) # 3484
-                    print(columns[-1]) # 3424  ???? last col is 3424, but cols go up to 3720
-                    #fails sum_index < cols[-1]
-                    print(start) #3469
-                    print(stop) #3720
-                    print(row_index) #17
+                if num_segments == 0:
+                    print(sum_index)
+                    print(col_index + half_chunk)
+                    print(max_col)
                 support_matrix[row_index, col_index] = summ / num_segments
                 left_index += 1
 
@@ -2237,7 +2230,7 @@ if __name__ == "__main__":
             stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
         exit()
 
-    match = re.search(r"(.+):(\d+)-(\d+)", Chroms[1])
+    match = re.search(r"(.+)/(\d+)-(\d+)", Chroms[1])  # FIXME: Replace : with / to work with the TR test align files
     Chrom: str = match.groups()[0]
     ChromStart: int = int(match.groups()[1])
     ChromEnd: int = int(match.groups()[2])
@@ -2299,13 +2292,12 @@ if __name__ == "__main__":
 
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                   ActiveCells, RepeatScores, AlignMatrix)
-
         max_tr_col = max(RepeatScores)
-        max_align_col = NonEmptyColumns[-1]
+        max_align_col = max(NonEmptyColumns)  # last NonEmptyColumn is not always the max col index
         max_col_index: int = max(max_tr_col, max_align_col)
 
         for tr_col in RepeatScores:
-            col_set = set(NonEmptyColumns)
+            col_set = set(NonEmptyColumns)  # to only add new columns
             col_set.add(tr_col)
             NonEmptyColumns = list(col_set)
         # check if TR columns were added after last alignment
@@ -2313,10 +2305,11 @@ if __name__ == "__main__":
         if max_col_index + 1 > cols:
             cols = max_col_index + 1
     else:
+        max_col_index = max(NonEmptyColumns)
         ConfidenceMatrix = FillConfidenceMatrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                 ActiveCells, AlignMatrix)
-
-    SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
+        
+    SupportMatrix = FillSupportMatrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix, max_col_index)
 
     (rows, ConsensusMatrixCollapse, StrandMatrixCollapse, SupportMatrixCollapse, SubfamsCollapse,
      ActiveCellsCollapse, SubfamsCollapseIndex) = CollapseMatrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
