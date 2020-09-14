@@ -112,7 +112,7 @@ def fill_support_matrix(
                 left_index += 1
 
             # middle part where num segments is chunk_size
-            col_index: int = (start + half_chunk)
+            col_index: int = start + half_chunk
             summ: float = 0.0
             sum_index: int = col_index - half_chunk
             while sum_index <= col_index + half_chunk:

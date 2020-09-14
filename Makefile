@@ -5,6 +5,7 @@ help:
 	@echo "check-fast       run tests and validations that finish quickly"
 	@echo "check-format     verify that the code formatter has been run"
 	@echo "check-slow       run tests and validations that take awhile"
+	@echo "container        build and push a new container image"
 	@echo "container-build  build the testing container"
 	@echo "container-push   push the testing container to Docker Hub"
 	@echo "format           run the code formatter"
@@ -17,7 +18,7 @@ endif
 
 TEST_INPUTS := wildcard(test_inputs/*.align.format)
 
-RUN_CMD := python3 -m poetry run
+RUN_CMD := pipenv run
 PYTHON_CMD := ${RUN_CMD} python
 
 FMT_CMD := ${PYTHON_CMD} -m black
@@ -40,7 +41,10 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	./test_inputs/RunTests.sh
+	cd test_inputs && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
+
+.PHONY: container
+container: container-build container-push
 
 .PHONY: container-build
 container-build:
@@ -56,8 +60,8 @@ format:
 
 .PHONY: setup
 setup:
-	python3 -m poetry install --no-dev
+	pipenv install
 
 .PHONY: setup-dev
 setup-dev:
-	python3 -m poetry install
+	pipenv install --dev

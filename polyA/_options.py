@@ -56,7 +56,8 @@ class Options:
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
         parser = ArgumentParser(
-            description="polyA adjudication tool", prog=__package__,
+            description="polyA adjudication tool",
+            prog=__package__,
         )
 
         parser.add_argument(
@@ -78,7 +79,9 @@ class Options:
             help="Size of the window in base pairs analyzed together",
         )
         parser.add_argument(
-            "--columns", type=str, help="Path list of column indices to run on",
+            "--columns",
+            type=str,
+            help="Path list of column indices to run on",
         )
         parser.add_argument(
             "--gap-ext",
@@ -105,7 +108,9 @@ class Options:
             default="stderr",
         )
         parser.add_argument(
-            "--support", type=str, help="Path to a serialized support matrix",
+            "--support",
+            type=str,
+            help="Path to a serialized support matrix",
         )
 
         namespace: Namespace
