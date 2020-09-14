@@ -5,7 +5,6 @@ from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple
 import os
 
-
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
@@ -415,14 +414,14 @@ if __name__ == "__main__":
     # 3. Extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
     # 5. Annotate again with removed nodes
     #   ** stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
-
+    prev_num_nodes: int = 0
     count: int = 0
     while True:
         count += 1
         NumNodes = len(Changes)
 
         # breakout of loop if there are 2 or less nodes left
-        if NumNodes <= 2:
+        if NumNodes <= 2 or NumNodes == prev_num_nodes:
             break
 
         NodeConfidence.clear()  # reuse old NodeConfidence matrix
@@ -512,6 +511,8 @@ if __name__ == "__main__":
             OriginMatrix,
             SameSubfamChangeMatrix,
         )
+        prev_num_nodes = NumNodes
+
 
     # prints results
     if printMatrixPos:
