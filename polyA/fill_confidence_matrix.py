@@ -45,9 +45,9 @@ def fill_confidence_matrix(
     >>> f"{conf_mat[1,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[0,2]:.4f}"
-    '0.4788'
+    '0.5000'
     >>> f"{conf_mat[1,2]:.4f}"
-    '0.5212'
+    '0.5000'
     """
     confidence_matrix: ConfidenceMatrix = {}
 

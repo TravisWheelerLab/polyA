@@ -275,7 +275,7 @@ if __name__ == "__main__":
         ChangeProbLog / 2
     )  # jumping in and then out of the skip state counts as 1 jump
     SameProbSkip = (
-        ChangeProbLog / 20
+        ChangeProbLog / 30
     )  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows in matrices
@@ -414,14 +414,14 @@ if __name__ == "__main__":
     # 3. Extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
     # 5. Annotate again with removed nodes
     #   ** stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
-
+    prev_num_nodes: int = 0
     count: int = 0
     while True:
         count += 1
         NumNodes = len(Changes)
 
         # breakout of loop if there are 2 or less nodes left
-        if NumNodes <= 2:
+        if NumNodes <= 2 or NumNodes == prev_num_nodes:
             break
 
         NodeConfidence.clear()  # reuse old NodeConfidence matrix
@@ -511,6 +511,7 @@ if __name__ == "__main__":
             OriginMatrix,
             SameSubfamChangeMatrix,
         )
+        prev_num_nodes = NumNodes
 
     # prints results
     if printMatrixPos:
