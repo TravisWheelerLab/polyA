@@ -108,5 +108,5 @@ def fill_consensus_position_matrix(
     sorted_columns.sort()
 
     return ConsensusMatrixContainer(
-        sorted_columns, active_cells, consensus_matrix,
+        sorted_columns, active_cells, consensus_matrix
     )

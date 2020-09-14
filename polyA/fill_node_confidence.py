@@ -96,9 +96,10 @@ def fill_node_confidence(
 
         for subfam_index in range(1, len(subfams)):
 
-            begin_node: int = columns[
-                changes_position[node_index]
-            ] + chrom_seq_offset[subfam_index]
+            begin_node: int = (
+                columns[changes_position[node_index]]
+                + chrom_seq_offset[subfam_index]
+            )
 
             count: int = 0
             for i in range(
@@ -114,9 +115,11 @@ def fill_node_confidence(
                 chrom_seq_offset[subfam_index] + count
             )
 
-            end_node: int = columns[
-                changes_position[node_index + 1]
-            ] + chrom_seq_offset[subfam_index] + count
+            end_node: int = (
+                columns[changes_position[node_index + 1]]
+                + chrom_seq_offset[subfam_index]
+                + count
+            )
 
             lastprev_subfam: str = subfam_seqs[subfam_index][begin_node - 1]
             lastprev_chrom: str = chrom_seqs[subfam_index][begin_node - 1]
@@ -145,9 +148,9 @@ def fill_node_confidence(
 
     # does last node
     for subfam_index2 in range(1, len(subfams)):
-        begin_node2: int = columns[changes_position[-2]] + chrom_seq_offset[
-            subfam_index2
-        ]
+        begin_node2: int = (
+            columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
+        )
 
         count: int = 0
         for i in range(
@@ -163,9 +166,11 @@ def fill_node_confidence(
             chrom_seq_offset[subfam_index2] + count
         )
 
-        end_node2: int = columns[changes_position[-1] - 1] + chrom_seq_offset[
-            subfam_index2
-        ] + count
+        end_node2: int = (
+            columns[changes_position[-1] - 1]
+            + chrom_seq_offset[subfam_index2]
+            + count
+        )
 
         lastprev_subfam2: str = subfam_seqs[subfam_index2][begin_node2 - 1]
         lastprev_chrom2: str = chrom_seqs[subfam_index2][begin_node2 - 1]

@@ -73,9 +73,9 @@ def fill_align_matrix(
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        seq_index: int = starts[
-            i
-        ] - edge_start  # place in subfam_seq and chrom_seq
+        seq_index: int = (
+            starts[i] - edge_start
+        )  # place in subfam_seq and chrom_seq
         col_index = seq_index + half_chunk  # col in align_matrix
         k = half_chunk
         temp_index = seq_index

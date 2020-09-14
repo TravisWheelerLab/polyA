@@ -4,18 +4,20 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pytest = "*"
-pylint = "*"
+black = "*"
+flit = "*"
 ipython = "*"
 mypy = "*"
-black = "*"
+pprofile = "*"
+pylint = ">=2.4.4,<3.0.0"
+pytest = ">=5.3.5,<6.0.0"
 rope = "*"
 
 [packages]
 numpy = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
 
 [pipenv]
 allow_prereleases = true
