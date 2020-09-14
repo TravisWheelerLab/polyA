@@ -44,11 +44,13 @@ def confidence_cm(
     score_total: int = 0
 
     # if command line option to include subfam_counts
-    if infile: #FIXME - doesn't always get the correct subfam_counts[] entry because this uses index of the smooshed array instead of the regular one
+    if (
+        infile
+    ):  # FIXME - doesn't always get the correct subfam_counts[] entry because this uses index of the smooshed array instead of the regular one
         for index in range(len(region)):
-            converted_score = (2 ** int(region[index] * lambdaa)) * subfam_counts[
-                subfams[index]
-            ]
+            converted_score = (
+                2 ** int(region[index] * lambdaa)
+            ) * subfam_counts[subfams[index]]
             confidence_list.append(converted_score)
             score_total += converted_score
 

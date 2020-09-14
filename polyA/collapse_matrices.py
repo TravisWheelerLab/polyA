@@ -4,7 +4,9 @@ from math import inf, log
 from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
 
 # TODO: add test for this function once test are up and running
-def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: List[int]) -> (List[int], List[int]):
+def dp_for_collapse(
+    dp_rows: List[int], support_matrix: SupportMatrix, columns: List[int]
+) -> (List[int], List[int]):
     """
     When there is more than one row with the same subfam label, do a mini DP trace
     to choose which row to collapse to use in collapsed matrices
@@ -29,8 +31,8 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
 
 
     """
-    change: float = log(.001)  #FIXME - what transition penalty to use ??
-    stay: float = log(1 - .001)
+    change: float = log(0.001)  # FIXME - what transition penalty to use ??
+    stay: float = log(1 - 0.001)
 
     non_empty: List[int] = []
 
@@ -49,10 +51,10 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
     for k in dp_rows:
         prev_col_list.append(0.0)
 
-    #do dp and fill origin matrix
+    # do dp and fill origin matrix
     for i in range(1, len(non_empty)):
         curr_col = non_empty[i]
-        prev_col = non_empty[i-1]
+        prev_col = non_empty[i - 1]
 
         col_list.clear()
 
@@ -72,17 +74,16 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
                         else:
                             score += change
 
-
                         if score > max:
                             max = score
                             max_index = prev_row
 
             col_list.append(max)
-            origin[row,curr_col] = max_index
+            origin[row, curr_col] = max_index
 
         prev_col_list = col_list.copy()
 
-    #get path from origin matrix
+    # get path from origin matrix
     # which row to start backtrace
     maxx = -inf
     max_row_index = 0
@@ -95,7 +96,7 @@ def dp_for_collapse(dp_rows: List[int], support_matrix: SupportMatrix, columns: 
     path.append(max_row_index)
 
     # already added the last col, but this adds the one before cols so still start at last col
-    for columns_index in range(len(non_empty)-1, 1, -1):
+    for columns_index in range(len(non_empty) - 1, 1, -1):
         prev_column: int = non_empty[columns_index - 1]
         path.append(prev_row_index)
         prev_row_index = origin[prev_row_index, prev_column]
@@ -155,11 +156,12 @@ def collapse_matrices(
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
     support_matrix_collapse: Dict[Tuple[int, int], float] = {}
     subfams_collapse: List[str] = []
-    subfams_collapse_temp: Dict[str, int] = {} #maps subfam name to new row index
-    subfams_count: Dict[str, List[int]] = {} #original row in matrix
+    subfams_collapse_temp: Dict[
+        str, int
+    ] = {}  # maps subfam name to new row index
+    subfams_count: Dict[str, List[int]] = {}  # original row in matrix
     active_cells_collapse: Dict[int, List[int]] = {}
-    subfams_dp= set()
-
+    subfams_dp = set()
 
     # assigns row num to subfams strings
     count_i: int = 0
@@ -175,35 +177,53 @@ def collapse_matrices(
 
     for col in range(len(columns)):
         col_index: int = columns[col]
-        active_cols = set()  #use set to don't add duplicates of subfams with mulitple alignments
+        active_cols = (
+            set()
+        )  # use set to don't add duplicates of subfams with mulitple alignments
         active_cells_collapse[col_index] = active_cols
 
         for row_index in active_cells[col_index]:
             subfam: str = subfams[row_index]
 
-            #if there is only one alignment for a subfam, just copy what was in the uncollapsed matrices
+            # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrices
             if len(subfams_count[subfam]) == 1:
-                consensus_matrix_collapse[subfams_collapse_temp[subfam], col_index] = consensus_matrix[row_index, col_index]
-                strand_matrix_collapse[subfams_collapse_temp[subfam], col_index] = strands[row_index]
-                support_matrix_collapse[subfams_collapse_temp[subfam], col_index] = support_matrix[row_index, col_index]
+                consensus_matrix_collapse[
+                    subfams_collapse_temp[subfam], col_index
+                ] = consensus_matrix[row_index, col_index]
+                strand_matrix_collapse[
+                    subfams_collapse_temp[subfam], col_index
+                ] = strands[row_index]
+                support_matrix_collapse[
+                    subfams_collapse_temp[subfam], col_index
+                ] = support_matrix[row_index, col_index]
 
             active_cells_collapse[col_index].add(subfams_collapse_temp[subfam])
 
-    #convert all sets into lists for easier use later
+    # convert all sets into lists for easier use later
     for key in active_cells_collapse:
         active_cells_collapse[key] = list(active_cells_collapse[key])
 
     for subfam in subfams_dp:
 
-        collapse_path, dp_non_empty = dp_for_collapse(subfams_count[subfam], support_matrix, columns)
+        collapse_path, dp_non_empty = dp_for_collapse(
+            subfams_count[subfam], support_matrix, columns
+        )
 
         for i in range(len(dp_non_empty)):
             collapse_col = dp_non_empty[i]
-            collapse_row = subfams_count[subfam][collapse_path[i]]  #original row
+            collapse_row = subfams_count[subfam][
+                collapse_path[i]
+            ]  # original row
 
-            consensus_matrix_collapse[subfams_collapse_temp[subfam], collapse_col] = consensus_matrix[collapse_row, collapse_col]
-            support_matrix_collapse[subfams_collapse_temp[subfam], collapse_col] = support_matrix[collapse_row, collapse_col]
-            strand_matrix_collapse[subfams_collapse_temp[subfam], collapse_col] = strands[collapse_row]
+            consensus_matrix_collapse[
+                subfams_collapse_temp[subfam], collapse_col
+            ] = consensus_matrix[collapse_row, collapse_col]
+            support_matrix_collapse[
+                subfams_collapse_temp[subfam], collapse_col
+            ] = support_matrix[collapse_row, collapse_col]
+            strand_matrix_collapse[
+                subfams_collapse_temp[subfam], collapse_col
+            ] = strands[collapse_row]
 
     row_num_update: int = len(subfams_collapse)
 

@@ -513,7 +513,6 @@ if __name__ == "__main__":
         )
         prev_num_nodes = NumNodes
 
-
     # prints results
     if printMatrixPos:
         print_results(
