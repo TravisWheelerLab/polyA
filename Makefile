@@ -5,6 +5,7 @@ help:
 	@echo "check-fast       run tests and validations that finish quickly"
 	@echo "check-format     verify that the code formatter has been run"
 	@echo "check-slow       run tests and validations that take awhile"
+	@echo "container        build and push a new container image"
 	@echo "container-build  build the testing container"
 	@echo "container-push   push the testing container to Docker Hub"
 	@echo "format           run the code formatter"
@@ -15,21 +16,35 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
+TEST_INPUTS := wildcard(test_inputs/*.align.format)
+
+RUN_CMD := pipenv run
+PYTHON_CMD := ${RUN_CMD} python
+
+FMT_CMD := ${PYTHON_CMD} -m black
+FMT_TARGETS := polyA/ tests/ test_inputs/
+FMT_OPTS := -t py38 -l 80
+
+TEST_CMD := ${PYTHON_CMD} -m pytest
+TEST_TARGETS := tests/ polyA/ test_inputs/AdjudicateRegions.py
+
 .PHONY: check
 check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	poetry run python -m pytest -m 'not slow' tests/ polyA/ test_inputs/AdjudicateRegions.py
+	${TEST_CMD} ${TEST_TARGETS}
 
 .PHONY: check-format
 check-format:
-	poetry run python -m black --check -t py38 -l 80 polyA/ tests/
+	${FMT_CMD} --check ${FMT_OPTS} ${FMT_TARGETS}
 
 .PHONY: check-slow
 check-slow:
-	poetry run python -m pytest -m slow tests/ polyA/
-	cd test_inputs && ./RunTests.sh
+	cd test_inputs && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
+
+.PHONY: container
+container: container-build container-push
 
 .PHONY: container-build
 container-build:
@@ -41,12 +56,12 @@ container-push:
 
 .PHONY: format
 format:
-	poetry run python -m black -t py38 -l 80 polyA/ tests/
+	${FMT_CMD} ${FMT_OPTS} ${FMT_TARGETS}
 
 .PHONY: setup
 setup:
-	poetry install --no-dev
+	pipenv install
 
 .PHONY: setup-dev
 setup-dev:
-	poetry install
+	pipenv install --dev

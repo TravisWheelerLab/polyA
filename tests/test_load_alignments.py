@@ -1,4 +1,4 @@
-from polyA import load_alignments
+from polyA.load_alignments import load_alignments
 from pytest import mark
 
 # TODO: Add test files that use different strand values
@@ -6,10 +6,9 @@ from pytest import mark
 # TODO: Add test files where consensus_start > consensus_stop
 
 
-@mark.prob_matrix
 def test_load_alignments_1():
     with open(f"fixtures/alignment1.align", "r") as file:
-        first, second = load_alignments(file)
+        skip, first, second = load_alignments(file)
 
     assert first.subfamily == "AluYj4"
     assert second.subfamily == "AluYi6_4d"
