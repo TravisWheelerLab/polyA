@@ -2,15 +2,16 @@ import math
 
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional, TextIO
-from ._exceptions import ValidationException
-from .constants import (
+
+from polyA._exceptions import ValidationException
+from polyA.constants import (
     DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_GAP_EXT,
     DEFAULT_GAP_INIT,
     DEFAULT_LAMBDA,
 )
-from .support_matrix import SupportMatrix, deserialize_support_matrix
+from polyA.matrices import SupportMatrix
 
 
 # TODO: Can we use reflection to automate calling the _parse methods?
@@ -55,7 +56,8 @@ class Options:
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
         parser = ArgumentParser(
-            description="polyA adjudication tool", prog=__package__,
+            description="polyA adjudication tool",
+            prog=__package__,
         )
 
         parser.add_argument(
@@ -77,7 +79,9 @@ class Options:
             help="Size of the window in base pairs analyzed together",
         )
         parser.add_argument(
-            "--columns", type=str, help="Path list of column indices to run on",
+            "--columns",
+            type=str,
+            help="Path list of column indices to run on",
         )
         parser.add_argument(
             "--gap-ext",
@@ -104,7 +108,9 @@ class Options:
             default="stderr",
         )
         parser.add_argument(
-            "--support", type=str, help="Path to a serialized support matrix",
+            "--support",
+            type=str,
+            help="Path to a serialized support matrix",
         )
 
         namespace: Namespace
@@ -123,7 +129,6 @@ class Options:
         self._parse_gap_ext(namespace)
         self._parse_gap_init(namespace)
         self._parse_log_file(namespace)
-        self._parse_support_matrix(namespace)
 
     def _parse_benchmark(self, namespace: Namespace) -> None:
         self.benchmark = namespace.benchmark
@@ -184,12 +189,3 @@ class Options:
             return
 
         self.log_file = open(namespace.log_file, "a")
-
-    def _parse_support_matrix(self, namespace: Namespace) -> None:
-        if namespace.support is None:
-            self.support_matrix = {}
-            return
-
-        with open(namespace.support) as supportFile:
-            support_lines = supportFile.readlines()
-        self.support_matrix = deserialize_support_matrix(support_lines)

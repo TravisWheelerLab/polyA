@@ -142,14 +142,14 @@ OPTIONS
 
 ## Development
 
-This project uses [Poetry](https://python-poetry.org), which can be installed
-through Homebrew for Mac users. It must be installed before the Makefile targets
-or the other commands listed in this document will work.
+This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
+installed through Homebrew for Mac users. It must be installed before the
+Makefile targets or the other commands listed in this document will work.
 
 In order to run a command which relies on the project virtual environment, such
-as `python foo.py`, it is necessary to either run `poetry shell` first, which
+as `python foo.py`, it is necessary to either run `pipenv shell` first, which
 will put you into a shell that has the correct Python in its `PATH`, or prefix
-the command with `poetry run` (e.g. `poetry run python foo.py`).
+the command with `pipenv run` (e.g. `pipenv run python foo.py`).
 
 ### Makefile
 
@@ -158,36 +158,37 @@ the available targets.
 
 ### Dependencies
 
-If you prefer not to use the Makefile, the following commands will allow you to
-manage dependencies.
+If you prefer not to use the Makefile, or if you need to add or remove
+dependencies, the following commands will allow you to manage dependencies.
 
 ```
 # Get to work (from within project directory)
 # This drops you into a shell inside the project virtual environment which means
-# that commands that "poetry run" may be elided from other commands.
-poetry shell
+# that commands that "pipenv run" may be elided from other commands.
+pipenv shell
 
 # Fetch runtime dependencies
-poetry install --no-dev
+pipenv install
 
 # Fetch runtime and development dependencies
-poetry install
+pipenv install --dev
 
 # Add a runtime dependency
-poetry install <package>
+pipenv install <package>
 
 # Add a development dependency
-poetry install --dev package
+pipenv install --dev <package>
 ```
 
-### Perl-to-Python Tests
+### Docker Image
 
-```
-poetry install # in the root
-poetry shell
-```
+There is a `Dockerfile` in the repo root. The image it describes is
+used for running tests in CI and can be used locally for convenience.
 
-Then you should be able to run `RunTests.sh` in `test_inputs` successfully.
+When dependencies change the image must be rebuilt and the new
+version pushed to Docker Hub. This can be done with `make container`
+if you have the correct permissions. Otherwise, ask a maintainer
+to do it for you.
 
 ### Unit Tests
 
@@ -200,11 +201,25 @@ Documentation tests are also fine for simple cases.
 
 ```
 # Run tests
-poetry run python -m pytest
+pipenv run python -m pytest
 
 # or
 make check-fast check-slow
+
+# or
+make check
 ```
+
+### Perl-to-Python Tests
+
+```
+pipenv install # in the repo root
+pipenv shell
+```
+
+Once you are in the virtual environment shell, you can run
+`PYTHONPATH=../ python ./RunTests.sh` in the `test_inputs` directory.
+This is also possible using `make check-slow` and happens in CI.
 
 ## License
 
@@ -217,4 +232,3 @@ MIT license. See `LICENSE`.
   - Kaitlin Carey
   - George Lesica
   - Travis Wheeler
-
