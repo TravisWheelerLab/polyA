@@ -9,3 +9,11 @@ author-email = "kaitlin1.carey@umontana.edu"
 home-page = "https://github.com/TravisWheelerLab/polyA"
 classifiers = ["License :: OSI Approved :: BSD License"]
 description-file = "README.md"
+
+[tool.flit.sdist]
+exclude = [
+    "fixtures/",
+    "supporting_materials/",
+    "tests/",
+    "test_inputs/",
+]

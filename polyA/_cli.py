@@ -21,6 +21,7 @@ def _configure_logging(options: Options) -> None:
 def run(args: List[str]) -> None:
     options = Options(args)
     _configure_logging(options)
+    print("foolish")
 
     # For now we just compute a probability matrix from a support
     # matrix because that's all we've ported to Python so far.

@@ -28,6 +28,14 @@ FMT_OPTS := -t py38 -l 80
 TEST_CMD := ${PYTHON_CMD} -m pytest
 TEST_TARGETS := tests/ polyA/ test_inputs/AdjudicateRegions.py
 
+.PHONY: build-package
+build-package:
+	pipenv run flit build
+
+.PHONY: publish-package
+publish-package:
+	pipenv run flit publish
+
 .PHONY: check
 check: check-fast check-slow check-format
 
