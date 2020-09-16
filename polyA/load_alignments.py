@@ -1,7 +1,6 @@
 from itertools import groupby
 from typing import Callable, Iterable, List, TextIO
 from .alignment import Alignment
-from .pad_sequences import pad_sequences
 
 
 def _line_grouper(prefix: str) -> Callable[[str], str]:
@@ -26,17 +25,6 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
     """
     Load a set of alignments from a file formatted the way cross_match
     formats its output (see http://www.phrap.org/phredphrapconsed.html).
-    For example::
-
-        Align: AluYj4	1-AluJr_311-AluYb8_629-AluSz6	1049	+	1	309	1	311
-        >1-AluJr_311-AluYb8_629-AluSz6
-        GGCCTTGCGAGGTGGGTCACGNCANNTGTAATCCCACTAATTTGGCCGGCCGAGGGTGGC
-        GGATC----GTTCANNNAGATTTTGAGGCCAGCCTGGGGGACCTANNN--GCGAGAGGCC
-        ...
-        >AluYj4
-        GGCCGGGCGCGGTGGCTCGCGCC---TGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGC
-        GGATCACGAGGTCAGG-AGATC--GAGACCATCCTGG-----CTAACACGGTGAAACCCC
-        ...
     """
     alignments: List[Alignment] = [
         Alignment(
@@ -50,7 +38,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             sequences=["", ""],
             strand="",
             flank=0,
-        )
+        ),
     ]
     for meta, lines in groupby(file, _line_grouper("Align:")):
         if meta == "":

@@ -1,5 +1,3 @@
-import numpy as np
-
 DEFAULT_CHUNK_SIZE = 30
 """
 The width of the "window" used to break a sequence up into pieces.
@@ -28,7 +26,7 @@ The string used to represent "not a number" for serialization and
 deserialization.
 """
 
-DEFAULT_CHANGE_PROB = float(np.nextafter(0, 1))
+DEFAULT_CHANGE_PROB = 10 ** -45
 """
 The base probability that we change our estimate from one
 base pair to the next. This will generally be a very small value.
