@@ -51,6 +51,10 @@ check-format:
 check-slow:
 	cd test_inputs && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
 
+.PHONY: clean
+clean:
+	rm -rf dist/
+
 .PHONY: container
 container: container-build container-push
 

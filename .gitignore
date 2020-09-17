@@ -3,6 +3,7 @@
 .mypy_cache
 *.egg-info/
 dist/
+.pytest_cache/
 
 # Mac
 .DS_Store
