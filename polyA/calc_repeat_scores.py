@@ -1,8 +1,15 @@
 from typing import Dict, List, Tuple
 
 
-def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: int, active_cells: Dict[int, List[int]],
-                     align_matrix: Dict[Tuple[int, int], float], consensus_matrix: Dict[Tuple[int, int], int]) -> Dict[int, float]:
+def CalcRepeatScores(
+    tandem_repeats,
+    chunk_size: int,
+    start_all: int,
+    row_num: int,
+    active_cells: Dict[int, List[int]],
+    align_matrix: Dict[Tuple[int, int], float],
+    consensus_matrix: Dict[Tuple[int, int], int],
+) -> Dict[int, float]:
     """
     Calculates score (according to ULTRA scoring) for every segment of size
     chunksize for all tandem repeats found in the target sequence.
@@ -36,15 +43,17 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
     {1: [0, 1], 2: [0, 1], 3: [0, 1], 4: [0, 1], 6: [0, 2], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2]}
     """
 
-    repeat_scores: Dict[int, float] = {}  # maps col in target seq to ultra output score
+    repeat_scores: Dict[
+        int, float
+    ] = {}  # maps col in target seq to ultra output score
     # for each tandem repeat, get overlapping windowed score
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start_rep = rep['Start']
+        start_rep = rep["Start"]
         col_index = start_rep - start_all
-        length = rep['Length']
-        pos_scores = rep['PositionScoreDelta'].split(":")
+        length = rep["Length"]
+        pos_scores = rep["PositionScoreDelta"].split(":")
 
         # calc score for first chunk
         score: float = 0
@@ -80,7 +89,9 @@ def CalcRepeatScores(tandem_repeats, chunk_size: int, start_all: int, row_num: i
                 # add new score to repeat_scores
                 repeat_scores[col_index + j + k] = float(pos_scores[j + k])
 
-            align_matrix[i + row_num, col_index + j] = score * chunk_size / window_size
+            align_matrix[i + row_num, col_index + j] = (
+                score * chunk_size / window_size
+            )
             consensus_matrix[i + row_num, col_index + j] = start_rep + j
             # add active cells
             if col_index + j in active_cells:

@@ -3,9 +3,16 @@ from typing import Dict, List, Tuple
 from polyA import confidence_cm
 
 
-def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam_countss: Dict[str, float],
-                           subfamss: List[str], active_cells: Dict[int, List[int]], repeat_scores: Dict[int, float],
-                           align_matrix: Dict[Tuple[int, int], float]) -> Dict[Tuple[int, int], float]:
+def FillConfidenceMatrixTR(
+    lamb: float,
+    infilee: str,
+    columns: List[int],
+    subfam_countss: Dict[str, float],
+    subfamss: List[str],
+    active_cells: Dict[int, List[int]],
+    repeat_scores: Dict[int, float],
+    align_matrix: Dict[Tuple[int, int], float],
+) -> Dict[Tuple[int, int], float]:
     """
     Fills confidence matrix from alignment matrix including TR scores. Each column in the alignment matrix is a group of competing
     annotations that are input into ConfidenceCM.
@@ -37,11 +44,20 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = confidence_cm(lamb, infilee, temp_region, subfam_countss, subfamss,
-                                                    active_cells[col_index], 0)
+        temp_confidence: List[float] = confidence_cm(
+            lamb,
+            infilee,
+            temp_region,
+            subfam_countss,
+            subfamss,
+            active_cells[col_index],
+            0,
+        )
 
         for row_index2 in range(len(active_cells[col_index])):
-            confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
+            confidence_matrix[
+                active_cells[col_index][row_index2], col_index
+            ] = temp_confidence[row_index2]
 
     # go through non empty TR columns
     for tr_col in repeat_scores:
@@ -53,11 +69,20 @@ def FillConfidenceMatrixTR(lamb: float, infilee: str, columns: List[int], subfam
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = confidence_cm(lamb, infilee, temp_region, subfam_countss, subfamss,
-                                                    active_cells[col_index], 1)
+        temp_confidence: List[float] = confidence_cm(
+            lamb,
+            infilee,
+            temp_region,
+            subfam_countss,
+            subfamss,
+            active_cells[col_index],
+            1,
+        )
 
         # will replace cols that had both TR and alignment scores
         for row_index2 in range(len(active_cells[col_index])):
-            confidence_matrix[active_cells[col_index][row_index2], col_index] = temp_confidence[row_index2]
+            confidence_matrix[
+                active_cells[col_index][row_index2], col_index
+            ] = temp_confidence[row_index2]
 
     return confidence_matrix

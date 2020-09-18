@@ -1,7 +1,9 @@
 from typing import Dict
 
 
-def SumRepeatScores(start: int, end: int, repeat_scores: Dict[int, float]) -> float:
+def SumRepeatScores(
+    start: int, end: int, repeat_scores: Dict[int, float]
+) -> float:
     """
     Sums tandem repeat scores from columns start to end.
 
@@ -22,4 +24,3 @@ def SumRepeatScores(start: int, end: int, repeat_scores: Dict[int, float]) -> fl
             summ += repeat_scores[curr_index]
         curr_index += 1
     return summ
-

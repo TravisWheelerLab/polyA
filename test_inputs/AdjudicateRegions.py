@@ -20,8 +20,14 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
-from polyA import pad_sequences, print_matrix_support, print_results, print_results_chrom, print_results_sequence, \
-    print_results_soda
+from polyA import (
+    pad_sequences,
+    print_matrix_support,
+    print_results,
+    print_results_chrom,
+    print_results_sequence,
+    print_results_soda,
+)
 
 if __name__ == "__main__":
     GapInit: int = -25
@@ -77,25 +83,28 @@ if __name__ == "__main__":
         --heatmap outfile - prints probability file for input into heatmap
     """
 
-    raw_opts, args = getopt(argv[1:], "", [
-        "GapInit=",
-        "GapExt=",
-        "skipScore=",
-        "lambda=",
-        "eslPath=",
-        "segmentsize=",
-        "changeprob=",
-        "priorCounts=",
-        "viz=",
-        "heatmap=",
-        "ultraPath=",
-        "seqFile=",
-        "ultraOutput=",
-
-        "help",
-        "matrixpos",
-        "seqpos",
-    ])
+    raw_opts, args = getopt(
+        argv[1:],
+        "",
+        [
+            "GapInit=",
+            "GapExt=",
+            "skipScore=",
+            "lambda=",
+            "eslPath=",
+            "segmentsize=",
+            "changeprob=",
+            "priorCounts=",
+            "viz=",
+            "heatmap=",
+            "ultraPath=",
+            "seqFile=",
+            "ultraOutput=",
+            "help",
+            "matrixpos",
+            "seqpos",
+        ],
+    )
     opts = dict(raw_opts)
 
     GapInit = int(opts["--GapInit"]) if "--GapInit" in opts else GapInit
@@ -114,12 +123,20 @@ if __name__ == "__main__":
         else infile_prior_counts
     )
     outfile_viz = str(opts["--viz"]) if "--viz" in opts else outfile_viz
-    outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+    outfile_heatmap = (
+        str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
+    )
 
     # options for using ultra
-    ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path
+    ultra_path = (
+        str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path
+    )
     seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
-    ultra_output_path = str(opts["--ultraOutput"]) if "--ultraOutput" in opts else ultra_output_path
+    ultra_output_path = (
+        str(opts["--ultraOutput"])
+        if "--ultraOutput" in opts
+        else ultra_output_path
+    )
 
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
@@ -172,8 +189,11 @@ if __name__ == "__main__":
     if ultra_path and seq_file:
         TR = True
         # run ULTRA
-        pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE,
-                               universal_newlines=True)
+        pop = subprocess.Popen(
+            [ultra_path, "-ss", seq_file],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
         ultra_out, err = pop.communicate()
         ultra_output = json.loads(ultra_out)
     elif ultra_output_path:
@@ -185,7 +205,7 @@ if __name__ == "__main__":
     # get TR info from ULTRA output
     TR_count: int = 0
     if TR:
-        TandemRepeats = ultra_output['Repeats']
+        TandemRepeats = ultra_output["Repeats"]
         if len(TandemRepeats) == 0:
             # no repeats found
             TR = False
@@ -317,7 +337,9 @@ if __name__ == "__main__":
     ChangeProbSkip = (
         ChangeProbLog / 2
     )  # jumping in and then out of the skip state counts as 1 jump
-    SameProbSkip = ChangeProbLog / 30 # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+    SameProbSkip = (
+        ChangeProbLog / 30
+    )  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows in matrices
     rows: int = len(Subfams)
@@ -335,19 +357,51 @@ if __name__ == "__main__":
     if TR:
         # add all TR starts and stops
         for rep in TandemRepeats:
-            Starts.append(rep['Start'])  # TR start index
-            Stops.append(rep['Start'] + rep['Length'] - 1)  # TR stop index
+            Starts.append(rep["Start"])  # TR start index
+            Stops.append(rep["Start"] + rep["Length"] - 1)  # TR stop index
 
-    (StartAll, StopAll) = pad_sequences(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
+    (StartAll, StopAll) = pad_sequences(
+        ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs
+    )
 
-    (cols, AlignMatrix) = fill_align_matrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
-                                            ChromSeqs, Starts, SubMatrix)
+    (cols, AlignMatrix) = fill_align_matrix(
+        StartAll,
+        ChunkSize,
+        GapExt,
+        GapInit,
+        SkipAlignScore,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        SubMatrix,
+    )
 
-    (NonEmptyColumns, ActiveCells, ConsensusMatrix) = fill_consensus_position_matrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
+    (
+        NonEmptyColumns,
+        ActiveCells,
+        ConsensusMatrix,
+    ) = fill_consensus_position_matrix(
+        cols,
+        rows,
+        StartAll,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        Stops,
+        ConsensusStarts,
+        Strands,
+    )
 
     if TR:
-        RepeatScores = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, ActiveCells,
-                                        AlignMatrix, ConsensusMatrix)
+        RepeatScores = CalcRepeatScores(
+            TandemRepeats,
+            ChunkSize,
+            StartAll,
+            rows,
+            ActiveCells,
+            AlignMatrix,
+            ConsensusMatrix,
+        )
         # add skip states for TR cols
         for tr_col in RepeatScores:
             AlignMatrix[0, tr_col] = float(SkipAlignScore)
@@ -358,8 +412,16 @@ if __name__ == "__main__":
             Strands.append("+")
             rows += 1
 
-        ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
-                                                  ActiveCells, RepeatScores, AlignMatrix)
+        ConfidenceMatrix = FillConfidenceMatrixTR(
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            SubfamCounts,
+            Subfams,
+            ActiveCells,
+            RepeatScores,
+            AlignMatrix,
+        )
 
         # check if TR columns were added after last alignment
         # TR cols before alignments were accounted for in PadSeqs
@@ -374,12 +436,35 @@ if __name__ == "__main__":
             NonEmptyColumns = list(col_set)
         NonEmptyColumns.sort()
     else:
-        ConfidenceMatrix = fill_confidence_matrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
-                                                ActiveCells, AlignMatrix)
+        ConfidenceMatrix = fill_confidence_matrix(
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            SubfamCounts,
+            Subfams,
+            ActiveCells,
+            AlignMatrix,
+        )
 
-    SupportMatrix = fill_support_matrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
+    SupportMatrix = fill_support_matrix(
+        rows,
+        ChunkSize,
+        StartAll,
+        NonEmptyColumns,
+        Starts,
+        Stops,
+        ConfidenceMatrix,
+    )
 
-    collapsed_matrices = collapse_matrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)
+    collapsed_matrices = collapse_matrices(
+        rows,
+        NonEmptyColumns,
+        Subfams,
+        Strands,
+        ActiveCells,
+        SupportMatrix,
+        ConsensusMatrix,
+    )
     SupportMatrixCollapse = collapsed_matrices.support_matrix
     SubfamsCollapse = collapsed_matrices.subfamilies
     ActiveCellsCollapse = collapsed_matrices.active_rows
@@ -387,7 +472,7 @@ if __name__ == "__main__":
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
 
-    #if command line option included to output support matrix for heatmap
+    # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
         with open(outfile_heatmap, "w") as outfile:
             print_matrix_support(
@@ -451,19 +536,43 @@ if __name__ == "__main__":
         if NumNodes <= 2 or NumNodes == prev_num_nodes:
             break
 
-        NodeConfidence.clear() #reuse old NodeConfidence matrix
+        NodeConfidence.clear()  # reuse old NodeConfidence matrix
 
-        NodeConfidence = fill_node_confidence(NumNodes, StartAll, GapInit, GapExt, Lamb, infile_prior_counts,
-                                            NonEmptyColumns, Starts, Stops, ChangesPosition, Subfams, SubfamSeqs,
-                                            ChromSeqs, SubfamCounts, SubMatrix, RepeatScores, TR_count)
+        NodeConfidence = fill_node_confidence(
+            NumNodes,
+            StartAll,
+            GapInit,
+            GapExt,
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            Starts,
+            Stops,
+            ChangesPosition,
+            Subfams,
+            SubfamSeqs,
+            ChromSeqs,
+            SubfamCounts,
+            SubMatrix,
+            RepeatScores,
+            TR_count,
+        )
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
-        PathGraph.clear() #reuse old PathGraph
+        PathGraph.clear()  # reuse old PathGraph
         # Update for TR's - no alternative edges
-        PathGraph = fill_path_graph(NumNodes, NonEmptyColumns, Changes, ChangesPosition,
-                                  ConsensusMatrixCollapse, StrandMatrixCollapse, NodeConfidence, SubfamsCollapseIndex)
+        PathGraph = fill_path_graph(
+            NumNodes,
+            NonEmptyColumns,
+            Changes,
+            ChangesPosition,
+            ConsensusMatrixCollapse,
+            StrandMatrixCollapse,
+            NodeConfidence,
+            SubfamsCollapseIndex,
+        )
 
         # test to see if there are nodes in the graph that have more than one incoming or outgoing edge,
         # if so - keep looping, if not - break out of the loop
@@ -503,12 +612,22 @@ if __name__ == "__main__":
         Changes.clear()
         ChangesPosition.clear()
 
-        (ID, ChangesPosition, Changes) = get_path(ID, NonEmptyColumns, IDs, ChangesOrig, ChangesPositionOrig,
-                                                 NonEmptyColumnsOrig, SubfamsCollapse, ProbMatrixLastColumn, ActiveCellsCollapse,
-                                                 OriginMatrix, SameSubfamChangeMatrix)
+        (ID, ChangesPosition, Changes) = get_path(
+            ID,
+            NonEmptyColumns,
+            IDs,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            SubfamsCollapse,
+            ProbMatrixLastColumn,
+            ActiveCellsCollapse,
+            OriginMatrix,
+            SameSubfamChangeMatrix,
+        )
         prev_num_nodes = NumNodes
 
-#prints results
+    # prints results
     if printMatrixPos:
         print_results(
             ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs

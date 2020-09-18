@@ -60,7 +60,13 @@ def fill_confidence_matrix(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            lambdaa, infile, temp_region, subfam_counts, subfams, active_cells[col_index], 0
+            lambdaa,
+            infile,
+            temp_region,
+            subfam_counts,
+            subfams,
+            active_cells[col_index],
+            0,
         )
 
         for row_index2 in range(len(active_cells[col_index])):

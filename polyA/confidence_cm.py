@@ -1,8 +1,15 @@
 from typing import Dict, List
 
 
-def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_counts: Dict[str, float],
-                 subfams: List[str], subfam_rows: List[int], repeats: int) -> List[float]:
+def confidence_cm(
+    lambdaa: float,
+    infile: str,
+    region: List[float],
+    subfam_counts: Dict[str, float],
+    subfams: List[str],
+    subfam_rows: List[int],
+    repeats: int,
+) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment and tandem
     repeat scores. Loops through the array once to find sum of 2^every_hit_score in
@@ -52,12 +59,16 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
     if infile:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = (2 ** int(region[index] * lambdaa)) * subfam_counts[subfams[subfam_rows[index]]]
+            converted_score = (
+                2 ** int(region[index] * lambdaa)
+            ) * subfam_counts[subfams[subfam_rows[index]]]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = (2 ** int(region[index])) * subfam_counts[subfams[subfam_rows[index]]]
+            tr_score = (2 ** int(region[index])) * subfam_counts[
+                subfams[subfam_rows[index]]
+            ]
             confidence_list.append(tr_score)
             score_total += tr_score
 
@@ -65,12 +76,12 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
     else:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = (2 ** int(region[index] * lambdaa))
+            converted_score = 2 ** int(region[index] * lambdaa)
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = (2 ** int(region[index]))
+            tr_score = 2 ** int(region[index])
             confidence_list.append(tr_score)
             score_total += tr_score
 
@@ -78,4 +89,3 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
         confidence_list[index] = confidence_list[index] / score_total
 
     return confidence_list
-
