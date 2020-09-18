@@ -28,11 +28,11 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
     >>> subs = ["s1", "s2", "s3"]
     >>> conf = confidence_cm(0.5, "infile", [2, 1, 1], counts, subs, [0, 1, 2], 0)
     >>> f"{conf[0]:.2f}"
-    '0.41'
+    '0.50'
     >>> f"{conf[1]:.2f}"
-    '0.29'
+    '0.25'
     >>> f"{conf[2]:.2f}"
-    '0.29'
+    '0.25'
 
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
