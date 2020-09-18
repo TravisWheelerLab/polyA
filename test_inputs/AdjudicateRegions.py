@@ -3,10 +3,8 @@ from math import log
 import re
 from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple
-import os
 import json
 import subprocess
-import tempfile
 
 from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
@@ -46,14 +44,10 @@ if __name__ == "__main__":
     outfile_viz: str = ""
     outfile_heatmap: str = ""
 
-    # running ultra and esl with raw data
-    esl_sfetch_path: str = ""
+    # running ultra
     ultra_path: str = ""
     seq_file: str = ""
-    start_pos: int = 0
-    end_pos: int = 0
-    chrom_name: str = ""
-    # using ultra output
+    # given ultra output
     ultra_output_path: str = ""  # json file
 
     help: bool = False  # Reassigned later
@@ -72,11 +66,8 @@ if __name__ == "__main__":
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
         --ultraPath [specify path to ULTRA executable]
-        --seqFile [specify path to genome file]
-        --startPos [start of sequence region]
-        --endPos [end of sequence region]
-        --chromName [name of chromosome] (must match genome file name)
-        --ultraOutput [specify path to ULTRA output file]
+        --seqFile [specify path to genome region file]
+        --ultraOutput [specify path to ULTRA output file from region]
     
     OPTIONS
         --help - display help message
@@ -98,11 +89,7 @@ if __name__ == "__main__":
         "viz=",
         "heatmap=",
         "ultraPath=",
-        "eslSfetch=",
         "seqFile=",
-        "startPos=",
-        "endPos=",
-        "chromName=",
         "ultraOutput=",
 
         "help",
@@ -130,12 +117,8 @@ if __name__ == "__main__":
     outfile_heatmap = str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
 
     # options for using ultra
-    esl_sfetch_path = str(opts["--eslSfetch"]) if "--eslSfetch" in opts else esl_sfetch_path
-    ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path # gets path to exe
+    ultra_path = str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path
     seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
-    start_pos = str(opts["--startPos"]) if "--startPos" in opts else start_pos
-    end_pos = str(opts["--endPos"]) if "--endPos" in opts else end_pos
-    chrom_name = str(opts["--chromName"]) if "--chromName" in opts else chrom_name
     ultra_output_path = str(opts["--ultraOutput"]) if "--ultraOutput" in opts else ultra_output_path
 
     help = "--help" in opts
@@ -185,23 +168,8 @@ if __name__ == "__main__":
     SubMatrix[".."] = 0
 
     TR: bool = False
-    # running esl and ultra
-    # should already have a correct fasta file from getting alignments
-    if ultra_path and esl_sfetch_path and seq_file and start_pos and end_pos and chrom_name:
-        TR = True
-        # pre-processing
-        subprocess.call([esl_sfetch_path, '--index', seq_file])
-        # get smaller region
-        file, small_region = tempfile.mkstemp()
-        subprocess.call([esl_sfetch_path, '-o', small_region, '-c',
-                         start_pos + '..' + end_pos, seq_file, chrom_name])
-        # run ULTRA
-        pop = subprocess.Popen([ultra_path, '-ss', small_region], stdout=subprocess.PIPE,
-                               universal_newlines=True)
-        ultra_out, err = pop.communicate()
-        ultra_output = json.loads(ultra_out)
-        os.remove(small_region)
-    elif ultra_path and seq_file:
+    # user should already have the correct file of seq region from alignments
+    if ultra_path and seq_file:
         TR = True
         # run ULTRA
         pop = subprocess.Popen([ultra_path, '-ss', seq_file], stdout=subprocess.PIPE,
@@ -210,15 +178,16 @@ if __name__ == "__main__":
         ultra_output = json.loads(ultra_out)
     elif ultra_output_path:
         TR = True
-        # my path: /Users/audrey/tr.json
+        # load ULTRA output file
         with open(ultra_output_path) as f:
             ultra_output = json.load(f)
 
-    # Get Tandem Repeats from ULTRA output
+    # get TR info from ULTRA output
     TR_count: int = 0
     if TR:
         TandemRepeats = ultra_output['Repeats']
         if len(TandemRepeats) == 0:
+            # no repeats found
             TR = False
         else:
             TR_count = len(TandemRepeats)
@@ -228,7 +197,7 @@ if __name__ == "__main__":
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
     prob_skip = 0.4  # about 60% of genome is TE derived
-    prob_tr = 0.06  # ~6% of genome exepected to be tandem repeat
+    prob_tr = 0.06  # about 6% of genome expected to be a tandem repeat
     if infile_prior_counts:
         SubfamCounts["skip"] = prob_skip
         if TR:
@@ -321,7 +290,7 @@ if __name__ == "__main__":
             stdout.write(f"{Starts[1]}\t{Stops[1]}\t1111\t{Subfams[1]}\n")
         exit()
 
-    match = re.search(r"(.+):(\d+)-(\d+)", Chroms[1])  # FIXME: Replace : with / to work with the TR test align files
+    match = re.search(r"(.+):(\d+)-(\d+)", Chroms[1])
     Chrom: str = match.groups()[0]
     ChromStart: int = int(match.groups()[1])
     ChromEnd: int = int(match.groups()[2])
@@ -372,18 +341,18 @@ if __name__ == "__main__":
     (StartAll, StopAll) = pad_sequences(ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs)
 
     (cols, AlignMatrix) = fill_align_matrix(StartAll, ChunkSize, GapExt, GapInit, SkipAlignScore, SubfamSeqs,
-                                          ChromSeqs, Starts, SubMatrix)
+                                            ChromSeqs, Starts, SubMatrix)
+
     (NonEmptyColumns, ActiveCells, ConsensusMatrix) = fill_consensus_position_matrix(cols, rows, StartAll, SubfamSeqs, ChromSeqs, Starts, Stops, ConsensusStarts, Strands)
 
     if TR:
-        TR_row_index_start = rows
         RepeatScores = CalcRepeatScores(TandemRepeats, ChunkSize, StartAll, rows, ActiveCells,
                                         AlignMatrix, ConsensusMatrix)
-        # add skip states for repeat cols
+        # add skip states for TR cols
         for tr_col in RepeatScores:
             AlignMatrix[0, tr_col] = float(SkipAlignScore)
             ConsensusMatrix[0, tr_col] = 0
-
+        # add TRs to subfams
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
             Strands.append("+")
@@ -391,23 +360,23 @@ if __name__ == "__main__":
 
         ConfidenceMatrix = FillConfidenceMatrixTR(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                   ActiveCells, RepeatScores, AlignMatrix)
-        max_tr_col = max(RepeatScores)
-        max_align_col = max(NonEmptyColumns)  # last NonEmptyColumn is not always the max col index
-        max_col_index: int = max(max_tr_col, max_align_col)
+
         # check if TR columns were added after last alignment
         # TR cols before alignments were accounted for in PadSeqs
+        max_col_index: int = max(RepeatScores)
         if max_col_index + 1 > cols:
             cols = max_col_index + 1
 
+        # add TR cols to NonEmptyColumns
         for tr_col in RepeatScores:
-            col_set = set(NonEmptyColumns)  # to only add new columns
+            col_set = set(NonEmptyColumns)  # only add new columns
             col_set.add(tr_col)
             NonEmptyColumns = list(col_set)
+        NonEmptyColumns.sort()
     else:
         ConfidenceMatrix = fill_confidence_matrix(Lamb, infile_prior_counts, NonEmptyColumns, SubfamCounts, Subfams,
                                                 ActiveCells, AlignMatrix)
 
-    NonEmptyColumns.sort()  # need cols in order for printing seqPos and so that last col is max
     SupportMatrix = fill_support_matrix(rows, ChunkSize, StartAll, NonEmptyColumns, Starts, Stops, ConfidenceMatrix)
 
     collapsed_matrices = collapse_matrices(rows, NonEmptyColumns, Subfams, Strands, ActiveCells, SupportMatrix, ConsensusMatrix)

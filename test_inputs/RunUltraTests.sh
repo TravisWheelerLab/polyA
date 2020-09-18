@@ -18,7 +18,11 @@ for file in $test_files
     # alignment files will correspond with fasta file names from CM
   	align_file="${file}.cm.align"
   	echo "$align_file"
-  	poetry run python3 AdjudicateRegions.py --seqpos --lambda .1227 --ultraPath $ultra_path --seqFile $file $align_file 25p41g_edited.matrix
+  	echo "Normal"
+  	python3 AdjudicateRegions.py --seqpos --lambda .1227 $align_file 25p41g_edited.matrix
+  	echo "-------------------------------------------------------------"
+  	echo "With TR flags"
+  	python3 AdjudicateRegions.py --seqpos --lambda .1227 --ultraPath $ultra_path --seqFile $file $align_file 25p41g_edited.matrix
     echo "-------------------------------------------------------------"
 done
 	

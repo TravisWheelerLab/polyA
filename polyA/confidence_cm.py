@@ -57,7 +57,7 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = (2 ** region[index]) * subfam_counts[subfams[subfam_rows[index]]]
+            tr_score = (2 ** int(region[index])) * subfam_counts[subfams[subfam_rows[index]]]
             confidence_list.append(tr_score)
             score_total += tr_score
 
@@ -70,7 +70,7 @@ def confidence_cm(lambdaa: float, infile: str, region: List[float], subfam_count
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = (2 ** region[index])
+            tr_score = (2 ** int(region[index]))
             confidence_list.append(tr_score)
             score_total += tr_score
 
