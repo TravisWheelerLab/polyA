@@ -69,8 +69,8 @@ def fill_path_graph(
         ]
 
         if (
-            sink_subfam != "skip"
-        ):  # don't want to add alternative edges to skip nodes
+            sink_subfam != "skip" or sink_subfam != "Tandem Repeat"
+        ):  # don't want to add alternative edges to skip nodes or tandem repeats
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
                 sourceConf: float = node_confidence[

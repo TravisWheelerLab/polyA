@@ -3,12 +3,15 @@ from math import log
 import re
 from sys import argv, stdout, stderr
 from typing import Dict, List, Tuple
-import os
+import json
+import subprocess
 
+from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
 from polyA.fill_confidence_matrix import fill_confidence_matrix
+from polyA.fill_confidence_matrix_tr import FillConfidenceMatrixTR
 from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
 from polyA.fill_node_confidence import fill_node_confidence
 from polyA.fill_path_graph import fill_path_graph
@@ -17,8 +20,8 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
-from polyA.pad_sequences import pad_sequences
-from polyA.printers import (
+from polyA import (
+    pad_sequences,
     print_matrix_support,
     print_results,
     print_results_chrom,
@@ -47,6 +50,12 @@ if __name__ == "__main__":
     outfile_viz: str = ""
     outfile_heatmap: str = ""
 
+    # running ultra
+    ultra_path: str = ""
+    seq_file: str = ""
+    # given ultra output
+    ultra_output_path: str = ""  # json file
+
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
     printMatrixPos: bool = False  # Reassigned later
@@ -62,6 +71,9 @@ if __name__ == "__main__":
         --segmentsize (must be odd) [31]
         --changeprob[1e-45]
         --priorCounts PriorCountsFile
+        --ultraPath [specify path to ULTRA executable]
+        --seqFile [specify path to genome region file]
+        --ultraOutput [specify path to ULTRA output file from region]
     
     OPTIONS
         --help - display help message
@@ -85,6 +97,9 @@ if __name__ == "__main__":
             "priorCounts=",
             "viz=",
             "heatmap=",
+            "ultraPath=",
+            "seqFile=",
+            "ultraOutput=",
             "help",
             "matrixpos",
             "seqpos",
@@ -111,6 +126,18 @@ if __name__ == "__main__":
     outfile_heatmap = (
         str(opts["--heatmap"]) if "--heatmap" in opts else outfile_heatmap
     )
+
+    # options for using ultra
+    ultra_path = (
+        str(opts["--ultraPath"]) if "--ultraPath" in opts else ultra_path
+    )
+    seq_file = str(opts["--seqFile"]) if "--seqFile" in opts else seq_file
+    ultra_output_path = (
+        str(opts["--ultraOutput"])
+        if "--ultraOutput" in opts
+        else ultra_output_path
+    )
+
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
     printSeqPos = "--seqpos" in opts
@@ -157,22 +184,57 @@ if __name__ == "__main__":
         count += 1
     SubMatrix[".."] = 0
 
+    TR: bool = False
+    # user should already have the correct file of seq region from alignments
+    if ultra_path and seq_file:
+        TR = True
+        # run ULTRA
+        pop = subprocess.Popen(
+            [ultra_path, "-ss", seq_file],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        ultra_out, err = pop.communicate()
+        ultra_output = json.loads(ultra_out)
+    elif ultra_output_path:
+        TR = True
+        # load ULTRA output file
+        with open(ultra_output_path) as f:
+            ultra_output = json.load(f)
+
+    # get TR info from ULTRA output
+    TR_count: int = 0
+    if TR:
+        TandemRepeats = ultra_output["Repeats"]
+        if len(TandemRepeats) == 0:
+            # no repeats found
+            TR = False
+        else:
+            TR_count = len(TandemRepeats)
+
     # maps subfam names to genomic prior_count/total_in_genome from input file
     # used during confidence calculations
     SubfamCounts: Dict[str, float] = {}
     PriorTotal: float = 0
     prob_skip = 0.4  # about 60% of genome is TE derived
+    prob_tr = 0.06  # about 6% of genome expected to be a tandem repeat
     if infile_prior_counts:
+        SubfamCounts["skip"] = prob_skip
+        if TR:
+            SubfamCounts["Tandem Repeat"] = prob_tr
+            prob_skip += prob_tr
+
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
             info = re.split(r"\s+", line)
-            SubfamCounts[info[0]] = int(info[1])
+            # FIXME: infile counts do not match subfam names
+            count = info[1]
+            subfam = info[0]
+            SubfamCounts[subfam] = int(count)
             PriorTotal += float(info[1])
 
         for key in SubfamCounts:
             SubfamCounts[key] = (1 - prob_skip) * SubfamCounts[key] / PriorTotal
-
-        SubfamCounts["skip"] = prob_skip
 
     Subfams: List[str] = []
     Chroms: List[str] = []
@@ -186,6 +248,7 @@ if __name__ == "__main__":
     ChromSeqs: List[str] = []
     Flanks: List[int] = []
 
+    RepeatScores: Dict[int, float] = {}
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     SingleAlignMatrix: Dict[Tuple[int, int], int] = {}
     ConfidenceMatrix: Dict[Tuple[int, int], float] = {}
@@ -220,7 +283,7 @@ if __name__ == "__main__":
         alignments = load_alignments(_infile)
         for alignment in alignments:
             numseqs += 1
-
+            # FIXME: split subfam to match prior counts file for testing - can't always split by #
             Subfams.append(alignment.subfamily)
             Chroms.append(alignment.chrom)
             Scores.append(alignment.score)
@@ -291,7 +354,13 @@ if __name__ == "__main__":
             else:
                 ConsensusLengths[Subfams[i]] = ConsensusStarts[i] + Flanks[i]
 
-    StartAll, StopAll = pad_sequences(
+    if TR:
+        # add all TR starts and stops
+        for rep in TandemRepeats:
+            Starts.append(rep["Start"])  # TR start index
+            Stops.append(rep["Start"] + rep["Length"] - 1)  # TR stop index
+
+    (StartAll, StopAll) = pad_sequences(
         ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs
     )
 
@@ -323,15 +392,59 @@ if __name__ == "__main__":
         Strands,
     )
 
-    ConfidenceMatrix = fill_confidence_matrix(
-        Lamb,
-        infile_prior_counts,
-        NonEmptyColumns,
-        SubfamCounts,
-        Subfams,
-        ActiveCells,
-        AlignMatrix,
-    )
+    if TR:
+        RepeatScores = CalcRepeatScores(
+            TandemRepeats,
+            ChunkSize,
+            StartAll,
+            rows,
+            ActiveCells,
+            AlignMatrix,
+            ConsensusMatrix,
+        )
+        # add skip states for TR cols
+        for tr_col in RepeatScores:
+            AlignMatrix[0, tr_col] = float(SkipAlignScore)
+            ConsensusMatrix[0, tr_col] = 0
+        # add TRs to subfams
+        for rep in TandemRepeats:
+            Subfams.append("Tandem Repeat")
+            Strands.append("+")
+            rows += 1
+
+        ConfidenceMatrix = FillConfidenceMatrixTR(
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            SubfamCounts,
+            Subfams,
+            ActiveCells,
+            RepeatScores,
+            AlignMatrix,
+        )
+
+        # check if TR columns were added after last alignment
+        # TR cols before alignments were accounted for in PadSeqs
+        max_col_index: int = max(RepeatScores)
+        if max_col_index + 1 > cols:
+            cols = max_col_index + 1
+
+        # add TR cols to NonEmptyColumns
+        for tr_col in RepeatScores:
+            col_set = set(NonEmptyColumns)  # only add new columns
+            col_set.add(tr_col)
+            NonEmptyColumns = list(col_set)
+        NonEmptyColumns.sort()
+    else:
+        ConfidenceMatrix = fill_confidence_matrix(
+            Lamb,
+            infile_prior_counts,
+            NonEmptyColumns,
+            SubfamCounts,
+            Subfams,
+            ActiveCells,
+            AlignMatrix,
+        )
 
     SupportMatrix = fill_support_matrix(
         rows,
@@ -352,7 +465,6 @@ if __name__ == "__main__":
         SupportMatrix,
         ConsensusMatrix,
     )
-
     SupportMatrixCollapse = collapsed_matrices.support_matrix
     SubfamsCollapse = collapsed_matrices.subfamilies
     ActiveCellsCollapse = collapsed_matrices.active_rows
@@ -442,13 +554,15 @@ if __name__ == "__main__":
             ChromSeqs,
             SubfamCounts,
             SubMatrix,
+            RepeatScores,
+            TR_count,
         )
-
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
 
         PathGraph.clear()  # reuse old PathGraph
+        # Update for TR's - no alternative edges
         PathGraph = fill_path_graph(
             NumNodes,
             NonEmptyColumns,
@@ -460,7 +574,7 @@ if __name__ == "__main__":
             SubfamsCollapseIndex,
         )
 
-        # test to see if there are nodes in the graph that have more that one incoming or outgoing edge,
+        # test to see if there are nodes in the graph that have more than one incoming or outgoing edge,
         # if so - keep looping, if not - break out of the loop
         # if they are all 0, break out of the loop
         test: bool = False

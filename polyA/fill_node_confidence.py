@@ -1,7 +1,8 @@
 from typing import Dict, List, Tuple
 
+from polyA import confidence_cm
 from polyA.calculate_score import calculate_score
-from polyA.confidence_cm import confidence_cm
+from polyA.sum_repeat_scores import SumRepeatScores
 
 
 def fill_node_confidence(
@@ -20,14 +21,20 @@ def fill_node_confidence(
     chrom_seqs: List[str],
     subfam_countss: Dict[str, float],
     sub_matrix: Dict[str, int],
+    repeat_scores: Dict[int, float],
+    tr_count: int,
 ) -> Dict[Tuple[str, int], float]:
     """
+    finds competing annotations, alignment scores and confidence values for each node
+    identified in GetPath()
+
+    first fills matrix with node alignment scores, then reuses matrix for confidence scores
     Using changes_position indentified boundaries for all nodes, and computes confidence
     values for each node. First fills matrix with node alignment scores, then reuses matrix
     for confidence scores.
 
     input:
-    all input needed for CalcScore() and confidence_cm()
+    all input needed for CalcScore() and ConfidenceCM()
     nodes: number of nodes
     changes_pos: node boundaries
     columns: all non empty columns in matrices
@@ -46,7 +53,8 @@ def fill_node_confidence(
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> node_conf = fill_node_confidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat)
+    >>> rep_scores = {}
+    >>> node_conf = fill_node_confidence(3, 0, -25, -5, 0.1227, "infile", non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat, rep_scores, 0)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.19999999999999998, ('n2', 1): 0.7999999999999999, ('skip', 2): 0.0, ('n1', 2): 0.19999999999999998, ('n2', 2): 0.7999999999999999}
     """
@@ -62,17 +70,16 @@ def fill_node_confidence(
 
     # first node
     begin_node0: int = columns[changes_position[0]]
-
-    for subfam_index0 in range(1, len(subfams)):
-
+    # alignment subfams
+    for subfam_index0 in range(1, len(subfams) - tr_count):
         count: int = 0
+        align_score0: float = 0.0
         for i in range(
             begin_node0,
             columns[changes_position[1]] - columns[changes_position[0]],
         ):
             if chrom_seqs[subfam_index0][i] == "-":
                 count += 1
-
         chrom_seq_offset[subfam_index0] = count
 
         end_node0: int = columns[changes_position[1]] + count
@@ -80,7 +87,6 @@ def fill_node_confidence(
         subfam0: str = subfam_seqs[subfam_index0][begin_node0:end_node0]
         chrom0: str = chrom_seqs[subfam_index0][begin_node0:end_node0]
 
-        align_score0: float = 0.0
         # if whole alignment is padding - don't run CalcScore
         if (
             end_node0 >= starts[subfam_index0] - start_all
@@ -90,11 +96,28 @@ def fill_node_confidence(
                 gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix
             )
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+    # first node TRs
+    count = 0
+    for subfam_index0 in range(len(subfams) - tr_count, len(subfams)):
+        rep_sum_score0: float = 0.0
+        chrom_seq_offset[subfam_index0] = count  # used for middle nodes
+
+        end_node0 = columns[changes_position[1]] + count
+
+        # get confidence from RepeatScores
+        if (
+            end_node0 >= starts[subfam_index0] - start_all
+            and begin_node0 <= stops[subfam_index0] - start_all
+        ):
+            rep_sum_score0 = SumRepeatScores(
+                begin_node0, end_node0, repeat_scores
+            )
+        node_confidence_temp[subfam_index0 * nodes + 0] = rep_sum_score0
 
     # middle nodes
     for node_index in range(1, nodes - 1):
-
-        for subfam_index in range(1, len(subfams)):
+        # alignment subfams
+        for subfam_index in range(1, len(subfams) - tr_count):
 
             begin_node: int = (
                 columns[changes_position[node_index]]
@@ -102,6 +125,7 @@ def fill_node_confidence(
             )
 
             count: int = 0
+
             for i in range(
                 begin_node,
                 begin_node
@@ -141,18 +165,42 @@ def fill_node_confidence(
                     lastprev_chrom,
                     sub_matrix,
                 )
-
             node_confidence_temp[
                 subfam_index * nodes + node_index
             ] = align_score
+        # middle nodes TRs
+        for subfam_index in range(len(subfams) - tr_count, len(subfams)):
+            begin_node: int = (
+                columns[changes_position[node_index]]
+                + chrom_seq_offset[subfam_index]
+            )
+            end_node: int = (
+                columns[changes_position[node_index + 1]]
+                + chrom_seq_offset[subfam_index]
+                + count
+            )
+
+            rep_sum_score: float = 0.0
+            if (
+                end_node >= starts[subfam_index] - start_all
+                and begin_node <= stops[subfam_index] - start_all
+            ):
+                rep_sum_score = SumRepeatScores(
+                    begin_node, end_node, repeat_scores
+                )
+            node_confidence_temp[
+                subfam_index * nodes + node_index
+            ] = rep_sum_score
 
     # does last node
-    for subfam_index2 in range(1, len(subfams)):
+    # alignment subfams
+    for subfam_index2 in range(1, len(subfams) - tr_count):
         begin_node2: int = (
             columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
         )
 
         count: int = 0
+
         for i in range(
             begin_node2,
             begin_node2
@@ -193,19 +241,35 @@ def fill_node_confidence(
                 lastprev_chrom2,
                 sub_matrix,
             )
-
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
+    # last node TRs
+    for subfam_index2 in range(len(subfams) - tr_count, len(subfams)):
+        begin_node2: int = (
+            columns[changes_position[-2]] + chrom_seq_offset[subfam_index2]
+        )
+        end_node2: int = (
+            columns[changes_position[-1] - 1] + chrom_seq_offset[subfam_index2]
+        )
+
+        rep_sum_score2: float = 0.0
+        if (
+            end_node2 >= starts[subfam_index2] - start_all
+            and begin_node0 <= stops[subfam_index2] - start_all
+        ):
+            rep_sum_score2 = SumRepeatScores(
+                begin_node2, end_node2 + 1, repeat_scores
+            )
+        node_confidence_temp[subfam_index2 * nodes + nodes - 1] = rep_sum_score2
 
     # reuse same matrix and compute confidence scores for the nodes
+    subfam_rows = [i for i in range(1, len(subfams))]  # excludes skip state
     for node_index4 in range(nodes):
         temp: List[float] = []
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
-
         confidence_temp: List[float] = confidence_cm(
-            lamb, infilee, temp, subfam_countss, subfams
+            lamb, infilee, temp, subfam_countss, subfams, subfam_rows, tr_count
         )
-
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[
                 (row_index2 + 1) * nodes + node_index4
