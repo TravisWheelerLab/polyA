@@ -43,13 +43,13 @@ def confidence_cm(
 
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
-    >>> conf = confidence_cm(0.5, "infile", [2, 1, 0.5], counts, subs, [0, 1, 3], 1)
+    >>> conf = confidence_cm(0.5, "infile", [2, 1, 0.7], counts, subs, [0, 1, 3], 1)
     >>> f"{conf[0]:.2f}"
-    '0.54'
+    '0.63'
     >>> f"{conf[1]:.2f}"
-    '0.38'
+    '0.31'
     >>> f"{conf[2]:.2f}"
-    '0.07'
+    '0.06'
     """
 
     confidence_list: List[float] = []
