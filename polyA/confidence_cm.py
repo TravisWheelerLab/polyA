@@ -2,7 +2,6 @@ from typing import Dict, List
 
 
 def confidence_cm(
-    lambdaa: float,
     infile: str,
     region: List[float],
     subfam_counts: Dict[str, float],
@@ -60,7 +59,7 @@ def confidence_cm(
         # alignment scores
         for index in range(len(region) - repeats):
             converted_score = (
-                2 ** int(region[index] * lambdaa)
+                2 ** int(region[index])
             ) * subfam_counts[subfams[subfam_rows[index]]]
             confidence_list.append(converted_score)
             score_total += converted_score
@@ -76,7 +75,7 @@ def confidence_cm(
     else:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = 2 ** int(region[index] * lambdaa)
+            converted_score = 2 ** int(region[index])
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores

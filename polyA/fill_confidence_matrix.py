@@ -5,7 +5,6 @@ from polyA.matrices import ConfidenceMatrix
 
 
 def fill_confidence_matrix(
-    lambdaa: float,
     infile: str,
     columns: List[int],
     subfam_counts: Dict[str, float],
@@ -60,7 +59,6 @@ def fill_confidence_matrix(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            lambdaa,
             infile,
             temp_region,
             subfam_counts,

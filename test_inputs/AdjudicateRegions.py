@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 0.0
+    SkipAlignScore: float = 3.0  #FIXME - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -365,6 +365,7 @@ if __name__ == "__main__":
     )
 
     (cols, AlignMatrix) = fill_align_matrix(
+        Lamb,
         StartAll,
         ChunkSize,
         GapExt,
@@ -437,7 +438,6 @@ if __name__ == "__main__":
         NonEmptyColumns.sort()
     else:
         ConfidenceMatrix = fill_confidence_matrix(
-            Lamb,
             infile_prior_counts,
             NonEmptyColumns,
             SubfamCounts,
