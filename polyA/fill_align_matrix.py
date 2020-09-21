@@ -89,16 +89,29 @@ def fill_align_matrix(
 
         offset: int = temp_index - seq_index
 
-        # grabs first chunk - here seq_index = pos of first non '.' char
-        chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
-        subfam_slice: str = subfam_seq[seq_index : seq_index + offset]
+        #add trailing cells and doesn't normalize
+        for trailing in range(1, half_chunk+1):
+            if col_index - k - trailing >= 0:
+                chrom_slice: str = chrom_seq[seq_index: seq_index + offset - trailing]
+                subfam_slice: str = subfam_seq[seq_index: seq_index + offset - trailing]
+
+                # calculates score for first chunk and puts in align_matrix
+                align_score: float = calculate_score(
+                    gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
+                )
+
+                align_matrix[i, col_index - k - trailing] = lambdaa * (align_score)  # already to scale so don't need to * chunk_size and / chunk_size
+
+        #normalizes for first non trailing cell
+        chrom_slice: str = chrom_seq[seq_index: seq_index + offset]
+        subfam_slice: str = subfam_seq[seq_index: seq_index + offset]
 
         # calculates score for first chunk and puts in align_matrix
         align_score: float = calculate_score(
             gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
         )
-        align_matrix[i, col_index - k] = lambdaa * (
-            align_score * chunk_size / (chunk_size - k)
+        align_matrix[i, col_index - k ] = lambdaa * (
+                align_score * chunk_size / (chunk_size - k)
         )  # already to scale so don't need to * chunk_size and / chunk_size
 
         # scores for first part, until we get to full sized chunks
@@ -263,6 +276,20 @@ def fill_align_matrix(
                 col_index += 1
 
             seq_index += 1
+
+        #add trailing cells and doesn't normalize
+        for trailing in range(1, half_chunk+1):
+            # if col_index - k - trailing >= 0:
+            chrom_slice: str = chrom_seq[seq_index + trailing:seq_index + offset - 1]
+            subfam_slice: str = subfam_seq[seq_index + trailing:seq_index + offset - 1]
+
+            # calculates score for first chunk and puts in align_matrix
+            align_score: float = calculate_score(
+                gap_ext, gap_init, subfam_slice, chrom_slice, subfam_seq[seq_index + trailing - 1], chrom_seq[seq_index + trailing - 1], sub_matrix
+            )
+
+            align_matrix[i, col_index - 1 + trailing] = lambdaa * (align_score)  # already to scale so don't need to * chunk_size and / chunk_size
+
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
         prev_seq_index: int = seq_index

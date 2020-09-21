@@ -377,6 +377,10 @@ if __name__ == "__main__":
         SubMatrix,
     )
 
+    # from polyA.printers import print_matrix_hash
+    # print_matrix_hash(cols, rows, Subfams, AlignMatrix)
+    # exit()
+
     (
         NonEmptyColumns,
         ActiveCells,
