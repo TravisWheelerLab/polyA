@@ -58,9 +58,9 @@ def confidence_cm(
     if infile:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = (
-                2 ** int(region[index])
-            ) * subfam_counts[subfams[subfam_rows[index]]]
+            converted_score = (2 ** int(region[index])) * subfam_counts[
+                subfams[subfam_rows[index]]
+            ]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores

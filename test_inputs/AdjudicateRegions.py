@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 3.0  #FIXME - not sure what number this should be
+    SkipAlignScore: float = 3.0  # FIXME - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
