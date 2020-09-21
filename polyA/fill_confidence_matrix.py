@@ -34,19 +34,19 @@ def fill_confidence_matrix(
     >>> non_cols = [0, 1, 2]
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = fill_confidence_matrix(0.1227, "infile", non_cols, counts, subs, active, align_mat)
+    >>> conf_mat = fill_confidence_matrix("infile", non_cols, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
-    '0.0002'
+    '0.0000'
     >>> f"{conf_mat[1,0]:.4f}"
-    '0.9998'
+    '1.0000'
     >>> f"{conf_mat[0,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[0,2]:.4f}"
-    '0.5000'
+    '0.3333'
     >>> f"{conf_mat[1,2]:.4f}"
-    '0.5000'
+    '0.6667'
     """
     confidence_matrix: ConfidenceMatrix = {}
 
