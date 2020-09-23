@@ -323,4 +323,12 @@ def fill_align_matrix(
     for j in range(num_cols):
         align_matrix[0, j] = float(skip_align_score)
 
+    #remove trailing edges that fall off end of matrix
+    #can't do this during matrix construction because we don't know how many
+    #cols the matrix has until the end
+    for row in range(1, len(chroms)):
+        for col in range(num_cols, num_cols + chunk_size + 1):
+            if (row, col) in align_matrix:
+                del align_matrix[row, col]
+    
     return num_cols, align_matrix
