@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 3.0  # FIXME - not sure what number this should be
+    SkipAlignScore: float = 0.0  # FIXME - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -397,6 +397,14 @@ if __name__ == "__main__":
         Strands,
     )
 
+    #FIXME - activecells gets changed and the trailing edges are added
+    #this updates confidene matrix like we need to compute support scores
+    #but how do we make activecells, nonempty cols and ConsensusMatrix back
+    #to the original one
+
+    #consensisMatrix and NonEmptyColumns might not be filled the correct
+    #way anymore, need to check this
+
     if TR:
         RepeatScores = CalcRepeatScores(
             TandemRepeats,
@@ -666,4 +674,5 @@ if __name__ == "__main__":
             ConsensusMatrixCollapse,
             SubfamsCollapseIndex,
             NodeConfidenceOrig,
+            IDs
         )
