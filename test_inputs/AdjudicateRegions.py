@@ -456,8 +456,6 @@ if __name__ == "__main__":
         ConfidenceMatrix,
     )
 
-    # print(rows, cols)
-
     collapsed_matrices = collapse_matrices(
         rows,
         NonEmptyColumns,
@@ -474,12 +472,6 @@ if __name__ == "__main__":
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
-
-    # from polyA.printers import print_matrix_hash
-    #
-    # print_matrix_hash(cols, rows, SubfamsCollapse, ConsensusMatrixCollapse)
-    #
-    # exit()
 
     # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
@@ -625,9 +617,9 @@ if __name__ == "__main__":
             ID,
             NonEmptyColumns,
             IDs,
-            ChangesOrig,
-            ChangesPositionOrig,
-            NonEmptyColumnsOrig,
+            Changes,
+            ChangesPosition,
+            NonEmptyColumns,
             SubfamsCollapse,
             ProbMatrixLastColumn,
             ActiveCellsCollapse,

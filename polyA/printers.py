@@ -305,7 +305,9 @@ def print_results_soda(
                                 if strand == "-":
                                     right_flank = (
                                         consensus_matrix_collapse[
-                                            subfams_collapse_index[changes_orig[j]],
+                                            subfams_collapse_index[
+                                                changes_orig[j]
+                                            ],
                                             columns_orig[
                                                 changes_position_orig[j + 1] - 1
                                             ],
