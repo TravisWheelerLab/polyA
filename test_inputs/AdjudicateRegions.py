@@ -443,7 +443,7 @@ if __name__ == "__main__":
     # print_matrix_hash(cols, rows, Subfams, ConfidenceMatrix)
     # exit()
 
-    #removing trailing edge info from NonEmptyColumns and ActiveCells
+    # removing trailing edge info from NonEmptyColumns and ActiveCells
     NonEmptyColumns.clear()
     ActiveCells.clear()
 
@@ -463,8 +463,7 @@ if __name__ == "__main__":
         Strands,
     )
 
-
-    #FIXME - ActiveCells and NonEmptyColumns are still the same as before, so the trailing edges don't
+    # FIXME - ActiveCells and NonEmptyColumns are still the same as before, so the trailing edges don't
     # get added to confidence matrix
     # need to create alternative copies of these to use just when calculating confidence
 
@@ -684,5 +683,5 @@ if __name__ == "__main__":
             ConsensusMatrixCollapse,
             SubfamsCollapseIndex,
             NodeConfidenceOrig,
-            IDs
+            IDs,
         )
