@@ -4,6 +4,26 @@ from polyA.confidence_cm import confidence_cm
 from polyA.matrices import ConfidenceMatrix
 
 
+def trailing_edges_info(row_num, col_num, align_matrix):
+    non_empty_cols_trailing_edges: List[int] = []
+    active_cells_trailing_edges: Dict[int, List[int]] = {}
+
+    for col in range(col_num):
+        active_count = 0
+        temp_list = []
+        for row in range(row_num):
+            if (row,col) in align_matrix:
+                active_count = 1
+                temp_list.append(row)
+        if active_count:
+            non_empty_cols_trailing_edges.append(col)
+            active_cells_trailing_edges[col] = temp_list
+
+    return non_empty_cols_trailing_edges, active_cells_trailing_edges
+
+
+
+
 def fill_confidence_matrix(
     infile: str,
     columns: List[int],
