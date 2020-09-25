@@ -10,7 +10,7 @@ from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
-from polyA.fill_confidence_matrix import fill_confidence_matrix
+from polyA.fill_confidence_matrix import *
 from polyA.fill_confidence_matrix_tr import FillConfidenceMatrixTR
 from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
 from polyA.fill_node_confidence import fill_node_confidence
@@ -381,29 +381,10 @@ if __name__ == "__main__":
     # print_matrix_hash(cols, rows, Subfams, AlignMatrix)
     # exit()
 
-    (
-        NonEmptyColumns,
-        ActiveCells,
-        ConsensusMatrix,
-    ) = fill_consensus_position_matrix(
-        cols,
-        rows,
-        StartAll,
-        SubfamSeqs,
-        ChromSeqs,
-        Starts,
-        Stops,
-        ConsensusStarts,
-        Strands,
-    )
-
-    #FIXME - activecells gets changed and the trailing edges are added
-    #this updates confidene matrix like we need to compute support scores
-    #but how do we make activecells, nonempty cols and ConsensusMatrix back
-    #to the original one
-
-    #consensisMatrix and NonEmptyColumns might not be filled the correct
-    #way anymore, need to check this
+    # originally NonEmptyColumns and ActiveCells have trailing edge included
+    # redo these later to not include trailing edges
+    # TODO: should be able to make this faster
+    NonEmptyColumns, ActiveCells = trailing_edges_info(rows, cols, AlignMatrix)
 
     if TR:
         RepeatScores = CalcRepeatScores(
@@ -457,6 +438,35 @@ if __name__ == "__main__":
             ActiveCells,
             AlignMatrix,
         )
+
+    # from polyA.printers import print_matrix_hash
+    # print_matrix_hash(cols, rows, Subfams, ConfidenceMatrix)
+    # exit()
+
+    #removing trailing edge info from NonEmptyColumns and ActiveCells
+    NonEmptyColumns.clear()
+    ActiveCells.clear()
+
+    (
+        NonEmptyColumns,
+        ActiveCells,
+        ConsensusMatrix,
+    ) = fill_consensus_position_matrix(
+        cols,
+        rows,
+        StartAll,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        Stops,
+        ConsensusStarts,
+        Strands,
+    )
+
+
+    #FIXME - ActiveCells and NonEmptyColumns are still the same as before, so the trailing edges don't
+    # get added to confidence matrix
+    # need to create alternative copies of these to use just when calculating confidence
 
     SupportMatrix = fill_support_matrix(
         rows,
