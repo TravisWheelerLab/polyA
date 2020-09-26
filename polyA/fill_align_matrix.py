@@ -110,8 +110,10 @@ def fill_align_matrix(
                     sub_matrix,
                 )
 
+                num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
+
                 align_matrix[i, col_index - k - trailing] = lambdaa * (
-                    align_score
+                    align_score * num_nucls0 / chunk_size
                 )  # already to scale so don't need to * chunk_size and / chunk_size
 
         # normalizes for first non trailing cell
@@ -124,7 +126,7 @@ def fill_align_matrix(
         )
         align_matrix[i, col_index - k] = lambdaa * (
             align_score * chunk_size / (chunk_size - k)
-        )  # already to scale so don't need to * chunk_size and / chunk_size
+        )
 
         # scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
@@ -289,7 +291,7 @@ def fill_align_matrix(
 
             seq_index += 1
 
-        # add trailing cells and doesn't normalize
+        # add trailing cells and normalizes
         for trailing in range(1, half_chunk + 1):
             # if col_index - k - trailing >= 0:
             chrom_slice: str = chrom_seq[
@@ -298,6 +300,8 @@ def fill_align_matrix(
             subfam_slice: str = subfam_seq[
                 seq_index + trailing : seq_index + offset - 1
             ]
+
+            num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
 
             # calculates score for first chunk and puts in align_matrix
             align_score: float = calculate_score(
@@ -311,8 +315,8 @@ def fill_align_matrix(
             )
 
             align_matrix[i, col_index - 1 + trailing] = lambdaa * (
-                align_score
-            )  # already to scale so don't need to * chunk_size and / chunk_size
+                align_score / num_nucls2 * chunk_size
+            )
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
         prev_seq_index: int = seq_index

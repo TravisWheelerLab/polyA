@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 0.0  # FIXME - not sure what number this should be
+    SkipAlignScore: float = 5.0  # FIXME - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -440,7 +440,7 @@ if __name__ == "__main__":
         )
 
     # from polyA.printers import print_matrix_hash
-    # print_matrix_hash(cols, rows, Subfams, ConfidenceMatrix)
+    # print_matrix_hash(cols, rows, Subfams, ConfideneMatrix)
     # exit()
 
     # removing trailing edge info from NonEmptyColumns and ActiveCells
@@ -476,6 +476,10 @@ if __name__ == "__main__":
         Stops,
         ConfidenceMatrix,
     )
+
+    # from polyA.printers import print_matrix_hash
+    # print_matrix_hash(cols, rows, Subfams, SupportMatrix)
+    # exit()
 
     collapsed_matrices = collapse_matrices(
         rows,
