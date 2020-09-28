@@ -295,9 +295,9 @@ if __name__ == "__main__":
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
 
-            #FIXME - add a check here when I need to reverse the alignment
-            #reverse it when the chrom sequence is reversed in the cm file
-            #need to add something to the .align files that has this info
+            # FIXME - add a check here when I need to reverse the alignment
+            # reverse it when the chrom sequence is reversed in the cm file
+            # need to add something to the .align files that has this info
 
             # if alignment.strand == '+':
             #     SubfamSeqs.append(alignment.subfamily_sequence)
@@ -476,7 +476,6 @@ if __name__ == "__main__":
         Stops,
         ConfidenceMatrix,
     )
-
 
     collapsed_matrices = collapse_matrices(
         rows,
