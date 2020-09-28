@@ -294,6 +294,18 @@ if __name__ == "__main__":
             ConsensusStops.append(alignment.consensus_stop)
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
+
+            #FIXME - add a check here when I need to reverse the alignment
+            #reverse it when the chrom sequence is reversed in the cm file
+            #need to add something to the .align files that has this info
+
+            # if alignment.strand == '+':
+            #     SubfamSeqs.append(alignment.subfamily_sequence)
+            #     ChromSeqs.append(alignment.sequence)
+            # else:
+            #     SubfamSeqs.append(alignment.subfamily_sequence[::-1])
+            #     ChromSeqs.append(alignment.sequence[::-1])
+
             Flanks.append(alignment.flank)
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
@@ -377,10 +389,6 @@ if __name__ == "__main__":
         SubMatrix,
     )
 
-    # from polyA.printers import print_matrix_hash
-    # print_matrix_hash(cols, rows, Subfams, AlignMatrix)
-    # exit()
-
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
     # TODO: should be able to make this faster
@@ -439,10 +447,6 @@ if __name__ == "__main__":
             AlignMatrix,
         )
 
-    # from polyA.printers import print_matrix_hash
-    # print_matrix_hash(cols, rows, Subfams, ConfideneMatrix)
-    # exit()
-
     # removing trailing edge info from NonEmptyColumns and ActiveCells
     NonEmptyColumns.clear()
     ActiveCells.clear()
@@ -463,10 +467,6 @@ if __name__ == "__main__":
         Strands,
     )
 
-    # FIXME - ActiveCells and NonEmptyColumns are still the same as before, so the trailing edges don't
-    # get added to confidence matrix
-    # need to create alternative copies of these to use just when calculating confidence
-
     SupportMatrix = fill_support_matrix(
         rows,
         ChunkSize,
@@ -477,9 +477,6 @@ if __name__ == "__main__":
         ConfidenceMatrix,
     )
 
-    # from polyA.printers import print_matrix_hash
-    # print_matrix_hash(cols, rows, Subfams, SupportMatrix)
-    # exit()
 
     collapsed_matrices = collapse_matrices(
         rows,
@@ -496,6 +493,7 @@ if __name__ == "__main__":
     ConsensusMatrixCollapse = collapsed_matrices.consensus_matrix
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
+    rows = collapsed_matrices.row_num_update
 
     # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
