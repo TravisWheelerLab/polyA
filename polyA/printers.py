@@ -211,7 +211,7 @@ def print_results_soda(
                 left_flank: int
                 right_flank: int
 
-                if changes_orig[i] == "Tandem Repeat":
+                if subfam == "Tandem Repeat":
                     left_flank = 0
                     right_flank = 0
                 else:
@@ -293,37 +293,34 @@ def print_results_soda(
 
                 j: int = i + 1
                 while j < length:
-                    if changes_orig[j] != "skip":
+                    if changes_orig[j] != "skip" and subfam != "Tandem Repeat":
 
                         if (
                             ids[columns_orig[changes_position_orig[i]]]
                             == ids[columns_orig[changes_position_orig[j]]]
                         ):
-                            if changes_orig[j] == "Tandem Repeat":
-                                right_flank = 0
+                            if strand == "-":
+                                right_flank = (
+                                    consensus_matrix_collapse[
+                                        subfams_collapse_index[
+                                            changes_orig[j]
+                                        ],
+                                        columns_orig[
+                                            changes_position_orig[j + 1] - 1
+                                        ],
+                                    ]
+                                    - 1
+                                )
                             else:
-                                if strand == "-":
-                                    right_flank = (
-                                        consensus_matrix_collapse[
-                                            subfams_collapse_index[
-                                                changes_orig[j]
-                                            ],
-                                            columns_orig[
-                                                changes_position_orig[j + 1] - 1
-                                            ],
-                                        ]
-                                        - 1
-                                    )
-                                else:
-                                    right_flank = (
-                                        consensus_lengths[subfam]
-                                        - consensus_matrix_collapse[
-                                            subfams_collapse_index[subfam],
-                                            columns_orig[
-                                                changes_position_orig[j + 1] - 1
-                                            ],
-                                        ]
-                                    )
+                                right_flank = (
+                                    consensus_lengths[subfam]
+                                    - consensus_matrix_collapse[
+                                        subfams_collapse_index[subfam],
+                                        columns_orig[
+                                            changes_position_orig[j + 1] - 1
+                                        ],
+                                    ]
+                                )
 
                             del block_size[-1]
                             block_size.append("0")
