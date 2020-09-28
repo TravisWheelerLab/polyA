@@ -45,7 +45,6 @@ def FillConfidenceMatrixTR(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            lamb,
             infilee,
             temp_region,
             subfam_countss,
@@ -70,7 +69,6 @@ def FillConfidenceMatrixTR(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            lamb,
             infilee,
             temp_region,
             subfam_countss,

@@ -415,7 +415,6 @@ if __name__ == "__main__":
             rows += 1
 
         ConfidenceMatrix = FillConfidenceMatrixTR(
-            Lamb,
             infile_prior_counts,
             NonEmptyColumns,
             SubfamCounts,
