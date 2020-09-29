@@ -4,8 +4,25 @@ from polyA.confidence_cm import confidence_cm
 from polyA.matrices import ConfidenceMatrix
 
 
+def trailing_edges_info(row_num, col_num, align_matrix):
+    non_empty_cols_trailing_edges: List[int] = []
+    active_cells_trailing_edges: Dict[int, List[int]] = {}
+
+    for col in range(col_num):
+        active_count = 0
+        temp_list = []
+        for row in range(row_num):
+            if (row, col) in align_matrix:
+                active_count = 1
+                temp_list.append(row)
+        if active_count:
+            non_empty_cols_trailing_edges.append(col)
+            active_cells_trailing_edges[col] = temp_list
+
+    return non_empty_cols_trailing_edges, active_cells_trailing_edges
+
+
 def fill_confidence_matrix(
-    lambdaa: float,
     infile: str,
     columns: List[int],
     subfam_counts: Dict[str, float],
@@ -35,19 +52,19 @@ def fill_confidence_matrix(
     >>> non_cols = [0, 1, 2]
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = fill_confidence_matrix(0.1227, "infile", non_cols, counts, subs, active, align_mat)
+    >>> conf_mat = fill_confidence_matrix("infile", non_cols, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
-    '0.0002'
+    '0.0000'
     >>> f"{conf_mat[1,0]:.4f}"
-    '0.9998'
+    '1.0000'
     >>> f"{conf_mat[0,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[0,2]:.4f}"
-    '0.5000'
+    '0.3333'
     >>> f"{conf_mat[1,2]:.4f}"
-    '0.5000'
+    '0.6667'
     """
     confidence_matrix: ConfidenceMatrix = {}
 
@@ -60,7 +77,6 @@ def fill_confidence_matrix(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            lambdaa,
             infile,
             temp_region,
             subfam_counts,

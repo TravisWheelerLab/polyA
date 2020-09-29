@@ -2,7 +2,6 @@ from typing import Dict, List
 
 
 def confidence_cm(
-    lambdaa: float,
     infile: str,
     region: List[float],
     subfam_counts: Dict[str, float],
@@ -33,7 +32,7 @@ def confidence_cm(
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> conf = confidence_cm(0.5, "infile", [2, 1, 1], counts, subs, [0, 1, 2], 0)
+    >>> conf = confidence_cm("infile", [2, 1, 1], counts, subs, [0, 1, 2], 0)
     >>> f"{conf[0]:.2f}"
     '0.50'
     >>> f"{conf[1]:.2f}"
@@ -43,13 +42,13 @@ def confidence_cm(
 
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
-    >>> conf = confidence_cm(0.5, "infile", [2, 1, 0.7], counts, subs, [0, 1, 3], 1)
+    >>> conf = confidence_cm("infile", [2, 1, 0.7], counts, subs, [0, 1, 3], 1)
     >>> f"{conf[0]:.2f}"
-    '0.63'
+    '0.65'
     >>> f"{conf[1]:.2f}"
-    '0.31'
+    '0.32'
     >>> f"{conf[2]:.2f}"
-    '0.06'
+    '0.03'
     """
 
     confidence_list: List[float] = []
@@ -59,9 +58,9 @@ def confidence_cm(
     if infile:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = (
-                2 ** int(region[index] * lambdaa)
-            ) * subfam_counts[subfams[subfam_rows[index]]]
+            converted_score = (2 ** int(region[index])) * subfam_counts[
+                subfams[subfam_rows[index]]
+            ]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
@@ -76,7 +75,7 @@ def confidence_cm(
     else:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = 2 ** int(region[index] * lambdaa)
+            converted_score = 2 ** int(region[index])
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores

@@ -10,7 +10,7 @@ from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
-from polyA.fill_confidence_matrix import fill_confidence_matrix
+from polyA.fill_confidence_matrix import *
 from polyA.fill_confidence_matrix_tr import FillConfidenceMatrixTR
 from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
 from polyA.fill_node_confidence import fill_node_confidence
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 0.0
+    SkipAlignScore: float = 5.0  # FIXME - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -294,6 +294,7 @@ if __name__ == "__main__":
             ConsensusStops.append(alignment.consensus_stop)
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
+
             Flanks.append(alignment.flank)
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
@@ -365,6 +366,7 @@ if __name__ == "__main__":
     )
 
     (cols, AlignMatrix) = fill_align_matrix(
+        Lamb,
         StartAll,
         ChunkSize,
         GapExt,
@@ -374,6 +376,13 @@ if __name__ == "__main__":
         ChromSeqs,
         Starts,
         SubMatrix,
+    )
+
+    # originally NonEmptyColumns and ActiveCells have trailing edge included
+    # redo these later to not include trailing edges
+    # TODO: should be able to make this faster
+    NonEmptyColumns_trailing, ActiveCells_trailing = trailing_edges_info(
+        rows, cols, AlignMatrix
     )
 
     (
@@ -413,7 +422,6 @@ if __name__ == "__main__":
             rows += 1
 
         ConfidenceMatrix = FillConfidenceMatrixTR(
-            Lamb,
             infile_prior_counts,
             NonEmptyColumns,
             SubfamCounts,
@@ -437,12 +445,11 @@ if __name__ == "__main__":
         NonEmptyColumns.sort()
     else:
         ConfidenceMatrix = fill_confidence_matrix(
-            Lamb,
             infile_prior_counts,
-            NonEmptyColumns,
+            NonEmptyColumns_trailing,
             SubfamCounts,
             Subfams,
-            ActiveCells,
+            ActiveCells_trailing,
             AlignMatrix,
         )
 
@@ -471,6 +478,7 @@ if __name__ == "__main__":
     ConsensusMatrixCollapse = collapsed_matrices.consensus_matrix
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
+    rows = collapsed_matrices.row_num_update
 
     # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
@@ -662,4 +670,5 @@ if __name__ == "__main__":
             ConsensusMatrixCollapse,
             SubfamsCollapseIndex,
             NodeConfidenceOrig,
+            IDs,
         )

@@ -92,7 +92,7 @@ def fill_node_confidence(
             end_node0 >= starts[subfam_index0] - start_all
             and begin_node0 <= stops[subfam_index0] - start_all
         ):
-            align_score0 = calculate_score(
+            align_score0 = lamb * calculate_score(
                 gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix
             )
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
@@ -156,7 +156,7 @@ def fill_node_confidence(
                 end_node >= starts[subfam_index] - start_all
                 and begin_node <= stops[subfam_index] - start_all
             ):
-                align_score = calculate_score(
+                align_score = lamb * calculate_score(
                     gap_ext,
                     gap_init,
                     subfam,
@@ -232,7 +232,7 @@ def fill_node_confidence(
             end_node2 >= starts[subfam_index2] - start_all
             and begin_node0 <= stops[subfam_index2] - start_all
         ):
-            align_score2 = calculate_score(
+            align_score2 = lamb * calculate_score(
                 gap_ext,
                 gap_init,
                 subfam2,
@@ -268,7 +268,7 @@ def fill_node_confidence(
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
         confidence_temp: List[float] = confidence_cm(
-            lamb, infilee, temp, subfam_countss, subfams, subfam_rows, tr_count
+            infilee, temp, subfam_countss, subfams, subfam_rows, tr_count
         )
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[

@@ -6,6 +6,7 @@ from polyA.calculate_score import calculate_score
 
 # TODO: Clean up the doc string on this function
 def fill_align_matrix(
+    lambdaa: float,
     edge_start: int,
     chunk_size: int,
     gap_ext: int,
@@ -53,11 +54,11 @@ def fill_align_matrix(
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> (c, m) = fill_align_matrix(0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
+    >>> (c, m) = fill_align_matrix(0.1, 0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
     >>> c
     40
     >>> m
-    {(1, 2): 31.0, (1, 3): 31.0, (1, 4): 31.0, (1, 5): 31.0, (1, 6): 31.0, (1, 7): 31.0, (1, 8): 31.0, (1, 9): 31.0, (1, 10): 31.0, (1, 11): 31.0, (1, 12): 31.0, (1, 13): 31.0, (1, 14): 31.0, (1, 15): 31.0, (1, 16): 31.0, (1, 17): 31.0, (1, 18): 31.0, (1, 19): 31.0, (1, 20): 31.0, (1, 21): 31.0, (1, 22): 31.0, (1, 23): 31.0, (1, 24): 29.0, (1, 25): 28.933333333333334, (1, 26): 28.862068965517242, (1, 27): 28.78571428571429, (1, 28): 28.703703703703702, (1, 29): 28.615384615384617, (1, 30): 28.52, (1, 31): 28.416666666666664, (1, 32): 28.304347826086953, (1, 33): 28.18181818181818, (1, 34): 28.047619047619047, (1, 35): 27.900000000000002, (1, 36): 27.736842105263158, (1, 37): 27.555555555555554, (1, 38): 27.352941176470587, (1, 39): 27.125, (2, 0): 27.125, (2, 1): 27.352941176470587, (2, 2): 27.555555555555557, (2, 3): 27.736842105263158, (2, 4): 27.9, (2, 5): 28.047619047619047, (2, 6): 28.181818181818183, (2, 7): 28.304347826086957, (2, 8): 28.416666666666668, (2, 9): 28.52, (2, 10): 28.615384615384617, (2, 11): 28.703703703703702, (2, 12): 28.785714285714285, (2, 13): 28.862068965517242, (2, 14): 28.933333333333334, (2, 15): 29.0, (2, 16): 31.0, (2, 17): 31.0, (2, 18): 31.0, (2, 19): 31.0, (2, 20): 31.0, (2, 21): 31.0, (2, 22): 5.0, (2, 23): -1.0, (2, 24): -3.0, (2, 25): -4.133333333333333, (2, 26): -5.344827586206897, (2, 27): -6.642857142857142, (2, 28): -8.037037037037036, (2, 29): -9.538461538461538, (2, 30): -11.16, (2, 31): -12.916666666666668, (2, 32): -14.82608695652174, (2, 33): -16.909090909090907, (2, 34): -19.19047619047619, (2, 35): -21.7, (2, 36): -24.473684210526315, (2, 37): -27.555555555555554, (2, 38): -31.0, (2, 39): -34.875, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
+    {(1, 1): 0.7741935483870969, (1, 0): 0.6774193548387097, (1, 2): 3.1, (1, 3): 3.1, (1, 4): 3.1, (1, 5): 3.1, (1, 6): 3.1, (1, 7): 3.1, (1, 8): 3.1, (1, 9): 3.1, (1, 10): 3.1, (1, 11): 3.1, (1, 12): 3.1, (1, 13): 3.1, (1, 14): 3.1, (1, 15): 3.1, (1, 16): 3.1, (1, 17): 3.1, (1, 18): 3.1, (1, 19): 3.1, (1, 20): 3.1, (1, 21): 3.1, (1, 22): 3.1, (1, 23): 3.1, (1, 24): 2.9000000000000004, (1, 25): 2.8933333333333335, (1, 26): 2.8862068965517245, (1, 27): 2.878571428571429, (1, 28): 2.8703703703703702, (1, 29): 2.861538461538462, (1, 30): 2.8520000000000003, (1, 31): 2.841666666666667, (1, 32): 2.8304347826086955, (1, 33): 2.8181818181818183, (1, 34): 2.804761904761905, (1, 35): 2.7900000000000005, (1, 36): 2.7736842105263158, (1, 37): 2.7555555555555555, (1, 38): 2.735294117647059, (1, 39): 2.7125000000000004, (2, 0): 2.7125000000000004, (2, 1): 2.735294117647059, (2, 2): 2.755555555555556, (2, 3): 2.7736842105263158, (2, 4): 2.79, (2, 5): 2.804761904761905, (2, 6): 2.8181818181818183, (2, 7): 2.830434782608696, (2, 8): 2.841666666666667, (2, 9): 2.8520000000000003, (2, 10): 2.861538461538462, (2, 11): 2.8703703703703702, (2, 12): 2.8785714285714286, (2, 13): 2.8862068965517245, (2, 14): 2.8933333333333335, (2, 15): 2.9000000000000004, (2, 16): 3.1, (2, 17): 3.1, (2, 18): 3.1, (2, 19): 3.1, (2, 20): 3.1, (2, 21): 3.1, (2, 22): 0.5, (2, 23): -0.1, (2, 24): -0.30000000000000004, (2, 25): -0.41333333333333333, (2, 26): -0.5344827586206897, (2, 27): -0.6642857142857143, (2, 28): -0.8037037037037037, (2, 29): -0.9538461538461539, (2, 30): -1.116, (2, 31): -1.291666666666667, (2, 32): -1.482608695652174, (2, 33): -1.6909090909090907, (2, 34): -1.9190476190476191, (2, 35): -2.17, (2, 36): -2.447368421052632, (2, 37): -2.7555555555555555, (2, 38): -3.1, (2, 39): -3.4875000000000003, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0}
     """
 
     num_cols: int = 0
@@ -88,7 +89,34 @@ def fill_align_matrix(
 
         offset: int = temp_index - seq_index
 
-        # grabs first chunk - here seq_index = pos of first non '.' char
+        # add trailing cells and doesn't normalize
+        for trailing in range(1, half_chunk + 1):
+            if col_index - k - trailing >= 0:
+                chrom_slice: str = chrom_seq[
+                    seq_index : seq_index + offset - trailing
+                ]
+                subfam_slice: str = subfam_seq[
+                    seq_index : seq_index + offset - trailing
+                ]
+
+                # calculates score for first chunk and puts in align_matrix
+                align_score: float = calculate_score(
+                    gap_ext,
+                    gap_init,
+                    subfam_slice,
+                    chrom_slice,
+                    "",
+                    "",
+                    sub_matrix,
+                )
+
+                num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
+
+                align_matrix[i, col_index - k - trailing] = lambdaa * (
+                    align_score * num_nucls0 / chunk_size
+                )  # already to scale so don't need to * chunk_size and / chunk_size
+
+        # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
         subfam_slice: str = subfam_seq[seq_index : seq_index + offset]
 
@@ -96,9 +124,9 @@ def fill_align_matrix(
         align_score: float = calculate_score(
             gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
         )
-        align_matrix[i, col_index - k] = (
+        align_matrix[i, col_index - k] = lambdaa * (
             align_score * chunk_size / (chunk_size - k)
-        )  # already to scale so don't need to * chunk_size and / chunk_size
+        )
 
         # scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
@@ -120,7 +148,7 @@ def fill_align_matrix(
                         ]
                     )
 
-                align_matrix[i, col_index - k] = (
+                align_matrix[i, col_index - k] = lambdaa * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -149,7 +177,7 @@ def fill_align_matrix(
                     chroms[i][seq_index - 1],
                     sub_matrix,
                 )
-                align_matrix[i, col_index - k] = (
+                align_matrix[i, col_index - k] = lambdaa * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -251,7 +279,7 @@ def fill_align_matrix(
                         )
                         num_nucls += 1
 
-                align_matrix[i, col_index] = (
+                align_matrix[i, col_index] = lambdaa * (
                     align_score / num_nucls * chunk_size
                 )
 
@@ -262,6 +290,33 @@ def fill_align_matrix(
                 col_index += 1
 
             seq_index += 1
+
+        # add trailing cells and normalizes
+        for trailing in range(1, half_chunk + 1):
+            # if col_index - k - trailing >= 0:
+            chrom_slice: str = chrom_seq[
+                seq_index + trailing : seq_index + offset - 1
+            ]
+            subfam_slice: str = subfam_seq[
+                seq_index + trailing : seq_index + offset - 1
+            ]
+
+            num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
+
+            # calculates score for first chunk and puts in align_matrix
+            align_score: float = calculate_score(
+                gap_ext,
+                gap_init,
+                subfam_slice,
+                chrom_slice,
+                subfam_seq[seq_index + trailing - 1],
+                chrom_seq[seq_index + trailing - 1],
+                sub_matrix,
+            )
+
+            align_matrix[i, col_index - 1 + trailing] = lambdaa * (
+                align_score / num_nucls2 * chunk_size
+            )
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
         prev_seq_index: int = seq_index
@@ -281,7 +336,7 @@ def fill_align_matrix(
                 chrom_seq[seq_index - 1],
                 sub_matrix,
             )
-            align_matrix[i, col_index] = (
+            align_matrix[i, col_index] = lambdaa * (
                 align_score / (half_chunk + 1) * chunk_size
             )
             col_index += 1
@@ -291,7 +346,16 @@ def fill_align_matrix(
             num_cols = col_index
 
     # assigns skip states an alignment score
+    # do not lambda adjust skip state score
     for j in range(num_cols):
         align_matrix[0, j] = float(skip_align_score)
+
+    # remove trailing edges that fall off end of matrix
+    # can't do this during matrix construction because we don't know how many
+    # cols the matrix has until the end
+    for row in range(1, len(chroms)):
+        for col in range(num_cols, num_cols + chunk_size + 1):
+            if (row, col) in align_matrix:
+                del align_matrix[row, col]
 
     return num_cols, align_matrix
