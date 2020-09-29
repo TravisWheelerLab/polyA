@@ -93,11 +93,16 @@ while(my $region = <$in_align>){
  			
  		my @Alignment = split(/\n/, $alignment);
 
- 		if($Alignment[0] =~ /^C.+/){
- 		    print $out "Align: $subfam\t$chrom\t$score\t$strand\tt\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+        if($strand eq '-'){
+ 		    if($Alignment[0] =~ /^C.+/){
+ 		        print $out "Align: $subfam\t$chrom\t$score\t$strand\tt\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+ 		    }else{
+ 		     print $out "Align: $subfam\t$chrom\t$score\t$strand\tq\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+ 		    }
  		}else{
- 		    print $out "Align: $subfam\t$chrom\t$score\t$strand\tq\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+ 		    print $out "Align: $subfam\t$chrom\t$score\t$strand\t-1\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
  		}
+
 
  		
  			 				
