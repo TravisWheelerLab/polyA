@@ -59,15 +59,22 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         # TODO: Figure out whether we can drop this bit
         strand = metaItems[4]
 
-        start = int(metaItems[5])
-        stop = int(metaItems[6])
+        # if on reverse strand, which seq is reversed
+        reverse = metaItems[5]
 
-        consensusStart = int(metaItems[7])
-        consensusStop = int(metaItems[8])
-        flank = int(metaItems[9])
+        start = int(metaItems[6])
+        stop = int(metaItems[7])
 
-        sequence = sequences[0]
-        subfamilySequence = sequences[1]
+        consensusStart = int(metaItems[8])
+        consensusStop = int(metaItems[9])
+        flank = int(metaItems[10])
+
+        if reverse == "t":
+            sequence = sequences[0][::-1]
+            subfamilySequence = sequences[1][::-1]
+        else:
+            sequence = sequences[0]
+            subfamilySequence = sequences[1]
 
         alignments.append(
             Alignment(
