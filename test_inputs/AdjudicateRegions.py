@@ -295,17 +295,6 @@ if __name__ == "__main__":
             SubfamSeqs.append(alignment.subfamily_sequence)
             ChromSeqs.append(alignment.sequence)
 
-            # FIXME - add a check here when I need to reverse the alignment
-            # reverse it when the chrom sequence is reversed in the cm file
-            # need to add something to the .align files that has this info
-
-            # if alignment.strand == '+':
-            #     SubfamSeqs.append(alignment.subfamily_sequence)
-            #     ChromSeqs.append(alignment.sequence)
-            # else:
-            #     SubfamSeqs.append(alignment.subfamily_sequence[::-1])
-            #     ChromSeqs.append(alignment.sequence[::-1])
-
             Flanks.append(alignment.flank)
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
@@ -392,7 +381,25 @@ if __name__ == "__main__":
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
     # TODO: should be able to make this faster
-    NonEmptyColumns, ActiveCells = trailing_edges_info(rows, cols, AlignMatrix)
+    NonEmptyColumns_trailing, ActiveCells_trailing = trailing_edges_info(
+        rows, cols, AlignMatrix
+    )
+
+    (
+        NonEmptyColumns,
+        ActiveCells,
+        ConsensusMatrix,
+    ) = fill_consensus_position_matrix(
+        cols,
+        rows,
+        StartAll,
+        SubfamSeqs,
+        ChromSeqs,
+        Starts,
+        Stops,
+        ConsensusStarts,
+        Strands,
+    )
 
     if TR:
         RepeatScores = CalcRepeatScores(
@@ -439,32 +446,12 @@ if __name__ == "__main__":
     else:
         ConfidenceMatrix = fill_confidence_matrix(
             infile_prior_counts,
-            NonEmptyColumns,
+            NonEmptyColumns_trailing,
             SubfamCounts,
             Subfams,
-            ActiveCells,
+            ActiveCells_trailing,
             AlignMatrix,
         )
-
-    # removing trailing edge info from NonEmptyColumns and ActiveCells
-    NonEmptyColumns.clear()
-    ActiveCells.clear()
-
-    (
-        NonEmptyColumns,
-        ActiveCells,
-        ConsensusMatrix,
-    ) = fill_consensus_position_matrix(
-        cols,
-        rows,
-        StartAll,
-        SubfamSeqs,
-        ChromSeqs,
-        Starts,
-        Stops,
-        ConsensusStarts,
-        Strands,
-    )
 
     SupportMatrix = fill_support_matrix(
         rows,

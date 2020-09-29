@@ -4,7 +4,6 @@ from polyA import confidence_cm
 
 
 def FillConfidenceMatrixTR(
-    lamb: float,
     infilee: str,
     columns: List[int],
     subfam_countss: Dict[str, float],
