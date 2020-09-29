@@ -69,7 +69,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         consensusStop = int(metaItems[9])
         flank = int(metaItems[10])
 
-        if reverse == 't':
+        if reverse == "t":
             sequence = sequences[0][::-1]
             subfamilySequence = sequences[1][::-1]
         else:
