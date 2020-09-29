@@ -31,8 +31,12 @@ while(my $region = <$in_align>){
 		my @infoline = split(/\s+/, $info);
 				
 		my $score = $infoline[0];
-# 		my $chrom = $infoline[4];  
-		my $chrom = 'chr0:0000-0000';  #doesn't have chrom info because it's an artificial seq
+		my $chrom = $infoline[4];
+
+		if (index($chrom, 'chr') == -1) {
+		    #doesn't have chrom info because it's an artificial seq
+		    $chrom = 'chr0:0000-0000';
+		}
 		my $start = $infoline[5];
 		my $stop = $infoline[6];
 		my $subfam;
@@ -85,11 +89,16 @@ while(my $region = <$in_align>){
 
 		if($flank =~ /\((\d+)\)/g){
 			$flank = $1;
-		}	
-				
-		print $out "Align: $subfam\t$chrom\t$score\t$strand\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n"; 						
+		}
  			
  		my @Alignment = split(/\n/, $alignment);
+
+ 		if($Alignment[0] =~ /^C.+/){
+ 		    print $out "Align: $subfam\t$chrom\t$score\t$strand\tt\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+ 		}else{
+ 		    print $out "Align: $subfam\t$chrom\t$score\t$strand\tq\t$start\t$stop\t$consensusStart\t$consensusStop\t$flank\n";
+ 		}
+
  		
  			 				
  		my $chromSeq = "";
