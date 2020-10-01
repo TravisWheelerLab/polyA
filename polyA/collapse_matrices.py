@@ -31,8 +31,8 @@ def dp_for_collapse(
 
 
     """
-    change: float = log(0.001)  # FIXME - what transition penalty to use ??
-    stay: float = log(1 - 0.001)
+    change: float = log(0.0001)  # FIXME - what transition penalty to use ??
+    stay: float = log(1 - change)
 
     non_empty: List[int] = []
 
