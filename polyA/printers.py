@@ -212,6 +212,7 @@ def print_results_soda(
                 right_flank: int
 
                 if subfam == "Tandem Repeat":
+                    subfam = "Tandem#Repeat/TR"
                     left_flank = 0
                     right_flank = 0
                 else:
@@ -293,7 +294,7 @@ def print_results_soda(
 
                 j: int = i + 1
                 while j < length:
-                    if changes_orig[j] != "skip" and subfam != "Tandem Repeat":
+                    if changes_orig[j] != "skip" and subfam != "Tandem#Repeat/TR":
 
                         if (
                             ids[columns_orig[changes_position_orig[i]]]
