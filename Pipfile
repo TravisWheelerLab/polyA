@@ -8,6 +8,7 @@ black = "*"
 flit = "*"
 ipython = "*"
 mypy = "*"
+polya = {path = "."}
 pprofile = "*"
 pylint = ">=2.4.4,<3.0.0"
 pytest = ">=5.3.5,<6.0.0"
@@ -20,4 +21,3 @@ python_version = "3.8"
 
 [pipenv]
 allow_prereleases = true
-
