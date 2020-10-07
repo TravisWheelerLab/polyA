@@ -430,7 +430,7 @@ if __name__ == "__main__":
 
         ConfidenceMatrix = FillConfidenceMatrixTR(
             infile_prior_counts,
-            NonEmptyColumns,  #FIXME - does this need to be NonEmptyColumns_trailing?
+            NonEmptyColumns,  # FIXME - does this need to be NonEmptyColumns_trailing?
             SubfamCounts,
             Subfams,
             ActiveCells,
