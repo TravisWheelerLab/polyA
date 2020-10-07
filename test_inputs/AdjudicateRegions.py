@@ -171,7 +171,7 @@ if __name__ == "__main__":
     SubMatrix: Dict[str, int] = {}
 
     # add all ambiguity codes just incase matrix doesnt have them
-    nucleotide_codes = "AGCTYRWSKMDVHBXN"
+    nucleotide_codes = "AGCTYRWSKMDVHBXN."
     for code in nucleotide_codes:
         for code2 in nucleotide_codes:
             SubMatrix[code + code2] = 0

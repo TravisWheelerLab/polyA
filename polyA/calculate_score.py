@@ -58,24 +58,17 @@ def calculate_score(
         seq1_char: str = seq1[j]
         seq2_char: str = seq2[j]
 
-        if seq1_char != ".":
-            if seq1_char == "-":
-                if seq1[j - 1] == "-":
-                    chunk_score += gap_ext
-                else:
-                    chunk_score += gap_init
-            elif seq2_char == "-":
-                if seq2[j - 1] == "-":
-                    chunk_score += gap_ext
-                else:
-                    chunk_score += gap_init
+        if seq1_char == "-":
+            if seq1[j - 1] == "-":
+                chunk_score += gap_ext
             else:
-                # TODO: Determine whether this check is necessary
-                # We could check earlier if necessary and fail if the
-                # substitution matrix input is insufficient.
-                # if (seq1_char + seq2_char) in sub_matrix:
-                chunk_score += sub_matrix[seq1_char + seq2_char]
+                chunk_score += gap_init
+        elif seq2_char == "-":
+            if seq2[j - 1] == "-":
+                chunk_score += gap_ext
+            else:
+                chunk_score += gap_init
         else:
-            break
+            chunk_score += sub_matrix[seq1_char + seq2_char]
 
     return float(chunk_score)

@@ -100,7 +100,7 @@ def fill_path_graph(
                     # confidence >= 20%, and if the source is before the sink in the consensus sequence
 
                     # FIXME - not sure what this confidence threshold should be
-                    if sourceConf >= 0.2 or sinkConf >= 0.2:
+                    if sourceConf >= 0.05 or sinkConf >= 0.05:
                         if sink_strand == "+" and sink_strand == source_strand:
                             # FIXME- not sure what this overlap should be .. just allowed 50 for now
                             if source_subfam_stop <= sink_subfam_start + 50:

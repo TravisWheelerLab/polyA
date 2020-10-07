@@ -95,7 +95,9 @@ def fill_node_confidence(
             align_score0 = lamb * calculate_score(
                 gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix
             )
+
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
+
     # first node TRs
     count = 0
     for subfam_index0 in range(len(subfams) - tr_count, len(subfams)):
