@@ -40,7 +40,7 @@ def fill_consensus_position_matrix(
     >>> strandss = ["", "+", "-"]
     >>> col, active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     >>> con_mat
-    {(0, 0): 0, (0, 1): 0, (0, 2): 0, (1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    {(1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
     >>> col
     [0, 1, 2]
     >>> active
@@ -49,10 +49,6 @@ def fill_consensus_position_matrix(
     columns = set()
     active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
-
-    # 0s for consensus pos of skip state
-    for j in range(col_num):
-        consensus_matrix[0, j] = 0
 
     # start at 1 to ignore 'skip state'
     for row_index in range(1, row_num):

@@ -430,7 +430,7 @@ if __name__ == "__main__":
 
         ConfidenceMatrix = FillConfidenceMatrixTR(
             infile_prior_counts,
-            NonEmptyColumns,
+            NonEmptyColumns,  #FIXME - does this need to be NonEmptyColumns_trailing?
             SubfamCounts,
             Subfams,
             ActiveCells,
@@ -450,6 +450,7 @@ if __name__ == "__main__":
             col_set.add(tr_col)
             NonEmptyColumns = list(col_set)
         NonEmptyColumns.sort()
+
     else:
         ConfidenceMatrix = fill_confidence_matrix(
             infile_prior_counts,
@@ -459,6 +460,11 @@ if __name__ == "__main__":
             ActiveCells_trailing,
             AlignMatrix,
         )
+
+    # add skip state to consensus matrix
+    # wait till after incase NonEmptyColumns is updated by TR stuff
+    for j in NonEmptyColumns:
+        ConsensusMatrix[0, j] = 0
 
     SupportMatrix = fill_support_matrix(
         rows,
