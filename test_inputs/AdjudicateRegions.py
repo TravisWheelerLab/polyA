@@ -461,6 +461,7 @@ if __name__ == "__main__":
         Starts,
         Stops,
         ConfidenceMatrix,
+        ConsensusMatrix,
     )
 
     collapsed_matrices = collapse_matrices(

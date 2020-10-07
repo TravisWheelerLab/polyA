@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from polyA.matrices import ConfidenceMatrix, SupportMatrix
+from polyA.matrices import ConfidenceMatrix, SupportMatrix, ConsensusMatrix
 
 
 def fill_support_matrix(
@@ -11,6 +11,7 @@ def fill_support_matrix(
     starts: List[int],
     stops: List[int],
     confidence_matrix: ConfidenceMatrix,
+    consensus_matrix: ConsensusMatrix,
 ) -> SupportMatrix:
     """
     Fills support_matrix using values in confidence_matrix. Average confidence values
@@ -40,7 +41,8 @@ def fill_support_matrix(
     >>> strts = [0, 0]
     >>> stps = [0, 2]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
-    >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, conf_mat)
+    >>> cons_mat = {(0, 0): 1, (0, 1): 1, (0, 2): 1, (1, 0): 1, (1, 1): 1, (1, 2): 1}
+    >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, conf_mat, cons_mat)
     {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
     """
 
@@ -58,7 +60,7 @@ def fill_support_matrix(
         for sum_index in range(
             col_index - half_chunk, col_index + half_chunk + 1
         ):
-            if (0, sum_index) in confidence_matrix:
+            if (0, sum_index) in consensus_matrix:
                 num_segments += 1
                 summ += confidence_matrix[0, sum_index]
 
@@ -75,12 +77,12 @@ def fill_support_matrix(
             for col in range(len(columns)):
                 j = columns[col]
 
-                if (row_index, j) in confidence_matrix:
+                if (row_index, j) in consensus_matrix:
                     num: int = j
                     summ: float = 0.0
                     numsegments: int = 0
                     while num >= 0 and num >= j:
-                        if (row_index, num) in confidence_matrix:
+                        if (row_index, num) in consensus_matrix:
                             summ = summ + confidence_matrix[row_index, num]
                             numsegments += 1
                         num -= 1
