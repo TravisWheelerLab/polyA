@@ -169,6 +169,13 @@ if __name__ == "__main__":
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
     # input substitution matrix - ex: 'AA' = 8
     SubMatrix: Dict[str, int] = {}
+
+    # add all ambiguity codes just incase matrix doesnt have them
+    nucleotide_codes = "AGCTYRWSKMDVHBXN"
+    for code in nucleotide_codes:
+        for code2 in nucleotide_codes:
+            SubMatrix[code + code2] = 0
+
     line = in_matrix[0]
     line = re.sub(r"^\s+", "", line)
     line = re.sub(r"\s+$", "", line)
