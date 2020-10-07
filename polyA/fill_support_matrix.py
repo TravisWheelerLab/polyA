@@ -97,7 +97,6 @@ def fill_support_matrix(
             for col_index in range(
                 start, starts[row_index] - start_all + half_chunk
             ):
-
                 summ: float = 0.0
                 sum_index: int = col_index - left_index
                 num_segments: int = 0
@@ -130,8 +129,20 @@ def fill_support_matrix(
                 last_index: int = col_index - half_chunk - 1
                 next_index: int = col_index + half_chunk
 
-                summ -= confidence_matrix[row_index, last_index]
-                summ += confidence_matrix[row_index, next_index]
+                summ = (
+                    summ
+                    - confidence_matrix[row_index, last_index]
+                    + confidence_matrix[row_index, next_index]
+                )
+
+                # rounding error when summ gets really small sometimes causes summ to become negative
+                # when this happen recompute sum the naiive way
+                if summ <= 0:
+                    summ = 0
+                    sum_index = last_index + 1
+                    while sum_index <= next_index:
+                        summ += confidence_matrix[row_index, sum_index]
+                        sum_index += 1
 
                 support_matrix[row_index, col_index] = summ / chunk_size
 
