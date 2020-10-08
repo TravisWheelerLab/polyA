@@ -418,10 +418,11 @@ if __name__ == "__main__":
             AlignMatrix,
             ConsensusMatrix,
         )
+
         # add skip states for TR cols
         for tr_col in RepeatScores:
             AlignMatrix[0, tr_col] = float(SkipAlignScore)
-            ConsensusMatrix[0, tr_col] = 0
+
         # add TRs to subfams
         for rep in TandemRepeats:
             Subfams.append("Tandem Repeat")
@@ -493,6 +494,16 @@ if __name__ == "__main__":
     StrandMatrixCollapse = collapsed_matrices.strand_matrix
     SubfamsCollapseIndex = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
+
+    if TR:
+        # give different TRs consensus positions that don't allow them to be stitched
+        tr_consensus_pos = 1000000
+        prev_tr_col = 0
+        for tr_col in RepeatScores:
+            if prev_tr_col != tr_col - 1:
+                tr_consensus_pos -= 500
+            ConsensusMatrixCollapse[rows - 1, tr_col] = tr_consensus_pos
+            prev_tr_col = tr_col
 
     # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
