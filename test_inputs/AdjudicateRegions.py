@@ -662,7 +662,9 @@ if __name__ == "__main__":
 
         if TR:
             for subfam in Changes:
-                assert subfam != 'Tandem Repeat', "can't add alternative edges to TRs"
+                assert (
+                    subfam != "Tandem Repeat"
+                ), "can't add alternative edges to TRs"
 
     # prints results
     if printMatrixPos:
