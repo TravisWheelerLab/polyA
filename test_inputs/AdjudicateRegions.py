@@ -660,6 +660,10 @@ if __name__ == "__main__":
         )
         prev_num_nodes = NumNodes
 
+        if TR:
+            for subfam in Changes:
+                assert subfam != 'Tandem Repeat', "can't add alternative edges to TRs"
+
     # prints results
     if printMatrixPos:
         print_results(
