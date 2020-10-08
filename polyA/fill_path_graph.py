@@ -73,46 +73,47 @@ def fill_path_graph(
         ):  # don't want to add alternative edges to skip nodes or tandem repeats
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
-                sourceConf: float = node_confidence[
-                    sink_subfam, source_node_index
-                ]  # sink subfam confidence in source node
-                sinkConf: float = node_confidence[
-                    source_subfam, sink_node_index
-                ]  # source subfam confidence in sink node
-                source_subfam_index = subfams_collapse_index[source_subfam]
-                source_col: int = columns[
-                    changes_position[source_node_index + 1] - 1
-                ]
-
-                if (
-                    source_subfam_index,
-                    source_col,
-                ) in consensus_matrix_collapse:
-
-                    source_subfam_stop = consensus_matrix_collapse[
-                        source_subfam_index, source_col
-                    ]
-                    source_strand = strand_matrix_collapse[
-                        source_subfam_index, source_col
+                if source_subfam != "Tandem Repeat":
+                    sourceConf: float = node_confidence[
+                        sink_subfam, source_node_index
+                    ]  # sink subfam confidence in source node
+                    sinkConf: float = node_confidence[
+                        source_subfam, sink_node_index
+                    ]  # source subfam confidence in sink node
+                    source_subfam_index = subfams_collapse_index[source_subfam]
+                    source_col: int = columns[
+                        changes_position[source_node_index + 1] - 1
                     ]
 
-                    # adds in edge if the subfam of the sink is at the source node and if it's
-                    # confidence >= 20%, and if the source is before the sink in the consensus sequence
+                    if (
+                        source_subfam_index,
+                        source_col,
+                    ) in consensus_matrix_collapse:
 
-                    # FIXME - not sure what this confidence threshold should be
-                    if sourceConf >= 0.05 or sinkConf >= 0.05:
-                        if sink_strand == "+" and sink_strand == source_strand:
-                            # FIXME- not sure what this overlap should be .. just allowed 50 for now
-                            if source_subfam_stop <= sink_subfam_start + 50:
-                                path_graph[
-                                    source_node_index * nodes + sink_node_index
-                                ] = 1
-                        elif (
-                            sink_strand == "-" and sink_strand == source_strand
-                        ):
-                            if source_subfam_stop + 50 >= sink_subfam_start:
-                                path_graph[
-                                    source_node_index * nodes + sink_node_index
-                                ] = 1
+                        source_subfam_stop = consensus_matrix_collapse[
+                            source_subfam_index, source_col
+                        ]
+                        source_strand = strand_matrix_collapse[
+                            source_subfam_index, source_col
+                        ]
+
+                        # adds in edge if the subfam of the sink is at the source node and if it's
+                        # confidence >= 20%, and if the source is before the sink in the consensus sequence
+
+                        # FIXME - not sure what this confidence threshold should be
+                        if sourceConf >= 0.05 or sinkConf >= 0.05:
+                            if sink_strand == "+" and sink_strand == source_strand:
+                                # FIXME- not sure what this overlap should be .. just allowed 50 for now
+                                if source_subfam_stop <= sink_subfam_start + 50:
+                                    path_graph[
+                                        source_node_index * nodes + sink_node_index
+                                    ] = 1
+                            elif (
+                                sink_strand == "-" and sink_strand == source_strand
+                            ):
+                                if source_subfam_stop + 50 >= sink_subfam_start:
+                                    path_graph[
+                                        source_node_index * nodes + sink_node_index
+                                    ] = 1
 
     return path_graph
