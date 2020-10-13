@@ -8,8 +8,6 @@
 
 ## About
 
-**TODO:** Kaitlin
-
 A common annotation process compares an unannotated sequence to a collection of known sequences.
 Sometimes, more than one of the queries shows a significant match to the target. Current 
 annotation processes choose the 'true' match based on highest alignment score. In databases
@@ -19,51 +17,27 @@ it falsely implies certainty in the true match. PolyA produces confidence estima
 competing annotations to eliminate implying false certainty in the annotations. In addition, 
 polyA can identify instances of gene conversion and homologous recombination, and find the 
 exact genomic location of the switch between sequences. It can also clarify ambiguous boundaries
-between neighboring elements due to homologous over extension. And it can find sequences nesting
-while identifying the inserted sequence along with the original sequence that was inserted into.
+between neighboring elements due to homologous over extension. It can also find sequence nesting,
+identifying the inserted sequence along with the original sequence that was inserted into.
 
 
 ## The Algorithm
 
-**TODO:** Kaitlin - we can also link to whatever paper(s) are published
+Using our confidence score analysis enables a jumping HMM approach. Allowing transitions between
+competing queries identifies switches between nucleotide elements. These switches are a result of 
+gene conversion, homologous recombination, neighboring elements or sequence nesting.
 
-Using our confidence score analysis enables a jumping HMM approach, allowing transitions between
-competing queries identifies switches between queries. These switches are a result of gene
-conversion, homologous recombination, neighboring elements and sequence nesting.
+Our algorithm has 3 parts: 
 
-Our algorithm has 4 parts: 
+1. Confidence calculations. This gives us the probablilites each competing query is the true 
+source of the target. 
+2. Position specific confidence creates a less computationally expensive version of a jpHMM, 
+allowing for transitions between queries. This identifies gene conversion, homologous recombination,
+nested elements, and boundaries between adjacent elements.  
+3. Graph Algorithm finds nested sequences. 
 
-1. Confidence calculations help choose between competing annotations
-	using an application of the bayes theorem on the probabilities underlying alignments scores
-	we compute posterior probabilities (confidence) of the likelihood a query is the true
-	source for the genomic region.
-2A. Segmented adjacent confidence finds non-exact breakpoint locations
-	-takes alignments of all competing queries
-	-splits alignments up into contiguous segments
-	-compute confidence scores for segments 
-	-dynamic programming pass through matrix holding confidence values gives most probable
-	path through alignment
-	-allows switches between queries
-	-identifies a query for each segment
-2B. Segmented overlapping confidence finds exact breakpoints of gene conversion, homologous 
-recombination and boundary detection
-	-takes alignments of all competing queries
-	-splits alignments up into adjacent segments starting at every nucleotide
-	-compute average confidence values for each nucleotide based on all segments overlapping
-	that position
-	-new dynamic programming matrix with confidence values for each nucleotide instead
-	of each segment
-	-dynamic programming pass identifies a query for every nucleotide
-3. Graph Algorithm finds nested sequences
-	-all sequences labeled in dynamic programming become nodes
-	-find alternative paths through that graph based on confidence of the sink subfamily
-	in the source node
-	-splice out all sequences with no alternative paths (these are the inserted sequences)
-	-splice corresponding positions out of dynamic programming matrix
-	-another dynamic programming pass on the updated matrix stitches original sequence back 
-	together
-	
-For a more detailed description view the [poster](/supporting_materials/AlgorithmPoster.pdf)
+**TODO:** add link to paper as well	
+For a more detailed description view the [poster](/publications/AlgorithmPoster.pdf)
 
 ## Using
 
@@ -73,28 +47,26 @@ For a more detailed description view the [poster](/supporting_materials/Algorith
 	
 #### Alignment Files
 
-  - RM of CM alignment files 
-  - Links to RM and CM alignment file formats
-  - Add hmmer eventually?
+TODO: do we want to input cm alignment file or formatted file ?
 
-Score matrix files example format:
+Score matrix files example format (can include ambiguity codes):
 
 ```
-  A   R   G   C   Y   T   K   M   S   W   N   H   V   X
-  8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1  -1  -1 -27
-  2   2   1 -13 -13 -14  -6  -5  -5  -5  -1  -1  -1 -27
- -2   3  10 -13 -13 -13  -1  -8  -1  -8  -1  -1  -1 -27
--13 -13 -13  10   3  -2  -8  -1  -1  -8  -1  -1  -1 -27
--14 -13 -13   1   2   2  -5  -6  -5  -5  -1  -1  -1 -27
--15 -14 -13  -6   1   8  -2 -11 -10  -3  -1  -1  -1 -27
- -9  -5  -1  -9  -6  -2  -1  -9  -5  -5  -1  -1  -1 -27
- -2  -6  -9  -1  -5  -9  -9  -1  -5  -5  -1  -1  -1 -27
- -8  -4  -1  -1  -4  -8  -4  -4  -1  -8  -1  -1  -1 -27
- -3  -6 -10 -10  -6  -3  -6  -6 -10  -3  -1  -1  -1 -27
- -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
- -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
- -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
--27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27  -1  -1 -27
+  A   G   C    T    N
+  8  -6  -13  -15  -1
+ -2  10  -13  -13  -1
+-13  -13  10  -2   -1
+-15  -13  -6   8   -1
+ -1  -1   -1  -1   -1
+```
+
+Subfamily counts file example format:
+```
+subfamily   genome count
+AluYk2      6855
+LTR38	    255
+L1PA7_5end  13261
+...
 ```
 
 ### Output file format
