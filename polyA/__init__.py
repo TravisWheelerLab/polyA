@@ -9,7 +9,6 @@ from .calculate_score import calculate_score
 from .collapse_matrices import collapse_matrices
 from .confidence_cm import confidence_cm
 from .constants import (
-    DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
     NAN_STRING,
 )

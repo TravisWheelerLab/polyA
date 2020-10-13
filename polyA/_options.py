@@ -5,11 +5,9 @@ from typing import List, Optional, TextIO
 
 from polyA._exceptions import ValidationException
 from polyA.constants import (
-    DEFAULT_CHANGE_PROB,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_GAP_EXT,
     DEFAULT_GAP_INIT,
-    DEFAULT_LAMBDA,
 )
 from polyA.matrices import SupportMatrix
 
@@ -67,12 +65,6 @@ class Options:
             help="Collect and display benchmarking data",
         )
         parser.add_argument(
-            "--change-prob",
-            type=float,
-            default=DEFAULT_CHANGE_PROB,
-            help="Base probability of changing sequences",
-        )
-        parser.add_argument(
             "--chunk-size",
             type=int,
             default=DEFAULT_CHUNK_SIZE,
@@ -96,12 +88,6 @@ class Options:
             default=DEFAULT_GAP_INIT,
         )
         parser.add_argument(
-            "--lambda",
-            type=float,
-            help="TODO: Kaitlin",
-            default=DEFAULT_LAMBDA,
-        )
-        parser.add_argument(
             "--log-file",
             type=str,
             help="File to log to, or stdout, stderr, or none",
@@ -123,7 +109,6 @@ class Options:
 
     def _parse_all(self, namespace: Namespace) -> None:
         self._parse_benchmark(namespace)
-        self._parse_change_prob(namespace)
         self._parse_chunk_size(namespace)
         self._parse_columns(namespace)
         self._parse_gap_ext(namespace)
