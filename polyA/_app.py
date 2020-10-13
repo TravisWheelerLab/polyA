@@ -163,7 +163,7 @@ def run():
 
     # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
     if not Lamb:
-        provider = EaselLambdaProvider(EslPath)
+        provider = EaselLambdaProvider(EslPath, infile_matrix)
         Lamb = provider()
 
     # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
