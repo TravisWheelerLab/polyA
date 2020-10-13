@@ -49,7 +49,7 @@ check-format:
 
 .PHONY: check-slow
 check-slow:
-	cd test_inputs && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
+	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
 
 .PHONY: clean
 clean:
