@@ -230,5 +230,6 @@ MIT license. See `LICENSE`.
 [Wheeler Lab](http://wheelerlab.org) at the University of Montana.
 
   - Kaitlin Carey
+  - Audrey Shingleton
   - George Lesica
   - Travis Wheeler
