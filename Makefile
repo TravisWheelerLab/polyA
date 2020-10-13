@@ -16,17 +16,15 @@ ifndef CONTAINER_VERSION
 override CONTAINER_VERSION := latest
 endif
 
-TEST_INPUTS := wildcard(test_inputs/*.align.format)
-
 RUN_CMD := pipenv run
 PYTHON_CMD := ${RUN_CMD} python
 
 FMT_CMD := ${PYTHON_CMD} -m black
-FMT_TARGETS := polyA/ tests/ test_inputs/
+FMT_TARGETS := polyA/ tests/
 FMT_OPTS := -t py38 -l 80
 
 TEST_CMD := ${PYTHON_CMD} -m pytest
-TEST_TARGETS := tests/ polyA/ test_inputs/AdjudicateRegions.py
+TEST_TARGETS := tests/ polyA/
 
 .PHONY: build-package
 build-package:

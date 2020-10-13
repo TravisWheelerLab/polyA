@@ -1,11 +1,18 @@
+import json
+import re
+import subprocess
 from getopt import getopt
 from math import log
-import re
-from sys import argv, stdout, stderr
-from typing import Dict, List, Tuple
-import json
-import subprocess
+from sys import argv, stderr, stdout
 
+from polyA import (
+    pad_sequences,
+    print_matrix_support,
+    print_results,
+    print_results_chrom,
+    print_results_sequence,
+    print_results_soda,
+)
 from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
@@ -20,16 +27,9 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
-from polyA import (
-    pad_sequences,
-    print_matrix_support,
-    print_results,
-    print_results_chrom,
-    print_results_sequence,
-    print_results_soda,
-)
 
-if __name__ == "__main__":
+
+def run():
     GapInit: int = -25
     GapExt: int = -5
     Lamb: float = 0.0
