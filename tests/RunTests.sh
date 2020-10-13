@@ -19,7 +19,7 @@ done
 #tests soda output
 for f in ../fixtures/*.align.format ;
 do echo "$f";
-  python -m polyA --seqpos --viz outfile.viz --heatmap outfile.heatmap "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seqpos --lambda .1227 --viz outfile.viz --heatmap outfile.heatmap "$f" ../fixtures/25p41g_edited.matrix;
   rm outfile.viz;
   rm outfile.viz.json;
   rm outfile.heatmap;
