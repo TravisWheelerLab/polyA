@@ -22,12 +22,13 @@ class ConstantLambdaProvider:
 class EaselLambdaProvider:
     _path: str
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, matrix: str):
         """
         Creates a new provider instance that runs Easel, which must
         be available at the given path, to produce a value for lambda.
         """
         self._path = path
+        self._matrix = matrix
 
     def __call__(self) -> float:
         # TODO: How do we know which matrix file to use?
@@ -35,7 +36,7 @@ class EaselLambdaProvider:
         # to the object constructor?
 
         esl_stream = os.popen(
-            self._path + "esl_scorematrix --dna 25p41g_edited.matrix"
+            self._path + "esl_scorematrix --dna " + self._matrix
         )
         esl_output = esl_stream.read()
         esl_output_list = re.split(r"\n+", esl_output)
