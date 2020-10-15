@@ -6,14 +6,22 @@ build-backend = "flit_core.buildapi"
 module = "polyA"
 author = "Kaitlin Carey"
 author-email = "kaitlin1.carey@umontana.edu"
+maintainer = "Audrey Shingleton"
+maintainer-email = "audrey.shingleton@umontana.edu"
 home-page = "https://github.com/TravisWheelerLab/polyA"
-classifiers = ["License :: OSI Approved :: BSD License"]
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "License :: OSI Approved :: BSD License",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
 description-file = "README.md"
 
 [tool.flit.sdist]
 exclude = [
-    "fixtures/",
-    "supporting_materials/",
-    "tests/",
     "test_inputs/",
+    "fixtures/",
+    "Dockerfile*",
+    "Makefile",
+    ".gitignore",
+    ".github",
 ]
