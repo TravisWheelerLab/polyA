@@ -346,7 +346,7 @@ def run():
         ChangeProbLog / 2
     )  # jumping in and then out of the skip state counts as 1 jump
     SameProbSkip = (
-        ChangeProbLog / 30
+        ChangeProbLog / 50
     )  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows in matrices
