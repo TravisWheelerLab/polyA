@@ -78,7 +78,8 @@ def get_path(
 
     ids[columns[-1]] = temp_id
 
-    changes_position.append(len(columns))
+    #last column is a skip state pad
+    changes_position.append(len(columns)-1)
 
     # already added the last col, but this adds the one before cols so still start at last col
     for columns_index in range(len(columns) - 1, 1, -1):

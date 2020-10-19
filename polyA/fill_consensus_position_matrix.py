@@ -50,15 +50,17 @@ def fill_consensus_position_matrix(
     active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
+    columns.add(0)
+
     # start at 1 to ignore 'skip state'
     for row_index in range(1, row_num):
 
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
-            col_index: int = starts[row_index] - start_all
+            col_index: int = starts[row_index] - start_all + 1
             seq_index: int = starts[row_index] - start_all
 
-            while col_index < stops[row_index] - start_all + 1:
+            while col_index < stops[row_index]+1 - start_all + 1:
 
                 # consensus pos only advances when there is not a gap in the subfam seq
                 if subfams[row_index][seq_index] != "-":
@@ -80,10 +82,10 @@ def fill_consensus_position_matrix(
 
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
-            col_index2: int = starts[row_index] - start_all
+            col_index2: int = starts[row_index] - start_all + 1
             seq_index2: int = starts[row_index] - start_all
 
-            while col_index2 < stops[row_index] - start_all + 1:
+            while col_index2 < stops[row_index]+1 - start_all + 1:
 
                 if subfams[row_index][seq_index2] != "-":
                     consensus_pos2 -= 1
