@@ -40,11 +40,11 @@ def fill_consensus_position_matrix(
     >>> strandss = ["", "+", "-"]
     >>> col, active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     >>> con_mat
-    {(1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    {(1, 2): 0, (1, 3): 1, (2, 1): 10, (2, 2): 9, (2, 3): 9}
     >>> col
-    [0, 1, 2]
+    [0, 1, 2, 3]
     >>> active
-    {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
+    {2: [0, 1, 2], 3: [0, 1, 2], 1: [0, 2]}
     """
     columns = set()
     active_cells: Dict[int, List[int]] = {}
@@ -60,7 +60,7 @@ def fill_consensus_position_matrix(
             col_index: int = starts[row_index] - start_all + 1
             seq_index: int = starts[row_index] - start_all
 
-            while col_index < stops[row_index]+1 - start_all + 1:
+            while col_index < stops[row_index] + 1 - start_all + 1:
 
                 # consensus pos only advances when there is not a gap in the subfam seq
                 if subfams[row_index][seq_index] != "-":
@@ -85,7 +85,7 @@ def fill_consensus_position_matrix(
             col_index2: int = starts[row_index] - start_all + 1
             seq_index2: int = starts[row_index] - start_all
 
-            while col_index2 < stops[row_index]+1 - start_all + 1:
+            while col_index2 < stops[row_index] + 1 - start_all + 1:
 
                 if subfams[row_index][seq_index2] != "-":
                     consensus_pos2 -= 1

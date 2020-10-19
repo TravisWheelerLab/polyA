@@ -375,7 +375,7 @@ def run():
         ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs
     )
 
-    #add skip state pad at start
+    # add skip state pad at start
     AlignMatrix[0, 0] = SkipAlignScore
     NonEmptyColumns.append(0)
     NonEmptyColumns_trailing.append(0)
@@ -418,7 +418,7 @@ def run():
 
     ActiveCells[0] = [0]
 
-    #add skip state pad at end
+    # add skip state pad at end
     AlignMatrix[0, cols] = SkipAlignScore
     NonEmptyColumns.append(cols)
     NonEmptyColumns_trailing.append(cols)
