@@ -48,6 +48,7 @@ check-format:
 .PHONY: check-slow
 check-slow:
 	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
+	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunUltraTests.sh
 
 .PHONY: clean
 clean:
