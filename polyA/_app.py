@@ -66,21 +66,20 @@ def run():
     ARGUMENTS
         --GapInit[-25]
         --getExt[-5]
-        --lambda [will calc from matrix if not included]
-        --eslPath [specify path to easel]
+        --lambda [will calculate from substitution matrix if not included]
         --segmentsize (must be odd) [31]
-        --changeprob[1e-45]
-        --priorCounts PriorCountsFile
-        --ultraPath [specify path to ULTRA executable]
-        --seqFile [specify path to genome region file]
-        --ultraOutput [specify path to ULTRA output file from region]
+        --eslPath esl_path
+        --priorCounts prior_counts.txt
+        --ultraPath ultra_path
+        --seqFile genomic_region.fasta
+        --ultraOutput ultra_output.txt
+        --viz outfile - prints output format for SODA visualization
+        --heatmap outfile - prints probability file for input into heatmap
     
     OPTIONS
         --help - display help message
-        --matrixpos - prints subfam changes in matrix position instead of genomic position
-        --sequencepos - prints subfam changes in sequence position instead of genomic position
-        --viz outfile - prints output format for SODA visualization
-        --heatmap outfile - prints probability file for input into heatmap
+        --matrixpos - prints output in terms of matrix position
+        --sequencepos - prints output in terms of target sequence position
     """
 
     raw_opts, args = getopt(
@@ -93,7 +92,6 @@ def run():
             "lambda=",
             "eslPath=",
             "segmentsize=",
-            "changeprob=",
             "priorCounts=",
             "viz=",
             "heatmap=",
@@ -113,9 +111,6 @@ def run():
     EslPath = str(opts["--eslPath"]) if "--eslPath" in opts else EslPath
     ChunkSize = (
         int(opts["--segmentsize"]) if "--segmentsize" in opts else ChunkSize
-    )
-    ChangeProb = (
-        float(opts["--changeprob"]) if "--changeprob" in opts else ChangeProb
     )
     infile_prior_counts = (
         str(opts["--priorCounts"])
