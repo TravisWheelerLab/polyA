@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # test with ultra output
 for f in ../fixtures/ultra_test_files/*.fa ;
 do echo "$f";
