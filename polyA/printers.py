@@ -317,7 +317,7 @@ def print_results_soda(
                                 right_flank = (
                                     consensus_lengths[subfam]
                                     - consensus_matrix_collapse[
-                                        subfams_collapse_index[subfam],
+                                        subfams_collapse_index[changes_orig[j]],
                                         columns_orig[
                                             changes_position_orig[j + 1] - 1
                                         ],
