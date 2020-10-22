@@ -39,11 +39,11 @@ def fill_support_matrix(
 
     >>> non_cols = [0,1,2]
     >>> strts = [0, 0]
-    >>> stps = [0, 2]
+    >>> stps = [0, 1]
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
     >>> cons_mat = {(0, 0): 1, (0, 1): 1, (0, 2): 1, (1, 0): 1, (1, 1): 1, (1, 2): 1}
     >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, conf_mat, cons_mat)
-    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.2, (1, 1): 0.16666666666666666, (1, 2): 0.2}
+    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.1, (1, 1): 0.3, (1, 2): 0.1}
     """
 
     support_matrix: Dict[Tuple[int, int], float] = {}
@@ -69,8 +69,8 @@ def fill_support_matrix(
     # rest of rows
     for row_index in range(1, row_num):
 
-        start: int = starts[row_index] - start_all
-        stop: int = stops[row_index] - start_all
+        start: int = starts[row_index] - start_all + 1
+        stop: int = stops[row_index] - start_all + 1
 
         # if the alignment is small, do it the easy way to avoid out of bound errors
         if stop - start + 1 < chunk_size:
@@ -95,7 +95,7 @@ def fill_support_matrix(
             # first chunk_size/2 before getting to full chunks
             left_index: int = 0
             for col_index in range(
-                start, starts[row_index] - start_all + half_chunk
+                start, starts[row_index] + 1 - start_all + half_chunk
             ):
                 summ: float = 0.0
                 sum_index: int = col_index - left_index
@@ -149,7 +149,7 @@ def fill_support_matrix(
             # last chunk_size/2
             right_index: int = half_chunk
             for col_index in range(
-                (stop + 1) - half_chunk, stops[row_index] - start_all + 1
+                (stop + 1) - half_chunk, stops[row_index] + 1 - start_all + 1
             ):
 
                 summ: float = 0.0

@@ -179,13 +179,13 @@ def collapse_matrices(
         col_index: int = columns[col]
         active_cols = (
             set()
-        )  # use set to don't add duplicates of subfams with mulitple alignments
+        )  # use set so don't add duplicates of subfams with mulitple alignments
         active_cells_collapse[col_index] = active_cols
 
         for row_index in active_cells[col_index]:
             subfam: str = subfams[row_index]
 
-            # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrices
+            # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrix
             if len(subfams_count[subfam]) == 1:
                 consensus_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index

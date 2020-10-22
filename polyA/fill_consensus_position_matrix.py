@@ -40,13 +40,13 @@ def fill_consensus_position_matrix(
     >>> strandss = ["", "+", "-"]
     >>> col, active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     >>> con_mat
-    {(1, 1): 0, (1, 2): 1, (2, 0): 10, (2, 1): 9, (2, 2): 9}
+    {(1, 2): 0, (1, 3): 1, (2, 1): 10, (2, 2): 9, (2, 3): 9}
     >>> col
     [0, 1, 2]
     >>> active
-    {1: [0, 1, 2], 2: [0, 1, 2], 0: [0, 2]}
+    {2: [0, 1, 2], 3: [0, 1, 2], 1: [0, 2], 0: [0]}
     """
-    columns = set()
+    columns: List[int] = []
     active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
@@ -55,18 +55,16 @@ def fill_consensus_position_matrix(
 
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
-            col_index: int = starts[row_index] - start_all
+            col_index: int = starts[row_index] - start_all + 1
             seq_index: int = starts[row_index] - start_all
 
-            while col_index < stops[row_index] - start_all + 1:
+            while col_index < stops[row_index] + 1 - start_all + 1:
 
                 # consensus pos only advances when there is not a gap in the subfam seq
                 if subfams[row_index][seq_index] != "-":
                     consensus_pos += 1
 
                 consensus_matrix[row_index, col_index] = consensus_pos
-
-                columns.add(col_index)
 
                 # matrix position only advances when there is not a gap in the chrom seq
                 if chroms[row_index][seq_index] != "-":
@@ -80,16 +78,14 @@ def fill_consensus_position_matrix(
 
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
-            col_index2: int = starts[row_index] - start_all
+            col_index2: int = starts[row_index] - start_all + 1
             seq_index2: int = starts[row_index] - start_all
 
-            while col_index2 < stops[row_index] - start_all + 1:
+            while col_index2 < stops[row_index] + 1 - start_all + 1:
 
                 if subfams[row_index][seq_index2] != "-":
                     consensus_pos2 -= 1
                 consensus_matrix[row_index, col_index2] = consensus_pos2
-
-                columns.add(col_index2)
 
                 if chroms[row_index][seq_index2] != "-":
                     if col_index2 in active_cells:
@@ -100,9 +96,9 @@ def fill_consensus_position_matrix(
 
                 seq_index2 += 1
 
-    sorted_columns: List[int] = list(columns)
-    sorted_columns.sort()
+    for i in range(col_num):
+        columns.append(i)
+        if i not in active_cells:
+            active_cells[i] = [0]
 
-    return ConsensusMatrixContainer(
-        sorted_columns, active_cells, consensus_matrix
-    )
+    return ConsensusMatrixContainer(columns, active_cells, consensus_matrix)

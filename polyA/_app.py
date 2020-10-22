@@ -268,6 +268,9 @@ def run():
     NonEmptyColumns: List[int] = []
     ActiveCells: Dict[int, List[int]] = {}
 
+    NonEmptyColumns_trailing: List[int] = []
+    ActiveCells_trailing: Dict[int, List[int]] = {}
+
     Changes: List[str] = []
     ChangesPosition: List[int] = []
 
@@ -346,7 +349,7 @@ def run():
         ChangeProbLog / 2
     )  # jumping in and then out of the skip state counts as 1 jump
     SameProbSkip = (
-        ChangeProbLog / 50
+        ChangeProbLog / 30
     )  # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
 
     # precomputes number of rows in matrices
@@ -371,6 +374,11 @@ def run():
     (StartAll, StopAll) = pad_sequences(
         ChunkSize, Starts, Stops, SubfamSeqs, ChromSeqs
     )
+
+    # add skip state pad at start
+    AlignMatrix[0, 0] = SkipAlignScore
+    NonEmptyColumns.append(0)
+    NonEmptyColumns_trailing.append(0)
 
     (cols, AlignMatrix) = fill_align_matrix(
         Lamb,
@@ -407,6 +415,16 @@ def run():
         ConsensusStarts,
         Strands,
     )
+
+    ActiveCells[0] = [0]
+
+    # add skip state pad at end
+    AlignMatrix[0, cols] = SkipAlignScore
+    NonEmptyColumns.append(cols)
+    NonEmptyColumns_trailing.append(cols)
+    ActiveCells[cols] = [0]
+    ActiveCells_trailing[cols] = [0]
+    cols += 1
 
     if TR:
         RepeatScores = CalcRepeatScores(
