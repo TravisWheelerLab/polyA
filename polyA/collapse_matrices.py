@@ -3,7 +3,7 @@ from math import inf, log
 
 from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
 
-# TODO: add test for this function once test are up and running
+
 def dp_for_collapse(
     dp_rows: List[int], support_matrix: SupportMatrix, columns: List[int]
 ) -> (List[int], List[int]):
@@ -28,8 +28,6 @@ def dp_for_collapse(
     [1, 1, 1]
     >>> non
     [0, 2, 3]
-
-
     """
     change: float = log(0.0001)  # FIXME - what transition penalty to use ??
     stay: float = log(1 - change)

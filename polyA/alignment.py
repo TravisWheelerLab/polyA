@@ -17,7 +17,7 @@ class Alignment(NamedTuple):
     strand: str
     flank: int
 
-    # TODO: Remove these mutators once we clean up the padding code
+    # TODO: George - Remove these mutators once we clean up the padding code
 
     @property
     def sequence(self) -> str:

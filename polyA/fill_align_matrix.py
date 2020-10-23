@@ -4,7 +4,6 @@ from typing import Dict, List, Tuple
 from polyA.calculate_score import calculate_score
 
 
-# TODO: Clean up the doc string on this function
 def fill_align_matrix(
     lambdaa: float,
     edge_start: int,
@@ -20,18 +19,19 @@ def fill_align_matrix(
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
     for every segment of size chunksize for all seqs in alignments
+
     Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
     matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
+
     Starting and trailing cells are different - column 0 in matrix holds alignment score for
     nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Scores are weighted based on number
-    of nucleotides that contribute to the score - so beginning and trailing positions with less
-    than chunksize nucleotides don't have lower scores
+    of nucleotides that contribute to the score
 
-    Computes score for the first segment that does not start with a '.' by calling CalcScore()
-    and from there keeps the base score and adds new chars score and subtracts old chars
-    score - if a new gap is introduced, calls CalcScore() instead of adding onto base score
-    ** padding of (chunksize-1)/2 added to right pad.. this way we can go all the way to the
-    end of the sequence and calc alignscores without doing anything special
+    ignores all padded indices in subfams and chroms array (padded with '.')
+
+    Speed up by computing base score for the first segment, moves to next column but adding next
+    chars score to base score and subtracting previous chars score from base score. Restarts and
+    recomputes new base score when necessary
 
     input:
     everything needed for CalcScore()
@@ -47,8 +47,6 @@ def fill_align_matrix(
     align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
     are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
-    Each cell in matrix is the alignment score of the surrounding chunksize number of nucleotides
-    for that particular subfamily.
 
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]

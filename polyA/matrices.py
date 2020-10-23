@@ -30,9 +30,7 @@ class ConsensusMatrixContainer(NamedTuple):
     """
 
     matrix: ConsensusMatrix
-    """
-    TODO: Clarify what the values are, perhaps?
-    
+    """    
     Hash implementation of a sparse 2D matrix used along with DP
     matrices. The key is a 2-tuple of row and column indices
     (respectively) and the values are the alignment positions in the
@@ -43,7 +41,10 @@ class ConsensusMatrixContainer(NamedTuple):
 class CollapsedMatrices(NamedTuple):
     row_num_update: int
     """
-    TODO: What, exactly, is this?
+    all matrices used in DP are "collapsed" meaning if there are duplicate rows with the same
+    subfamily they are collapsed into the same row. We choose which original row to use in the
+    collapsed version by doing a mini DP to find the most probable.
+
     updates number of rows in matrices
     """
 

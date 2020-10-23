@@ -12,20 +12,20 @@ from polyA.constants import (
 from polyA.matrices import SupportMatrix
 
 
-# TODO: Can we use reflection to automate calling the _parse methods?
-# TODO: Option for normal output target?
-# TODO: Options for output formats?
-# TODO: What if we want to handle different output matrices differently?
-# TODO: Columns should be a list of columns to exclude for clarity
-# TODO: Read options from a file by default or with a different script?
-# TODO: Accept input from a pipe
+# TODO: George - Can we use reflection to automate calling the _parse methods?
+# TODO: George - Option for normal output target?
+# TODO: George - Options for output formats?
+# TODO: George - What if we want to handle different output matrices differently?
+# TODO: George - Columns should be a list of columns to exclude for clarity
+# TODO: George - Read options from a file by default or with a different script?
+# TODO: George - Accept input from a pipe
 
 
 class Options:
     """
     A typed container to hold program options and parameters.
 
-    TODO: Decide how to document each option canonically
+    TODO: George - Decide how to document each option canonically
 
     >>> import sys
     >>> o = Options()
@@ -78,13 +78,13 @@ class Options:
         parser.add_argument(
             "--gap-ext",
             type=int,
-            help="TODO: Kaitlin",
+            help="penalty to extend gap in alignment, default = -5",
             default=DEFAULT_GAP_EXT,
         )
         parser.add_argument(
             "--gap-init",
             type=int,
-            help="TODO: Kaitlin",
+            help="penalty to initialize gap in alignment, default = -25",
             default=DEFAULT_GAP_INIT,
         )
         parser.add_argument(

@@ -3,8 +3,8 @@ from typing import NamedTuple, TextIO, Union, Callable
 EaselRunner = Callable[[], None]
 
 
-# TODO: Read and write JSON for repeatability
-# TODO: Separate the IO stuff into another class
+# TODO: George - Read and write JSON for repeatability
+# TODO: George - Separate the IO stuff into another class
 class Parameters(NamedTuple):
     gap_init: int = -25
     gap_ext: int = -5

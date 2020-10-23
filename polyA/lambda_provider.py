@@ -31,9 +31,6 @@ class EaselLambdaProvider:
         self._matrix = matrix
 
     def __call__(self) -> float:
-        # TODO: How do we know which matrix file to use?
-        # Should the matrix file be passed to the call or
-        # to the object constructor?
 
         esl_stream = os.popen(
             self._path + "esl_scorematrix --dna " + self._matrix

@@ -56,7 +56,6 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         chrom = metaItems[2]
         score = int(metaItems[3])
 
-        # TODO: Figure out whether we can drop this bit
         strand = metaItems[4]
 
         # if on reverse strand, which seq is reversed

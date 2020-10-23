@@ -5,6 +5,7 @@ from polyA.matrices import ConfidenceMatrix
 
 
 def trailing_edges_info(row_num, col_num, align_matrix):
+
     non_empty_cols_trailing_edges: List[int] = []
     active_cells_trailing_edges: Dict[int, List[int]] = {}
 

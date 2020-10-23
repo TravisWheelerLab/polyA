@@ -390,7 +390,6 @@ def run():
 
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
-    # TODO: should be able to make this faster
     NonEmptyColumns_trailing, ActiveCells_trailing = trailing_edges_info(
         rows, cols, AlignMatrix
     )
