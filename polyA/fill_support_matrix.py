@@ -10,6 +10,7 @@ def fill_support_matrix(
     columns: List[int],
     starts: List[int],
     stops: List[int],
+    subfams: List[str],
     confidence_matrix: ConfidenceMatrix,
     consensus_matrix: ConsensusMatrix,
 ) -> SupportMatrix:
@@ -40,9 +41,10 @@ def fill_support_matrix(
     >>> non_cols = [0,1,2]
     >>> strts = [0, 0]
     >>> stps = [0, 1]
+    >>> subs = ['subfam1', 'subfam2']
     >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
     >>> cons_mat = {(0, 0): 1, (0, 1): 1, (0, 2): 1, (1, 0): 1, (1, 1): 1, (1, 2): 1}
-    >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, conf_mat, cons_mat)
+    >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, subs, conf_mat, cons_mat)
     {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.1, (1, 1): 0.3, (1, 2): 0.1}
     """
 
@@ -73,7 +75,9 @@ def fill_support_matrix(
         stop: int = stops[row_index] - start_all + 1
 
         # if the alignment is small, do it the easy way to avoid out of bound errors
-        if stop - start + 1 < chunk_size:
+        if (stop - start + 1 < chunk_size) or subfams[
+            row_index
+        ] == "Tandem Repeat":
             for col in range(len(columns)):
                 j = columns[col]
 

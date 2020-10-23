@@ -38,9 +38,9 @@ def CalcRepeatScores(
     >>> active_cols = {}
     >>> rep_scores = CalcRepeatScores(repeats, 5, 4, 1, active_cols, align_mat, {})
     >>> align_mat
-    {(1, 1): 3.3333333333333335, (1, 2): 3.75, (1, 3): 3.75, (1, 4): 5.833333333333333, (2, 6): 1.6666666666666667, (2, 7): 3.125, (2, 8): 4.0, (2, 9): 5.0, (2, 10): 5.0, (2, 11): 4.0, (2, 12): 3.125, (2, 13): 1.6666666666666667}
+    {(1, 2): 3.3333333333333335, (1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0, (2, 13): 3.125, (2, 14): 1.6666666666666667}
     >>> active_cols
-    {1: [0, 1], 2: [0, 1], 3: [0, 1], 4: [0, 1], 6: [0, 2], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2]}
+    {2: [0, 1], 3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
     """
 
     repeat_scores: Dict[
@@ -50,8 +50,8 @@ def CalcRepeatScores(
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start_rep = rep["Start"]
-        col_index = start_rep - start_all
+        start_rep = rep["Start"] + 1
+        col_index = start_rep - (start_all)
         length = rep["Length"]
         pos_scores = rep["PositionScoreDelta"].split(":")
 

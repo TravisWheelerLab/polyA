@@ -9,6 +9,7 @@ def FillConfidenceMatrixTR(
     subfam_countss: Dict[str, float],
     subfamss: List[str],
     active_cells: Dict[int, List[int]],
+    active_cells_trailing: Dict[int, List[int]],
     repeat_scores: Dict[int, float],
     align_matrix: Dict[Tuple[int, int], float],
 ) -> Dict[Tuple[int, int], float]:
@@ -40,7 +41,7 @@ def FillConfidenceMatrixTR(
         col_index: int = columns[i]
         temp_region: List[float] = []
 
-        for row_index in active_cells[col_index]:
+        for row_index in active_cells_trailing[col_index]:
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
@@ -48,13 +49,13 @@ def FillConfidenceMatrixTR(
             temp_region,
             subfam_countss,
             subfamss,
-            active_cells[col_index],
+            active_cells_trailing[col_index],
             0,
         )
 
-        for row_index2 in range(len(active_cells[col_index])):
+        for row_index2 in range(len(active_cells_trailing[col_index])):
             confidence_matrix[
-                active_cells[col_index][row_index2], col_index
+                active_cells_trailing[col_index][row_index2], col_index
             ] = temp_confidence[row_index2]
 
     # go through non empty TR columns

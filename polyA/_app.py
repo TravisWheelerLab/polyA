@@ -444,10 +444,11 @@ def run():
 
         ConfidenceMatrix = FillConfidenceMatrixTR(
             infile_prior_counts,
-            NonEmptyColumns,  # FIXME - does this need to be NonEmptyColumns_trailing?
+            NonEmptyColumns_trailing,
             SubfamCounts,
             Subfams,
             ActiveCells,
+            ActiveCells_trailing,
             RepeatScores,
             AlignMatrix,
         )
@@ -487,6 +488,7 @@ def run():
         NonEmptyColumns,
         Starts,
         Stops,
+        Subfams,
         ConfidenceMatrix,
         ConsensusMatrix,
     )
@@ -515,7 +517,7 @@ def run():
         for tr_col in RepeatScores:
             if prev_tr_col != tr_col - 1:
                 tr_consensus_pos -= 500
-            ConsensusMatrixCollapse[rows - 1, tr_col] = tr_consensus_pos
+            ConsensusMatrixCollapse[rows - 1, tr_col + 1] = tr_consensus_pos
             prev_tr_col = tr_col
 
     # if command line option included to output support matrix for heatmap
