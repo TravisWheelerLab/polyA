@@ -26,10 +26,9 @@ do echo "$f";
   printf -- "-------------------------------------------------------------\n";
 done
 
-# TODO: this is broken
 ##tests prior counts
-#for f in ../fixtures/*.align.format ;
-#do echo "$f";
-#  python -m polyA --seqpos --lambda .1227 --priorCounts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
-#  printf -- "-------------------------------------------------------------\n";
-#done
+for f in ../fixtures/*.align.format ;
+do echo "$f";
+  python -m polyA --seqpos --lambda .1227 --priorCounts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
+  printf -- "-------------------------------------------------------------\n";
+done

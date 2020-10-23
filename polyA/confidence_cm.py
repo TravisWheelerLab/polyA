@@ -1,4 +1,5 @@
 from typing import Dict, List
+import re
 
 
 def confidence_cm(
@@ -58,16 +59,20 @@ def confidence_cm(
     if infile:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = (2 ** int(region[index])) * subfam_counts[
-                subfams[subfam_rows[index]]
-            ]
+            subfam: str = subfams[subfam_rows[index]]
+            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
+            if m:
+                subfam = m.group(1)
+            converted_score = (2 ** int(region[index])) * subfam_counts[subfam]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = (2 ** int(region[index])) * subfam_counts[
-                subfams[subfam_rows[index]]
-            ]
+            subfam: str = subfams[subfam_rows[index]]
+            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
+            if m:
+                subfam = m.group(1)
+            tr_score = (2 ** int(region[index])) * subfam_counts[subfam]
             confidence_list.append(tr_score)
             score_total += tr_score
 

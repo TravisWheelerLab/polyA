@@ -229,7 +229,6 @@ def run():
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
             info = re.split(r"\s+", line)
-            # TODO: infile counts do not match subfam names
             count = info[1]
             subfam = info[0]
             SubfamCounts[subfam] = int(count)
@@ -288,7 +287,6 @@ def run():
         alignments = load_alignments(_infile)
         for alignment in alignments:
             numseqs += 1
-            # TODO: split subfam to match prior counts file for testing - can't always split by #
             Subfams.append(alignment.subfamily)
             Chroms.append(alignment.chrom)
             Scores.append(alignment.score)
