@@ -100,13 +100,12 @@ def fill_path_graph(
                         # adds in edge if the subfam of the sink is at the source node and if it's
                         # confidence >= 20%, and if the source is before the sink in the consensus sequence
 
-                        # FIXME - not sure what this confidence threshold should be
+                        # TODO - not sure what this confidence threshold should be
                         if sourceConf >= 0.05 or sinkConf >= 0.05:
                             if (
                                 sink_strand == "+"
                                 and sink_strand == source_strand
                             ):
-                                # FIXME- not sure what this overlap should be .. just allowed 50 for now
                                 if source_subfam_stop <= sink_subfam_start + 50:
                                     path_graph[
                                         source_node_index * nodes

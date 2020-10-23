@@ -40,7 +40,7 @@ def run():
     ChangeProbLog: float = 0.0  # Reassigned later
     ChangeProbSkip: float = 0.0  # Reassigned later
     SameProbSkip: float = 0.0
-    SkipAlignScore: float = 5.0  # FIXME - not sure what number this should be
+    SkipAlignScore: float = 5.0  # TODO - not sure what number this should be
 
     StartAll: int = 0  # Reassigned later
     StopAll: int = 0  # Reassigned later
@@ -229,7 +229,7 @@ def run():
         for line in in_counts[1:]:
             line = re.sub(r"\n", "", line)
             info = re.split(r"\s+", line)
-            # FIXME: infile counts do not match subfam names
+            # TODO: infile counts do not match subfam names
             count = info[1]
             subfam = info[0]
             SubfamCounts[subfam] = int(count)
@@ -288,7 +288,7 @@ def run():
         alignments = load_alignments(_infile)
         for alignment in alignments:
             numseqs += 1
-            # FIXME: split subfam to match prior counts file for testing - can't always split by #
+            # TODO: split subfam to match prior counts file for testing - can't always split by #
             Subfams.append(alignment.subfamily)
             Chroms.append(alignment.chrom)
             Scores.append(alignment.score)

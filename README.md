@@ -83,7 +83,7 @@ start stop	IDnum	query
 981	1497	1111	L1PREC2_3end
 ```
 
-**FIXME** - switch these postions to genomic locations not matrix pos 
+TODO: switch these postions to genomic locations not matrix pos 
 
 Matching IDnums correspond to sequences involved in nesting that have been
 stitched back to the original sequence.

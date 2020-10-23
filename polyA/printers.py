@@ -5,7 +5,8 @@ from typing import Dict, List, TextIO, Tuple, Union
 
 from polyA.matrices import SupportMatrix
 
-# FIXME: need to print -1 for all positions on chrom and seq because padded matrix at start
+# TODO: need to print -1 for all positions on chrom and seq because padded matrix at start
+# do for soda output too
 
 
 def print_matrix_hash(
