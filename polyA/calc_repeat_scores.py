@@ -26,7 +26,8 @@ def CalcRepeatScores(
     columns: all columns that are not empty from alignment scores
     active_cells: dictionary that maps column number to a list of active rows
     align_matrix
-    skip_align_score: alignment score to give the skip state (default = 0)
+    consensus_matrix: dictionary that maps a tuple (row, col) to consensus
+    position in the subfam/query sequence
 
     output:
     repeat_scores: Hash implementation of sparse 1d array. Key is int that maps col

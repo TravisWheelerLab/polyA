@@ -24,7 +24,7 @@ class ConsensusMatrixContainer(NamedTuple):
 
     active_rows: Dict[int, List[int]]
     """
-    Mapping from column index (starting at zero) to a list of row
+    Mapping from column index to a list of row
     indices in that column that are "active" (have data in them).
     This lets us avoid looping through unnecessary rows.
     """

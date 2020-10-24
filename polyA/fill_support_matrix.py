@@ -29,14 +29,17 @@ def fill_support_matrix(
     columns: list of non empty columns in matrices
     starts: chrom/target start positions of all alignments
     stops: chrom/target stop positions of all alignments
+    subfams: list of subfam names from input alignmensts
     confidence_matrix: Hash implementation of sparse 2D matrix that holds confidence values
+    consensus_matrix: Hash implementation of sparse 2D matrix that holds position of consensus
+    position in alignments
 
     output:
     support_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
-    subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
-    Each cell in matrix is the support score (or average confidence value) for the surrounding
-    chunk_size cells in the confidence matrix.
+    tuple[row, col] to value in that matrix of cell. Rows are subfamilies in the input
+    alignment file, cols are nucleotide positions in the alignment. Each cell in matrix is
+    the support score (or average confidence value) for the surrounding chunk_size cells in
+    the confidence matrix.
 
     >>> non_cols = [0,1,2]
     >>> strts = [0, 0]

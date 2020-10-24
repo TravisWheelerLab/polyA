@@ -32,13 +32,7 @@ def fill_probability_matrix(
     change_prob: penalty given for channging rows
     change_prob_skip: penalty given for changinr rows in or out of skip state
     columns: list that holds all non empty columns in matrices
-    active_cells_collapse: holds which rows have values for all columns - using this making it so don't have to
-    loop through all cells in the previous column when filling a cell, just loop though cells that hold a value
-    support_matrix_collapse: probabilites are calculated form support scores
-    strand_matrix_collapse: used when testing if some collapsed seqs are continuous - can't be if they aren't
-    on same strand
-    consensus_matrix_collapse: used when testing if some collapsed seqs are continuous - positions in consensus
-    sequence have to be contiguous
+    CollapsedMatrices container
 
     output:
     col_list: last column of prob matrix, needed to find max to know where to start the backtrace.

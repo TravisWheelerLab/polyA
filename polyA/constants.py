@@ -1,6 +1,6 @@
 DEFAULT_CHUNK_SIZE = 31
 """
-The width of the "window" used to break a sequence up into pieces.
+The width of the "window" used to break a sequence up into segments.
 Measured in base pairs.
 """
 

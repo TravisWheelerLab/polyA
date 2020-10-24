@@ -16,11 +16,10 @@ def get_path(
     same_subfam_change_matrix: Dict[Tuple[int, int], int],
 ) -> Tuple[int, List[int], List[str]]:
     """
-    using origin matrix, back traces through the 2D array to get the subfam path (most probable
-    path through the DP matrix)
-    finds where the path switches to a different row and populates Changes and ChangesPosition
-    reverses Changes and ChangesPosition because it's a backtrace so they are initially backwards
-    jumps over removed/empty columns when necessary
+    back traces through origin matrix to get most probable path through the DP matrix.
+    Finds where the path switches to a different row and populates Changes and ChangesPosition.
+    Reverses Changes and ChangesPosition because it's a backtrace so they are initially backwards.
+    Jumps over removed/empty columns when necessary.
 
     assigns IDs to each col in matrices (corresponds to a nucleotide position in target/chrom
     sequence) - cols with same ID are part of same initial subfam
@@ -31,6 +30,7 @@ def get_path(
     ids: list of ids for each column in matrices
     changes_orig: original changes from first DP trace
     changes_pos_orig: original changes_position from first DP trace
+    columns_orig: original list of non empty columns before any nodes are extracted
     subfams_collapse: subfamily names for the rows
     last_column: last column in probability matrix. Used to find where to start backtrace.
     active_cells_collapse: holds which rows haves values for each column

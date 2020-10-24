@@ -25,13 +25,12 @@ def fill_node_confidence(
     tr_count: int,
 ) -> Dict[Tuple[str, int], float]:
     """
-    finds competing annotations, alignment scores and confidence values for each node
-    identified in GetPath()
+    for a particular annotated node, takes all competing alignments and calculates
+    the confidence for that node
 
     first fills matrix with node alignment scores, then reuses matrix for confidence scores
-    Using changes_position indentified boundaries for all nodes, and computes confidence
-    values for each node. First fills matrix with node alignment scores, then reuses matrix
-    for confidence scores.
+    Using changes_position indentifies boundaries for all nodes, and computes confidence
+    values for each node.
 
     input:
     all input needed for CalcScore() and ConfidenceCM()

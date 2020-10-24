@@ -17,7 +17,7 @@ def print_matrix_hash(
     file: TextIO = stdout,
 ) -> None:
     """
-    Print values contained in a non-collapsed matrix.
+    Print values contained in a matrix. Tab separated.
     This function exists for debugging purposes only.
     """
     file.write("\t")
@@ -110,7 +110,7 @@ def print_results_sequence(
 ) -> None:
     """
     prints final results
-    prints start and stop in terms of input chrom sequence
+    prints start and stop in terms of input target sequence
     """
     # stdout.write("start\tstop\tID\tname\n")
     # stdout.write("----------------------------------------\n")

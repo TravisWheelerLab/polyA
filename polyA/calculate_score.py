@@ -11,8 +11,8 @@ def calculate_score(
     sub_matrix: Dict[str, int],
 ) -> float:
     """
-    Calculate the score for a particular alignment between a subfamily and a target/chromsome sequence.
-    Scores are calculated based on input SubstitutionMatrix, gap_ext, and gap_init.
+    Calculate the score for an alignment between a subfamily and a target/chromsome sequence.
+    Scores are calculated based on input sub_matrix, gap_ext, and gap_init.
 
     prev_char_seq1, prev_char_seq2 are the single nucleotides in the alignment before the chunk - if
     chunk starts with '-' these tell us to use gap_init or gap_ext as the penalty

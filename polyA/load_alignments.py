@@ -23,6 +23,7 @@ def _line_grouper(prefix: str) -> Callable[[str], str]:
 
 def load_alignments(file: TextIO) -> Iterable[Alignment]:
     """
+    TODO: change this to load alignments in stockholm format
     Load a set of alignments from a file formatted the way cross_match
     formats its output (see http://www.phrap.org/phredphrapconsed.html).
     """

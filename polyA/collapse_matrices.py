@@ -9,7 +9,7 @@ def dp_for_collapse(
 ) -> (List[int], List[int]):
     """
     When there is more than one row with the same subfam label, do a mini DP trace
-    to choose which row to collapse to use in collapsed matrices
+    to choose which row to use in collapsed matrices
 
     input:
     dp_rows: rows in original matrices to be collapsed
@@ -126,6 +126,9 @@ def collapse_matrices(
     active_cells: maps column number with rows that are active in that column
     support_matrix: uncollapsed support matrix - rows are number indices
     consensus_matrix: uncollapsed consensus matrix - rows are number indices
+
+    output:
+    CollapsedMatrices container
 
     >>> non_cols = [0, 2, 3]
     >>> active = {0: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}

@@ -22,8 +22,7 @@ def extract_nodes(
     path_graph: 2D array that represents edges in the graph
 
     output:
-    updates columns (NonEmptyColumns)
-    updated_num_col: updated number of columns in matrices after nodes have been removed
+    updated_num_col: updated number of columns after nodes are extracted
 
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     >>> change_pos = [0, 3, 7]

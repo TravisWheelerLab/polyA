@@ -15,7 +15,7 @@ def fill_path_graph(
     finds alternative paths through the nodes - used for stitching to find nested elements
     and to stitch back together elements that have been inserted into.
 
-    Alternative edges only added when confidence of other node label is above a certain
+    Alternative edges only added when on same strand, and confidence of other node label is above a certain
     threshold and when the alignments are relatively contiguous in the consensus sequence.
 
     input:
@@ -25,16 +25,13 @@ def fill_path_graph(
     changes_position: list of subfams identified for each node
     consensus_matrix_collapse: matrix holding alignment position in consensus/subfam seqs -
     used to identify whether nodes are spacially close enough for an alternative edge
-    strand_matrix_collapse: matrix holding strand for alignments - nodes can only be connected
-    with alternative edge if on same strand
-    node_confidence: competing annoation confidence for nodes - nodes can only be connected
-    with alternative edge if subfam identified for sink node is a competing annotation in
-    source node and is above a certain confidence
+    strand_matrix_collapse: matrix holding strand for alignments
+    node_confidence: competing annoation confidence for nodes
     subfams_collapse_index: maps subfam names to their row indices in collapsed matrices
 
     output:
-    path_graph: Flat array reprepsentation of 2D matrix. Graph used during stitching. Maps nodes to all other nodes and holds
-    values for if there is an alternative edge between the nodes.
+    path_graph: Flat array reprepsentation of 2D matrix. Graph used during stitching. Maps nodes to all other nodes.
+    1 if nodes are connected, 0 if not
 
     >>> non_cols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     >>> changess = ["s1", "s2", "s1"]

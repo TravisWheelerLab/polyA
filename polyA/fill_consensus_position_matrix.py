@@ -15,7 +15,7 @@ def fill_consensus_position_matrix(
     strands: List[str],
 ) -> ConsensusMatrixContainer:
     """
-    Fills parallel to AlignMatrix that holds the consensus position for each subfam at that
+    Fills matrix that holds the consensus position for each subfam at that
     position in the alignment. Walks along the alignments one nucleotide at a time adding
     the consensus position to the matrix.
 
@@ -31,6 +31,9 @@ def fill_consensus_position_matrix(
     stops: stop positions for all competing alignments (on target)
     consensus_starts: where alignment starts in the subfam/consensus sequence
     strands: what strand each of the alignments are on - reverse strand will count down instead of up
+
+    output:
+    ConsensusMatrixContainer
 
     >>> subs = ["", ".AA", "TT-"]
     >>> chrs = ["", ".AA", "TTT"]

@@ -38,8 +38,10 @@ def fill_confidence_matrix(
     input:
     everything needed for confidence_cm()
     columns: array that holds all non empty columns in align matrix
+    subfam_counts: dictionary that maps subfam names to prior counts
+    subfams: array of subfam names from original input alignment
     active_cells: maps col numbers to all active rows in that col
-    align_matrix: alignment matrix - used to calculate confidence
+    align_matrix: matrix with alignment scores - used to calculate confidence
 
     output:
     confidence_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is

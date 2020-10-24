@@ -17,6 +17,7 @@ def pad_sequences(
     pad with an extra (chunk_size-1)/2 at the end
 
     input:
+    chunk_size: size (in nucleotides) of each segment
     start: start positions on the target sequence from the input alignment
     stop: stop positions on the target sequence from the input alignment
     subfam_seqs: actual subfamily/consensus sequences from alignment

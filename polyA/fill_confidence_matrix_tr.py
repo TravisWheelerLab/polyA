@@ -21,16 +21,16 @@ def FillConfidenceMatrixTR(
     input:
     everything needed for ConfidenceCM
     columns: array that holds all non empty columns in align matrix
+    subfam_counts: dictionary that maps subfam names to prior counts
+    subfams: array of subfam names from original input alignment
     active_cells: maps col numbers to all active rows in that col
+    active_cells_trailing: same as above but has trailing cells on ends of alignments
     repeat_score: dict that maps col in target sequence to tandem repeat score
     align_matrix: alignment matrix - used to calculate confidence
 
     output:
     confidence_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
-    subfamilies in the input alignment file or tandem repeats, cols are nucleotide positions.
-    Each cell in matrix is the confidence score calculated from all the scores in a
-    column of the AlignHash
+    tuple[row, col] to value held in that cell of matrix.
     """
 
     confidence_matrix: Dict[Tuple[int, int], float] = {}
