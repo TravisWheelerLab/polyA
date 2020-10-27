@@ -92,8 +92,9 @@ stitched back to the original sequence.
 ### Additional software
 
 esl_scorematrix as a part of the esl package in the hammer software suite
-	-will compute lambda for the input score matrix
-	-not needed if including lambda as a command line argument
+
+  - will compute lambda for the input score matrix
+  - not needed if including lambda as a command line argument
 
 ### Using at the command line
 
