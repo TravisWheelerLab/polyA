@@ -1,5 +1,7 @@
 ![PolyA CI](https://github.com/TravisWheelerLab/polyA/workflows/PolyA%20CI/badge.svg)
 
+TODO: Kaitlin - parser info... idk what section ??
+
 # AAAAAAAAAAAAAAAA (PolyA)
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
@@ -35,19 +37,43 @@ source of the target.
 allowing for transitions between queries. This identifies gene conversion, homologous recombination,
 nested elements, and boundaries between adjacent elements.  
 3. Graph Algorithm finds nested sequences. 
-
-**TODO:** add link to paper as well	
+	
 For a more detailed description view the [poster](/publications/AlgorithmPoster.pdf)
+**TODO:** add link to paper as well
 
 ## Using
-
-**TODO:** Kaitlin, George
 
 ### Input File Format
 	
 #### Alignment Files
 
-TODO: do we want to input cm alignment file or formatted file ?
+Alignments for all possible queries matching target sequence in single stockhold format file.
+
+Special information fields required are:
+
+```
+#=GF ID  MERX#DNA/TcMar-Tigger              * query sequence name
+#=GF TR  chr1:11543-28567                   target sequence
+#=GF SC  1153                               alignment score
+#=GF ST  +                                  strand
+#=GF TQ  -1                                 ** see below
+#=GF ST  127                                alignment start position on target
+#=GF SP  601                                alignment stop position on target
+#=GF CST 135                                alignment start position on query
+#=GF CSP 628                                alignment stop position on query
+#=GF FL  128                                *** see below
+
+* query sequence names must be in the format 'name#family/class'
+
+** TQ: 'q' if alignment is on reverse strand and the reversed sequence 
+is the query. 't' if alignment is on reverse strand and the reversed 
+sequence is the target. '-1' if alignment is on positive strand. 
+
+*** FL: flanking region of unaligned query sequence.
+Ex1: query sequence of length 100 aligns from 1-75, FL = 25. 
+Ex2: query sequence of length 100 aligns from 10-100, FL = 9. 
+```
+
 
 Score matrix files example format (can include ambiguity codes):
 
@@ -69,47 +95,58 @@ L1PA7_5end  13261
 ...
 ```
 
+TODO: Audrey - add in input file formats for TR stuff
+
 ### Output file format
 
-#### Genomic Location
-
 ```
-start stop	IDnum	query
-0	362		1111	L1PREC2_3end
-363	567	2345	AluJr
-568	833	3579	AluYb8
-834	964	1245	AluJr
-965	980	6047	L1MA4A_3end
-981	1497	1111	L1PREC2_3end
+start   stop    IDnum*   query
+1       362     1111	L1PREC2_3end
+363     567	2345	AluJr
+568     833	3579	AluYb8
+834     964	1245	AluJr
+965     980	6047	L1MA4A_3end
+981     1497	1111	L1PREC2_3end
+
+* Matching IDnums correspond to partial sequences that originate from 
+the same ancestral sequence.
 ```
 
-TODO: switch these postions to genomic locations not matrix pos 
-
-Matching IDnums correspond to sequences involved in nesting that have been
-stitched back to the original sequence.
-
+TODO: Kaitlin - add output file formats for the soda viz stuff
 
 ### Additional software
 
 esl_scorematrix as a part of the esl package in the hammer software suite
-	-will compute lambda for the input score matrix
-	-not needed if including lambda as a command line argument
+
+  - will compute lambda for the input score matrix
+  - not needed if including lambda as a command line argument
+
+TODO: Audrey - add info here ultra
+	
+  - ULTRA from github link ...
 
 ### Using at the command line
 
 ```
-usage: $0 alignFile matrixFile
-ARGUMENTS
-	--gapInit [-25]
-	--getExt [-5]
-	--lambda [will calc from matrix if not included - need esl_scorematrix installed]
-	--segmentsize [30]
-	--changeprob [1e-45]
-	
-OPTIONS
-	--help - display help message
-	--printmatrices - output all dynamic programming matrices
-	--matrixpos - prints subfam changes in matrix position instead of genomic position
+usage: python -m polyA alignFile subMatrixFile
+    ARGUMENTS
+        --GapInit[-25]
+        --getExt[-5]
+        --lambda [will calculate from substitution matrix if not included]
+        --segmentsize (must be odd) [31]
+        --eslPath esl_path
+        --priorCounts prior_counts.txt
+        --ultraPath ultra_path
+        --seqFile genomic_region.fasta
+        --ultraOutput ultra_output.txt
+        --viz outfile - prints output format for SODA visualization
+        --heatmap outfile - prints probability file for input into heatmap
+    
+    OPTIONS
+        --help - display help message
+        --matrixpos - prints output in terms of matrix position
+        --sequencepos - prints output in terms of target sequence position
+    """
 ```
 
 ## Development
@@ -181,17 +218,6 @@ make check-fast check-slow
 # or
 make check
 ```
-
-### Perl-to-Python Tests
-
-```
-pipenv install # in the repo root
-pipenv shell
-```
-
-Once you are in the virtual environment shell, you can run
-`PYTHONPATH=../ python ./RunTests.sh` in the `test_inputs` directory.
-This is also possible using `make check-slow` and happens in CI.
 
 ## License
 
