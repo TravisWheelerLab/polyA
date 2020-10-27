@@ -91,6 +91,4 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             )
         )
 
-    # pad_sequences(alignments)
-
     return alignments

@@ -1,0 +1,2182 @@
+/data1/um/kcarey/src/crossmatch/cross_match /data1/um/kcarey/2020/POLYA_PAPER/Aug17-NestingBenchMark_paper/ARTIFICIAL_SEQS_NESTING_ABCBA//HAL1M8-MER2B-AluYe6_967.fa /data1/um/kcarey/ALL_nodups.consensus -gap_init -25 -gap_ext -5 -minmatch 7 -bandwidth 14 -masklevel 101 -matrix /data1/um/kcarey/src/RepeatMasker/Matrices/crossmatch/25p41g.matrix -minscore 200 -alignments 
+cross_match version 1.090518
+
+Run date:time  200901:082717
+Query file(s):  /data1/um/kcarey/2020/POLYA_PAPER/Aug17-NestingBenchMark_paper/ARTIFICIAL_SEQS_NESTING_ABCBA//HAL1M8-MER2B-AluYe6_967.fa   Log file: /data1/um/kcarey/2020/POLYA_PAPER/Aug17-NestingBenchMark_paper/ARTIFICIAL_SEQS_NESTING_ABCBA//HAL1M8-MER2B-AluYe6_967.fa.log
+Subject file(s):   /data1/um/kcarey/ALL_nodups.consensus
+Presumed sequence type (from score matrix): DNA
+
+Pairwise comparison algorithm: banded Smith-Waterman
+
+Score matrix /data1/um/kcarey/src/RepeatMasker/Matrices/crossmatch/25p41g.matrix
+    A   R   G   C   Y   T   K   M   S   W   N   X
+A   8   1  -6 -13 -14 -15 -11  -2 -10  -3  -1 -27
+R   2   2   1 -13 -13 -14  -6  -5  -5  -5  -1 -27
+G  -2   3  10 -13 -13 -13  -1  -8  -1  -8  -1 -27
+C -13 -13 -13  10   3  -2  -8  -1  -1  -8  -1 -27
+Y -14 -13 -13   1   2   2  -5  -6  -5  -5  -1 -27
+T -15 -14 -13  -6   1   8  -2 -11 -10  -3  -1 -27
+K  -9  -5  -1  -9  -6  -2  -1  -9  -5  -5  -1 -27
+M  -2  -6  -9  -1  -5  -9  -9  -1  -5  -5  -1 -27
+S  -8  -4  -1  -1  -4  -8  -4  -4  -1  -8  -1 -27
+W  -3  -6 -10 -10  -6  -3  -6  -6 -10  -3  -1 -27
+N  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1  -1 -27
+X -27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27 -27
+
+Gap penalties: gap_init: -25, gap_ext: -5, ins_gap_ext: -5, del_gap_ext: -5, 
+Using complexity-adjusted scores. Assumed background frequencies:
+ Aa: 0.295  Rr: 0.000  Gg: 0.205  Cc: 0.205  Yy: 0.000  Tt: 0.295  Kk: 0.000  Mm: 0.000  Ss: 0.000  Ww: 0.000  Nn: 0.000  : 0.000  
+
+minmatch: 7, maxmatch: 20, max_group_size: 0 (turned off), minscore: 200, near_minscore: 200, bandwidth: 14, indexwordsize: 7, indexwordsize2: 4, word_offset: 2
+word_raw: 0
+vector_bound: 0
+gap1_minscore: 17, gap1_dropoff: -12
+masklevel: 101 (minmargin irrelevant)
+splice_edge_length: 0, allocation: 1 bytes
+min_intron_length: 30, max_intron_length: 10000, max_overlap: 20, min_exon_length: 6 
+Variable sizes: int: 4, long int: 8, SEQ_AREA: 4, signed: 1
+
+
+Sequence file: /data1/um/kcarey/2020/POLYA_PAPER/Aug17-NestingBenchMark_paper/ARTIFICIAL_SEQS_NESTING_ABCBA//HAL1M8-MER2B-AluYe6_967.fa    1 entries
+Residue counts,  score matrix column # (* = last column):
+  a         937    1
+  c         589    4
+  g         694    3
+  m           1    8
+  n         265   11
+  t         636    6
+Total   3122 residues
+
+5 distinct alphabetic chars have freq > 1% -- 
+
+Allocated space: 6247 seqs, 54 ids, 2 descrips
+
+NO QUALITY FILE /data1/um/kcarey/2020/POLYA_PAPER/Aug17-NestingBenchMark_paper/ARTIFICIAL_SEQS_NESTING_ABCBA//HAL1M8-MER2B-AluYe6_967.fa.qual WAS FOUND. REMAINING INPUT QUALITIES SET TO 15.
+Base_llr -5.55, intron_coeff: -0.00288828
+
+Total subject length: 1588683 residues, final minscore: 200
+
+Num. pairs: 78
+Maximal single base matches (low complexity regions):
+
+2200 26.53 13.90 5.32  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8        1  1353 (1769)    HAL1M8#LINE/L1        2  1470 (1521)  
+
+  HAL1M8_1353_MER         1 GAGGAT-CTGGTAGGANCCGCGGCCGNCGATNNNAGA-CTTTTGAAGCTC 48
+                                  -    v i  ?v-     - ?  ii??? v -i       v   
+  HAL1M8#LINE/L1          2 GAGGATTCTGGGAAGATG-GCGGC-GGCGGCGGCATAGTTTTTGAATCTC 49
+
+  HAL1M8_1353_MER        49 CCCAAATCTACACA-GAAAAC---CAGAG-AAGTGGGTA----AACCAAT 89
+                               i    iv    -i     ---     -  v i i  ----      v
+  HAL1M8#LINE/L1         50 CCCGAATCCCCACATAAAAACAGACAGAGCAACTAGATAGCAAAACCAAA 99
+
+  HAL1M8_1353_MER        90 AAC--ATGGACAGAATTTACATCAATTCGAGGTNGAATAGTTGTCNNNNC 137
+                               --       iv       v   vv v    -  vv  v i  ???? 
+  HAL1M8#LINE/L1        100 AACCCATGGACAACATTTACAACAAAACTAGGT-GACAAGGTATCCCCAC 148
+
+  HAL1M8_1353_MER       138 GAACCGCAGAATATAC-CGCGTTGGGACGNAACCACCAACNNNNANGANC 186
+                                 v  i    i v-  v  v     -?          ???? ---- 
+  HAL1M8#LINE/L1        149 GAACCCCAAAATACAAGCGGGTGGGGAC-AAACCACCAACAGCCA----C 193
+
+  HAL1M8_1353_MER       187 GAAACCTG----GTATCAGC---TATGCGGGAGNGACGCAGAGGGAA--- 226
+                            i i     ----        --- i        -  v          ---
+  HAL1M8#LINE/L1        194 AAGACCTGCATGGTATCAGCGTCTGTGCGGGAG-GAAGCAGAGGGAAGCA 242
+
+  HAL1M8_1353_MER       227 ------CGTGCCACAGAATTACGANNACAGGA----CNCGTAAANGTCNN 266
+                            ------   viv  i  vi --  ??      ---- ? iv  v? ----
+  HAL1M8#LINE/L1        243 ACGGGGCGTCTGACGGACCT--GAGAACAGGAGAACCCCAAAATAG---- 286
+
+  HAL1M8_1353_MER       267 TCCCGANNNNAATTCCCTCGAAAGCGCGCCGGGCNCATCTGAGNNNNAGC 316
+                            --  i ????v    v  v         v     ?v  i    ---- i 
+  HAL1M8#LINE/L1        287 --CCAACAGGTATTCACTGGAAAGCGCGGCGGGCCAATTTGAG----AAC 330
+
+  HAL1M8_1353_MER       317 AGCANNNGACGAAC-GGGAGGTGTTTTTCCCAATN--ANAGCAGGTGANN 363
+                                ???  --   -      v     v    v ?-- ?   i     ??
+  HAL1M8#LINE/L1        331 AGCAGCTGA--AACTGGGAGGGGTTTTGCCCACTCCAATAGCGGGTGAGT 378
+
+  HAL1M8_1353_MER       364 NNGGGCAATCGACCGTNNAATTTNNNCTGCAGGGGCTGGNATCAGTCT-- 411
+                            ??ii viii vi v  ??ii -----   v         ?i-      --
+  HAL1M8#LINE/L1        379 GCAAGGGGCCCGCGGTAAGGT-----CTGAAGGGGCTGGAG-CAGTCTAG 422
+
+  HAL1M8_1353_MER       412 ---CTAAGACNNNNCTCTTGCTAGTGTCCAGT----GCTCTCTTT-ACGT 453
+                            ---   v  ----?    i vv v  v    i----    i   i- v v
+  HAL1M8#LINE/L1        423 CCCCTATGA----ACTCTCGAAACTGACCAGCCAGGGCTCCCTTCCAGGA 468
+
+  HAL1M8_1353_MER       454 NNNNGCCCCTCCCTGTGGAGTAACCGCTGGGAGTGGCCNNNTAAACT--- 500
+                            ????     v v   v    v   i           --???i   v ---
+  HAL1M8#LINE/L1        469 CAGGGCCCCACACTGAGGAGAAACTGCTGGGAGTGG--AATCAAAATTGA 516
+
+  HAL1M8_1353_MER       501 ACCGGACATGGAN--CGTGGAAGAAGGCCAAAGAAGGNNNGCTTCC---T 545
+                            i v     v   ?-- ivi  v     vv i      ------   --- 
+  HAL1M8#LINE/L1        517 GCAGGACAGGGACAACAGAGACGAAGGAAAGAGAAGG------TCCAGAT 560
+
+  HAL1M8_1353_MER       546 AAANATTGTGG---GGAT----GCCAGG------CNTAANG-AAGGCGCA 581
+                               ?i v v  ---   v----      ------ ?v  ? -   v   v
+  HAL1M8#LINE/L1        561 AAAAGTGGGGGAGGGGAACAGAGCCAGGAAATCTCAGAAAGCAAGCCGCC 610
+
+  HAL1M8_1353_MER       582 ATATTNNTTTTAAGAAAANNNCACGCAAACCTGTGAAGAGGG--CTAAGG 629
+                                 ?? -----   v ???    v    vvvv        --  vv v
+  HAL1M8#LINE/L1        611 ATATTTTT-----GAACACTACACGAAAACAACAGAAGAGGGAGCTCTGT 655
+
+  HAL1M8_1353_MER       630 CAAGTTAGAAAAGCTGTCCTGGACGACGCCTTCT------------GGAA 667
+                            v              i     i  v      i  ------------    
+  HAL1M8#LINE/L1        656 GAAGTTAGAAAAGCTATCCTGAACCACGCCTCCTTCTAAAAGTTCAGGAA 705
+
+  HAL1M8_1353_MER       668 GANNNNNNNTCACG-AAAAATTTGGAATGCTAAAGAAANNTAACGA---T 713
+                            - ???????    i-      ---  --  v v     ??  v   ---i
+  HAL1M8#LINE/L1        706 -AACTAATTTCACATAAAAAT---GA--GCAACAGAAAAGTATCGAGGTC 749
+
+  HAL1M8_1353_MER       714 AAA---CGTGCAGAGGTATTATAGGAGAAAAGAGTAT--GGAG---AAT- 754
+                               --- i i  i  v       i  i       v  --    ---   -
+  HAL1M8#LINE/L1        750 AAATCCCATACAAAGTTATTATAAGAAAAAAGAGAATAAGGAGCAGAATA 799
+
+  HAL1M8_1353_MER       755 ---TCCTTNCAGACAATGAAAGCAAGCCAGCCAGA---GCCCNNAANNNC 798
+                            ---   i ?               v     vv   ---    ??  ??- 
+  HAL1M8#LINE/L1        800 ACATCCCTACAGACAATGAAAGCACGCCAGAAAGACATGCCCACAAAA-C 848
+
+  HAL1M8_1353_MER       799 GGCGTAAAACTG-GTNNTACAATNNTCAAAANNCGAG----AAGACA--- 840
+                            i vvi       -iv??   v  ?-      --    ----      ---
+  HAL1M8#LINE/L1        849 AGATCAAAACTGTAACCTACTATT-TCAAAA--CGAGCTAAAAGACATTA 895
+
+  HAL1M8_1353_MER       841 --GACCTAGTATTAGCNNNGGAAGNA----GT---CCCCAATTA--ATGA 879
+                            --i vv ii  iv  v??? i   ? ----i ---i vv     -- vi 
+  HAL1M8#LINE/L1        896 AGAAAATGATACAAGACATGAAAGAACAACATAAATCAGAATTAGAAAAA 945
+
+  HAL1M8_1353_MER       880 CTCAGAAATGAGATCGNNNCATAACTCACGTAATAATTAGATATC---GC 926
+                                        --- ???  v      v v  v       v  v--- v
+  HAL1M8#LINE/L1        946 CTCAGAAATGAG---GTGACAGAACTCAGGAAAGAATTAGAAATAAAAGA 992
+
+  HAL1M8_1353_MER       927 ACATAATCA---CACAANNGTGGAACAANNNGAAGNGTATTCAAGAGCGA 973
+                             v -     ---  v  ?? vi  vi  ???ii i? v iv         
+  HAL1M8#LINE/L1        993 AAA-AATCATTTCAGAAATGAAGACTAAACTAGAAGGAACACAAGAGCGA 1041
+
+  HAL1M8_1353_MER       974 AGAATCACA-CAGACA-TGTNNCAAGAGAAATATAAGTGGGNNNNAATAA 1021
+                             v  v    -    i -  i??i          v   --- ????  vi 
+  HAL1M8#LINE/L1       1042 ATAAACACAACAGATAATGCCTTAAGAGAAATAGAAG---GTGAAAAGGA 1088
+
+  HAL1M8_1353_MER      1022 ATGAAAATTTTAAAAACCAAAAAGCAGTGAAGAAA----TACGNNNNATN 1067
+                            i-              i       v i        ----  vi????  -
+  HAL1M8#LINE/L1       1089 G-GAAAATTTTAAAAATCAAAAAGAAATGAAGAAAGAGATAAAAAGGAT- 1136
+
+  HAL1M8_1353_MER      1068 TCGAGTGCAGGCGACAATTNNNNACTCAAGATCGGCCGAAGNGA----AC 1113
+                                 v v i i     ----?? i v     v   vi ii?  ----  
+  HAL1M8#LINE/L1       1137 TCGAGAGAAAGTGACAA----ATATTGAAGATAGGCAAAGAAGATCCAAC 1182
+
+  HAL1M8_1353_MER      1114 TTANNN-------------CTGATTAGCAGAAACCCAAAGCCAGNNN-CA 1149
+                            v  ???-------------    --  v     v       v  ???-  
+  HAL1M8#LINE/L1       1183 ATACGGATAATAGGAGTCCCTGA--AGAAGAAAACCAAAGCAAGGGAACA 1230
+
+  HAL1M8_1353_MER      1150 CCACAAATA------GCTATGATGCAAGGACAATTT------AGGAAAAG 1187
+                            vv       ------i    i  v    i v v   ------ vi    i
+  HAL1M8#LINE/L1       1231 GAACAAATACTAAAAACTATAATTCAAGAAAACTTTCCTGAAATAAAAAA 1280
+
+  HAL1M8_1353_MER      1188 AGATATGAATCT---TATTGAAAGAGCACCCCGAG---CTGAGTGTATCG 1231
+                                v    v  ---              v   v ---     vi     
+  HAL1M8#LINE/L1       1281 AGATTTGAAACTACATATTGAAAGAGCACACCGCGTACCTGAGAATATCG 1330
+
+  HAL1M8_1353_MER      1232 ACCCTGATGGAT-GACACCGGGCCCTATGCGAGTATCATTG-TNANCGTT 1279
+                                v  vv  i-i     ii v v   v v    vv   i- ?i? v  
+  HAL1M8#LINE/L1       1331 ACCCAGAACGACCAACACCAAGACATATTCTAGTAAAATTACTGGACTTT 1380
+
+  HAL1M8_1353_MER      1280 AAACAAATACATAGAATG----GGGCGTCTAGG-------AGCANNGTGA 1318
+                               v   v v v i   v----    i      -------     -    
+  HAL1M8#LINE/L1       1381 AAAGAAAAAGAAAAAATCCTTTGGGCATCTAGGCAAAAAGAGCAN-GTGA 1429
+
+  HAL1M8_1353_MER      1319 GTAATATTGGAAANTCAATANGATCATC------CTTTTCG 1353
+                            v v   vv     ?vv   v?   i   ------       
+  HAL1M8#LINE/L1       1430 CTTATAAGGGAAAGAAAATTAGATTATCATCAGACTTTTCG 1470
+
+Transitions / transversions = 0.66 (101 / 152); Gap_init rate = 0.06 (86 / 1353), avg. gap size = 3.02 (260 / 86)
+1571 29.01 13.24 5.99  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8        1  1186 (1936)    L1M8_5end#LINE/L1        2  1273 (1082)  
+
+  HAL1M8_1353_MER         1 GAGGAT-CTGGTAGGANCCGCGGCCGNCGATNNNAGA-CTTTTGAAGCTC 48
+                                  -    v i  ?v-     - ?  ii??? v -i       v   
+  L1M8_5end#LINE/         2 GAGGATTCTGGGAAGATG-GCGGC-GGCGGCGGCATAGTTTTTGAATCTC 49
+
+  HAL1M8_1353_MER        49 CCCAAATCTACACA-GAAAAC---CAGAG-AAGTGGG-TA----AACCAA 88
+                               i    iv v  -i     ---     -  v i  -  ----      
+  L1M8_5end#LINE/        50 CCCGAATCCCCCCATAAAAACAGACAGAGCAACTAGGATAGCAAAACCAA 99
+
+  HAL1M8_1353_MER        89 TAAC--ATGGACAGAATTTACATCAATTCGAGGTNGAATAGTTGTCNNNN 136
+                            v   -- i     iv  i    v   vv v    -  vv  v i  ????
+  L1M8_5end#LINE/       100 AAACCCACGGACAACATCTACAACAAAACTAGGT-GACAAGGTATCCCCA 148
+
+  HAL1M8_1353_MER       137 CGAACCGCAGAATAT-ACCGCGTTGGGACGNAACCACCAACNNNNANGAN 185
+                                  v  i    i- v  v  v     -?       i  ???? ----
+  L1M8_5end#LINE/       149 CGAACCCCAAAATACGAGCGGGTGGGGAC-AAACCACCGACAGCTA---- 193
+
+  HAL1M8_1353_MER       186 CGAAACC----TGGTATCAGC---TATGCGGGAGNGACGCAGAGGGAA-- 226
+                             i i   ----          --- i        -  v          --
+  L1M8_5end#LINE/       194 CAAGACCCGCGTGGTATCAGCATCTGTGCGGGAG-GAAGCAGAGGGAAGC 242
+
+  HAL1M8_1353_MER       227 -------CGTGCC-ACAGAATTACGANNACAGGA---CNCGTAAANGTCN 265
+                            -------   v i-  i ?vi --  ??      --- ? -i   ?-  ?
+  L1M8_5end#LINE/       243 AACGGGGCGTTCTGACGGNCCT--GAGAACAGGAGAACCC-CAAAA-TCG 288
+
+  HAL1M8_1353_MER       266 NTCCCGANNNNAATTCCCTCGAAAGCGCGCCGGGCNCATCTGAGNNNNAG 315
+                            ---  i ????v i  v  v         v     ?v       ---- i
+  L1M8_5end#LINE/       289 ---CCAACAGGTACTCACTGGAAAGCGCGGCGGGCCAATCTGAG----AA 331
+
+  HAL1M8_1353_MER       316 CAGCANNNGACGAAC-GGGAGGTGTTTTT------CCCAATNANAGCAGG 358
+                                 ???  --   -      v vi   ------i     ?v--  i  
+  L1M8_5end#LINE/       332 CAGCAGCCGA--AACTGGGAGGGGGCTTTGCAGGCTCCAATTC--GCGGG 377
+
+  HAL1M8_1353_MER       359 TGANNNNGGGCAATCGACCGTNNAATTTNNNCTGCAGGGGCTGGNATCAG 408
+                               ????ii vii? vi v  ??ii -----   v   ?     ?i-   
+  L1M8_5end#LINE/       378 TGAGTGCAAGGGGNCCGCGGTAAGGT-----CTGAAGGNGCTGGAG-CAG 421
+
+  HAL1M8_1353_MER       409 TCT-----CTAAGACNNNNCTCTTGCTAGTGTCCAGT----GCTCTCTTT 449
+                               -----   v  ----?    i vv v iv    i----    i   i
+  L1M8_5end#LINE/       422 TCTGGGCCCTATGA----ACTCTCGAAACTAACCAGCCGAAGCTCCCTTC 467
+
+  HAL1M8_1353_MER       450 -ACGTNNNNGCCCCTCCCTGTGGAGTAACCGCTGGGAGTGGCCNNNTAAA 498
+                            - v v????     v v   v    v   i         i v-???i   
+  L1M8_5end#LINE/       468 CAGGACAAAGCCCCACACTGAGGAGAAACTGCTGGGAGTAGA-ATCCAAA 516
+
+  HAL1M8_1353_MER       499 CTA--CCGGACATGGANCGTGGAAG--AAGGCCAAAGAAGGNNNGCTTCC 544
+                            i i-- v     v   ?vi i ii --    vv i      ------   
+  L1M8_5end#LINE/       517 TTGAGCAGGACAGGGACAATAGGGGCAAAGGAAAGAGAAGG------TCC 560
+
+  HAL1M8_1353_MER       545 ---TAAANATTGTGG---GGAT----GCCAGG----CNTAANGAAGGCGC 580
+                            ---    ?i v v  ---   v----      ---- ?i --   i ii 
+  L1M8_5end#LINE/       561 AGATAAAAGTGGGGGAGGGGAACAGAGCCAGGAGATCTCA--GAAAGTAC 608
+
+  HAL1M8_1353_MER       581 AATAT--TNNTTTTAAGAAAANNNCACGCAAACCTGTGAAGAGGG----C 624
+                            i vii-- ??    --   v ??? i  v    vvvv        ---- 
+  L1M8_5end#LINE/       609 GAGGCCATATTTTT--GAACACTTCGCGAAAACAACAGAAGAGGGAGCTC 656
+
+  HAL1M8_1353_MER       625 TAAGGC----AAGTTAGAAAAGCTGTCCTGGACGACGCCTTCT------- 663
+                              ii  ----   i          i      v v  v   i i-------
+  L1M8_5end#LINE/       657 TAGAGCCGTGAAGCTAGAAAAGCTATCCTGGCCCACCCCTCCCTCCTAAA 706
+
+  HAL1M8_1353_MER       664 ------GGAAGANNNNNNNTCACG-AAAAATTTGGAATGCTAAAGAAANN 706
+                            ------    - ??? ???    ?-      ---  iiivi i i  i??
+  L1M8_5end#LINE/       707 AGTNCAGGAA-AACTNATTTCACNTAAAAAT---GAGCAACAGAAAAGGA 752
+
+  HAL1M8_1353_MER       707 TAACGAT-AAA---CGTGCAGAGGTATTATAGGAGAAAAGAGTAT--GGA 750
+                             vi  i -i  --- i i  i  v       i  i       v  --   
+  L1M8_5end#LINE/       753 TCGCGGTCGAATCCCATACAAAGTTATTATAAGAAAAAAGAGAATAAGGA 802
+
+  HAL1M8_1353_MER       751 G---AAT----TCCTTNCAGACAATGAAAGCAAGCCAGCCAGA---GCCC 790
+                             ---   ----   i ?               v     vv   ---    
+  L1M8_5end#LINE/       803 GCAGAATAACATCCCTACAGACAATGAAAGCACGCCAGAAAGACATGCCC 852
+
+  HAL1M8_1353_MER       791 NNAANNNCGGCGTAAAACTGGTNNTACAATNNT-CAAAANNCGAG--AAG 837
+                            ??  ???v ii -       - ??ivi   ?? -     --    --  i
+  L1M8_5end#LINE/       853 ACAAAACAGATG-AAAACTG-TAACCTAATATTTCAAAA--CGAGCTAAA 898
+
+  HAL1M8_1353_MER       838 ACAGACCTAG-------TATTAGCNNNGGAAGNA----GT---CCCCAAT 873
+                             v i iiv  -------  vv  ???? i   ? ----i ---i vv   
+  L1M8_5end#LINE/       899 AGAAATTAAGAAAATGATAGAAGNTATGAAAGAACAACATAAATCAGAAT 948
+
+  HAL1M8_1353_MER       874 TA--ATGACTCAGAAATGAGATCGNNNCATAACTCACGTAATAATTAGAT 921
+                              -- vi             --- ???i v      v v  v       v
+  L1M8_5end#LINE/       949 TAGAAAAACTCAGAAATGAG---GTGATAGAACTCAGGAAAGAATTAGAA 995
+
+  HAL1M8_1353_MER       922 ATC---GCACATAATCA---CACAANNGTGGAACAANNNGAAGNGTATTC 965
+                              v--- v v -     ---  v  ?? vi  vi  ???ii i? v iv 
+  L1M8_5end#LINE/       996 ATAAAAGAAAA-AATCATTTCAGAAATGAAGACTAAACTAGAAGGAACAC 1044
+
+  HAL1M8_1353_MER       966 AAGAGCGAAGAATCACA-CAGACA-TGTNNCAAGAGAAATATAAGTGGGN 1013
+                                     v  v    -    i -  i??i          v   ----?
+  L1M8_5end#LINE/      1045 AAGAGCGAATAAACACAACAGATAATGCCTTAAGAGAAATAGAAG----A 1090
+
+  HAL1M8_1353_MER      1014 NNNAATAAATGAAAATTTTAAAAACCAAAAAGCAGTGAAGAAA----TAC 1059
+                            ???  vii v              i       v i        ----  v
+  L1M8_5end#LINE/      1091 TGAAAAGGAGGAAAATTTTAAAAATCAAAAAGAAATGAAGAAAGAGATAA 1140
+
+  HAL1M8_1353_MER      1060 GNNNNATNTCGAGTGCAGGCGACAATTNNNNACTCAAGATCGGCCGAAGN 1109
+                            i????  -     v v i i    iv ???? ----    v   vi ii?
+  L1M8_5end#LINE/      1141 AAAGGAT-TCGAGAGAAAGTGACAGATATAGA----AGATAGGCAAAGAA 1185
+
+  HAL1M8_1353_MER      1110 GA----ACTTANNNCTGAT-----T------AGCAGAAACCCAAAGCCA- 1143
+                              ----  v  ???v i  ----- ------  v     v       v -
+  L1M8_5end#LINE/      1186 GATCCAACATACGTATAATAGGAGTCCCCGAAGAAGAAAACCAAAGCAAT 1235
+
+  HAL1M8_1353_MER      1144 GNNNCACCACAAATAGCTATGATGCAAGGACAATTTAGGAAAA 1186
+                             ???  vv       -   -i ---  vv i    i i     
+  L1M8_5end#LINE/      1236 GGAACAGAACAAATA-CTA-AA---AACTATAATTCAAGAAAA 1273
+
+Transitions / transversions = 1.04 (120 / 115); Gap_init rate = 0.07 (84 / 1186), avg. gap size = 2.71 (228 / 84)
+ 337 12.09 14.29 8.79  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1364  1454 (1668)    MER2B#DNA/TcMar-Tigger       65   160 (176)  
+
+  HAL1M8_1353_MER      1364 TTCGGAGAAATAA----TACAAA--TTCAAGAGG------TTGAATNNNT 1401
+                                  i   v  ----i     -- i   i i ------      --- 
+  MER2B#DNA/TcMar        65 TTCGGAAAAAAAAATTCCACAAAGTTCCAAAAAGCAAAACTTGAAT---T 111
+
+  HAL1M8_1353_MER      1402 TGCCGCGCGCCGAGTACT-CGTCGAGTCAACGTGAATGAAGNNNTNNGAT 1450
+                                              -   i  i  v   i        ?-----   
+  MER2B#DNA/TcMar       112 TGCCGCGCGCCGAGTACTACGTTGAATCCACGCGAATGAAGT-----GAT 156
+
+  HAL1M8_1353_MER      1451 GTGT 1454
+                                
+  MER2B#DNA/TcMar       157 GTGT 160
+
+Transitions / transversions = 4.00 (8 / 2); Gap_init rate = 0.07 (6 / 91), avg. gap size = 3.50 (21 / 6)
+1347  7.21 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYk2#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYk2#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYk2#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYk2#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                        v  
+  AluYk2#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---    i 
+  AluYk2#SINE/Alu       247 A---CTCCGG 253
+
+Transitions / transversions = 0.67 (6 / 9); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1135 10.58 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSq#SINE/Alu       48   254 (59)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i          v         v      iv 
+  AluSq#SINE/Alu         48 CGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSq#SINE/Alu         98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                     --     i          v                   v  
+  AluSq#SINE/Alu        147 GTGGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                        v
+  AluSq#SINE/Alu        197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSq#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.80 (9 / 5)
+1140 11.06 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSq4#SINE/Alu       48   252 (59)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i          v         v      iv   
+  AluSq4#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSq4#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --     i          v                   v  v 
+  AluSq4#SINE/Alu       147 GGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v  v  -  vi       vi                        v  
+  AluSq4#SINE/Alu       197 CTTGAAACC-GGAAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSq4#SINE/Alu       246 A---CTCCAG 252
+
+Transitions / transversions = 0.53 (8 / 15); Gap_init rate = 0.02 (4 / 208), avg. gap size = 1.75 (7 / 4)
+ 705 20.74 2.76 7.37  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)  C SVA_B#Retroposon/SVA   (1101)   282    76  
+
+C HAL1M8_1353_MER      1672 CAAATCGAA-CTGGAGNNNTGCTGTGGCGCGATCTCGGCTCACTGCAGGC 1624
+                             i ii   i-     -??? i   i--   v                iv 
+  SVA_B#Retroposo        76 CGAGCCGAGGCTGGA-CTGTACTGC--CGCCATCTCGGCTCACTGCAACC 122
+
+C HAL1M8_1353_MER      1623 TCCGCCCACCAGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTAGC 1574
+                               -- ii  -----   ----- v               v   v  iv 
+  SVA_B#Retroposo       123 TCC--CTGCC-----TGA-----TTCTCCTGCCTCAGCCTGCCGAGTGCC 160
+
+C HAL1M8_1353_MER      1573 TGGGACTACAGGC-C-CGCCACCTCGCACGGCTAATTTTTTGTATTTTT- 1527
+                                 i i     - -    i  v   vi i  ii    i-        -
+  SVA_B#Retroposo       161 TGGGATTGCAGGCGCGCGCCGCCACGCCTGACTGGTTTTC-GTATTTTTT 209
+
+C HAL1M8_1353_MER      1526 AGTAGAGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCCTGA 1477
+                            i  i          i  i      vi   i  v       v v       
+  SVA_B#Retroposo       210 GGTGGAGACGGGGTTTCGCCGTGTTGGCCGGGCTGGTCTCCAGCTCCTGA 259
+
+C HAL1M8_1353_MER      1476 CCTTG--TGATCCGCCCGCTGCG 1456
+                              vi --     i   v  iv  
+  SVA_B#Retroposo       260 CCGCGAGTGATCTGCCAGCCTCG 282
+
+Transitions / transversions = 1.80 (27 / 15); Gap_init rate = 0.05 (11 / 217), avg. gap size = 2.00 (22 / 11)
+1196 10.10 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSx3#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i          v         v      iv   
+  AluSx3#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                                   v   v   
+  AluSx3#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                - -                  v                   v  v 
+  AluSx3#SINE/Alu       148 GGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSx3#SINE/Alu       198 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSx3#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.50 (7 / 14); Gap_init rate = 0.02 (4 / 208), avg. gap size = 1.50 (6 / 4)
+1324  7.69 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYk3#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYk3#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYk3#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYk3#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                v       v  
+  AluYk3#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATAGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---    i 
+  AluYk3#SINE/Alu       247 A---CTCCGG 253
+
+Transitions / transversions = 0.60 (6 / 10); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1262 10.85 0.94 1.89  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1667 (1455)    AluYk12#SINE/Alu       48   257 (54)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYk12#SINE/Al        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYk12#SINE/Al        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                              i    --     i          v                   v    
+  AluYk12#SINE/Al       148 GGTGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             i v     vi -i        i            i   v       v  
+  AluYk12#SINE/Al       198 CATGAACCCAAG-AGGCGGAGCTTGCAGTGAGCCGGGATAGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAGTTCG 1667
+                             ?---     i i 
+  AluYk12#SINE/Al       247 AG---TCCAGCTTG 257
+
+Transitions / transversions = 1.20 (12 / 10); Gap_init rate = 0.01 (3 / 212), avg. gap size = 2.00 (6 / 3)
+1189  6.25 0.96 7.69  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYc#SINE/Alu       48   241 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                    ------------
+  AluYc#SINE/Alu         48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCA------------ 85
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYc#SINE/Alu         86 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 135
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYc#SINE/Alu        136 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 185
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                        v  
+  AluYc#SINE/Alu        186 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGC 234
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYc#SINE/Alu        235 A---CTCCAG 241
+
+Transitions / transversions = 0.62 (5 / 8); Gap_init rate = 0.02 (4 / 208), avg. gap size = 4.50 (18 / 4)
+1333  8.87 0.99 0.49  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1658 (1464)    AluYi6_4d#SINE/Alu       48   251 (60)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYi6_4d#SINE/        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYi6_4d#SINE/        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYi6_4d#SINE/       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v    -   vi        i                i       v  
+  AluYi6_4d#SINE/       198 CGTGAACC-TGGGAGGCGGAGCTTGCAGTGAGCCGAGATTGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNC 1658
+                             ??? 
+  AluYi6_4d#SINE/       247 ACTCC 251
+
+Transitions / transversions = 0.67 (6 / 9); Gap_init rate = 0.01 (2 / 203), avg. gap size = 1.50 (3 / 2)
+1355  6.73 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYm1#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYm1#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYm1#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYm1#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                        v  
+  AluYm1#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYm1#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.56 (5 / 9); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1079 12.02 0.96 2.88  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSg7#SINE/Alu       48   251 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi     i       i          v  i      v      iv v 
+  AluSg7#SINE/Alu        48 CGAGGCGGGTGGATCACGAGGTCAGGAGTTCAAGACCAGCCTGGCCAAGA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSg7#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --     i          v                -  v  v 
+  AluSg7#SINE/Alu       147 GGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAG-AGAATTG 195
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSg7#SINE/Alu       196 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 244
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSg7#SINE/Alu       245 A---CTCCAG 251
+
+Transitions / transversions = 0.67 (10 / 15); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.60 (8 / 5)
+ 915 15.87 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluJo#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     v     i --i  vi      v         v     viv 
+  AluJo#SINE/Alu         48 CGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              ii i                v             -       v   v 
+  AluJo#SINE/Alu         98 CATAGCGAGACCCCGTCTCTACAAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -                  v                   v  
+  AluJo#SINE/Alu        147 GTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v i   v  v vv -   v           iiv           v
+  AluJo#SINE/Alu        197 CGCTTGAGCCCAGGAGTTC-GAGGCTGCAGTGAGCTATGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluJo#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.50 (11 / 22); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+ 992 13.46 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluJb#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     v       --i  vi      v         v     viv 
+  AluJb#SINE/Alu         48 CGAGGCGGGAGGATCACTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i             v             -       v   v 
+  AluJb#SINE/Alu         98 CATGGTGAAACCCCGTCTCTACAAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -                  v                   v  
+  AluJb#SINE/Alu        147 GTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v i   v  v  v  -  v             v           v
+  AluJb#SINE/Alu        197 CGCTTGAGCCCGGGAGGTCG-AGGCTGCAGTGAGCCGTGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluJb#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.33 (7 / 21); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1189  9.62 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSc#SINE/Alu       48   252 (57)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i      i                    iv   
+  AluSc#SINE/Alu         48 CGAGGCGGGCGGATCACGAGGTCAAGAGATCGAGACCATCCTGGCCAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSc#SINE/Alu         98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                - -                  v                   v  v 
+  AluSc#SINE/Alu        147 GGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSc#SINE/Alu        197 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSc#SINE/Alu        246 A---CTCCAG 252
+
+Transitions / transversions = 0.67 (8 / 12); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.40 (7 / 5)
+ 655 21.66 3.23 7.37  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)  C SVA_C#Retroposon/SVA   (1101)   283    76  
+
+C HAL1M8_1353_MER      1672 CAAATCGAA-CTGGAGNNNTGCTGTGGCGCGATCTCGGCTCACTGCAGGC 1624
+                             i ii    -     -??? i   i--   v                iv 
+  SVA_C#Retroposo        76 CGAGCCGAAGCTGGA-CTGTACTGC--CGCCATCTCGGCTCACTGCAACC 122
+
+C HAL1M8_1353_MER      1623 TCCGCCCACCAGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTAGC 1574
+                               -- ii  -----   ----- v               v   v  iv 
+  SVA_C#Retroposo       123 TCC--CTGCC-----TGA-----TTCTCCTGCCTCAGCCTGCCGAGTGCC 160
+
+C HAL1M8_1353_MER      1573 TGGGACTACAGGC-C-CGCCACCTCGCACGGCTAATTTTTTGTATTTTT- 1527
+                              v  i i     - -    i  v   vi i  ii    i-        -
+  SVA_C#Retroposo       161 TGCGATTGCAGGCGCGCGCCGCCACGCCTGACTGGTTTTC-GTATTTTTT 209
+
+C HAL1M8_1353_MER      1526 -AGTAGAGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCCTG 1478
+                            -i  i          i  i i    vi   i  v       v v     i
+  SVA_C#Retroposo       210 TGGTGGAGACGGGGTTTCGCTGTGTTGGCCGGGCTGGTCTCCAGCTCCTA 259
+
+C HAL1M8_1353_MER      1477 ACCTTG--TGATCCGCCCGCTGCG 1456
+                               vi --     i   v  iv  
+  SVA_C#Retroposo       260 ACCGCGAGTGATCTGCCAGCCTCG 283
+
+Transitions / transversions = 1.75 (28 / 16); Gap_init rate = 0.05 (11 / 217), avg. gap size = 2.09 (23 / 11)
+1281 12.90 0.92 0.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)    AluYb8#SINE/Alu       48   264 (54)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi     i      ii                            v   
+  AluYb8#SINE/Alu        48 CGAGGCGGGTGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            v     i                                   v   vi  
+  AluYb8#SINE/Alu        98 AGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCAGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYb8#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -ii       i                i       v  
+  AluYb8#SINE/Alu       198 CGTGAACCCGGG-AAGCGGAGCTTGCAGTGAGCCGAGATTGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAGTTCGATTTG 1672
+                             ??? -v    i  iii  
+  AluYb8#SINE/Alu       247 AGTCC-GCAGTCCGGCCTG 264
+
+Transitions / transversions = 1.27 (14 / 11); Gap_init rate = 0.01 (3 / 217), avg. gap size = 1.33 (4 / 3)
+ 912 16.35 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluJr#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     v     i --i   i      v         v     viv 
+  AluJr#SINE/Alu         48 CGAGGCGGGAGGATCGCTTGAGGCCAGGAGTTCGAGACCAGCCTGGGCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              ii i                v       i     -       v   v 
+  AluJr#SINE/Alu         98 CATAGCGAGACCCCGTCTCTACAAAAAATATAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -                  v              i    v  
+  AluJr#SINE/Alu        147 GTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCGGGAGGAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v i   v  v vv -   v           iiv           v
+  AluJr#SINE/Alu        197 CGCTTGAGCCCAGGAGTTC-GAGGCTGCAGTGAGCTATGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluJr#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.62 (13 / 21); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1040 12.98 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSp#SINE/Alu       48   254 (59)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i     i    v         v    i iv 
+  AluSp#SINE/Alu         48 CGAGGCGGGCGGATCACCTGAGGTCGGGAGTTCGAGACCAGCCTGACCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i  v  i                           -       v   v 
+  AluSp#SINE/Alu         98 CATGGAGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -       i          v                   v  
+  AluSp#SINE/Alu        147 GTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi   i                   iv
+  AluSp#SINE/Alu        197 CGCTTGAACCCGGG-AGGCGGAGGTTGCGGTGAGCCGAGATCGCGCCATT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSp#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.80 (12 / 15); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1115 10.58 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSz#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i          v         v      iv 
+  AluSz#SINE/Alu         48 CGAGGCGGGCGGATCACTTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSz#SINE/Alu         98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -       i          v                   v  
+  AluSz#SINE/Alu        147 GTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                        v
+  AluSz#SINE/Alu        197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSz#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1439  5.77 0.96 1.44  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYe5#SINE/Alu       48   254 (56)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYe5#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v       
+  AluYe5#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGAGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYe5#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     i  v                                  v  
+  AluYe5#SINE/Alu       198 CGTGAACCCCGGGGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACTGC 247
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYe5#SINE/Alu       248 A---CTCCAG 254
+
+Transitions / transversions = 0.50 (4 / 8); Gap_init rate = 0.01 (2 / 208), avg. gap size = 2.50 (5 / 2)
+1056 12.50 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSz6#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i   i      v         v      iv 
+  AluSz6#SINE/Alu        48 CGAGGCGGGCGGATCACTTGAGGCCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i  ii i                           -       v   v 
+  AluSz6#SINE/Alu        98 CATGGCAAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -       i          v               v   v  
+  AluSz6#SINE/Alu       147 GTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCACGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                        v
+  AluSz6#SINE/Alu       197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSz6#SINE/Alu       246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.73 (11 / 15); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+ 661 20.28 4.15 8.29  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)  C SVA_D#Retroposon/SVA   (1103)   283    76  
+
+C HAL1M8_1353_MER      1672 CAAATCGAA-CTGGA--GNNNTGCTGTGGCGCGATCTCGGCTCACTGCAG 1626
+                             i ii    -     -- ???     ----- v                i
+  SVA_D#Retroposo        76 CGAGCCGAAGCTGGACTGTACTGCTG-----CCATCTCGGCTCACTGCAA 120
+
+C HAL1M8_1353_MER      1625 GCTCCGCCCACCAGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTA 1576
+                            v    -- ii  -----   ----- v               v   v  i
+  SVA_D#Retroposo       121 CCTCC--CTGCC-----TGA-----TTCTCCTGCCTCAGCCTGCCGAGTG 158
+
+C HAL1M8_1353_MER      1575 GCTGGGACTACAGGC-C-CGCCACCTCGCACGGCTAATTTTTTGTATTTT 1528
+                            v   v  i i     - -    i  v   vi i  ii    i-       
+  SVA_D#Retroposo       159 CCTGCGATTGCAGGCGCGCGCCGCCACGCCTGACTGGTTTTC-GTATTTT 207
+
+C HAL1M8_1353_MER      1527 T--AGTAGAGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCC 1480
+                             --i  i          i  i i    vi   i  v       v v    
+  SVA_D#Retroposo       208 TTTGGTGGAGACGGGGTTTCGCTGTGTTGGCCGGGCTGGTCTCCAGCTCC 257
+
+C HAL1M8_1353_MER      1479 TGACCTTG--TGATCCGCCCGCTGCG 1456
+                             i   vi --         v  iv  
+  SVA_D#Retroposo       258 TAACCGCGAGTGATCCGCCAGCCTCG 283
+
+Transitions / transversions = 1.56 (25 / 16); Gap_init rate = 0.05 (11 / 217), avg. gap size = 2.45 (27 / 11)
+1129 11.06 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSx4#SINE/Alu       48   252 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i          v         v      iv i 
+  AluSx4#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGTTCGAGACCAGCCTGGCCAATA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSx4#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                - -                  v                i  v  v 
+  AluSx4#SINE/Alu       147 GGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGAAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSx4#SINE/Alu       197 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSx4#SINE/Alu       246 A---CTCCAG 252
+
+Transitions / transversions = 0.64 (9 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.40 (7 / 5)
+1274 12.90 0.92 0.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)    AluYb9#SINE/Alu       48   264 (54)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi     i      ii                            v   
+  AluYb9#SINE/Alu        48 CGAGGCGGGTGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            v     i                                   v   v   
+  AluYb9#SINE/Alu        98 AGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                vv                  v    
+  AluYb9#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTGGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -ii       i                i       v  
+  AluYb9#SINE/Alu       198 CGTGAACCCGGG-AAGCGGAGCTTGCAGTGAGCCGAGATTGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAGTTCGATTTG 1672
+                             ??? -v    i  iii  
+  AluYb9#SINE/Alu       247 AGTCC-GCAGTCCGGCCTG 264
+
+Transitions / transversions = 1.08 (13 / 12); Gap_init rate = 0.01 (3 / 217), avg. gap size = 1.33 (4 / 3)
+1267  9.13 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYa5#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                       i    v v 
+  AluYa5#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCCGGCTAAAA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   vi  
+  AluYa5#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTAGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                vi                  v    
+  AluYa5#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTTGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                 v      v  
+  AluYa5#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCCCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYa5#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.73 (8 / 11); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1145 10.58 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSg#SINE/Alu       48   252 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i          v         v      iv   
+  AluSg#SINE/Alu         48 CGAGGCGGGCGGATCACGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSg#SINE/Alu         98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                - -       i          v                   v  v 
+  AluSg#SINE/Alu        147 GGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSg#SINE/Alu        197 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSg#SINE/Alu        246 A---CTCCAG 252
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.40 (7 / 5)
+1046 13.46 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSq10#SINE/Alu       48   254 (59)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     i       --i          v  v      v      iv 
+  AluSq10#SINE/Al        48 CGAGGCGGGTGGATCACCTGAGGTCAGGAGTTCTAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSq10#SINE/Al        98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                 i   --     i          v    i   i          v  
+  AluSq10#SINE/Al       147 GTGGCAGGCGCCTGTAATCCCAGCTACTCGGGGGGCCGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                       iv
+  AluSq10#SINE/Al       197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCATC 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSq10#SINE/Al       246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.87 (13 / 15); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.80 (9 / 5)
+1462  5.29 0.96 1.44  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYe6#SINE/Alu       48   254 (56)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYe6#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v       
+  AluYe6#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGAGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                                    v    
+  AluYe6#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     i  v                                  v  
+  AluYe6#SINE/Alu       198 CGTGAACCCCGGGGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACTGC 247
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYe6#SINE/Alu       248 A---CTCCAG 254
+
+Transitions / transversions = 0.57 (4 / 7); Gap_init rate = 0.01 (2 / 208), avg. gap size = 2.50 (5 / 2)
+ 639 21.66 3.69 7.83  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1672 (1450)  C SVA_E#Retroposon/SVA   (1099)   283    76  
+
+C HAL1M8_1353_MER      1672 CAAATCGAA-CTGGA--GNNNTGCTGTGGCGCGATCTCGGCTCACTGCAG 1626
+                             i ii i  -     -- ???     ----- v                i
+  SVA_E#Retroposo        76 CGAGCCAAAGCTGGACGGTACTGCTG-----CCATCTCGGCTCACTGCAA 120
+
+C HAL1M8_1353_MER      1625 GCTCCGCCCACCAGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTA 1576
+                            v    -- ii  -----   ----- v               v   v  i
+  SVA_E#Retroposo       121 CCTCC--CTGCC-----TGA-----TTCTCCTGCCTCAGCCTGCCGAGTG 158
+
+C HAL1M8_1353_MER      1575 GCTGGGACTACAGGC-C-CGCCACCTCGCACGGCTAATTTTT-TGTATTT 1529
+                            v   v  i i     - -    i  v   vi i  ii    i- v v   
+  SVA_E#Retroposo       159 CCTGCGATTGCAGGCGCGCGCCGCCACGCCTGACTGGTTTTCGTTTTTTT 208
+
+C HAL1M8_1353_MER      1528 TTAGTAGAGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCCT 1479
+                              i  i          i  i i    vi   i  v       v v     
+  SVA_E#Retroposo       209 TTGGTGGAGACGGGGTTTCGCTGTGTTGGCCGGGCTGGTCTCCAGCTCCT 258
+
+C HAL1M8_1353_MER      1478 GACCTTG--TGATCCGCCCGCTGCG 1456
+                            i   vi --         v  iv  
+  SVA_E#Retroposo       259 AACCGCGAGTGATCCGCCAGCCTCG 283
+
+Transitions / transversions = 1.44 (26 / 18); Gap_init rate = 0.05 (10 / 217), avg. gap size = 2.50 (25 / 10)
+1119 11.06 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSq2#SINE/Alu       48   254 (59)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i          v         v      iv 
+  AluSq2#SINE/Alu        48 CGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSq2#SINE/Alu        98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                     --     i          v                   v  
+  AluSq2#SINE/Alu       147 GTGGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                       iv
+  AluSq2#SINE/Alu       197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCATT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSq2#SINE/Alu       246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.64 (9 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.80 (9 / 5)
+1158  8.37 0.99 6.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1658 (1464)    AluYd8#SINE/Alu       48   239 (60)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                    ------------
+  AluYd8#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCA------------ 85
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   vi  
+  AluYd8#SINE/Alu        86 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCAGT 135
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYd8#SINE/Alu       136 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 185
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     -  vi        i          v                
+  AluYd8#SINE/Alu       186 CGTGAACCC-GGAAGGCGGAGCTTGCAGTGAGCGGAGATCGCGCCACAGC 234
+
+  HAL1M8_1353_MER      1654 ANNNC 1658
+                             ??? 
+  AluYd8#SINE/Alu       235 ACTCC 239
+
+Transitions / transversions = 0.75 (6 / 8); Gap_init rate = 0.01 (3 / 203), avg. gap size = 5.00 (15 / 3)
+1329  8.87 0.99 0.49  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1658 (1464)    AluYk11#SINE/Alu       48   251 (60)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi                                    i     v   
+  AluYk11#SINE/Al        48 CGAGGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCTTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYk11#SINE/Al        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYk11#SINE/Al       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v    -   vi        i                i       v  
+  AluYk11#SINE/Al       198 CGTGAACC-TGGGAGGCGGAGCTTGCAGTGAGCCGAGATTGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNC 1658
+                             ??? 
+  AluYk11#SINE/Al       247 AATCC 251
+
+Transitions / transversions = 0.67 (6 / 9); Gap_init rate = 0.01 (2 / 203), avg. gap size = 1.50 (3 / 2)
+1164  6.25 1.44 7.69  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYc3#SINE/Alu       48   242 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                    ------------
+  AluYc3#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCA------------ 85
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYc3#SINE/Alu        86 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 135
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGG-GAGGCTGAGGCAGGAGTATG 1602
+                                   --                v   -                v   
+  AluYc3#SINE/Alu       136 GGCGGGCGCCTGTAGTCCCAGCTACTCGGAGAGGCTGAGGCAGGAGAATG 185
+
+  HAL1M8_1353_MER      1603 GCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAG 1652
+                                v     v  -i        i                        v 
+  AluYc3#SINE/Alu       186 GCGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTG 234
+
+  HAL1M8_1353_MER      1653 CANNNCTCCAG 1663
+                              ---      
+  AluYc3#SINE/Alu       235 CA---CTCCAG 242
+
+Transitions / transversions = 0.62 (5 / 8); Gap_init rate = 0.02 (5 / 208), avg. gap size = 3.80 (19 / 5)
+ 350 22.35 2.35 0.00  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1540 (1582)    FLAM_C#SINE/Alu       48   134 (9)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     v     i --i  vi      v         v     viv 
+  FLAM_C#SINE/Alu        48 CGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAA 1540
+                              ii i               vv     v v      
+  FLAM_C#SINE/Alu        98 CATAGCGAGACCCCGTCTCTAAAAAAAAAAAAAAAAA 134
+
+Transitions / transversions = 0.73 (8 / 11); Gap_init rate = 0.01 (1 / 85), avg. gap size = 2.00 (2 / 1)
+1115 10.58 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSx#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i          v         v      iv 
+  AluSx#SINE/Alu         48 CGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSx#SINE/Alu         98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -       i          v                   v  
+  AluSx#SINE/Alu        147 GTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                        v
+  AluSx#SINE/Alu        197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSx#SINE/Alu        246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1310  9.36 0.99 0.49  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1658 (1464)    AluYi6#SINE/Alu       48   251 (60)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYi6#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v i 
+  AluYi6#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGAT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYi6#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                i       v  
+  AluYi6#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATTGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNC 1658
+                             ??? 
+  AluYi6#SINE/Alu       247 ACTCC 251
+
+Transitions / transversions = 0.78 (7 / 9); Gap_init rate = 0.01 (2 / 203), avg. gap size = 1.50 (3 / 2)
+1263  8.65 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSc8#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluSc8#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluSc8#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGC--GGGCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                               -- v                  v                   v  v 
+  AluSc8#SINE/Alu       148 GGCACGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSc8#SINE/Alu       198 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSc8#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.38 (5 / 13); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1127 11.06 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSc5#SINE/Alu       48   252 (57)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                           iv   
+  AluSc5#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCCAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -     i v   v   
+  AluSc5#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCTGGGCGTGGT 146
+
+  HAL1M8_1353_MER      1556 GGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                - -       i          v                   v  v 
+  AluSc5#SINE/Alu       147 GGCGCGTGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v    vv  -i v     vi                        v  
+  AluSc5#SINE/Alu       197 CTTGAACCAGGG-AGTCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSc5#SINE/Alu       246 A---CTCCAG 252
+
+Transitions / transversions = 0.64 (9 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.40 (7 / 5)
+1321  8.87 0.99 0.49  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1658 (1464)    AluYk4#SINE/Alu       48   251 (60)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYk4#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluYk4#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGCGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYk4#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                v       v  
+  AluYk4#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATAGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNC 1658
+                             ??? 
+  AluYk4#SINE/Alu       247 AGTCC 251
+
+Transitions / transversions = 0.50 (5 / 10); Gap_init rate = 0.01 (2 / 203), avg. gap size = 1.50 (3 / 2)
+ 865 17.79 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluJr4#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi     v     i --i   i      v         v     viv 
+  AluJr4#SINE/Alu        48 CGAGGCGGGAGGATCGCTTGAGGCCAGGAGTTCGAGACCAGCCTGGGCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              ii i                v      ?i     -       v   v 
+  AluJr4#SINE/Alu        98 CATAGCGAGACCCCGTCTCTACAAAAAATNTAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                  - -           i      v                   v  
+  AluJr4#SINE/Alu       147 GTGGCGCGCGCCTGTAGTCCTAGCTACTCGGGAGGCTGAGGCAGGAGGAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v i   v  v vv -   vi i        iiv           v
+  AluJr4#SINE/Alu       197 CGCTTGAGCCCAGGAGTTC-GAGGTTACAGTGAGCTATGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluJr4#SINE/Alu       246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.71 (15 / 21); Gap_init rate = 0.03 (6 / 208), avg. gap size = 1.50 (9 / 6)
+1135 10.58 1.92 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSx1#SINE/Alu       48   254 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCA 1503
+                              vi             --i          v         v      iv 
+  AluSx1#SINE/Alu        48 CGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAA 97
+
+  HAL1M8_1353_MER      1504 CACGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAG 1553
+                              i     i                           -       v   v 
+  AluSx1#SINE/Alu        98 CATGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGTG 146
+
+  HAL1M8_1353_MER      1554 GTGGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTAT 1601
+                                     --     i          v                   v  
+  AluSx1#SINE/Alu       147 GTGGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAAT 196
+
+  HAL1M8_1353_MER      1602 GGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACA 1651
+                            v  v v     v  -i       vi                        v
+  AluSx1#SINE/Alu       197 CGCTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACT 245
+
+  HAL1M8_1353_MER      1652 GCANNNCTCCAG 1663
+                               ---      
+  AluSx1#SINE/Alu       246 GCA---CTCCAG 254
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.02 (5 / 208), avg. gap size = 1.80 (9 / 5)
+ 767 22.64 2.83 2.83  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1667 (1455)  C SVA_A#Retroposon/SVA   (1100)   287    76  
+
+C HAL1M8_1353_MER      1667 CGAA-CTGGAGNNNTGCTGTGGCGCGATCTCGGCTCACTGCAGGCTCCGC 1619
+                               i-     -??? i   i--  i           i     iv    --
+  SVA_A#Retroposo        76 CGAGGCTGGA-CTGTACTGC--CGTGATCTCGGCTCGCTGCAACCTCC-- 120
+
+C HAL1M8_1353_MER      1618 CCACC-AGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTAGCTGGG 1570
+                             ii  -v   i vv  iv  v          i    v   v  iv     
+  SVA_A#Retroposo       121 CTGCCTCGGGCTCCCGTGATTCTCCTGCCTCGGCCTGCCGAGTGCCTGGG 170
+
+C HAL1M8_1353_MER      1569 ACTACAGGC-C-CGCCACCTCGCACGGCTAATTTTTTGTATTTTTAGTAG 1522
+                             i i     - -    i  v   vi i  ii     -        i  i 
+  SVA_A#Retroposo       171 ATTGCAGGCACGCGCCGCCACGCCTGACTGGTTTTT-GTATTTTTGGTGG 219
+
+C HAL1M8_1353_MER      1521 AGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCCTGACCTTG 1472
+                                     i  i      vii  i  v       v v          i 
+  SVA_A#Retroposo       220 AGACGGGGTTTCGCCGTGTTGACCGGGCTGGTCTCCAGCTCCTGACCTCG 269
+
+C HAL1M8_1353_MER      1471 --TGATCCGCCCGCTGCG 1456
+                            --     i      iv  
+  SVA_A#Retroposo       270 AGTGATCTGCCCGCCTCG 287
+
+Transitions / transversions = 1.81 (29 / 16); Gap_init rate = 0.04 (9 / 212), avg. gap size = 1.33 (12 / 9)
+1355  6.73 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluY#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluY#SINE/Alu          48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v   v   
+  AluY#SINE/Alu          98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluY#SINE/Alu         148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                        v  
+  AluY#SINE/Alu         198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluY#SINE/Alu         247 A---CTCCAG 253
+
+Transitions / transversions = 0.56 (5 / 9); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1319  8.17 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYj4#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYj4#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                    i              v   v   
+  AluYj4#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATGCAAAAAATTAGCCGGGCGTGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --              i v                   v    
+  AluYj4#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTGCTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                  i     v  
+  AluYj4#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGTGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYj4#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.89 (8 / 9); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1128 11.54 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluSg4#SINE/Alu       48   252 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi     i       i          v         v      iv v 
+  AluSg4#SINE/Alu        48 CGAGGCGGGTGGATCACGAGGTCAGGAGTTCGAGACCAGCCTGGCCAAGA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                            i     i                           -       v   v   
+  AluSg4#SINE/Alu        98 TGGTGAAACCCCGTCTCTACTAAAAATACAAAAA-TTAGCCGGGCGCGGT 146
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --     i          v                   v  v 
+  AluSg4#SINE/Alu       147 GGCGGGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                             v v     v  -i       vi                        v  
+  AluSg4#SINE/Alu       197 CTTGAACCCGGG-AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluSg4#SINE/Alu       246 A---CTCCAG 252
+
+Transitions / transversions = 0.60 (9 / 15); Gap_init rate = 0.02 (4 / 208), avg. gap size = 1.75 (7 / 4)
+1378  6.25 0.96 1.92  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYf1#SINE/Alu       48   253 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                            v   
+  AluYf1#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                                   v       
+  AluYf1#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCGAGGT 147
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --                v                   v    
+  AluYf1#SINE/Alu       148 GGCGGGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGG 197
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                        v  
+  AluYf1#SINE/Alu       198 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGC 246
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYf1#SINE/Alu       247 A---CTCCAG 253
+
+Transitions / transversions = 0.62 (5 / 8); Gap_init rate = 0.01 (3 / 208), avg. gap size = 2.00 (6 / 3)
+1191 10.10 0.96 2.40  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1456  1663 (1459)    AluYa8#SINE/Alu       48   252 (58)  
+
+  HAL1M8_1353_MER      1456 CGCAGCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACA 1505
+                              vi             i                       i    v v 
+  AluYa8#SINE/Alu        48 CGAGGCGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCCGGCTAAAA 97
+
+  HAL1M8_1353_MER      1506 CGGTGAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGT 1555
+                                  i                  v          -     v   vi  
+  AluYa8#SINE/Alu        98 CGGTGAAACCCCGTCTCTACTAAAACTACAAAAAAT-AGCCGGGCGTAGT 146
+
+  HAL1M8_1353_MER      1556 GGCGGGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGG 1603
+                                   --         i      vi                  v    
+  AluYa8#SINE/Alu       147 GGCGGGCGCCTGTAGTCCTAGCTACTTGGGAGGCTGAGGCAGGAGAATGG 196
+
+  HAL1M8_1353_MER      1604 CGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGC 1653
+                               v     v  -i        i                 v      v  
+  AluYa8#SINE/Alu       197 CGTGAACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCCCGCCACTGC 245
+
+  HAL1M8_1353_MER      1654 ANNNCTCCAG 1663
+                             ---      
+  AluYa8#SINE/Alu       246 A---CTCCAG 252
+
+Transitions / transversions = 0.75 (9 / 12); Gap_init rate = 0.02 (4 / 208), avg. gap size = 1.75 (7 / 4)
+ 247 27.16 3.70 0.00  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1540 (1582)    BC200#SINE/Alu       54   137 (63)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCACACG 1507
+                                 v    vi --i  vi      v        vv     viv i ii
+  BC200#SINE/Alu         54 GCGGGAGGATAGCTTGAGCCCAGGAGTTCGAGACCTGCCTGGGCAATATA 103
+
+  HAL1M8_1353_MER      1508 GTGAGACCCCGT-CTCTACTAAAAATACAAAAAA 1540
+                             i          -   i vv    iv v      
+  BC200#SINE/Alu        104 GCGAGACCCCGTTCTCCAGAAAAAGGAAAAAAAA 137
+
+Transitions / transversions = 0.83 (10 / 12); Gap_init rate = 0.02 (2 / 81), avg. gap size = 1.50 (3 / 2)
+ 352 20.99 2.47 0.00  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1540 (1582)    FLAM_A#SINE/Alu       51   133 (9)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCAC--AAGGTCAGGAGATCGAGACCATCCTGGCTCACACG 1507
+                                 v     i --i  vi      v         v     viv   ii
+  FLAM_A#SINE/Alu        51 GCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATA 100
+
+  HAL1M8_1353_MER      1508 GTGAGACCCCGTCTCTACTAAAAATACAAAAAA 1540
+                             i               vv     v v      
+  FLAM_A#SINE/Alu       101 GCGAGACCCCGTCTCTAAAAAAAAAAAAAAAAA 133
+
+Transitions / transversions = 0.70 (7 / 10); Gap_init rate = 0.01 (1 / 81), avg. gap size = 2.00 (2 / 1)
+1291  8.82 0.98 1.96  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1663 (1459)    AluYh7#SINE/Alu       52   253 (58)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACACGGT 1509
+                                        ii                            v  i    
+  AluYh7#SINE/Alu        52 GCGGGCGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACGCGGT 101
+
+  HAL1M8_1353_MER      1510 GAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGTGGCG 1559
+                              i      i                            v   v       
+  AluYh7#SINE/Alu       102 GAAACCCCGCCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGTGGCG 151
+
+  HAL1M8_1353_MER      1560 GGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGGCGTC 1607
+                               --    i     i     v                   v       v
+  AluYh7#SINE/Alu       152 GGCGCCTGTGGTCCCGGCTACTCGGGAGGCTGAGGCAGGAGAATGGCGTG 201
+
+  HAL1M8_1353_MER      1608 AACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGCANNN 1657
+                                 v  -i        i              i         v   ---
+  AluYh7#SINE/Alu       202 AACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGGTCGCGCCACTGCA--- 247
+
+  HAL1M8_1353_MER      1658 CTCCAG 1663
+                                  
+  AluYh7#SINE/Alu       248 CTCCAG 253
+
+Transitions / transversions = 1.25 (10 / 8); Gap_init rate = 0.01 (3 / 204), avg. gap size = 2.00 (6 / 3)
+1274 11.00 2.39 0.48  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1668 (1454)    AluYh3a3#SINE/Alu       52   264 (28)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACACGGT 1509
+                                        ii                            v    i  
+  AluYh3a3#SINE/A        52 GCGGGCGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACACAGT 101
+
+  HAL1M8_1353_MER      1510 GAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGTGGCG 1559
+                              i      i                            v   v       
+  AluYh3a3#SINE/A       102 GAAACCCCGCCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGTGGCG 151
+
+  HAL1M8_1353_MER      1560 GGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGGCGTC 1607
+                               --                v                   v       v
+  AluYh3a3#SINE/A       152 GGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGGCGTG 201
+
+  HAL1M8_1353_MER      1608 AACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCC-ACAG--CA 1654
+                                 v  -i        i                 v    -    -- i
+  AluYh3a3#SINE/A       202 AACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCCCGCCGACAGAGCG 250
+
+  HAL1M8_1353_MER      1655 NNNCTCCAGTTCGA 1668
+                            ???    ivi  i 
+  AluYh3a3#SINE/A       251 AGACTCCGTCTCAA 264
+
+Transitions / transversions = 1.22 (11 / 9); Gap_init rate = 0.02 (4 / 209), avg. gap size = 1.50 (6 / 4)
+1265  9.80 0.98 1.96  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1663 (1459)    AluYh9#SINE/Alu       52   253 (58)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACACGGT 1509
+                                        ii                            v  i    
+  AluYh9#SINE/Alu        52 GCGGGCGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACGCGGT 101
+
+  HAL1M8_1353_MER      1510 GAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGTGGCG 1559
+                              i      i                            v   v       
+  AluYh9#SINE/Alu       102 GAAACCCCGCCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGTGGCG 151
+
+  HAL1M8_1353_MER      1560 GGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGGCGTC 1607
+                               --    i     i     v                   v       v
+  AluYh9#SINE/Alu       152 GGCGCCTGTGGTCCCGGCTACTCGGGAGGCTGAGGCAGGAGAATGGCGTG 201
+
+  HAL1M8_1353_MER      1608 AACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGCANNN 1657
+                                 v  -i        i          i   i         v   ---
+  AluYh9#SINE/Alu       202 AACCCGGG-AGGCGGAGCTTGCAGTGAGCTGAGGTCGCGCCACTGCA--- 247
+
+  HAL1M8_1353_MER      1658 CTCCAG 1663
+                             i    
+  AluYh9#SINE/Alu       248 CCCCAG 253
+
+Transitions / transversions = 1.50 (12 / 8); Gap_init rate = 0.01 (3 / 204), avg. gap size = 2.00 (6 / 3)
+1331  6.86 0.98 1.96  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1460  1663 (1459)    AluYh3#SINE/Alu       52   253 (58)  
+
+  HAL1M8_1353_MER      1460 GCGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACACGGT 1509
+                                        ii                            v       
+  AluYh3#SINE/Alu        52 GCGGGCGGATCATGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGT 101
+
+  HAL1M8_1353_MER      1510 GAGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGTGGCG 1559
+                              i      i                            v   v       
+  AluYh3#SINE/Alu       102 GAAACCCCGCCTCTACTAAAAATACAAAAAATTAGCCGGGCGTGGTGGCG 151
+
+  HAL1M8_1353_MER      1560 GGC--CTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGGCGTC 1607
+                               --                v                   v       v
+  AluYh3#SINE/Alu       152 GGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATGGCGTG 201
+
+  HAL1M8_1353_MER      1608 AACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGCANNN 1657
+                                 v  -i        i                        v   ---
+  AluYh3#SINE/Alu       202 AACCCGGG-AGGCGGAGCTTGCAGTGAGCCGAGATCGCGCCACTGCA--- 247
+
+  HAL1M8_1353_MER      1658 CTCCAG 1663
+                                  
+  AluYh3#SINE/Alu       248 CTCCAG 253
+
+Transitions / transversions = 0.75 (6 / 8); Gap_init rate = 0.01 (3 / 204), avg. gap size = 2.00 (6 / 3)
+1306  6.90 0.99 1.97  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1461  1663 (1459)    AluYg6#SINE/Alu       53   253 (58)  
+
+  HAL1M8_1353_MER      1461 CGGGCGGATCACAAGGTCAGGAGATCGAGACCATCCTGGCTCACACGGTG 1510
+                                        i                            v        
+  AluYg6#SINE/Alu        53 CGGGCGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGTG 102
+
+  HAL1M8_1353_MER      1511 AGACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGTGCGAGGTGGCG- 1559
+                             i                                   v  iv       -
+  AluYg6#SINE/Alu       103 AAACCCCGTCTCTACTAAAAATACAAAAAATTAGCCGGGCATGGTGGCGC 152
+
+  HAL1M8_1353_MER      1560 G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAGGCAGGAGTATGGCGTCA 1608
+                             -                  i                   v       v 
+  AluYg6#SINE/Alu       153 GCGCCTGTAGTCCCAGCTACACGGGAGGCTGAGGCAGGAGAATGGCGTGA 202
+
+  HAL1M8_1353_MER      1609 ACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGATCGCGCCACAGCANNNC 1658
+                                v  -i        i         i              v   --- 
+  AluYg6#SINE/Alu       203 ACCCGGG-AGGCGGAGCTTGCAGTGAGTCGAGATCGCGCCACTGCA---C 248
+
+  HAL1M8_1353_MER      1659 TCCAG 1663
+                                 
+  AluYg6#SINE/Alu       249 TCCAG 253
+
+Transitions / transversions = 1.00 (7 / 7); Gap_init rate = 0.02 (4 / 203), avg. gap size = 1.50 (6 / 4)
+ 568 20.19 2.40 12.02  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1463  1670 (1452)  C SVA_F#Retroposon/SVA   (1110)   265    78  
+
+C HAL1M8_1353_MER      1670 AATCGAA-CTGGA--GNNNTGCTGTGGCGCGATCTCGGCTCACTGCAGGC 1624
+                             ii    -     -- ???     ----- v                iv 
+  SVA_F#Retroposo        78 AGCCGAAGCTGGACTGTACTGCTG-----CCATCTCGGCTCACTGCAACC 122
+
+C HAL1M8_1353_MER      1623 TCCGCCCACCAGGGTTGACGCCATACTCCTGCCTCAGCCTCCCGCGTAGC 1574
+                               -- ii  -----   ----- v               v   v  iv 
+  SVA_F#Retroposo       123 TCC--CTGCC-----TGA-----TTCTCCTGCCTCAGCCTGCCGAGTGCC 160
+
+C HAL1M8_1353_MER      1573 TGGGACTACAGGCCCGCCACCTCGCACGGCTAATTTTTTGTATTTTTAGT 1524
+                              v  i i     v   -i  v -    v  i i ------iv    i  
+  SVA_F#Retroposo       161 TGCGATTGCAGGCACGC-GCCGC-CACGCCTGACT------GGTTTTGGT 202
+
+C HAL1M8_1353_MER      1523 AGAGACGGGGTCTCACCGTGTGAGCCAGGATGGTCTCGATCTCCTGACCT 1474
+                            i          i  i i    vi   i  vi      v v i   i   v
+  SVA_F#Retroposo       203 GGAGACGGGGTTTCGCTGTGTTGGCCGGGCCGGTCTCCAGCCCCTAACCG 252
+
+C HAL1M8_1353_MER      1473 TG--TGATCCGCC 1463
+                            i --         
+  SVA_F#Retroposo       253 CGAGTGATCCGCC 265
+
+Transitions / transversions = 1.44 (23 / 16); Gap_init rate = 0.05 (10 / 208), avg. gap size = 3.00 (30 / 10)
+ 277 20.95 8.57 0.95  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1544  1648 (1474)    FLAM_A#SINE/Alu        1   113 (29)  
+
+  HAL1M8_1353_MER      1544 GCCGTGCGAGGTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAG 1591
+                                v   v       - -                  v            
+  FLAM_A#SINE/Alu         1 GCCGGGCGCGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG 50
+
+  HAL1M8_1353_MER      1592 GCAGGAGTATGGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGC----- 1636
+                              i    v  v  v v i   v  v vv  iii  v  v-  i  -----
+  FLAM_A#SINE/Alu        51 GCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCC-TGGGCAACAT 99
+
+  HAL1M8_1353_MER      1637 --CGAGATCGCGCC 1648
+                            --     i v  i 
+  FLAM_A#SINE/Alu       100 AGCGAGACCCCGTC 113
+
+Transitions / transversions = 0.57 (8 / 14); Gap_init rate = 0.04 (4 / 105), avg. gap size = 2.50 (10 / 4)
+ 451 15.00 1.67 3.33  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1544  1663 (1459)    FRAM#SINE/Alu        1   118 (58)  
+
+  HAL1M8_1353_MER      1544 GCCGTGCGAGGTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAG 1591
+                                v   v       - -                  v            
+  FRAM#SINE/Alu           1 GCCGGGCGCGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG 50
+
+  HAL1M8_1353_MER      1592 GCAGGAGTATGGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGA 1641
+                              i    v  v  v v i   v  v vv -   v           iiv  
+  FRAM#SINE/Alu          51 GCGGGAGGATCGCTTGAGCCCAGGAGTTC-GAGGCTGCAGTGAGCTATGA 99
+
+  HAL1M8_1353_MER      1642 TCGCGCCACAGCANNNCTCCAG 1663
+                                     v   ---      
+  FRAM#SINE/Alu         100 TCGCGCCACTGCA---CTCCAG 118
+
+Transitions / transversions = 0.29 (4 / 14); Gap_init rate = 0.03 (4 / 120), avg. gap size = 1.50 (6 / 4)
+ 362 18.10 1.90 0.95  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1544  1648 (1474)    FAM#SINE/Alu        1   106 (79)  
+
+  HAL1M8_1353_MER      1544 GCCGTGCGAGGTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAG 1591
+                                v   v       - -                  v            
+  FAM#SINE/Alu            1 GCCGGGCGCGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG 50
+
+  HAL1M8_1353_MER      1592 GCAGGAGTATGGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGCCGAGA 1641
+                              i    v  v  v v i   v  v vv -   v   i    v  iiv  
+  FAM#SINE/Alu           51 GCGGGAGGATCGCTTGAGCCCAGGAGTTC-GAGGCTGTAGTGCGCTATGA 99
+
+  HAL1M8_1353_MER      1642 TCGCGCC 1648
+                                   
+  FAM#SINE/Alu          100 TCGCGCC 106
+
+Transitions / transversions = 0.36 (5 / 14); Gap_init rate = 0.03 (3 / 105), avg. gap size = 1.00 (3 / 3)
+ 275 20.43 2.15 1.08  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1544  1636 (1486)    7SLRNA#SINE/Alu        1    94 (226)  
+
+  HAL1M8_1353_MER      1544 GCCGTGCGAGGTGGCG-G-GCCTGTAGTCCCAGCTACGCGGGAGGCTGAG 1591
+                                v   v       - -                  v            
+  7SLRNA#SINE/Alu         1 GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG 50
+
+  HAL1M8_1353_MER      1592 GCAGGAGTATGGCGTCAACCCTGGTGGGCGGAGCCTGCAGTGAGC 1636
+                             ii    v  v  v v ii  v  v vv v i -   i    v  
+  7SLRNA#SINE/Alu        51 GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGG-CTGTAGTGCGC 94
+
+Transitions / transversions = 0.46 (6 / 13); Gap_init rate = 0.03 (3 / 93), avg. gap size = 1.00 (3 / 3)
+ 408 24.51 3.92 0.00  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1668  1769 (1353)    MER2B#DNA/TcMar-Tigger      170   275 (61)  
+
+  HAL1M8_1353_MER      1668 ATTTGCTACTATAATTAATCTAGAGATACTTT----CATACGCGTGGATG 1713
+                               v v  i     v            iv   ----i     v v     
+  MER2B#DNA/TcMar       170 ATTAGGTATTATAAGTAATCTAGAGATGATTTAAAGTATACGGGAGGATG 219
+
+  HAL1M8_1353_MER      1714 CGTGCAGATCAGCTGCAAAAACGACGTCATTTCATATMAGGCATATGCGC 1763
+                            i i i  i i vv      v  v   i     i        v iv  v  
+  MER2B#DNA/TcMar       220 TGCGTAGGTTATATGCAAATACTACGCCATTTTATATMAGGGACTTGAGC 269
+
+  HAL1M8_1353_MER      1764 ATCCGC 1769
+                                  
+  MER2B#DNA/TcMar       270 ATCCGC 275
+
+Transitions / transversions = 0.85 (11 / 13); Gap_init rate = 0.01 (1 / 102), avg. gap size = 4.00 (4 / 1)
+ 398 24.75 3.96 0.00  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1668  1768 (1354)    MER2#DNA/TcMar-Tigger      179   283 (62)  
+
+  HAL1M8_1353_MER      1668 ATTTGCTACTATAATTAATCTAGAGATACTTT----CATACGCGTGGATG 1713
+                               v v  i     v            iv   ----i     v v     
+  MER2#DNA/TcMar-       179 ATTAGGTATTATAAGTAATCTAGAGATGATTTAAAGTATACGGGAGGATG 228
+
+  HAL1M8_1353_MER      1714 CGTGCAGATCAGCTGCAAAAACGACGTCATTTCATATMAGGCATATGCGC 1763
+                            i i i  i i vv      v  v   i     i        v iv  v  
+  MER2#DNA/TcMar-       229 TGCGTAGGTTATATGCAAATACTACGCCATTTTATATMAGGGACTTGAGC 278
+
+  HAL1M8_1353_MER      1764 ATCCG 1768
+                                 
+  MER2#DNA/TcMar-       279 ATCCG 283
+
+Transitions / transversions = 0.85 (11 / 13); Gap_init rate = 0.01 (1 / 101), avg. gap size = 4.00 (4 / 1)
+2634 24.94 16.01 3.87  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1770  3112 (10)    HAL1M8#LINE/L1     1471  2976 (15)  
+
+  HAL1M8_1353_MER      1770 ACAGCCTAGCTGTGTGCCAGAAGCAAATAGANCTANNACATTTAAGATAN 1819
+                                 vvv   v i         v    i  ?-  ?? i          ?
+  HAL1M8#LINE/L1       1471 ACAGCAACGCTTTATGCCAGAAGAAAATGGAG-TAACATATTTAAGATAC 1519
+
+  HAL1M8_1353_MER      1820 NTCACGGTTCGANNN----AGCTGNNNAGCCGATATGCAG-AAANNNNAC 1864
+                            -   v  vvv  ???----   ii??? viiv    v   -   ????  
+  HAL1M8#LINE/L1       1520 -TCAAGGAAAGAAAATGTGAGCCAAGGATTTTATATCCAGCAAAACTGAC 1568
+
+  HAL1M8_1353_MER      1865 TGNNTCNN--ATAAAAGCCACANGACAAACA--TATCAAC---CAAACAC 1907
+                             --?  ??--     i v    -       v--       ---   iv  
+  HAL1M8#LINE/L1       1569 T--TTCAAGTATAAAGGGCACA-GACAAACTGTTATCAACATGCAAGAAC 1615
+
+  HAL1M8_1353_MER      1908 TCGAGGCATATTGTTCCCTTGAGCCTTTGCTGAG--ACNTACTAGAGAAA 1955
+                              ii  v           v      i  v     -- i?          v
+  HAL1M8#LINE/L1       1616 TCAGGGAATATTGTTCCCATGAGCCCTTCCTGAGGAATCTACTAGAGAAC 1665
+
+  HAL1M8_1353_MER      1956 TAGCNNGTTAGA-AACN-----GACTAGNNC--CATGGACAGTGATACTC 1997
+                            v   ?-- i   -   ?-----      ??v--   v    ----  vvv
+  HAL1M8#LINE/L1       1666 GAGCT--TCAGACAACCAAAATGACTAGAGAGACATCGACA----TAAGG 1709
+
+  HAL1M8_1353_MER      1998 ANNNNTGNNNAGCATTAAATATAGAGTTGCTAGNNNAACCGATACCAACT 2047
+                             ????  ???             v    i  v ???   ii v  i  v 
+  HAL1M8#LINE/L1       1710 ACTGGTGGTGAGCATTAAATATATAGTTACTTGTAGAACTAAGACTAAAT 1759
+
+  HAL1M8_1353_MER      2048 NNNGATTACA-TGGAGAGAGTATAGTATGTAATGGCTTCATGCTCTTANN 2096
+                            ??? i   v -v                         vi       v ??
+  HAL1M8#LINE/L1       1760 GAGGGTTAAAAGGGAGAGAGTATAGTATGTAATGGCTATATGCTCTGACA 1809
+
+  HAL1M8_1353_MER      2097 NCG---ATGTAGTATCAATATTAAAAACGAGGAGANNNNTACTAGGGAGA 2143
+                            ?i ---  i     iv v         vvi    i????- v i      
+  HAL1M8#LINE/L1       1810 ATGTAGATATAGTACAACTATTAAAAAATGGGAGGAGAG-AATGGGGAGA 1858
+
+  HAL1M8_1353_MER      2144 -------CAA-----TTTGTTAACNTNNNGTTTTTAGGGATCAT--TGGA 2179
+                            -------   -----   -     ?----     i  vi     --   v
+  HAL1M8#LINE/L1       1859 GCATATGCAAAAAAATTT-TTAACT----GTTTTCAGTAATCATATTGGT 1903
+
+  HAL1M8_1353_MER      2180 AGTCGTAGTATGAATATTATNNNCTATTC-----CT-TTGTGACTCTGTC 2223
+                            i  v       v i    i ----     -----  -     -- v   v
+  HAL1M8#LINE/L1       1904 GGTGGTAGTATTAGTATTGT----TATTCTGAGACTGTTGTG--TGTGTA 1947
+
+  HAL1M8_1353_MER      2224 A---AGGACAA-------GAG-----ATG----ATTTT-----TATCATC 2249
+                             ---i   i  -------   -----   ----   i -----       
+  HAL1M8#LINE/L1       1948 ATGTGGGATAAAGCAAATGAGTAATTATGGGATATTCTAATTCTATCATC 1997
+
+  HAL1M8_1353_MER      2250 ----AGGTTCGTTTATAACGAGGCTGCTCG---CGGAAGA-----TATAC 2287
+                            ----iv  i -  v v   v   v v    ---i      -----v    
+  HAL1M8#LINE/L1       1998 CCCTGTGTCC-TTGAGAACCAGGATTCTCGGTGTGGAAGAAAGGAGATAC 2046
+
+  HAL1M8_1353_MER      2288 CGATGT--CATAGTGGATAT-AAGTA------TTGTAGTCGTGAATTTGA 2328
+                            v     --i    vi  vi -     ------i       v         
+  HAL1M8#LINE/L1       2047 AGATGTAATATAGAAGAGGTTAAGTAAAAACCCTGTAGTCCTGAATTTGA 2096
+
+  HAL1M8_1353_MER      2329 -TTGATTGTATGAGTATAGA----TGATGTTTTNNAAATCTTNAAA--TA 2371
+                            -   ivv    v     ii ----   v  v  ?? --    ?   --  
+  HAL1M8#LINE/L1       2097 ATTGGAAGTATCAGTATGAACTCATGAGGTATTTTA--TCTTTAAAAATA 2144
+
+  HAL1M8_1353_MER      2372 TA-ATTTAGTTTTTAGCTCAGTCCTNNNNCTGAANN--CCCAG---TAGG 2415
+                              -  v  v  ii      v    ----?     ??--  i  ---i iv
+  HAL1M8#LINE/L1       2145 TATATGTATTTCCTAGCTCTGTCC----ACTGAAAAGGCCTAGAAACAAT 2190
+
+  HAL1M8_1353_MER      2416 GACC---CCAATAN-ATTCTGACTCCCTGGCGNNCAA--CGCNNTGCTAA 2459
+                                ---   i  ?- v vv vv     i   ??  i--i i?? vi i 
+  HAL1M8#LINE/L1       2191 GACCAACCCAGTAGCAATGAGCATCCCTAGCGCCCAGATTGTGGTCTTGA 2240
+
+  HAL1M8_1353_MER      2460 GACNNNGGCTCCCTAANNNAAGAANNACCAGGACTTNNNGGTGAA--GGC 2507
+                            i i???ivi    - v???     --      i   ???  v   --   
+  HAL1M8#LINE/L1       2241 AATACCATTTCCC-ACTAAAAGAA--ACCAGGGCTTCTTGGAGAAATGGC 2287
+
+  HAL1M8_1353_MER      2508 TTATTCCTGGNNNNTG-TGGGCTTTTTACCAGGATGCGCCTGGAAGATCG 2556
+                             v     v  ????v -ii  vvv v   - i    v        v   v
+  HAL1M8#LINE/L1       2288 TGATTCCAGGTCTGGGGCAGGAAATGTAC-AAGATGAGCCTGGAACATCT 2336
+
+  HAL1M8_1353_MER      2557 TGTCCTACCAGACA-CAAGGAA---ATGAAAGACTAGTAA--TCATG-CA 2599
+                                v       i -       ---  v        v  i--     -  
+  HAL1M8#LINE/L1       2337 TGTCATACCAGATAGCAAGGAAGCTATCAAAGACTACTAGGGTCATGTCA 2386
+
+  HAL1M8_1353_MER      2600 TAAGGGCTTGGGTGCGANNACT--ANNAG------ACTGGC-AAAGATGG 2640
+                            v    i  ii  v  --??   -- ??  ------      -        
+  HAL1M8#LINE/L1       2387 AAAGGACTCAGGAGC--CAACTTGAAGAGGCTCCCACTGGCCAAAGATGG 2434
+
+  HAL1M8_1353_MER      2641 ANNNGTT---GCC-CAATNNGGCTA------GCAATGGATTGCAACGCAG 2680
+                            i???i  ---  i-    ??  v  ------           v   v  v
+  HAL1M8#LINE/L1       2435 GACAATTTGAGCTTCAATAAGGATAATAATTGCAATGGATTGAAACCCAT 2484
+
+  HAL1M8_1353_MER      2681 CTACTATGTC---ATACA-GTATTCATCATGACAAAAATNNAGA--TGAA 2724
+                             v v     i---  v  - vi     v    i v    ?? v --    
+  HAL1M8#LINE/L1       2485 CAAATATGTTTAAATCCATGAGTTCATAATGATATAAATAAATAATTGAA 2534
+
+  HAL1M8_1353_MER      2725 TACAGANNATCAATGGAAGAC---GGAAGCATCGCT-----ANAGT-TAC 2765
+                              v v ?-  v     v   v---      i  v  -----i?   - v 
+  HAL1M8#LINE/L1       2535 TAAATAA-ATAAATGGTAGAGAAGGGAAGCGTCTCTTTATAGAAGTATTC 2583
+
+  HAL1M8_1353_MER      2766 CAGCTAAT----GTAAAA---ATATTAGAATNTANNNGAATA----CATT 2804
+                                    ---- v    ---  iv      ?----?     ----    
+  HAL1M8#LINE/L1       2584 CAGCTAATAAATGAAAAAGAAATGATAGAATT----AGAATATCACCATT 2629
+
+  HAL1M8_1353_MER      2805 TTGCAACC---AATGAATTAATGGACTTAGG--TTGA-CANNN-CGG--- 2844
+                                    ---              ii    --    -  ???-   ---
+  HAL1M8#LINE/L1       2630 TTGCAACCCCCAATGAATTAATGGATCTAGGCATTGAGCATCAACGGCTG 2679
+
+  HAL1M8_1353_MER      2845 -TAACATCNAGAACAAGCGAGACAATCAGCCACT---TACCCCCAGTTGA 2890
+                            -       - v  v   v       i   v  i --- i  i  v v   
+  HAL1M8#LINE/L1       2680 CTAACATC-ACAAAAAGAGAGACAACCAGACATTATGTGCCTCCTGATGA 2728
+
+  HAL1M8_1353_MER      2891 AAGCNAGTCGNCCCCCCCTATATTCGAGCC---GGGACCG--TCGNAGTC 2935
+                               -? vv i  v  v      v  vv   ---    i  --i v?    
+  HAL1M8#LINE/L1       2729 AAG-AACACANCACCACCTATAGTCTTGCCAAAGGGATCGAACCTGAGTC 2777
+
+  HAL1M8_1353_MER      2936 TGATCCTGCCTATGGATCCAGCCGCCAATT---AGGTAACA-AAAGGA-- 2979
+                                 vv    v          i       ---   v  i - i    --
+  HAL1M8#LINE/L1       2778 TGATCAAGCCTCTGGATCCAGCTGCCAATTTGCAGGAAATACAGAGGACA 2827
+
+  HAL1M8_1353_MER      2980 ---------GTTAAACTGCACNCATGNAT---CATTCAGCCAAANT---A 3014
+                            ---------   i        -    ?i?---  v     v   ?i--- 
+  HAL1M8#LINE/L1       2828 GAGGAACATGTTGAACTGCAC-CATGAGNATGCAATCAGCAAAATCCAGA 2876
+
+  HAL1M8_1353_MER      3015 CAGTACGACTCTCGACAG--TACNNGCTCCGGGTGCTTCAACACATATAA 3062
+                             v  iv  vv   v    --i v?? vi      v        v   -  
+  HAL1M8#LINE/L1       2877 CTGTGGGAAACTCTACAGGTCAAACGGCCCGGGTTCTTCAACAGATA-AA 2925
+
+  HAL1M8_1353_MER      3063 --GNNNGGCGGCCAATGAAAGGA---GAGGGAGNNNCACCTGTAGA---G 3104
+                            -- ???  v----  v      i---     i ?---         ---i
+  HAL1M8#LINE/L1       2926 TTGTAAGGA----AAAGAAAGGGATGGAGGGGGA---ACCTGTAGATTAA 2968
+
+  HAL1M8_1353_MER      3105 AAGAGACT 3112
+                                    
+  HAL1M8#LINE/L1       2969 AAGAGACT 2976
+
+Transitions / transversions = 0.71 (99 / 139); Gap_init rate = 0.07 (100 / 1343), avg. gap size = 2.67 (267 / 100)
+ 882 30.21 7.22 3.48  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1770  2143 (979)    L1M8_5end#LINE/L1     1482  1869 (486)  
+
+  HAL1M8_1353_MER      1770 ACAGCCTAGCTGTGTGCCAGAAGCAAATAGANCTANNACATTTAAGATAN 1819
+                                 vvv   v i         vv   i  ?-  ?? i          ?
+  L1M8_5end#LINE/      1482 ACAGCAACGCTTTATGCCAGAAGACAATGGAG-TAACATATTTAAGATAC 1530
+
+  HAL1M8_1353_MER      1820 NTCACGGTTCGANNN----AGCTGNNNAGCCGATATGCAGAAANNNNACT 1865
+                            -   v  vvv  ???----   ii??? viiv    v   ---????   
+  L1M8_5end#LINE/      1531 -TCAAGGAAAGAAAATGTGAGCCAAGGATTTTATATCCAG---CCAAACT 1576
+
+  HAL1M8_1353_MER      1866 GNN--TCNN--ATAAAAGCCACANGACAAACA--TATCAAC---CAAACA 1906
+                             ??--  ??--     i      -       v--   v   ---   iv 
+  L1M8_5end#LINE/      1577 GACCTTCAAGTATAAAGGCCACA-GACAAACTGTTATGAACATGCAAGAA 1625
+
+  HAL1M8_1353_MER      1907 CTCGAGGCATATTGTTCCCTTGAGCCTTTGCTGAG--ACNTACTAGAGAA 1954
+                               ii  v           v      i  v     -- i?          
+  L1M8_5end#LINE/      1626 CTCAGGGAATATTGTTCCCATGAGCCCTTCCTGAGGAATCTACTAGAGAA 1675
+
+  HAL1M8_1353_MER      1955 ATAGCNNGTTAGA-AACN-----GACT--AGNNCCATGGACAGTGATACT 1996
+                            vv   ?-- i   -   ?-----    --  ??v   v    ----  vv
+  L1M8_5end#LINE/      1676 CGAGCT--TCAGACAACCAAAATGACTGGAGAGACATCGACA----TAAG 1719
+
+  HAL1M8_1353_MER      1997 CANNNNTGNNNAGCATTAAATATAGAGTTGCTAGNNNAACCGATACCAAC 2046
+                            v ????  ???             v v  i iv ???   ii v  i  v
+  L1M8_5end#LINE/      1720 GACTGGTGGTGAGCATTAAATATATATTTACCTGTAGAACTAAGACTAAA 1769
+
+  HAL1M8_1353_MER      2047 TNNNGATTACA-TGGAGAGAGTATAGTATGTAATGGCTTCATGCTCTTAN 2095
+                             ??? i   i -v     ?                   vi       v ?
+  L1M8_5end#LINE/      1770 TGATGGTTATAAGGGAGANAGTATAGTATGTAATGGCTATATGCTCTGAC 1819
+
+  HAL1M8_1353_MER      2096 NNCG---ATGTAGTATCAATATTAAAAACGAGGAGANNNNTACTAGGGAG 2142
+                            ??i ---  ii    iv v   i     vvi    i????- v i     
+  L1M8_5end#LINE/      1820 AATGTAGATACAGTACAACTATCAAAAAATGGGAGGAGAG-AATGGGGAG 1868
+
+  HAL1M8_1353_MER      2143 A 2143
+                             
+  L1M8_5end#LINE/      1869 A 1869
+
+Transitions / transversions = 0.77 (30 / 39); Gap_init rate = 0.05 (18 / 374), avg. gap size = 2.22 (40 / 18)
+ 290 35.14 8.78 6.42  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1848  2143 (979)    L1M7_5end#LINE/L1     1523  1825 (412)  
+
+  HAL1M8_1353_MER      1848 ATATGCAGAAANNNNACTGNN--TCNNATA-AAAGCCACANGACAAACAT 1894
+                                v   ---????    ??--  ??i  -    v    -  -      
+  L1M7_5end#LINE/      1523 ATATCCAG---CCAAACTGTCNTTCAAGTATAAAGGCACA-GA-AAACAT 1567
+
+  HAL1M8_1353_MER      1895 ATC-AAC---CAAACACTCGAGGCATATTGTTCCCTTGAGCCTTTGCTGA 1940
+                            v i-   ---   iv    ii  v    ?      v      i  vi   
+  L1M7_5end#LINE/      1568 TTTGAACATGCAAGAACTCAGGGAATATNGTTCCCATGAGCCCTTCTTGA 1617
+
+  HAL1M8_1353_MER      1941 G--ACNTACTAGAG---AAAT---AGCNNGTTAGAAACNGACTAGNN--- 1979
+                            i-- v?        ---   i---   ??iii ii iv?  v i ??---
+  L1M7_5end#LINE/      1618 AGAAACTACTAGAGGATAAACTTCAGCCAACCAAGAGATGAATGGAGAAA 1667
+
+  HAL1M8_1353_MER      1980 CCATGGACAGTGATACTCANNNNTGNNNAGCATTAAATATAG--AGTTGC 2027
+                             i i  -  iviiv   ----??i ???    i i   ?  v-- ii  i
+  L1M7_5end#LINE/      1668 CTACGG-CAAAAGGACT----GGCGGTGAGCACTGAATNTATTTAACTGT 1712
+
+  HAL1M8_1353_MER      2028 TAGNNNAA--CCGATACCAAC-TNNNGATTACATGGAGAGAGTATAGTAT 2074
+                            vi ???  -- ii v  v  i- ???     --   v? ?  v i  v  
+  L1M7_5end#LINE/      1713 AGGACTAAGACTAAAACAAATGTGGGGATTA--TGGTNANAGAACAGAAT 1760
+
+  HAL1M8_1353_MER      2075 GTAATGGCTTCATGCTCTTANNNCGATGTAGTATCAATAT---TAAAAAC 2121
+                                vv i vi v  i  ---?? i      v vii   i---      v
+  L1M7_5end#LINE/      1761 GTAAATGTTATAAGCCCT---GACAATGTAGAAATGATACAACTAAAAAA 1807
+
+  HAL1M8_1353_MER      2122 GAGGAGANNNNTACTAGGGAGA 2143
+                            vi    i????----    i  
+  L1M7_5end#LINE/      1808 TGGGAGGAGAG----AGGGGGA 1825
+
+Transitions / transversions = 1.56 (42 / 27); Gap_init rate = 0.07 (20 / 296), avg. gap size = 2.25 (45 / 20)
+ 239 25.61 8.54 1.22  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     1873  1954 (1168)    L1MC4_5end#LINE/L1     1631  1718 (837)  
+
+  HAL1M8_1353_MER      1873 ATAAAAGCCACANGACAAACA--TATCAAC---CAAACACTCGAGGCATA 1917
+                              v  i  i i -  v     -- v ?   ---   iv    ii  v  ?
+  L1MC4_5end#LINE      1631 ATCAAGGCTATA-GAAAAACAGTTTTNAACATGCAAGAACTCAGGGAATN 1679
+
+  HAL1M8_1353_MER      1918 TTGTTCCCTTGAGCCTTTGCTGAG--ACNTACTAGAGAA 1954
+                            i   v   v      i  v     -- i?        i 
+  L1MC4_5end#LINE      1680 CTGTACCCATGAGCCCTTCCTGAGGAATCTACTAGAGGA 1718
+
+Transitions / transversions = 1.25 (10 / 8); Gap_init rate = 0.05 (4 / 82), avg. gap size = 2.00 (8 / 4)
+ 207 30.84 8.41 4.67  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2122  2228 (894)  C MER50-int#LTR/ERV1   (628)  6577  6467  
+
+C HAL1M8_1353_MER      2228 TCCTTGAC--AGAGTCA-----CAAAGGAA-TAGNNNATAATATTCATAC 2187
+                                    -- v  i  -----        -   ??? i  i   v   i
+  MER50-int#LTR/E      6467 TCCTTGACCCATAGCCAGCTCTCAAAGGAAATAGCCAACAACATTAATAT 6516
+
+C HAL1M8_1353_MER      2186 TACGACTTCCAATGATCCCTAAAAACNNNANGTTAACAAATTGTCTCCCT 2137
+                            i i i  ---  -- v  i   v?  ???i?ivv         v   ii 
+  MER50-int#LTR/E      6517 CATGGCT---AA--AACCTTAACNACTGTGCAAGAACAAATTGACTCTTT 6561
+
+C HAL1M8_1353_MER      2136 AGTANNNNTC-TCCTC 2122
+                              i ???? v-     
+  MER50-int#LTR/E      6562 AGCAGCTGTAGTCCTC 6577
+
+Transitions / transversions = 1.62 (13 / 8); Gap_init rate = 0.06 (6 / 107), avg. gap size = 2.33 (14 / 6)
+ 732 27.31 14.35 3.70  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2279  2710 (412)    L1MC5_3end#LINE/L1     1222  1699 (995)  
+
+  HAL1M8_1353_MER      2279 AAGATATACCGATGTCATAGTGGATA----TAAGTA------TTGTAGTC 2318
+                             i  v    v     v v - v   i----      ------i       
+  L1MC5_3end#LINE      1222 AGGAGATACAGATGTAAGA-TCGATGAGGTTAAGTAAAAACCCTGTAGTC 1270
+
+  HAL1M8_1353_MER      2319 GTGAATTTGA-TTGATTGTATGAGTATAGA----TGATGTTTTNNAAATC 2363
+                            v         -   ivv    v     ii ----      v  ?? --  
+  L1MC5_3end#LINE      1271 CTGAATTTGAATTGGAAGTATCAGTATGAACTCATGATGTATTTTA--TC 1318
+
+  HAL1M8_1353_MER      2364 TTNAAATATAATTTAGTTTTTAGCTCAGTCCTNNNNCTGAANN--CCCAG 2411
+                              ?   v vv iv  v  ii      v    ----?     ??--  i  
+  L1MC5_3end#LINE      1319 TTTAAAAAATACATATTTCCTAGCTCTGTCC----ACTGAAAAGGCCTAG 1364
+
+  HAL1M8_1353_MER      2412 ---TAGGGACC---CCAATAN-ATTCTGACTCCCTGGCGNNCAACGCNNT 2454
+                            ---i iv    ---   i  ?- v vv vvi    i   ??  i-ii?? 
+  L1MC5_3end#LINE      1365 AAACAATGACCAACCCAGTAGCAATGAGCACCCCTAGCGCCCAG-ATTGT 1413
+
+  HAL1M8_1353_MER      2455 G----CTAAG-ACNNNGGCTCCCTAANNNAAGAANNACCAGGACTTNNNG 2499
+                             ----    i-  ???vv i v    ---   i --      i  i??? 
+  L1MC5_3end#LINE      1414 GGTCTCTAAATACCATTTCCCACTAA---AAGGA--ACCAGGGCTCCTTG 1458
+
+  HAL1M8_1353_MER      2500 GTGAA--GGCTTATTCCTGGNNNNTG-TGGGCTTTTTACCAGGATGCGCC 2546
+                             v   --    v     v  ????v -ii  vvv v   - i    v   
+  L1MC5_3end#LINE      1459 GAGAAATGGCTGATTCCAGGTCTGGGGCAGGAAATGTAC-AAGATGAGCC 1507
+
+  HAL1M8_1353_MER      2547 TGGAAGATCGTGTCCTACCAGACA-CAAGGAA---ATGAAAGACTAGTAA 2592
+                                 v   v    v       v -       ---  v        v  i
+  L1MC5_3end#LINE      1508 TGGAACATCTTGTCATACCAGAAAGCAAGGAAGCTATCAAAGACTACTAG 1557
+
+  HAL1M8_1353_MER      2593 --TCATG-CATAAGGGCTTGGGTGCGANNACT--ANNAG------ACTGG 2631
+                            --  i  -  v    i  ii  v  --??   -- ??  ------     
+  L1MC5_3end#LINE      1558 GGTCGTGTCAAAAGGACTCAGGAGC--CAACTTGAAGAGGCTCCCACTGG 1605
+
+  HAL1M8_1353_MER      2632 C-AAAGATGGANNNGTT---GC-CCAATNNGGCTA------GCAATGGAT 2670
+                             -        i???i  ---  -i    ??  v  ------         
+  L1MC5_3end#LINE      1606 CCAAAGATGGGACAATTTGAGCATCAATAAGGATAATAACTGCAATGGAT 1655
+
+  HAL1M8_1353_MER      2671 TGCAACGCAGCTACTATGTC---ATACA-GTATTCATCATGACA 2710
+                              v   i  v v v     i---  v  - vi     v    i 
+  L1MC5_3end#LINE      1656 TGAAACACATCAAATATGTTTAAATCCATGAGTTCATAATGATA 1699
+
+Transitions / transversions = 0.76 (38 / 50); Gap_init rate = 0.07 (32 / 432), avg. gap size = 2.44 (78 / 32)
+ 560 30.47 12.78 3.93  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2312  2718 (404)    L1MC5a_3end#LINE/L1     1264  1706 (1071)  
+
+  HAL1M8_1353_MER      2312 TGTAGTCGTGAATTTGA-TTGATTGTATGAGTATAGA----TGATGT-TT 2355
+                                i  v i       -   ivvi   v     ii ----    ? -  
+  L1MC5a_3end#LIN      1264 TGTAATCTTAAATTTGAATTGGAAATATCAGTATGAACTCATGATNTATT 1313
+
+  HAL1M8_1353_MER      2356 TNNAAATCTTNAAATATAATTTAGTTTTTAGCTCAGTCCTNNNNCTGAAN 2405
+                             ??---    ?   v vv iv  v  ii      v    ----?     ?
+  L1MC5a_3end#LIN      1314 TTC---TCTTTAAAAAATACGTATTTCCTAGCTCTGTCC----ACTGAAA 1356
+
+  HAL1M8_1353_MER      2406 N--CCCAGTAGG---GAC--CCCAATAN-ATTCTGACTCCCTGGCGNNCA 2447
+                            ?--  i  v  v---   --    i  ?- v vv vvi    i   ??  
+  L1MC5a_3end#LIN      1357 AGGCCTAGAAGCAATGACAACCCAGTAGCAATGAGCACCCCTAGCGCCCA 1406
+
+  HAL1M8_1353_MER      2448 ACGCNNTG----CTAAG-ACNNNGGCTCCCTAANNNAAGAANNACCAGGA 2492
+                            i-ii??  ----    i-  ???vv i v    ---   i --      i
+  L1MC5a_3end#LIN      1407 G-ATTGTGGTCTCTAAATACCATTTCCCACTAA---AAGGA--ACCAGGG 1450
+
+  HAL1M8_1353_MER      2493 CTTNNNGGTGAA--GGCTTATTCCTGGNNNNTG-TGGGCTTTTTACCAGG 2539
+                              i???  v   --    v     v  ????v -ii  vvv v   - i 
+  L1MC5a_3end#LIN      1451 CTCCTTGGAGAAATGGCTGATTCCAGGTCTGGGGCAGGAAATGTAC-AAG 1499
+
+  HAL1M8_1353_MER      2540 ATGCGCCTGGAAGATCGTGTCCTACCAGACA-CAAGGAA---ATGAAAGA 2585
+                               v      i v   v    v i     v -       ---  v     
+  L1MC5a_3end#LIN      1500 ATGAGCCTGGGACATCTTGTCGTGCCAGAAAGCAAGGAAGCTATCAAAGA 1549
+
+  HAL1M8_1353_MER      2586 CTA--GTAATCATG-CATAAGGGCTTGGGTGCGANNACTANNAG------ 2626
+                               -- vii  i  -  v    i vii  v  --??   v??  ------
+  L1MC5a_3end#LIN      1550 CTACTGGGGTCGTGTCAAAAGGACACAGGAGC--CAACTTGAAGGGGCTC 1597
+
+  HAL1M8_1353_MER      2627 --ACTGGC-AAAGATGGANNNGTT---GC-CCAATNNGGCTA------GC 2663
+                            --      -        i???i  ---  -i   v?? iv  ------  
+  L1MC5a_3end#LIN      1598 CCACTGGCCAAAGATGGGACAATTTGAGCATCAAAAAGAATAATGACTGC 1647
+
+  HAL1M8_1353_MER      2664 AATGGATTGCAACGCAGCTACTATGTCA---TACA-GTATTCATCATGAC 2709
+                                     v   i  v v v   i ? --- v  - vi     v  i v
+  L1MC5a_3end#LIN      1648 AATGGATTGAAACACATCAAATATATNAAAATCCATGAGTTCATAATAAA 1697
+
+  HAL1M8_1353_MER      2710 AAAAATNNA 2718
+                                 i?? 
+  L1MC5a_3end#LIN      1698 AAAAACTCA 1706
+
+Transitions / transversions = 0.84 (41 / 49); Gap_init rate = 0.07 (29 / 407), avg. gap size = 2.34 (68 / 29)
+ 290 31.65 12.23 6.47  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2334  2750 (372)    L1MC4a_3end#LINE/L1     1390  1830 (799)  
+
+  HAL1M8_1353_MER      2334 TGTATGAGTATAGATGATGTTTTNNAAATCTTNAAATATAATTTAGTTTT 2383
+                                  v    iv   i-   ----- i v v? v i   ---  v  ii
+  L1MC4a_3end#LIN      1390 TGTATGTGTATGCATGG-GTT-----AGTATACATACATA---TATTTCC 1430
+
+  HAL1M8_1353_MER      2384 TAGCTCAGTCCTNNNNCTGAANNCCCAGTAG----GG-ACCCCAATANAT 2428
+                                  v    v????--  i??  i  v  ---- i-      i  ?--
+  L1MC4a_3end#LIN      1431 TAGCTCTGTCCGCTGA--GAGGGCCTAGAAGCAATGACACCCCAGTAG-- 1476
+
+  HAL1M8_1353_MER      2429 TC--TGA-CTC-CCTGGCGNNCAACGCNNTG---CTAAG-ACNNNGGCTC 2470
+                            - --   - v -   i   ??  ivv ??v ---    i-  ???---  
+  L1MC4a_3end#LIN      1477 -CAATGAGCACACCTAGCGCCCAGATCTTGGTTTCTAAATACCAT---TC 1522
+
+  HAL1M8_1353_MER      2471 CCTAANNNAAGAANNACCAGGACTTNNNGGTGAAG--GCTTATTCC-TGG 2517
+                            i i  ???   i --      i  i???  v    -- i v     -v  
+  L1MC4a_3end#LIN      1523 TCCAATAAAAGGA--ACCAGGGCTCCTTGGAGAAGTGGTTGATTCCAGGG 1570
+
+  HAL1M8_1353_MER      2518 NNNNTGTGGGCTTTTTACCAGGATGCGCCTGGAAGATCGTGTCCTACCAG 2567
+                            ????v ii  vvvvv   - i    v        v   v   vv i    
+  L1MC4a_3end#LIN      1571 CTGGGGCAGGGAAAATAC-AAGATGAGCCTGGAACATCTTGTGGTGCCAG 1619
+
+  HAL1M8_1353_MER      2568 ACA-CAAGGAAATG----AAAGACTA-GTAATCATG-CATAAGGGCTTGG 2610
+                             v -i      i  ----   i ?v - viiv    -  v    i vii 
+  L1MC4a_3end#LIN      1620 AAAGTAAGGAAGTGCTCAAAAAANGATGGGGGCATGTCAAAAGGACACAG 1669
+
+  HAL1M8_1353_MER      2611 GTGCGANNACTANNAGA-CT------GGC-AAAGATGGANNNGTT---GC 2649
+                             v  v ??-  i??i  -  ------   -    v    ???i  ---  
+  L1MC4a_3end#LIN      1670 GAGCCAAC-CTGAAGGAGCTCCCAATGGCCAAAGCTGGAACAATTTGAGC 1718
+
+  HAL1M8_1353_MER      2650 -------CCAATNNGGCTAGCAATGGATTGCAACGCAGCTACTATGTCAT 2692
+                            -------iv   ??v v   i v      ii   v  --  vv  ivv  
+  L1MC4a_3end#LIN      1719 AACAAAATAAATAATGATAGTATTGGATTATAACCCA--TAGAATAAAAT 1766
+
+  HAL1M8_1353_MER      2693 ACAGTATTCAT-----CAT---GACAAAAATNNAGA--TGAATACAGANN 2732
+                             - i   i   -----   ---  i v    ?? v --      v v ?-
+  L1MC4a_3end#LIN      1767 A-AATATCCATGAGTCCATACTGATATAAATAAATAATTGAATAAATAA- 1814
+
+  HAL1M8_1353_MER      2733 ATCAATGGAAGACGGAAG 2750
+                              v     ii  --    
+  L1MC4a_3end#LIN      1815 ATAAATGGGGGA--GAAG 1830
+
+Transitions / transversions = 0.88 (44 / 50); Gap_init rate = 0.08 (34 / 417), avg. gap size = 2.29 (78 / 34)
+ 274 32.85 15.12 4.65  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2336  2679 (443)    L1MC4_3end#LINE/L1     1400  1779 (1010)  
+
+  HAL1M8_1353_MER      2336 TATGAGTATAGATGATGTTT-TNNAAATCTTNAAATATA-------ATTT 2377
+                               iii    v   -     - ?? v  v v? vi    -------  v 
+  L1MC4_3end#LINE      1400 TATAGATATATATG-TGTTTGTGTATATGTGTATGTATATACGTACATAT 1448
+
+  HAL1M8_1353_MER      2378 AGTTTTTAGCTCAGTCCTNNNNCTGAANN--CCCAGTAG----GG-ACCC 2420
+                             v  ii      v   ----??    i??--  i  v  ---- i-    
+  L1MC4_3end#LINE      1449 ATTTCCTAGCTCTGTC----TACTGAGAGGGCCTAGAAGCAATGACACCC 1494
+
+  HAL1M8_1353_MER      2421 CAATANATTC--TGA-CTC-CCTGGCGNNCAACGCNNTG---CTAAG-AC 2462
+                              i  ?--- --   - v -   i   ??  ivv ??v ---    i-  
+  L1MC4_3end#LINE      1495 CAGTAG---CAATGAGCACACCTAGCGCCCAGATCTTGGTTTCTAAATAC 1541
+
+  HAL1M8_1353_MER      2463 NNNGGCTCCCTAANNNAAGAANNACCAGGACTTNNNGGTGAA--GGCTTA 2510
+                            ???---  i i v???   i --      i  i???  v   --    v 
+  L1MC4_3end#LINE      1542 CAT---TCTCCACTAAAAGGA--ACCAGGGCTCCTTGGAGAAATGGCTGA 1586
+
+  HAL1M8_1353_MER      2511 TTCC-TGGNNNNTGTGGGCTTTTTACCAGGATGCGCCTGGAAGATCGTGT 2559
+                                -v  ????v ii  vvvvv   - i    v        v   v   
+  L1MC4_3end#LINE      1587 TTCCAGGGCTGGGGCAGGGAAAGTAC-AAGATGAGCCTGGAACATCTTGT 1635
+
+  HAL1M8_1353_MER      2560 CCTACCAGACA-CAAGGAAATG---AAAGACTAGTAAT--CATG-CATAA 2602
+                            iv i     v -i      ii ---     v ii iiv--    -  v  
+  L1MC4_3end#LINE      1636 TGTGCCAGAAAGTAAGGAAGCGCTCAAAGAATGATGGGGACATGTCAAAA 1685
+
+  HAL1M8_1353_MER      2603 GGGCTTGGGTGCGANNACTANNAG--------ACTGGC-AAAGATGGANN 2643
+                              i vii  v  --??i  v??  --------      -   vv   i??
+  L1MC4_3end#LINE      1686 GGACACAGGAGC--CAGCTTGAAGGGGCTCCCACTGGCCAAATCTGGGAC 1733
+
+  HAL1M8_1353_MER      2644 NGTT---GC-CCAA------TNNGGCTAGCAATGGATTGCAACGCA 2679
+                            ?i  ---  -i   ------ ??v v   i        ii   v  
+  L1MC4_3end#LINE      1734 AATTTGAGCATCAAAATAAATAATGATAGTAATGGATTATAACCCA 1779
+
+Transitions / transversions = 1.03 (40 / 39); Gap_init rate = 0.08 (28 / 344), avg. gap size = 2.43 (68 / 28)
+ 262 34.78 7.45 3.73  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2437  2597 (525)    L1MC3_3end#LINE/L1     1455  1621 (911)  
+
+  HAL1M8_1353_MER      2437 CCTGGCGNNCAACGCNNTG---CTAAGACNNNGGCTCCCTAANNNAAGAA 2483
+                               i   ??  ivv ??v ---    v  ???---  i i  ???   i 
+  L1MC3_3end#LINE      1455 CCTAGCGCCCAGATCTTGGTTTCTAATACCAT---TCTCCAATAAAAGGA 1501
+
+  HAL1M8_1353_MER      2484 NNACCAGGACTTNNNGGTGAA--GGCTTATTCCTGGNNNNTG-TGGGCTT 2530
+                            --      i  i???  v   --    v    iv  ????v -ii  vvv
+  L1MC3_3end#LINE      1502 --ACCAGGGCTCCTTGGAGAAATGGCTGATTCTAGGACTGGGGCAGGAAA 1549
+
+  HAL1M8_1353_MER      2531 TTTACCAGGATGCGCCTGGAAGATCGTGTCCTACCAGACA-CAAGGAAAT 2579
+                             v   - i    v       iv   v   vv i     v -i      i 
+  L1MC3_3end#LINE      1550 TATAC-AAGATGAGCCTGGAGCATCTTGTAGTGCCAGAAAGTAAGGAAGT 1598
+
+  HAL1M8_1353_MER      2580 G-----AAAGACTAGTAATCATG 2597
+                             -----   i  ivii   v   
+  L1MC3_3end#LINE      1599 GCTCAAAAAAACCCACAATGATG 1621
+
+Transitions / transversions = 0.95 (19 / 20); Gap_init rate = 0.05 (8 / 161), avg. gap size = 2.25 (18 / 8)
+ 211 34.75 5.93 2.54  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2469  2586 (536)    L1MD3_3end#LINE/L1     1510  1631 (1111)  
+
+  HAL1M8_1353_MER      2469 TCCCTAANNNAAGAANNACCAGGACTTNNNGGTGAA--GGCTTATTCC-T 2515
+                              i i  ???   i --      i  i???  v   --    v    i-v
+  L1MD3_3end#LINE      1510 TCTCCAATAAAAGGA--ACCAGGGCTCCTTGGAGAAATGGCTGATTCTAG 1557
+
+  HAL1M8_1353_MER      2516 GGNNNNTGTGGGCTTTTTACCAGGATGCGCCTGGAAGATCGTGTCCTACC 2565
+                              ????v ii  vvvvv   - i    v       iv   vi  vv i  
+  L1MD3_3end#LINE      1558 GGCTGGGGCAGGGAAAATAC-AAGATGAGCCTGGAGCATCTCGTAGTGCC 1606
+
+  HAL1M8_1353_MER      2566 AGACA-CAAGGAAATG---AAAGAC 2586
+                               vi-i      i  ---   i  
+  L1MD3_3end#LINE      1607 AGAAGGTAAGGAAGTGCTCAAAAAC 1631
+
+Transitions / transversions = 1.07 (16 / 15); Gap_init rate = 0.05 (6 / 118), avg. gap size = 1.67 (10 / 6)
+ 209 19.12 16.18 1.47  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2765  2832 (290)    L1MC5a_3end#LINE/L1     1865  1942 (835)  
+
+  HAL1M8_1353_MER      2765 CCAGCTAAT----GTAAAA---ATATTAGAATNTANNNGAATAC-ATTTT 2806
+                                     ---- i i  ---  iv      -  ???i vi  -     
+  L1MC5a_3end#LIN      1865 CCAGCTAATAAATGCAGAAGGAATGATAGAAT-TAGAAAATCACCATTTT 1913
+
+  HAL1M8_1353_MER      2807 GCAACC---AATGAATTAATGGACTTAGG 2832
+                                  ---      v       ii    
+  L1MC5a_3end#LIN      1914 GCAACCCCTAATGAAATAATGGATCTAGG 1942
+
+Transitions / transversions = 2.33 (7 / 3); Gap_init rate = 0.07 (5 / 68), avg. gap size = 2.40 (12 / 5)
+ 525 25.85 18.47 4.55  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2765  3116 (6)    L1MC5_3end#LINE/L1     1873  2273 (421)  
+
+  HAL1M8_1353_MER      2765 CCAGCTAAT-------GTAAAAATATTAGAATNTANNNGAATA----CAT 2803
+                                     ------- v ii   iv      ?----?     ----   
+  L1MC5_3end#LINE      1873 CCAGCTAATAAATGAAGAAGGAATGATAGAATT----AGAATATCACCAT 1918
+
+  HAL1M8_1353_MER      2804 TTTGCAACC---AATGAATTAATGGACTTAGGT--TGA-CANNN-CGG-- 2844
+                                     ---      ?       ii    i--   -  ???-i  --
+  L1MC5_3end#LINE      1919 TTTGCAACCCCTAATGAANTAATGGATCTAGGCAATGATCATCAATGGCT 1968
+
+  HAL1M8_1353_MER      2845 --TAACATCNAGAACAAGCGAGACAATCAGCCACT---TACCCCCAGTTG 2889
+                            --       - v  v   v       i   v  i --- i  i  v v  
+  L1MC5_3end#LINE      1969 GCTAACATC-ACAAAAAGAGAGACAACCAGACATTATGTGCCTCCTGATG 2017
+
+  HAL1M8_1353_MER      2890 AAAGCNAGTCGNCCCCCCCTAT-----ATTCGAGCCGGGACCGTCGNA-- 2932
+                            i   -? vv i? v  v     ----- v  vv   iii vvi   ? --
+  L1MC5_3end#LINE      2018 GAAG-TACACAACACCACCTATGAAGTAGTCTTGCCAAAAAAATCGAACC 2066
+
+  HAL1M8_1353_MER      2933 ---GTCTGATCCTGCCTATGGATCCAGCCGCCAATT------------AG 2967
+                            ---i       vv    v i    i i ii      ------------  
+  L1MC5_3end#LINE      2067 TGAATCTGATCAAGCCTCTAGATCTAACTACCAATTTACAGGAAATACAG 2116
+
+  HAL1M8_1353_MER      2968 GTAACAAAAGGA---GTTAAACTGCACN-CATGNAT-CATTCAGCCAAAN 3012
+                             vi   i i i ---       vi   ?- iv ?  -  v     v   ?
+  L1MC5_3end#LINE      2117 GGGACAGAGGAACATGTTAAACGACACCACGGGGATGCAATCAGCAAAAT 2166
+
+  HAL1M8_1353_MER      3013 T---ACAGTACGACTCTCGACAGTACNNGC--TCCGGGTGCTTCAACACA 3057
+                            i---  v  iv  vv   v    v  ??i --i    v v        v 
+  L1MC5_3end#LINE      2167 CCAGACTGTGGGAAACTCTACAGGACAAACGACCCGGTTTCTTCAACAAA 2216
+
+  HAL1M8_1353_MER      3058 TATAA--GNNNGGCGGCCAATGAAAGGA--GAGGGAGNNNCACCTGTAGA 3103
+                              -  -- ??? ------  vi   i  --     i ?---    i    
+  L1MC5_3end#LINE      2217 TA-AATTGCAAG------AAAAAAAAGATGGAGGGGGA---ACCTATAGA 2256
+
+  HAL1M8_1353_MER      3104 ---GAAGAGACT-AAGA 3116
+                            ---i        -    
+  L1MC5_3end#LINE      2257 TTAAAAGAGACTTAAGA 2273
+
+Transitions / transversions = 1.09 (38 / 35); Gap_init rate = 0.07 (26 / 352), avg. gap size = 3.12 (81 / 26)
+ 283 25.95 16.22 5.41  HAL1M8_1353_MER2B_1459_AluYe6_1663_MER2B_1769_HAL1M8     2932  3116 (6)    L1MC5a_3end#LINE/L1     2154  2358 (419)  
+
+  HAL1M8_1353_MER      2932 AGTCTGATCCTGCCTATGGATCCAGCCGCCAATT---AGGTAACA----- 2973
+                             i   i   vv    v i    i i ii   i  ---   v  i -----
+  L1MC5a_3end#LIN      2154 AATCTAATCAAGCCTCTAGATCTAACTACCAGTTTACAGGAAATACGGGG 2203
+
+  HAL1M8_1353_MER      2974 ---AAAGGA----GTTAAACTGCACN-CATGNAT-CATTCAGCCAAANTA 3014
+                            --- i    ----       vi   ?- iv ?  -  v         ?i-
+  L1MC5a_3end#LIN      2204 GATAGAGGAACATGTTAAACGACACCACGAGGATGCAATCAGCCAAATC- 2252
+
+  HAL1M8_1353_MER      3015 CAGTACG------ACTCTCGACAGTACNN--GCTCCGGGTGCTTCAACAC 3056
+                               v i ------ i   --    v  ??-- vi    v v        v
+  L1MC5a_3end#LIN      2253 CAGAATGTGGGAAATTCT--ACAGGACAAATGACCCGGTTTCTTCAACAA 2300
+
+  HAL1M8_1353_MER      3057 ATATAAGNNNGGCGGCCAATGAAAGGAGAGGGA-GNNNCACCTGTAGA-- 3103
+                               ----???    --- ivi   ii       - ???v    i    --
+  L1MC5a_3end#LIN      2301 ATA----AATGGCG---AGAAAAAAAAGAGGGAAGGAGAACCTATAGATT 2343
+
+  HAL1M8_1353_MER      3104 -GAAGAGACT-AAGA 3116
+                            -i        -    
+  L1MC5a_3end#LIN      2344 AAAAGAGACTTAAGA 2358
+
+Transitions / transversions = 1.47 (22 / 15); Gap_init rate = 0.08 (14 / 185), avg. gap size = 2.86 (40 / 14)
+
+1 matching entries (first file).
+
+Discrepancy summary:
+Qual algn  cum    rcum    (%)    unalgn X    N  sub del ins  total (%)   cum  rcum (%)
+
+
+Score histogram: displayed unspliced matches/cum/frac, other unspliced, displayed spliced, other spliced:
+> 1000   45    45 0.577      0     0 0.000      0     0 0.000      0     0 0.000  
+  992    1    46 0.590      0     0 0.000      0     0 0.000      0     0 0.000  
+  915    1    47 0.603      0     0 0.000      0     0 0.000      0     0 0.000  
+  912    1    48 0.615      0     0 0.000      0     0 0.000      0     0 0.000  
+  882    1    49 0.628      0     0 0.000      0     0 0.000      0     0 0.000  
+  865    1    50 0.641      0     0 0.000      0     0 0.000      0     0 0.000  
+  767    1    51 0.654      0     0 0.000      0     0 0.000      0     0 0.000  
+  732    1    52 0.667      0     0 0.000      0     0 0.000      0     0 0.000  
+  705    1    53 0.679      0     0 0.000      0     0 0.000      0     0 0.000  
+  661    1    54 0.692      0     0 0.000      0     0 0.000      0     0 0.000  
+  655    1    55 0.705      0     0 0.000      0     0 0.000      0     0 0.000  
+  639    1    56 0.718      0     0 0.000      0     0 0.000      0     0 0.000  
+  568    1    57 0.731      0     0 0.000      0     0 0.000      0     0 0.000  
+  560    1    58 0.744      0     0 0.000      0     0 0.000      0     0 0.000  
+  525    1    59 0.756      0     0 0.000      0     0 0.000      0     0 0.000  
+  451    1    60 0.769      0     0 0.000      0     0 0.000      0     0 0.000  
+  408    1    61 0.782      0     0 0.000      0     0 0.000      0     0 0.000  
+  398    1    62 0.795      0     0 0.000      0     0 0.000      0     0 0.000  
+  362    1    63 0.808      0     0 0.000      0     0 0.000      0     0 0.000  
+  352    1    64 0.821      0     0 0.000      0     0 0.000      0     0 0.000  
+  350    1    65 0.833      0     0 0.000      0     0 0.000      0     0 0.000  
+  337    1    66 0.846      0     0 0.000      0     0 0.000      0     0 0.000  
+  290    2    68 0.872      0     0 0.000      0     0 0.000      0     0 0.000  
+  283    1    69 0.885      0     0 0.000      0     0 0.000      0     0 0.000  
+  277    1    70 0.897      0     0 0.000      0     0 0.000      0     0 0.000  
+  275    1    71 0.910      0     0 0.000      0     0 0.000      0     0 0.000  
+  274    1    72 0.923      0     0 0.000      0     0 0.000      0     0 0.000  
+  262    1    73 0.936      0     0 0.000      0     0 0.000      0     0 0.000  
+  247    1    74 0.949      0     0 0.000      0     0 0.000      0     0 0.000  
+  239    1    75 0.962      0     0 0.000      0     0 0.000      0     0 0.000  
+  211    1    76 0.974      0     0 0.000      0     0 0.000      0     0 0.000  
+  209    1    77 0.987      0     0 0.000      0     0 0.000      0     0 0.000  
+  207    1    78 1.000      0     0 0.000      0     0 0.000      0     0 0.000  
+
+Start histogram: displayed unspliced matches/cum/frac, other unspliced, displayed spliced, other spliced:
+> 1000   76    76 0.974      0     0 0.000      0     0 0.000      0     0 0.000  
+    0    2    78 1.000      0     0 0.000      0     0 0.000      0     0 0.000  
+
+
+Splice histogram : displayed 5' splice, other 5' splice: displayed 3' splice, other 3' splice:
+
+
+Times in secs (cum)
+read queries   0 (  0)
+sort queries   0 (  0)
+find matches  19 ( 19)
+         end   0 ( 19)
