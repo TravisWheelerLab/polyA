@@ -39,7 +39,7 @@ check: check-fast check-slow check-format
 
 .PHONY: check-fast
 check-fast:
-	${TEST_CMD} ${TEST_TARGETS}
+	PYTHONPATH=./ ${TEST_CMD} ${TEST_TARGETS}
 
 .PHONY: check-format
 check-format:
