@@ -1,8 +1,7 @@
 ![PolyA CI](https://github.com/TravisWheelerLab/polyA/workflows/PolyA%20CI/badge.svg)
 
-TODO: Kaitlin - parser info... idk what section ??
-
-# AAAAAAAAAAAAAAAA (PolyA)
+# AAAAAAAAAAAAAAAA (PolyA):
+#### a tool for adjudicating between competing annotations of biological sequences 
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
 > **A**nnotations, **A**stutely > **A**djoin **A**butting **A**lignments,
@@ -39,7 +38,7 @@ nested elements, and boundaries between adjacent elements.
 3. Graph Algorithm finds nested sequences. 
 	
 For a more detailed description view the [poster](/publications/AlgorithmPoster.pdf)
-**TODO:** add link to paper as well
+<!-- TODO: Kaitlin - add link to paper -->
 
 ## Using
 
@@ -55,7 +54,7 @@ Special information fields required are:
 #=GF ID  MERX#DNA/TcMar-Tigger              * query sequence name
 #=GF TR  chr1:11543-28567                   target sequence
 #=GF SC  1153                               alignment score
-#=GF ST  +                                  strand
+#=GF SD  +                                  strand
 #=GF TQ  -1                                 ** see below
 #=GF ST  127                                alignment start position on target
 #=GF SP  601                                alignment stop position on target
@@ -74,8 +73,19 @@ Ex1: query sequence of length 100 aligns from 1-75, FL = 25.
 Ex2: query sequence of length 100 aligns from 10-100, FL = 9. 
 ```
 
+#### Creating Alignment files from cross_match alignments
 
-Score matrix files example format (can include ambiguity codes):
+We include a parser to convert cross_match alignment files to stockholm
+alignments. 
+
+```
+usage: python parser/cm_to_stockholm.py align_file.cm
+output: align_file.cm.sto (can be input directly into polyA)
+```
+
+#### Substitution Matrix Files
+
+Substitution matrix files example format (can include ambiguity codes):
 
 ```
   A   G   C    T    N
@@ -84,15 +94,6 @@ Score matrix files example format (can include ambiguity codes):
 -13  -13  10  -2   -1
 -15  -13  -6   8   -1
  -1  -1   -1  -1   -1
-```
-
-Subfamily counts file example format:
-```
-subfamily   genome count
-AluYk2      6855
-LTR38	    255
-L1PA7_5end  13261
-...
 ```
 
 TODO: Audrey - add in input file formats for TR stuff
@@ -112,7 +113,29 @@ start   stop    IDnum*   query
 the same ancestral sequence.
 ```
 
-TODO: Kaitlin - add output file formats for the soda viz stuff
+### Extensions
+#### Visualizing annotations using SODA
+<!-- TODO: Kaitlin - finish this once SODA is ready -->
+This section is a work in progress and will be released in the coming weeks. 
+
+#### Prior Counts Files
+
+The command line option --priorCounts prior_counts.txt includes prior
+genome counts in confidence calculations (see paper for more details)
+<!-- TODO: Kaitlin - add link to paper -->
+
+Prior counts file example format:
+```
+subfamily   genome_count
+AluYk2      6855
+LTR38	    255
+L1PA7_5end  13261
+...
+```
+
+#### Using ULTRA
+<!-- TODO: Audrey - fix this seciton -->
+This section is a work in progress and will be released in the coming weeks. 
 
 ### Additional software
 
@@ -121,9 +144,8 @@ esl_scorematrix as a part of the esl package in the hammer software suite
   - will compute lambda for the input score matrix
   - not needed if including lambda as a command line argument
 
-TODO: Audrey - add info here ultra
-	
-  - ULTRA from github link ...
+ULTRA
+<!-- TODO: Audrey - fix this seciton -->	
 
 ### Using at the command line
 
