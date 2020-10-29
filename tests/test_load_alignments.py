@@ -3,40 +3,42 @@ from pytest import mark
 
 
 def test_load_alignments_1():
-    with open(f"fixtures/alignment1.align", "r") as file:
+    with open(f"fixtures/alignment1.sto", "r") as file:
         skip, first, second = load_alignments(file)
 
-    assert first.subfamily == "AluYj4"
-    assert second.subfamily == "AluYi6_4d"
+    assert first.subfamily == "L2#LINE/L2"
+    assert second.subfamily == "Charlie12#DNA/hAT-Charlie"
 
-    assert first.sequence.startswith("GGCCTTGCGA")
-    assert second.sequence.startswith("GGCCTTGCGA")
+    assert first.sequence.startswith("ATTTCCAG---")
+    assert second.sequence.startswith("AAGCTTGTCCAA")
 
-    assert first.subfamily_sequence.startswith("GGCCGGGCG")
-    assert second.subfamily_sequence.startswith("GGCCGGGCG")
+    assert first.subfamily_sequence.startswith("ATCTCCAGCCCA")
+    assert second.subfamily_sequence.startswith("AAGCTTGTCCA")
 
-    assert first.score == 1049
-    assert second.score == 993
+    assert first.score == 245
+    assert second.score == 671
 
-    assert first.start == 1
-    assert second.start == 1
+    assert first.start == 323
+    assert second.start == 983
 
-    assert first.stop == 309
-    assert second.stop == 309
+    assert first.stop == 499
+    assert second.stop == 1095
 
-    assert first.consensus_start == 1
-    assert second.consensus_start == 1
+    assert first.consensus_start == 2349
+    assert second.consensus_start == 2
 
-    assert first.consensus_stop == 311
-    assert second.consensus_stop == 311
+    assert first.consensus_stop == 2534
+    assert second.consensus_stop == 118
+
+    assert first.flank == 548
+    assert second.flank == 2755
 
 
+#test to make sure seqs get flipped with reverse is on target (TQ == 't')
 def test_load_alignments_2():
-    with open(f"fixtures/alignment2.align", "r") as file:
-        skip, first, second = load_alignments(file)
+    with open(f"fixtures/alignment2.sto", "r") as file:
+        skip, first = load_alignments(file)
 
-    assert first.sequence.startswith("AACAAAAANN")
-    assert second.sequence.startswith("AACAAAAANN")
-
+    assert first.sequence.startswith("AACAAGAA")
     assert first.subfamily_sequence.startswith("AAAAAAAAA")
-    assert second.subfamily_sequence.startswith("AAAAAAAAA")
+

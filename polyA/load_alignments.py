@@ -117,20 +117,36 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             #   we have two sequences
             #   all required metadata was present
 
-            alignments.append(
-                Alignment(
-                    subfamily=meta["ID"],
-                    chrom=meta["TR"],
-                    score=int(meta["SC"]),
-                    start=int(meta["ST"]),
-                    stop=int(meta["SP"]),
-                    consensus_start=int(meta["CST"]),
-                    consensus_stop=int(meta["CSP"]),
-                    sequences=[seqs[0], seqs[1]],
-                    strand=meta["SD"],
-                    flank=int(meta["FL"]),
+            if meta["TQ"] == "t":
+                alignments.append(
+                    Alignment(
+                        subfamily=meta["ID"],
+                        chrom=meta["TR"],
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0][::-1], seqs[1][::-1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                    )
                 )
-            )
+            else:
+                alignments.append(
+                    Alignment(
+                        subfamily=meta["ID"],
+                        chrom=meta["TR"],
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0], seqs[1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                    )
+                )
             meta.clear()
             seqs.clear()
             continue
