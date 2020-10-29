@@ -96,7 +96,11 @@ Substitution matrix files example format (can include ambiguity codes):
  -1  -1   -1  -1   -1
 ```
 
-TODO: Audrey - add in input file formats for TR stuff
+#### Sequence File
+
+A FASTA file of the target sequence is needed when using ULTRA.
+The target sequence must be the same genomic region that was used 
+to get the cross_match alignment file.
 
 ### Output file format
 
@@ -134,8 +138,12 @@ L1PA7_5end  13261
 ```
 
 #### Using ULTRA
-<!-- TODO: Audrey - fix this seciton -->
-This section is a work in progress and will be released in the coming weeks. 
+
+The command line options --seqFile seq.fasta with --ultraPath ultra_path 
+will include tandem repeats in the competing annotations of the sequence.
+The option --ultraOutput ultra_output.txt can also be used in the
+same way if ULTRA was ran on seq.fasta prior.
+
 
 ### Additional software
 
@@ -145,7 +153,9 @@ esl_scorematrix as a part of the esl package in the hammer software suite
   - not needed if including lambda as a command line argument
 
 ULTRA
-<!-- TODO: Audrey - fix this seciton -->	
+
+  - will detect tandem repeat regions in a sequence FASTA file
+
 
 ### Using at the command line
 
