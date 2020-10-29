@@ -141,8 +141,8 @@ L1PA7_5end  13261
 
 The command line options --seqFile seq.fasta with --ultraPath ultra_path 
 will include tandem repeats in the competing annotations of the sequence.
-The option --ultraOutput ultra_output.txt can also be used in the
-same way if ULTRA was ran on seq.fasta prior.
+The option --ultraOutput ultra_output.txt can also be used if ULTRA was 
+ran on seq.fasta prior.
 
 
 ### Additional software
