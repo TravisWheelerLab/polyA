@@ -34,11 +34,10 @@ def test_load_alignments_1():
     assert second.flank == 2755
 
 
-#test to make sure seqs get flipped with reverse is on target (TQ == 't')
+# test to make sure seqs get flipped with reverse is on target (TQ == 't')
 def test_load_alignments_2():
     with open(f"fixtures/alignment2.sto", "r") as file:
         skip, first = load_alignments(file)
 
     assert first.sequence.startswith("AACAAGAA")
     assert first.subfamily_sequence.startswith("AAAAAAAAA")
-
