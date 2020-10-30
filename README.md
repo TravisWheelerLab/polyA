@@ -253,7 +253,7 @@ make check
 
 ## License
 
-MIT license. See `LICENSE`.
+BSD license. See `LICENSE`.
 
 ## Authors
 
