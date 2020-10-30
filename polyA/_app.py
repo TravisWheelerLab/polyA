@@ -27,6 +27,7 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
+from polyA.confidence_cm import confidence_only
 
 
 def run():
@@ -34,6 +35,7 @@ def run():
     GapExt: int = -5
     Lamb: float = 0.0
     EslPath = ""
+    Confidence = 0
     ChunkSize: int = 31
     SameProbLog: float = 0.0
     ChangeProb: float = 10 ** -45
@@ -69,6 +71,7 @@ def run():
         --lambda [will calculate from substitution matrix if not included]
         --segmentsize (must be odd) [31]
         --eslPath esl_path
+        --confidence - output confidence for a single annoation without running whole algorithm
         --priorCounts prior_counts.txt
         --ultraPath ultra_path
         --seqFile genomic_region.fasta
@@ -91,6 +94,7 @@ def run():
             "skipScore=",
             "lambda=",
             "eslPath=",
+            "confidence",
             "segmentsize=",
             "priorCounts=",
             "viz=",
@@ -136,6 +140,7 @@ def run():
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
     printSeqPos = "--seqpos" in opts
+    Confidence = "--confidence" in opts
 
     outfile_conf = outfile_viz + ".json"
 
@@ -299,6 +304,24 @@ def run():
             ChromSeqs.append(alignment.sequence)
 
             Flanks.append(alignment.flank)
+
+    # command line option to just output confidence values for single annotation instead of do whole algorithm
+    if Confidence:
+        subfam_rows = []
+        for i in range(len(Subfams)):
+            subfam_rows.append(i)
+
+        confidence_list = confidence_only(Lamb, Scores)
+        confidence_list, Subfams_copy = zip(
+            *sorted(zip(confidence_list, Subfams))
+        )
+
+        stdout.write(f"query_label\tconfidence\n")
+        for i in range(len(Subfams_copy) - 1, 0, -1):
+            if confidence_list[i]:
+                stdout.write(f"{Subfams_copy[i]}\t{confidence_list[i]}\n")
+
+        exit()
 
     # if there is only one subfam in the alignment file, no need to run anything because we know
     # that subfam is the annotation
