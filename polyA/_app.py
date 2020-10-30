@@ -6,7 +6,6 @@ from math import log
 from sys import argv, stderr, stdout
 
 from polyA import (
-    confidence_cm,
     pad_sequences,
     print_matrix_support,
     print_results,
@@ -28,6 +27,7 @@ from polyA.fill_support_matrix import fill_support_matrix
 from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
+from polyA.confidence_cm import confidence_only
 
 
 def run():
@@ -311,7 +311,7 @@ def run():
         for i in range(len(Subfams)):
             subfam_rows.append(i)
 
-        confidence_list = confidence_cm("", Scores, {}, Subfams, subfam_rows, 0)
+        confidence_list = confidence_only(Lamb, Scores)
         confidence_list, Subfams_copy = zip(
             *sorted(zip(confidence_list, Subfams))
         )
