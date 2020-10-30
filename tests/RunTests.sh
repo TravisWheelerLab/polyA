@@ -8,10 +8,10 @@ do echo "$f";
   printf -- "-------------------------------------------------------------\n";
 done
 
-# tests confidence only option
+# tests confidence only option - use --lambda just so doesn't run esl_scorematrix
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --confidence "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --lambda .1227 --confidence "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 

@@ -312,10 +312,12 @@ def run():
             subfam_rows.append(i)
 
         confidence_list = confidence_cm("", Scores, {}, Subfams, subfam_rows, 0)
-        confidence_list, Subfams_copy = zip(*sorted(zip(confidence_list, Subfams)))
+        confidence_list, Subfams_copy = zip(
+            *sorted(zip(confidence_list, Subfams))
+        )
 
         stdout.write(f"query_label\tconfidence\n")
-        for i in range(len(Subfams_copy)-1, 0, -1):
+        for i in range(len(Subfams_copy) - 1, 0, -1):
             if confidence_list[i]:
                 stdout.write(f"{Subfams_copy[i]}\t{confidence_list[i]}\n")
 
