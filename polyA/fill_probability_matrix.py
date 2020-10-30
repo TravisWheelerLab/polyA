@@ -92,7 +92,7 @@ def fill_probability_matrix(
                 prob: float = change_prob
 
                 if row_index == 0 or prev_row_index == 0:
-                    prob = change_prob_skip
+                    prob = change_prob_skip + same_prob_skip
                     if row_index == prev_row_index:
                         prob = same_prob_skip
                 else:

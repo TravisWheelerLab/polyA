@@ -78,7 +78,7 @@ def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, co
     f_out.write(f'#=GF ID  {subfam}\n')
     f_out.write(f'#=GF TR  {chrom}\n')
     f_out.write(f'#=GF SC  {score}\n')
-    f_out.write(f'#=GF ST  {strand}\n')
+    f_out.write(f'#=GF SD  {strand}\n')
 
     if strand == '-':
         if C:

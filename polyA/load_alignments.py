@@ -1,31 +1,83 @@
-from itertools import groupby
-from typing import Callable, Iterable, List, TextIO
+from typing import Iterable, List, Optional, TextIO, Tuple
 from .alignment import Alignment
 
 
-def _line_grouper(prefix: str) -> Callable[[str], str]:
+def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
     """
-    Helper function to return a function appropriate for use with
-    `itertools.groupby` that checks for the key prefix and includes all keys
-    themselves under a key associated with the empty string.
+    Attempt to parse one line of a Stockholm file. If the line
+    contains metadata, return a tuple of the key and value.
+    Otherwise, return ``None``.
+
+    >>> _parse_meta_line("#=GF ID\tSeqMcSeq")
+    ('ID', 'SeqMcSeq')
+    >>> _parse_meta_line("seqname\tatcg")
+    >>> _parse_meta_line("//")
+    >>> _parse_meta_line("# stockholm 1.0")
     """
-    lastKey = ""
+    if line.strip().startswith("#="):
+        parts = line.strip().split()
 
-    def _group_lines(line: str) -> str:
-        nonlocal lastKey
-        if line.startswith(prefix):
-            lastKey = line
-            return ""
-        return lastKey
+        if len(parts) != 3:
+            return None
 
-    return _group_lines
+        return parts[1], parts[2]
+
+    return None
+
+
+def _parse_alignment_line(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Attempt to parse one line of a sequence alignment,
+    returning a tuple of the sequence name and the sequence
+    itself. If the string isn't formatted correctly, return
+    ``None``.
+
+    >>> _parse_alignment_line("seqname\tatcg")
+    ('seqname', 'atcg')
+    >>> _parse_alignment_line("#=GF ID SeqMcSeq")
+    >>> _parse_meta_line("//")
+    >>> _parse_meta_line("# stockholm 1.0")
+    """
+    parts = line.strip().split()
+
+    if len(parts) != 2:
+        return None
+
+    return parts[0], parts[1]
+
+
+def _parse_preamble_line(line: str) -> bool:
+    """
+    Return ``True`` if this line contains a Stockholm format
+    preamble ("# Stockholm 1.0") and ``False`` otherwise.
+    """
+    return line.strip().upper().startswith("# STOCKHOLM")
+
+
+def _parse_terminator_line(line: str) -> bool:
+    """
+    Return ``True`` if this line contains a terminator
+    ("//") or ``False`` otherwise.
+    """
+    return line.strip() == "//"
 
 
 def load_alignments(file: TextIO) -> Iterable[Alignment]:
     """
-    TODO: change this to load alignments in stockholm format
-    Load a set of alignments from a file formatted the way cross_match
-    formats its output (see http://www.phrap.org/phredphrapconsed.html).
+    Load a set of alignments in Stockholm format.
+
+    ::
+
+        #=GF ID  MERX#DNA/TcMar-Tigger
+        #=GF TR  chr0:0000-0000
+        #=GF SC  1153
+        #=GF ST  +
+        #=GF TQ  -1
+        #=GF ST  127
+        #=GF SP  601
+        #=GF CST 135
+        #=GF CSP 628
+        #=GF FL  128
     """
     alignments: List[Alignment] = [
         Alignment(
@@ -41,54 +93,62 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             flank=0,
         ),
     ]
-    for meta, lines in groupby(file, _line_grouper("Align:")):
-        if meta == "":
+
+    meta = {}
+    seqs = []
+
+    for line in file:
+        if _parse_preamble_line(line):
             continue
-        sequences: List[str] = []
-        for element, lines in groupby(lines, _line_grouper(">")):
-            if element == "":
-                continue
-            sequence = "".join(map(lambda l: l.strip(), lines))
-            sequences.append(sequence)
 
-        metaItems = meta.split()
+        parts = _parse_meta_line(line)
+        if parts is not None:
+            meta[parts[0]] = parts[1]
+            continue
 
-        subfamily = metaItems[1]
-        chrom = metaItems[2]
-        score = int(metaItems[3])
+        parts = _parse_alignment_line(line)
+        if parts is not None:
+            seqs.append(parts[1])
+            continue
 
-        strand = metaItems[4]
+        if _parse_terminator_line(line):
+            # TODO: Validation and good error messages go here
+            # Verify that...
+            #   we have two sequences
+            #   all required metadata was present
 
-        # if on reverse strand, which seq is reversed
-        reverse = metaItems[5]
-
-        start = int(metaItems[6])
-        stop = int(metaItems[7])
-
-        consensusStart = int(metaItems[8])
-        consensusStop = int(metaItems[9])
-        flank = int(metaItems[10])
-
-        if reverse == "t":
-            sequence = sequences[0][::-1]
-            subfamilySequence = sequences[1][::-1]
-        else:
-            sequence = sequences[0]
-            subfamilySequence = sequences[1]
-
-        alignments.append(
-            Alignment(
-                subfamily=subfamily,
-                chrom=chrom,
-                score=score,
-                start=start,
-                stop=stop,
-                consensus_start=consensusStart,
-                consensus_stop=consensusStop,
-                sequences=[sequence, subfamilySequence],
-                strand=strand,
-                flank=flank,
-            )
-        )
+            if meta["TQ"] == "t":
+                alignments.append(
+                    Alignment(
+                        subfamily=meta["ID"],
+                        chrom=meta["TR"],
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0][::-1], seqs[1][::-1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                    )
+                )
+            else:
+                alignments.append(
+                    Alignment(
+                        subfamily=meta["ID"],
+                        chrom=meta["TR"],
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0], seqs[1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                    )
+                )
+            meta.clear()
+            seqs.clear()
+            continue
 
     return alignments

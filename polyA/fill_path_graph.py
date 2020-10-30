@@ -98,7 +98,7 @@ def fill_path_graph(
                         # confidence >= 20%, and if the source is before the sink in the consensus sequence
 
                         # TODO - not sure what this confidence threshold should be
-                        if sourceConf >= 0.05 or sinkConf >= 0.05:
+                        if sourceConf >= 0.01 or sinkConf >= 0.01:
                             if (
                                 sink_strand == "+"
                                 and sink_strand == source_strand
@@ -117,4 +117,5 @@ def fill_path_graph(
                                         source_node_index * nodes
                                         + sink_node_index
                                     ] = 1
+
     return path_graph
