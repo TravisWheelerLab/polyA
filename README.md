@@ -177,7 +177,7 @@ usage: python -m polyA alignFile subMatrixFile
         --lambda [will calculate from substitution matrix if not included]
         --segmentsize (must be odd) [31]
         --eslPath esl_path
-        --confidence - output confidence for a single annoation without running whole algorithm
+        --confidence - output confidence for a single annoation without running the whole algorithm
         --priorCounts prior_counts.txt
         --ultraPath ultra_path
         --seqFile genomic_region.fasta
