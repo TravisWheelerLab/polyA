@@ -4,7 +4,7 @@
 #### a tool for adjudicating between competing annotations of biological sequences 
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
-> **A**nnotations, **A**stutely > **A**djoin **A**butting **A**lignments,
+> **A**nnotations, **A**stutely **A**djoin **A**butting **A**lignments,
 > **A**nd **A**lso **A**mputate **A**nything **A**miss.
 
 ## About
