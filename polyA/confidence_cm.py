@@ -92,3 +92,42 @@ def confidence_cm(
         confidence_list[index] = confidence_list[index] / score_total
 
     return confidence_list
+
+
+def confidence_only(
+    lambdaa: float,
+    region: List[float],
+) -> List[float]:
+    """
+    Computes confidence values for competing annotations using alignment scores. Loops
+    through the array once to find sum of 2^every_hit_score in
+    region, then loops back through to calculate confidence. Converts the alignment
+    score to account for lambda before summing.
+
+    input:
+    lambdaa: lambda for score matrix used
+    region: list of scores for competing annotations
+    subfams: list of subfam names
+
+    output:
+    confidence_list: list of confidence values for competing annotations
+
+    >>> reg = [100., 55., 1.,]
+    >>> conf = confidence_only(.1227, reg)
+    >>> conf
+    [0.9843787551069454, 0.015380918048546022, 0.0002403268445085316]
+    """
+
+    confidence_list: List[float] = []
+    score_total: int = 0
+
+    # alignment scores
+    for index in range(len(region)):
+        converted_score = 2 ** int(region[index] * lambdaa)
+        confidence_list.append(converted_score)
+        score_total += converted_score
+
+    for index in range(len(region)):
+        confidence_list[index] = confidence_list[index] / score_total
+
+    return confidence_list

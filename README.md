@@ -4,7 +4,7 @@
 #### a tool for adjudicating between competing annotations of biological sequences 
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
-> **A**nnotations, **A**stutely > **A**djoin **A**butting **A**lignments,
+> **A**nnotations, **A**stutely **A**djoin **A**butting **A**lignments,
 > **A**nd **A**lso **A**mputate **A**nything **A**miss.
 
 ## About
@@ -117,6 +117,16 @@ start   stop    IDnum*   query
 the same ancestral sequence.
 ```
 
+#### Confidence only output file format
+
+```
+query_label         confidence
+LTR40a#LTR/ERVL     0.875
+LTR40b#LTR/ERVL     0.052
+LTR40c#LTR/ERVL     0.001
+...
+```
+
 ### Extensions
 #### Visualizing annotations using SODA
 <!-- TODO: Kaitlin - finish this once SODA is ready -->
@@ -167,6 +177,7 @@ usage: python -m polyA alignFile subMatrixFile
         --lambda [will calculate from substitution matrix if not included]
         --segmentsize (must be odd) [31]
         --eslPath esl_path
+        --confidence - output confidence for a single annoation without running the whole algorithm
         --priorCounts prior_counts.txt
         --ultraPath ultra_path
         --seqFile genomic_region.fasta
@@ -178,7 +189,6 @@ usage: python -m polyA alignFile subMatrixFile
         --help - display help message
         --matrixpos - prints output in terms of matrix position
         --sequencepos - prints output in terms of target sequence position
-    """
 ```
 
 ## Development
@@ -253,7 +263,7 @@ make check
 
 ## License
 
-MIT license. See `LICENSE`.
+BSD license. See `LICENSE`.
 
 ## Authors
 

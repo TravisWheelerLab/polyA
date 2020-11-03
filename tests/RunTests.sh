@@ -2,10 +2,16 @@
 
 set -e
 
-#for f in ../fixtures/*.align.format ;
 for f in ../fixtures/ex*.sto;
 do echo "$f";
   python -m polyA --seqpos --lambda .1227 "$f" ../fixtures/25p41g_edited.matrix;
+  printf -- "-------------------------------------------------------------\n";
+done
+
+# tests confidence only option - use --lambda just so doesn't run esl_scorematrix
+for f in ../fixtures/ex*.sto;
+do echo "$f";
+  python -m polyA --lambda .1227 --confidence "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 
