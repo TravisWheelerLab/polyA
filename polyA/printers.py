@@ -5,9 +5,6 @@ from typing import Dict, List, TextIO, Tuple, Union
 
 from polyA.matrices import SupportMatrix
 
-# TODO: need to print -1 for all positions on chrom and seq because padded matrix at start
-# do for soda output too
-
 
 def print_matrix_hash(
     num_col: int,
@@ -56,7 +53,7 @@ def print_matrix_support(
     """
     file.write("\t")
 
-    start: int = chrom_start + start_all
+    start: int = chrom_start + start_all - 1
     j: int = 0
     while j < num_col:
         file.write(f"{start}\t")
@@ -112,14 +109,14 @@ def print_results_sequence(
     prints final results
     prints start and stop in terms of input target sequence
     """
-    # stdout.write("start\tstop\tID\tname\n")
-    # stdout.write("----------------------------------------\n")
+    stdout.write("start\tstop\tID\tname\n")
+    stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
-            stdout.write(str(columns_orig[changespos_orig[i]] + edgestart))
+            stdout.write(str(columns_orig[changespos_orig[i]] + edgestart - 1))
             stdout.write("\t")
             stdout.write(
-                str(columns_orig[changespos_orig[i + 1] - 1] + edgestart)
+                str(columns_orig[changespos_orig[i + 1] - 1] + edgestart - 1)
             )
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
@@ -145,7 +142,12 @@ def print_results_chrom(
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
             stdout.write(
-                str(columns_orig[changespos_orig[i]] + edgestart + chrom_start)
+                str(
+                    columns_orig[changespos_orig[i]]
+                    + edgestart
+                    + chrom_start
+                    - 1
+                )
             )
             stdout.write("\t")
             stdout.write(
@@ -153,6 +155,7 @@ def print_results_chrom(
                     columns_orig[changespos_orig[i + 1] - 1]
                     + edgestart
                     + chrom_start
+                    - 1
                 )
             )
             stdout.write("\t")
@@ -388,17 +391,17 @@ def print_results_soda(
                     "000 "
                     + chrom
                     + " "
-                    + str(feature_start)
+                    + str(feature_start - 1)
                     + " "
-                    + str(feature_stop)
+                    + str(feature_stop - 1)
                     + " "
                     + subfam
                     + " 0 "
                     + strand
                     + " "
-                    + str(align_start)
+                    + str(align_start - 1)
                     + " "
-                    + str(align_stop)
+                    + str(align_stop - 1)
                     + " 0 "
                     + str(block_count)
                     + " "
