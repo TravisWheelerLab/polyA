@@ -600,10 +600,6 @@ def run():
         count += 1
         NumNodes = len(Changes)
 
-        # breakout of loop if there are 2 or less nodes left
-        if NumNodes <= 2 or NumNodes == prev_num_nodes:
-            break
-
         NodeConfidence.clear()  # reuse old NodeConfidence matrix
 
         NodeConfidence = fill_node_confidence(
@@ -628,6 +624,10 @@ def run():
         # store original node confidence for reporting results
         if count == 1:
             NodeConfidenceOrig = NodeConfidence.copy()
+
+        # breakout of loop if there are 2 or less nodes left
+        if NumNodes <= 2 or NumNodes == prev_num_nodes:
+            break
 
         PathGraph.clear()  # reuse old PathGraph
         # Update for TR's - no alternative edges
