@@ -28,6 +28,7 @@ from polyA.get_path import get_path
 from polyA.lambda_provider import EaselLambdaProvider
 from polyA.load_alignments import load_alignments
 from polyA.confidence_cm import confidence_only
+from polyA.load_hmm import load_hmm
 
 
 def run():
@@ -76,6 +77,7 @@ def run():
         --ultraPath ultra_path
         --seqFile genomic_region.fasta
         --ultraOutput ultra_output.txt
+        --hmm file.hmm
         --viz outfile - prints output format for SODA visualization
         --heatmap outfile - prints probability file for input into heatmap
     
@@ -102,6 +104,7 @@ def run():
             "ultraPath=",
             "seqFile=",
             "ultraOutput=",
+            "hmm=",
             "help",
             "matrixpos",
             "seqpos",
@@ -136,6 +139,9 @@ def run():
         if "--ultraOutput" in opts
         else ultra_output_path
     )
+
+    # using HMM
+    hmm_file = str(opts["--hmm"]) if "--hmm" in opts else hmm_file
 
     help = "--help" in opts
     printMatrixPos = "--matrixpos" in opts
@@ -395,6 +401,11 @@ def run():
     AlignMatrix[0, 0] = SkipAlignScore
     NonEmptyColumns.append(0)
     NonEmptyColumns_trailing.append(0)
+
+    if hmm_file:
+        # parse
+        with open(hmm_file) as _hmm:
+            Hmms = load_hmm(_hmm)
 
     (cols, AlignMatrix) = fill_align_matrix(
         Lamb,
