@@ -2,7 +2,7 @@ from typing import TextIO, List, Dict
 
 
 def load_hmm(file: TextIO):
-    hmm_dict:  {}
+    hmm_dict: {}
     char_pos: List[str] = []
     line = file.readline()
     while line:
@@ -44,4 +44,3 @@ def load_hmm(file: TextIO):
             hmm_dict[name] = hmm_sub_dict
         line = file.readline()
     return hmm_dict
-

@@ -59,6 +59,8 @@ def run():
     # given ultra output
     ultra_output_path: str = ""  # json file
 
+    hmm_file: str = ""
+
     help: bool = False  # Reassigned later
     prin: bool = False  # Reassigned later
     printMatrixPos: bool = False  # Reassigned later
