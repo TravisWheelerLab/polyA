@@ -410,10 +410,6 @@ def run():
         # parse
         with open(hmm_file) as _hmm:
             SubfamHmms = load_hmm(_hmm, Subfams)
-    for name in SubfamHmms:
-        if name not in Subfams:
-            print(name)
-    exit()
 
     (cols, AlignMatrix) = fill_align_matrix(
         Lamb,
