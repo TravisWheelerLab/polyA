@@ -158,7 +158,7 @@ def run():
 
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
-    infile_matrix: str = args[1]
+    infile_matrix: str = args[1]  # FIXME: not needed for hmms
 
     # Other open was moved down to where we load the alignments file
     with open(infile_matrix) as _infile_matrix:
@@ -170,6 +170,7 @@ def run():
             in_counts: List[str] = _infile_prior_counts.readlines()
 
     # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
+    # FIXME: not needed for Hmms
     if not Lamb:
         provider = EaselLambdaProvider(EslPath, infile_matrix)
         Lamb = provider()
@@ -262,6 +263,7 @@ def run():
     ChromSeqs: List[str] = []
     Flanks: List[int] = []
 
+    SubfamHmms = {} # SubfamHmms[subfam][position][emmission/transition][char]
     RepeatScores: Dict[int, float] = {}
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     SingleAlignMatrix: Dict[Tuple[int, int], int] = {}
@@ -407,7 +409,11 @@ def run():
     if hmm_file:
         # parse
         with open(hmm_file) as _hmm:
-            Hmms = load_hmm(_hmm)
+            SubfamHmms = load_hmm(_hmm, Subfams)
+    for name in SubfamHmms:
+        if name not in Subfams:
+            print(name)
+    exit()
 
     (cols, AlignMatrix) = fill_align_matrix(
         Lamb,

@@ -137,7 +137,7 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
                     Alignment(
                         subfamily=meta["ID"],
                         chrom=meta["TR"],
-                        score=int(meta["SC"]),
+                        score=float(meta["SC"]),
                         start=int(meta["ST"]),
                         stop=int(meta["SP"]),
                         consensus_start=int(meta["CST"]),
