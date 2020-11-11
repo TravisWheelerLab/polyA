@@ -263,7 +263,7 @@ def run():
     ChromSeqs: List[str] = []
     Flanks: List[int] = []
 
-    SubfamHmms = {} # SubfamHmms[subfam][position][emmission/transition][char]
+    SubfamHmms = {}  # SubfamHmms[subfam][position][emmission/transition][char]
     RepeatScores: Dict[int, float] = {}
     AlignMatrix: Dict[Tuple[int, int], float] = {}
     SingleAlignMatrix: Dict[Tuple[int, int], int] = {}
