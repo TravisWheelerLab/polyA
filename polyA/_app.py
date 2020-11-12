@@ -17,6 +17,7 @@ from polyA.calc_repeat_scores import CalcRepeatScores
 from polyA.collapse_matrices import collapse_matrices
 from polyA.extract_nodes import extract_nodes
 from polyA.fill_align_matrix import fill_align_matrix
+from polyA.fill_align_matrix import fill_hmm_align_matrix
 from polyA.fill_confidence_matrix import *
 from polyA.fill_confidence_matrix_tr import FillConfidenceMatrixTR
 from polyA.fill_consensus_position_matrix import fill_consensus_position_matrix
@@ -410,19 +411,28 @@ def run():
         # parse
         with open(hmm_file) as _hmm:
             SubfamHmms = load_hmm(_hmm, Subfams)
-
-    (cols, AlignMatrix) = fill_align_matrix(
-        Lamb,
-        StartAll,
-        ChunkSize,
-        GapExt,
-        GapInit,
-        SkipAlignScore,
-        SubfamSeqs,
-        ChromSeqs,
-        Starts,
-        SubMatrix,
-    )
+        (cols, AlignMatrix) = fill_hmm_align_matrix(
+            SubfamHmms,
+            StartAll,
+            ChunkSize,
+            SkipAlignScore,
+            SubfamSeqs,
+            ChromSeqs,
+            Starts,
+        )
+    else:
+        (cols, AlignMatrix) = fill_align_matrix(
+            Lamb,
+            StartAll,
+            ChunkSize,
+            GapExt,
+            GapInit,
+            SkipAlignScore,
+            SubfamSeqs,
+            ChromSeqs,
+            Starts,
+            SubMatrix,
+        )
 
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges

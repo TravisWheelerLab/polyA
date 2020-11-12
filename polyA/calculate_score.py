@@ -72,3 +72,17 @@ def calculate_score(
             chunk_score += sub_matrix[seq1_char + seq2_char]
 
     return float(chunk_score)
+
+
+def calculate_hmm_score(
+    seq1: str,
+    seq2: str,
+    prev_char_seq1: str,
+    prev_char_seq2: str,
+    subfam_hmm,
+) -> float:
+    """
+    Function description here
+    """
+    # FIXME: include subfam start position in HMM
+    return 0.0
