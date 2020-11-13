@@ -1,0 +1,501 @@
+from logging import Logger
+from math import log
+from sys import stderr, stdout
+from typing import Dict, Iterable, List, Sized, Tuple
+
+from polyA.fill_confidence_matrix_tr import fill_confidence_matrix_tr
+
+from polyA.calc_repeat_scores import calculate_repeat_scores
+
+from polyA.fill_confidence_matrix import trailing_edges_info
+
+from constants import CHANGE_PROB, SKIP_ALIGN_SCORE
+from polyA.confidence_cm import confidence_only
+
+from polyA import Alignment, collapse_matrices, extract_nodes, fill_align_matrix, fill_confidence_matrix, \
+    fill_consensus_position_matrix, \
+    fill_node_confidence, fill_path_graph, fill_probability_matrix, fill_support_matrix, get_path, pad_sequences, \
+    print_matrix_support, print_results, print_results_chrom, print_results_sequence, print_results_soda
+from ultra_provider import TandemRepeat
+
+
+def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
+    # command line option to just output confidence values for
+    # single annotation instead of do whole algorithm
+    """
+    Calculate confidence values for single annotations instead of
+    running the entire algorithm.
+
+    :param alignments: list of alignments to run on
+    :param lambdaa: the value of lambda to use (from Easel)
+    """
+    subfams = []
+    subfam_rows = []
+    scores = []
+
+    for i, a in enumerate(alignments):
+        subfams.append(a.subfamily)
+        subfam_rows.append(i)
+        scores.append(a.score)
+
+    confidence_list = confidence_only(lambdaa, scores)
+    confidence_list, subfams_copy = zip(
+        *sorted(zip(confidence_list, subfams))
+    )
+
+    # TODO: Provide a writer to the function
+    stdout.write(f"query_label\tconfidence\n")
+    for i in range(len(subfams_copy) - 1, 0, -1):
+        if confidence_list[i]:
+            stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+
+
+def _validate_target(target: Alignment) -> None:
+    # TODO: Switch to using a Logger
+    if target.chrom_length == 0:
+        Logger(__name__).warning("""No chromosome position information found
+            (this is OK for artificial sequences but --viz and --heatmap will fail)""")
+    elif target.chrom_length <= 25:
+        raise RuntimeError("Target sequence length must be >25")
+    elif target.chrom_length < 1000:
+        Logger(__name__).warning("""Target region is <1000 in length,
+            did you mean to use such a short region?""")
+
+
+def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
+    """
+    If there is only one subfam in the alignment file, no need
+    to run anything because we know that subfam is the annotation.
+    """
+    if print_matrix_pos:
+        stdout.write("start\tstop\tID\tname\n")
+        stdout.write("----------------------------------------\n")
+        stdout.write(f"{0}\t{target.stop - target.start}\t1111\t{target.subfamily}\n")
+    else:
+        stdout.write("start\tstop\tID\tname\n")
+        stdout.write("----------------------------------------\n")
+        stdout.write(f"{target.start}\t{target.stop}\t1111\t{target.subfamily}\n")
+    exit()
+
+
+def _change_probs(seq_count: int) -> Tuple[float, float, float]:
+    change_prob_log = log(CHANGE_PROB / (seq_count - 1))
+
+    # jumping in and then out of the skip state counts as 1 jump
+    change_prob_skip = change_prob_log / 2
+
+    # 5% of the jump penalty, staying in skip state for 20nt "counts" as one jump
+    same_prob_skip = change_prob_log / 30
+
+    return change_prob_log, change_prob_skip, same_prob_skip
+
+
+def run_full(
+        alignments: List[Alignment],
+        tandem_repeats: List[TandemRepeat],
+        chunk_size: int,
+        gap_ext: int,
+        gap_init: int,
+        lambdaa: float,
+        outfile_viz: str,
+        print_matrix_pos: bool,
+        sub_matrix_scores: Dict[str, int],
+        subfam_counts: Dict[str, float],
+) -> None:
+    seq_count = len(alignments)
+
+    target = alignments[1]
+    _validate_target(target)
+
+    if seq_count == 2:
+        _handle_single_alignment(target, print_matrix_pos)
+
+    change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
+
+    subfamily_matrix: List[str] = []
+    chromosome_matrix: List[str] = []
+    scores_matrix: List[int] = []
+    strands_matrix: List[str] = []
+    starts_matrix: List[int] = []
+    stops_matrix: List[int] = []
+    consensus_starts_matrix: List[int] = []
+    consensus_stops_matrix: List[int] = []
+    subfamily_sequences_matrix: List[str] = []
+    chromosome_sequences_matrix: List[str] = []
+    flanks_matrix: List[int] = []
+
+    for alignment in alignments:
+        subfamily_matrix.append(alignment.subfamily)
+        chromosome_matrix.append(alignment.chrom)
+        scores_matrix.append(alignment.score)
+        strands_matrix.append(alignment.strand)
+        starts_matrix.append(alignment.start)
+        stops_matrix.append(alignment.stop)
+        consensus_starts_matrix.append(alignment.consensus_start)
+        consensus_stops_matrix.append(alignment.consensus_stop)
+        subfamily_sequences_matrix.append(alignment.subfamily_sequence)
+        chromosome_sequences_matrix.append(alignment.sequence)
+        flanks_matrix.append(alignment.flank)
+
+    # precomputes consensus seq length for PrintResultsViz()
+    consensus_lengths_matrix: Dict[str, int] = {}
+    if outfile_viz:
+        for i in range(1, len(flanks_matrix)):
+            if strands_matrix[i] == "+":
+                consensus_lengths_matrix[subfamily_matrix[i]] = consensus_stops_matrix[i] + flanks_matrix[i]
+            else:
+                consensus_lengths_matrix[subfamily_matrix[i]] = consensus_starts_matrix[i] + flanks_matrix[i]
+
+    if len(tandem_repeats) > 0:
+        for tr in tandem_repeats:
+            # TR start index
+            starts_matrix.append(tr.start)
+            # TR stop index
+            stops_matrix.append(tr.start + tr.length - 1)
+
+    start_all, stop_all = pad_sequences(
+        chunk_size, starts_matrix, stops_matrix, subfamily_sequences_matrix, chromosome_sequences_matrix
+    )
+
+    align_matrix: Dict[Tuple[int, int], float] = {}
+
+    # number of rows in matrices
+    rows: int = seq_count
+
+    cols, align_matrix = fill_align_matrix(
+        lambdaa,
+        start_all,
+        chunk_size,
+        gap_ext,
+        gap_init,
+        SKIP_ALIGN_SCORE,
+        subfamily_sequences_matrix,
+        chromosome_sequences_matrix,
+        starts_matrix,
+        sub_matrix_scores,
+    )
+
+    # originally NonEmptyColumns and ActiveCells have trailing edge included
+    # redo these later to not include trailing edges
+    non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
+        rows, cols, align_matrix,
+    )
+
+    non_empty_columns, active_cells, consensus_matrix = fill_consensus_position_matrix(
+        cols,
+        rows,
+        start_all,
+        subfamily_sequences_matrix,
+        chromosome_sequences_matrix,
+        starts_matrix,
+        stops_matrix,
+        consensus_starts_matrix,
+        strands_matrix,
+    )
+
+    active_cells[0] = [0]
+
+    # add skip state pad at end
+    align_matrix[0, cols] = SKIP_ALIGN_SCORE
+    non_empty_columns.append(cols)
+    non_empty_columns_trailing.append(cols)
+    active_cells[cols] = [0]
+    active_cells_trailing[cols] = [0]
+    cols += 1
+
+    if len(tandem_repeats) > 0:
+        repeat_scores = calculate_repeat_scores(
+            tandem_repeats,
+            chunk_size,
+            start_all,
+            rows,
+            active_cells,
+            align_matrix,
+            consensus_matrix,
+        )
+
+        # add skip states for TR cols
+        for tr_col in repeat_scores:
+            align_matrix[0, tr_col] = SKIP_ALIGN_SCORE
+
+        # add TRs to subfams
+        for _ in tandem_repeats:
+            subfamily_matrix.append("Tandem Repeat")
+            strands_matrix.append("+")
+            rows += 1
+
+        confidence_matrix = fill_confidence_matrix_tr(
+            non_empty_columns_trailing,
+            subfam_counts,
+            subfamily_matrix,
+            active_cells,
+            active_cells_trailing,
+            repeat_scores,
+            align_matrix,
+        )
+
+        # check if TR columns were added after last alignment
+        # TR cols before alignments were accounted for in PadSeqs
+        max_col_index: int = max(repeat_scores)
+        if max_col_index + 1 > cols:
+            cols = max_col_index + 1
+
+        # add TR cols to NonEmptyColumns
+        for tr_col in repeat_scores:
+            col_set = set(non_empty_columns)  # only add new columns
+            col_set.add(tr_col)
+            non_empty_columns = list(col_set)
+        non_empty_columns.sort()
+
+    else:
+        confidence_matrix = fill_confidence_matrix(
+            non_empty_columns_trailing,
+            subfam_counts,
+            subfamily_matrix,
+            active_cells_trailing,
+            align_matrix,
+        )
+
+    # add skip state to consensus matrix
+    # wait till after incase NonEmptyColumns is updated by TR stuff
+    for j in non_empty_columns:
+        consensus_matrix[0, j] = 0
+
+    support_matrix = fill_support_matrix(
+        rows,
+        chunk_size,
+        start_all,
+        non_empty_columns,
+        starts_matrix,
+        stops_matrix,
+        subfamily_matrix,
+        confidence_matrix,
+        consensus_matrix,
+    )
+
+    collapsed_matrices = collapse_matrices(
+        rows,
+        non_empty_columns,
+        subfamily_matrix,
+        strands_matrix,
+        active_cells,
+        support_matrix,
+        consensus_matrix,
+    )
+
+    support_matrix_collapse = collapsed_matrices.support_matrix
+    subfams_collapse = collapsed_matrices.subfamilies
+    active_cells_collapse = collapsed_matrices.active_rows
+    consensus_matrix_collapse = collapsed_matrices.consensus_matrix
+    strand_matrix_collapse = collapsed_matrices.strand_matrix
+    subfams_collapse_index = collapsed_matrices.subfamily_indices
+    rows = collapsed_matrices.row_num_update
+
+    if len(tandem_repeats) > 0:
+        # give different TRs consensus positions that don't allow them to be stitched
+        tr_consensus_pos = 1000000
+        prev_tr_col = 0
+        for tr_col in repeat_scores:
+            if prev_tr_col != tr_col - 1:
+                tr_consensus_pos -= 500
+            consensus_matrix_collapse[rows - 1, tr_col + 1] = tr_consensus_pos
+            prev_tr_col = tr_col
+
+    # if command line option included to output support matrix for heatmap
+    if outfile_heatmap:
+        with open(outfile_heatmap, "w") as outfile:
+            print_matrix_support(
+                cols,
+                start_all,
+                ChromStart,
+                support_matrix_collapse,
+                subfams_collapse,
+                file=outfile,
+            )
+
+    (
+        ProbMatrixLastColumn,
+        OriginMatrix,
+        SameSubfamChangeMatrix,
+    ) = fill_probability_matrix(
+        same_prob_skip,
+        SameProbLog,
+        change_prob_log,
+        change_prob_skip,
+        non_empty_columns,
+        collapsed_matrices,
+    )
+
+    # IDs for each nucleotide will be assigned during DP backtrace
+    IDs = [0] * cols
+
+    (ID, ChangesPosition, Changes) = get_path(
+        ID,
+        non_empty_columns,
+        IDs,
+        ChangesOrig,
+        ChangesPositionOrig,
+        NonEmptyColumnsOrig,
+        subfams_collapse,
+        ProbMatrixLastColumn,
+        active_cells_collapse,
+        OriginMatrix,
+        SameSubfamChangeMatrix,
+    )
+
+    # keep the original annotation for reporting results
+    ChangesOrig = Changes.copy()
+    ChangesPositionOrig = ChangesPosition.copy()
+    NonEmptyColumnsOrig = non_empty_columns.copy()
+
+    # Finding inserted elements and stitching original elements
+    # Steps-
+    # 1. Find confidence for nodes
+    # 2. Create path graph - Find alternative paths through graph and add those edges
+    # 3. Extract all nodes (from dp matrix) that have a single incoming and a single outgoing edge
+    # 5. Annotate again with removed nodes
+    #   ** stop when all nodes have incoming and outgoing edges <= 1 or there are <= 2 nodes left
+    prev_num_nodes: int = 0
+    count: int = 0
+    while True:
+        count += 1
+        NumNodes = len(Changes)
+
+        NodeConfidence.clear()  # reuse old NodeConfidence matrix
+
+        NodeConfidence = fill_node_confidence(
+            NumNodes,
+            start_all,
+            gap_init,
+            gap_ext,
+            lambdaa,
+            infile_prior_counts,
+            non_empty_columns,
+            starts_matrix,
+            stops_matrix,
+            ChangesPosition,
+            subfamily_matrix,
+            subfamily_sequences_matrix,
+            chromosome_sequences_matrix,
+            SubfamCounts,
+            SubMatrix,
+            repeat_scores,
+            len(tandem_repeats),
+        )
+        # store original node confidence for reporting results
+        if count == 1:
+            NodeConfidenceOrig = NodeConfidence.copy()
+
+        # breakout of loop if there are 2 or less nodes left
+        if NumNodes <= 2 or NumNodes == prev_num_nodes:
+            break
+
+        PathGraph.clear()  # reuse old PathGraph
+        # Update for TR's - no alternative edges
+        PathGraph = fill_path_graph(
+            NumNodes,
+            non_empty_columns,
+            Changes,
+            ChangesPosition,
+            consensus_matrix_collapse,
+            strand_matrix_collapse,
+            NodeConfidence,
+            subfams_collapse_index,
+        )
+
+        # test to see if there are nodes in the graph that have more than one incoming or outgoing edge,
+        # if so - keep looping, if not - break out of the loop
+        # if they are all 0, break out of the loop
+        test: bool = False
+        j: int = 0
+        while j < NumNodes:
+            i: int = 0
+            while i < j - 1:
+                if PathGraph[i * NumNodes + j] == 1:
+                    test = True
+                i += 1
+            j += 1
+
+        if not test:
+            break
+
+        cols = extract_nodes(
+            cols, NumNodes, non_empty_columns, ChangesPosition, PathGraph
+        )
+
+        # run DP calculations again with nodes corresponding to inserted elements removed
+        # ignores removed nodes because they are no longer in NonEmptyColumns
+        (
+            ProbMatrixLastColumn,
+            OriginMatrix,
+            SameSubfamChangeMatrix,
+        ) = fill_probability_matrix(
+            same_prob_skip,
+            SameProbLog,
+            change_prob_log,
+            change_prob_skip,
+            non_empty_columns,
+            collapsed_matrices,
+        )
+
+        Changes.clear()
+        ChangesPosition.clear()
+
+        (ID, ChangesPosition, Changes) = get_path(
+            ID,
+            non_empty_columns,
+            IDs,
+            Changes,
+            ChangesPosition,
+            non_empty_columns,
+            subfams_collapse,
+            ProbMatrixLastColumn,
+            active_cells_collapse,
+            OriginMatrix,
+            SameSubfamChangeMatrix,
+        )
+        prev_num_nodes = NumNodes
+
+        if len(tandem_repeats) > 0:
+            for subfam in Changes:
+                assert (
+                        subfam != "Tandem Repeat"
+                ), "can't add alternative edges to TRs"
+
+    # prints results
+    if printMatrixPos:
+        print_results(
+            ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+        )
+    elif printSeqPos:
+        print_results_sequence(
+            start_all, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+        )
+    else:
+        print_results_chrom(
+            start_all,
+            ChromStart,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            IDs,
+        )
+
+    if outfile_viz:
+        print_results_soda(
+            start_all,
+            outfile_viz,
+            outfile_conf,
+            Chrom,
+            ChromStart,
+            subfamily_matrix,
+            ChangesOrig,
+            ChangesPositionOrig,
+            NonEmptyColumnsOrig,
+            consensus_lengths_matrix,
+            strand_matrix_collapse,
+            consensus_matrix_collapse,
+            subfams_collapse_index,
+            NodeConfidenceOrig,
+            IDs,
+        )
