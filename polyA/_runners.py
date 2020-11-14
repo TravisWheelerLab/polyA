@@ -1,7 +1,7 @@
 from logging import Logger
 from math import log
 from sys import stderr, stdout
-from typing import Dict, Iterable, List, Sized, Tuple
+from typing import Dict, Iterable, List, Optional, Sized, Tuple
 
 from polyA.fill_confidence_matrix_tr import fill_confidence_matrix_tr
 
@@ -9,7 +9,7 @@ from polyA.calc_repeat_scores import calculate_repeat_scores
 
 from polyA.fill_confidence_matrix import trailing_edges_info
 
-from constants import CHANGE_PROB, SKIP_ALIGN_SCORE
+from constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
 from polyA.confidence_cm import confidence_only
 
 from polyA import Alignment, collapse_matrices, extract_nodes, fill_align_matrix, fill_confidence_matrix, \
@@ -99,7 +99,7 @@ def run_full(
         lambdaa: float,
         outfile_viz: str,
         print_matrix_pos: bool,
-        sub_matrix_scores: Dict[str, int],
+        subfam_matrix_scores: Dict[str, int],
         subfam_counts: Dict[str, float],
 ) -> None:
     seq_count = len(alignments)
@@ -172,7 +172,7 @@ def run_full(
         subfamily_sequences_matrix,
         chromosome_sequences_matrix,
         starts_matrix,
-        sub_matrix_scores,
+        subfam_matrix_scores,
     )
 
     # originally NonEmptyColumns and ActiveCells have trailing edge included
@@ -202,6 +202,8 @@ def run_full(
     active_cells[cols] = [0]
     active_cells_trailing[cols] = [0]
     cols += 1
+
+    repeat_scores: Optional[Dict[int, float]] = None
 
     if len(tandem_repeats) > 0:
         repeat_scores = calculate_repeat_scores(
@@ -291,7 +293,7 @@ def run_full(
     subfams_collapse_index = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
 
-    if len(tandem_repeats) > 0:
+    if repeat_scores is not None:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
         prev_tr_col = 0
@@ -307,10 +309,10 @@ def run_full(
             print_matrix_support(
                 cols,
                 start_all,
-                ChromStart,
+                target.chrom_start,
                 support_matrix_collapse,
                 subfams_collapse,
-                file=outfile,
+                outfile=outfile,
             )
 
     (
@@ -319,7 +321,7 @@ def run_full(
         SameSubfamChangeMatrix,
     ) = fill_probability_matrix(
         same_prob_skip,
-        SameProbLog,
+        SAME_PROB_LOG,
         change_prob_log,
         change_prob_skip,
         non_empty_columns,
@@ -369,7 +371,6 @@ def run_full(
             gap_init,
             gap_ext,
             lambdaa,
-            infile_prior_counts,
             non_empty_columns,
             starts_matrix,
             stops_matrix,
@@ -377,8 +378,8 @@ def run_full(
             subfamily_matrix,
             subfamily_sequences_matrix,
             chromosome_sequences_matrix,
-            SubfamCounts,
-            SubMatrix,
+            subfam_counts,
+            subfam_matrix_scores,
             repeat_scores,
             len(tandem_repeats),
         )
@@ -431,7 +432,7 @@ def run_full(
             SameSubfamChangeMatrix,
         ) = fill_probability_matrix(
             same_prob_skip,
-            SameProbLog,
+            SAME_PROB_LOG,
             change_prob_log,
             change_prob_skip,
             non_empty_columns,
@@ -474,7 +475,7 @@ def run_full(
     else:
         print_results_chrom(
             start_all,
-            ChromStart,
+            target.chrom_start,
             ChangesOrig,
             ChangesPositionOrig,
             NonEmptyColumnsOrig,
