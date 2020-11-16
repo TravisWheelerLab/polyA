@@ -1,21 +1,17 @@
 from logging import Logger
 from math import log
-from sys import stderr, stdout
-from typing import Dict, Iterable, List, Optional, Sized, Tuple
+from sys import stdout
+from typing import Dict, List, Optional, TextIO, Tuple
 
-from polyA.fill_confidence_matrix_tr import fill_confidence_matrix_tr
-
-from polyA.calc_repeat_scores import calculate_repeat_scores
-
-from polyA.fill_confidence_matrix import trailing_edges_info
-
-from constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
-from polyA.confidence_cm import confidence_only
-
+from constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE, START_ID
 from polyA import Alignment, collapse_matrices, extract_nodes, fill_align_matrix, fill_confidence_matrix, \
     fill_consensus_position_matrix, \
     fill_node_confidence, fill_path_graph, fill_probability_matrix, fill_support_matrix, get_path, pad_sequences, \
     print_matrix_support, print_results, print_results_chrom, print_results_sequence, print_results_soda
+from polyA.calc_repeat_scores import calculate_repeat_scores
+from polyA.confidence_cm import confidence_only
+from polyA.fill_confidence_matrix import trailing_edges_info
+from polyA.fill_confidence_matrix_tr import fill_confidence_matrix_tr
 from ultra_provider import TandemRepeat
 
 
@@ -97,8 +93,11 @@ def run_full(
         gap_ext: int,
         gap_init: int,
         lambdaa: float,
-        outfile_viz: str,
+        outfile_conf: TextIO,
+        outfile_viz: TextIO,
+        outfile_heatmap: TextIO,
         print_matrix_pos: bool,
+        print_seq_pos: bool,
         subfam_matrix_scores: Dict[str, int],
         subfam_counts: Dict[str, float],
 ) -> None:
@@ -156,8 +155,6 @@ def run_full(
     start_all, stop_all = pad_sequences(
         chunk_size, starts_matrix, stops_matrix, subfamily_sequences_matrix, chromosome_sequences_matrix
     )
-
-    align_matrix: Dict[Tuple[int, int], float] = {}
 
     # number of rows in matrices
     rows: int = seq_count
@@ -305,15 +302,14 @@ def run_full(
 
     # if command line option included to output support matrix for heatmap
     if outfile_heatmap:
-        with open(outfile_heatmap, "w") as outfile:
-            print_matrix_support(
-                cols,
-                start_all,
-                target.chrom_start,
-                support_matrix_collapse,
-                subfams_collapse,
-                outfile=outfile,
-            )
+        print_matrix_support(
+            cols,
+            start_all,
+            target.chrom_start,
+            support_matrix_collapse,
+            subfams_collapse,
+            outfile=outfile_heatmap,
+        )
 
     (
         ProbMatrixLastColumn,
@@ -328,16 +324,22 @@ def run_full(
         collapsed_matrices,
     )
 
-    # IDs for each nucleotide will be assigned during DP backtrace
-    IDs = [0] * cols
+    node_id = START_ID
 
-    (ID, ChangesPosition, Changes) = get_path(
-        ID,
+    # node_ids for each nucleotide will be assigned during DP backtrace
+    node_ids = [0] * cols
+
+    changes_orig: List[str] = []
+    changes_position_orig: List[int] = []
+    non_empty_columns_orig: List[int] = []
+
+    (node_id, changes_position, changes) = get_path(
+        node_id,
         non_empty_columns,
-        IDs,
-        ChangesOrig,
-        ChangesPositionOrig,
-        NonEmptyColumnsOrig,
+        node_ids,
+        changes_orig,
+        changes_position_orig,
+        non_empty_columns_orig,
         subfams_collapse,
         ProbMatrixLastColumn,
         active_cells_collapse,
@@ -346,9 +348,13 @@ def run_full(
     )
 
     # keep the original annotation for reporting results
-    ChangesOrig = Changes.copy()
-    ChangesPositionOrig = ChangesPosition.copy()
-    NonEmptyColumnsOrig = non_empty_columns.copy()
+    changes_orig = changes.copy()
+    changes_position_orig = changes_position.copy()
+    non_empty_columns_orig = non_empty_columns.copy()
+
+    node_confidence: Dict[Tuple[str, int], float] = {}
+    node_confidence_orig: Dict[Tuple[str, int], float] = {}
+    path_graph: List[int] = []
 
     # Finding inserted elements and stitching original elements
     # Steps-
@@ -361,12 +367,11 @@ def run_full(
     count: int = 0
     while True:
         count += 1
-        NumNodes = len(Changes)
+        node_count = len(changes)
 
-        NodeConfidence.clear()  # reuse old NodeConfidence matrix
-
-        NodeConfidence = fill_node_confidence(
-            NumNodes,
+        node_confidence.clear()  # reuse old node_confidence matrix
+        node_confidence = fill_node_confidence(
+            node_count,
             start_all,
             gap_init,
             gap_ext,
@@ -374,7 +379,7 @@ def run_full(
             non_empty_columns,
             starts_matrix,
             stops_matrix,
-            ChangesPosition,
+            changes_position,
             subfamily_matrix,
             subfamily_sequences_matrix,
             chromosome_sequences_matrix,
@@ -383,24 +388,25 @@ def run_full(
             repeat_scores,
             len(tandem_repeats),
         )
+
         # store original node confidence for reporting results
         if count == 1:
-            NodeConfidenceOrig = NodeConfidence.copy()
+            node_confidence_orig = node_confidence.copy()
 
         # breakout of loop if there are 2 or less nodes left
-        if NumNodes <= 2 or NumNodes == prev_num_nodes:
+        if node_count <= 2 or node_count == prev_num_nodes:
             break
 
-        PathGraph.clear()  # reuse old PathGraph
+        path_graph.clear()  # reuse old path_graph
         # Update for TR's - no alternative edges
-        PathGraph = fill_path_graph(
-            NumNodes,
+        path_graph = fill_path_graph(
+            node_count,
             non_empty_columns,
-            Changes,
-            ChangesPosition,
+            changes,
+            changes_position,
             consensus_matrix_collapse,
             strand_matrix_collapse,
-            NodeConfidence,
+            node_confidence,
             subfams_collapse_index,
         )
 
@@ -409,10 +415,10 @@ def run_full(
         # if they are all 0, break out of the loop
         test: bool = False
         j: int = 0
-        while j < NumNodes:
+        while j < node_count:
             i: int = 0
             while i < j - 1:
-                if PathGraph[i * NumNodes + j] == 1:
+                if path_graph[i * node_count + j] == 1:
                     test = True
                 i += 1
             j += 1
@@ -421,7 +427,7 @@ def run_full(
             break
 
         cols = extract_nodes(
-            cols, NumNodes, non_empty_columns, ChangesPosition, PathGraph
+            cols, node_count, non_empty_columns, changes_position, path_graph
         )
 
         # run DP calculations again with nodes corresponding to inserted elements removed
@@ -439,15 +445,15 @@ def run_full(
             collapsed_matrices,
         )
 
-        Changes.clear()
-        ChangesPosition.clear()
+        changes.clear()
+        changes_position.clear()
 
-        (ID, ChangesPosition, Changes) = get_path(
-            ID,
+        (node_id, changes_position, changes) = get_path(
+            node_id,
             non_empty_columns,
-            IDs,
-            Changes,
-            ChangesPosition,
+            node_ids,
+            changes,
+            changes_position,
             non_empty_columns,
             subfams_collapse,
             ProbMatrixLastColumn,
@@ -455,31 +461,31 @@ def run_full(
             OriginMatrix,
             SameSubfamChangeMatrix,
         )
-        prev_num_nodes = NumNodes
+        prev_num_nodes = node_count
 
         if len(tandem_repeats) > 0:
-            for subfam in Changes:
+            for subfam in changes:
                 assert (
                         subfam != "Tandem Repeat"
                 ), "can't add alternative edges to TRs"
 
     # prints results
-    if printMatrixPos:
+    if print_matrix_pos:
         print_results(
-            ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+            changes_orig, changes_position_orig, non_empty_columns_orig, node_ids
         )
-    elif printSeqPos:
+    elif print_seq_pos:
         print_results_sequence(
-            start_all, ChangesOrig, ChangesPositionOrig, NonEmptyColumnsOrig, IDs
+            start_all, changes_orig, changes_position_orig, non_empty_columns_orig, node_ids
         )
     else:
         print_results_chrom(
             start_all,
             target.chrom_start,
-            ChangesOrig,
-            ChangesPositionOrig,
-            NonEmptyColumnsOrig,
-            IDs,
+            changes_orig,
+            changes_position_orig,
+            non_empty_columns_orig,
+            node_ids,
         )
 
     if outfile_viz:
@@ -487,16 +493,16 @@ def run_full(
             start_all,
             outfile_viz,
             outfile_conf,
-            Chrom,
-            ChromStart,
+            target.chrom,
+            target.chrom_start,
             subfamily_matrix,
-            ChangesOrig,
-            ChangesPositionOrig,
-            NonEmptyColumnsOrig,
+            changes_orig,
+            changes_position_orig,
+            non_empty_columns_orig,
             consensus_lengths_matrix,
             strand_matrix_collapse,
             consensus_matrix_collapse,
             subfams_collapse_index,
-            NodeConfidenceOrig,
-            IDs,
+            node_confidence_orig,
+            node_ids,
         )
