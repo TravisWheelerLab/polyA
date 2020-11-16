@@ -4,10 +4,25 @@ from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
 from constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE, START_ID
-from polyA import Alignment, collapse_matrices, extract_nodes, fill_align_matrix, fill_confidence_matrix, \
-    fill_consensus_position_matrix, \
-    fill_node_confidence, fill_path_graph, fill_probability_matrix, fill_support_matrix, get_path, pad_sequences, \
-    print_matrix_support, print_results, print_results_chrom, print_results_sequence, print_results_soda
+from polyA import (
+    Alignment,
+    collapse_matrices,
+    extract_nodes,
+    fill_align_matrix,
+    fill_confidence_matrix,
+    fill_consensus_position_matrix,
+    fill_node_confidence,
+    fill_path_graph,
+    fill_probability_matrix,
+    fill_support_matrix,
+    get_path,
+    pad_sequences,
+    print_matrix_support,
+    print_results,
+    print_results_chrom,
+    print_results_sequence,
+    print_results_soda,
+)
 from polyA.calc_repeat_scores import calculate_repeat_scores
 from polyA.confidence_cm import confidence_only
 from polyA.fill_confidence_matrix import trailing_edges_info
@@ -35,9 +50,7 @@ def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
         scores.append(a.score)
 
     confidence_list = confidence_only(lambdaa, scores)
-    confidence_list, subfams_copy = zip(
-        *sorted(zip(confidence_list, subfams))
-    )
+    confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
 
     # TODO: Provide a writer to the function
     stdout.write(f"query_label\tconfidence\n")
@@ -49,13 +62,17 @@ def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
 def _validate_target(target: Alignment) -> None:
     # TODO: Switch to using a Logger
     if target.chrom_length == 0:
-        Logger(__name__).warning("""No chromosome position information found
-            (this is OK for artificial sequences but --viz and --heatmap will fail)""")
+        Logger(__name__).warning(
+            """No chromosome position information found
+            (this is OK for artificial sequences but --viz and --heatmap will fail)"""
+        )
     elif target.chrom_length <= 25:
         raise RuntimeError("Target sequence length must be >25")
     elif target.chrom_length < 1000:
-        Logger(__name__).warning("""Target region is <1000 in length,
-            did you mean to use such a short region?""")
+        Logger(__name__).warning(
+            """Target region is <1000 in length,
+            did you mean to use such a short region?"""
+        )
 
 
 def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
@@ -66,11 +83,15 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
     if print_matrix_pos:
         stdout.write("start\tstop\tID\tname\n")
         stdout.write("----------------------------------------\n")
-        stdout.write(f"{0}\t{target.stop - target.start}\t1111\t{target.subfamily}\n")
+        stdout.write(
+            f"{0}\t{target.stop - target.start}\t1111\t{target.subfamily}\n"
+        )
     else:
         stdout.write("start\tstop\tID\tname\n")
         stdout.write("----------------------------------------\n")
-        stdout.write(f"{target.start}\t{target.stop}\t1111\t{target.subfamily}\n")
+        stdout.write(
+            f"{target.start}\t{target.stop}\t1111\t{target.subfamily}\n"
+        )
     exit()
 
 
@@ -87,19 +108,19 @@ def _change_probs(seq_count: int) -> Tuple[float, float, float]:
 
 
 def run_full(
-        alignments: List[Alignment],
-        tandem_repeats: List[TandemRepeat],
-        chunk_size: int,
-        gap_ext: int,
-        gap_init: int,
-        lambdaa: float,
-        outfile_conf: TextIO,
-        outfile_viz: TextIO,
-        outfile_heatmap: TextIO,
-        print_matrix_pos: bool,
-        print_seq_pos: bool,
-        subfam_matrix_scores: Dict[str, int],
-        subfam_counts: Dict[str, float],
+    alignments: List[Alignment],
+    tandem_repeats: List[TandemRepeat],
+    chunk_size: int,
+    gap_ext: int,
+    gap_init: int,
+    lambdaa: float,
+    outfile_conf: Optional[TextIO],
+    outfile_viz: Optional[TextIO],
+    outfile_heatmap: Optional[TextIO],
+    print_matrix_pos: bool,
+    print_seq_pos: bool,
+    subfam_matrix_scores: Dict[str, int],
+    subfam_counts: Dict[str, float],
 ) -> None:
     seq_count = len(alignments)
 
@@ -141,9 +162,13 @@ def run_full(
     if outfile_viz:
         for i in range(1, len(flanks_matrix)):
             if strands_matrix[i] == "+":
-                consensus_lengths_matrix[subfamily_matrix[i]] = consensus_stops_matrix[i] + flanks_matrix[i]
+                consensus_lengths_matrix[subfamily_matrix[i]] = (
+                    consensus_stops_matrix[i] + flanks_matrix[i]
+                )
             else:
-                consensus_lengths_matrix[subfamily_matrix[i]] = consensus_starts_matrix[i] + flanks_matrix[i]
+                consensus_lengths_matrix[subfamily_matrix[i]] = (
+                    consensus_starts_matrix[i] + flanks_matrix[i]
+                )
 
     if len(tandem_repeats) > 0:
         for tr in tandem_repeats:
@@ -153,7 +178,11 @@ def run_full(
             stops_matrix.append(tr.start + tr.length - 1)
 
     start_all, stop_all = pad_sequences(
-        chunk_size, starts_matrix, stops_matrix, subfamily_sequences_matrix, chromosome_sequences_matrix
+        chunk_size,
+        starts_matrix,
+        stops_matrix,
+        subfamily_sequences_matrix,
+        chromosome_sequences_matrix,
     )
 
     # number of rows in matrices
@@ -175,10 +204,16 @@ def run_full(
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
     non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
-        rows, cols, align_matrix,
+        rows,
+        cols,
+        align_matrix,
     )
 
-    non_empty_columns, active_cells, consensus_matrix = fill_consensus_position_matrix(
+    (
+        non_empty_columns,
+        active_cells,
+        consensus_matrix,
+    ) = fill_consensus_position_matrix(
         cols,
         rows,
         start_all,
@@ -466,17 +501,24 @@ def run_full(
         if len(tandem_repeats) > 0:
             for subfam in changes:
                 assert (
-                        subfam != "Tandem Repeat"
+                    subfam != "Tandem Repeat"
                 ), "can't add alternative edges to TRs"
 
     # prints results
     if print_matrix_pos:
         print_results(
-            changes_orig, changes_position_orig, non_empty_columns_orig, node_ids
+            changes_orig,
+            changes_position_orig,
+            non_empty_columns_orig,
+            node_ids,
         )
     elif print_seq_pos:
         print_results_sequence(
-            start_all, changes_orig, changes_position_orig, non_empty_columns_orig, node_ids
+            start_all,
+            changes_orig,
+            changes_position_orig,
+            non_empty_columns_orig,
+            node_ids,
         )
     else:
         print_results_chrom(
