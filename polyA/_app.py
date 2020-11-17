@@ -411,6 +411,7 @@ def run():
         # parse
         with open(hmm_file) as _hmm:
             SubfamHmms = load_hmm(_hmm, Subfams)
+
         (cols, AlignMatrix) = fill_hmm_align_matrix(
             SubfamHmms,
             StartAll,
@@ -419,7 +420,10 @@ def run():
             SubfamSeqs,
             ChromSeqs,
             Starts,
+            ConsensusStarts,
+            Subfams
         )
+        exit()
     else:
         (cols, AlignMatrix) = fill_align_matrix(
             Lamb,

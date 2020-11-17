@@ -38,7 +38,7 @@ def load_hmm(file: TextIO, subfams: List[str]):
                         transition = file.readline().strip().split()
                         for i in range(len(char_pos)):
                             transition_dict[transition_pos[i]] = transition[i]
-                        pos_dict["emmission"] = emmission_dict
+                        pos_dict["emission"] = emmission_dict
                         pos_dict["transition"] = transition_dict
                         hmm_sub_dict[pos] = pos_dict
                     line = file.readline()

@@ -75,6 +75,7 @@ def calculate_score(
 
 
 def calculate_hmm_score(
+    hmm_start: int,
     seq1: str,
     seq2: str,
     prev_char_seq1: str,
@@ -84,5 +85,4 @@ def calculate_hmm_score(
     """
     Function description here
     """
-    # FIXME: include subfam start position in HMM
     return 0.0
