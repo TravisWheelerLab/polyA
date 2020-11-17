@@ -32,8 +32,8 @@ Our algorithm has 3 parts:
 
 1. Confidence calculations. This gives us the probablilites each competing query is the true 
 source of the target. 
-2. Position specific confidence creates a less computationally expensive version of a jpHMM, 
-allowing for transitions between queries. This identifies gene conversion, homologous recombination,
+2. Position specific confidence creates a computationally efficient mechanism for 
+allowing for transitions between query annotations. This identifies gene conversion, homologous recombination,
 nested elements, and boundaries between adjacent elements.  
 3. Graph Algorithm finds nested sequences. 
 	
@@ -157,12 +157,12 @@ ran on seq.fasta prior.
 
 ### Additional software
 
-esl_scorematrix as a part of the esl package in the hammer software suite
+esl_scorematrix is a part of the esl package in the [hmmer software suite](https://github.com/EddyRivasLab/hmmer/)
 
   - will compute lambda for the input score matrix
   - not needed if including lambda as a command line argument
 
-ULTRA
+[ULTRA](https://github.com/TravisWheelerLab/ultra)
 
   - will detect tandem repeat regions in a sequence FASTA file
 
@@ -272,4 +272,5 @@ BSD license. See `LICENSE`.
   - Kaitlin Carey
   - Audrey Shingleton
   - George Lesica
+  - Jack Roddy
   - Travis Wheeler
