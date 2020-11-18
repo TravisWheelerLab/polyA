@@ -362,15 +362,15 @@ def fill_align_matrix(
 
 # make own method
 def fill_hmm_align_matrix(
-        hmms,
-        edge_start: int,
-        chunk_size: int,
-        skip_align_score: float,
-        subfams: List[str],
-        chroms: List[str],
-        starts: List[int],
-        consensus_starts: List[int],
-        subfam_names: List[str],
+    hmms,
+    edge_start: int,
+    chunk_size: int,
+    skip_align_score: float,
+    subfams: List[str],
+    chroms: List[str],
+    starts: List[int],
+    consensus_starts: List[int],
+    subfam_names: List[str],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     Function description
@@ -438,7 +438,9 @@ def fill_hmm_align_matrix(
 
                 num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
 
-                align_matrix[i, col_index - k - trailing] = align_score * num_nucls0 / chunk_size
+                align_matrix[i, col_index - k - trailing] = (
+                    align_score * num_nucls0 / chunk_size
+                )
                 # already to scale so don't need to * chunk_size and / chunk_size
 
         # normalizes for first non trailing cell
@@ -450,7 +452,9 @@ def fill_hmm_align_matrix(
             hmm_start, subfam_slice, chrom_slice, "", "", subfam_hmm
         )
 
-        align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
+        align_matrix[i, col_index - k] = (
+            align_score * chunk_size / (chunk_size - k)
+        )
 
         # scores for first part, until we get to full sized chunks
         # hmm start position doesn't change
@@ -464,19 +468,26 @@ def fill_hmm_align_matrix(
                     gap_ext = 0  # gap to gap
                     gap_init = 0  # something else to gap
                     # look at prev char
-                    if subfams[i][seq_index + offset - 1] == "-":  # insertion -> insertion
+                    if (
+                        subfams[i][seq_index + offset - 1] == "-"
+                    ):  # insertion -> insertion
                         align_score = align_score + gap_ext
                     else:  # match -> insertion
                         align_score = align_score + gap_init
                 else:  # match
-                    hmm_end += 1  # only move end if next char in subfam is not -
-                    emission_score = float(subfam_hmm[str(hmm_end)]['emission'][chroms[i][seq_index + offset]])
-                    align_score = (
-                        align_score
-                        + emission_score
+                    hmm_end += (
+                        1  # only move end if next char in subfam is not -
                     )
+                    emission_score = float(
+                        subfam_hmm[str(hmm_end)]["emission"][
+                            chroms[i][seq_index + offset]
+                        ]
+                    )
+                    align_score = align_score + emission_score
 
-                align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
+                align_matrix[i, col_index - k] = (
+                    align_score * chunk_size / (chunk_size - k)
+                )
                 offset += 1
 
             else:  # if new gap introduced, recalculate offset and call CalcScore again
@@ -488,7 +499,10 @@ def fill_hmm_align_matrix(
                 while temp_count < chunk_size - k:
                     if chrom_seq[temp_index] != "-":
                         temp_count += 1
-                    if subfam_seq[temp_index] == "-" or subfam_seq[temp_index] == ".":
+                    if (
+                        subfam_seq[temp_index] == "-"
+                        or subfam_seq[temp_index] == "."
+                    ):
                         hmm_offset += 1
                     temp_index += 1
 
@@ -506,9 +520,11 @@ def fill_hmm_align_matrix(
                     chroms[i][seq_index - 1],
                     subfam_hmm,
                 )
-                align_matrix[i, col_index - k] = align_score * chunk_size / (chunk_size - k)
+                align_matrix[i, col_index - k] = (
+                    align_score * chunk_size / (chunk_size - k)
+                )
 
-        print(subfam_seq[seq_index: seq_index + offset])
+        print(subfam_seq[seq_index : seq_index + offset])
         print(hmm_start)
         print(hmm_end)
 
@@ -531,7 +547,7 @@ def fill_hmm_align_matrix(
                 offset -= 1
 
             # don't move forward in hmm if removed gap in subfam
-            if subfam_seq[seq_index] == '-':
+            if subfam_seq[seq_index] == "-":
                 hmm_start -= 1
 
             # skip over gap at start and not calc a score for the matrix
@@ -546,7 +562,10 @@ def fill_hmm_align_matrix(
                     while temp_count < chunk_size:
                         if chrom_seq[temp_index + 1] != "-":
                             temp_count += 1
-                        if subfam_seq[temp_index + 1] == "-" or subfam_seq[temp_index + 1] == ".":
+                        if (
+                            subfam_seq[temp_index + 1] == "-"
+                            or subfam_seq[temp_index + 1] == "."
+                        ):
                             hmm_offset += 1
                         temp_index += 1
 
@@ -596,11 +615,12 @@ def fill_hmm_align_matrix(
                         else:
                             align_score = align_score - gap_init
                     else:
-                        emission_score = float(subfam_hmm[str(hmm_start)]['emission'][chroms[i][seq_index]])
-                        align_score = (
-                            align_score
-                            - emission_score
+                        emission_score = float(
+                            subfam_hmm[str(hmm_start)]["emission"][
+                                chroms[i][seq_index]
+                            ]
                         )
+                        align_score = align_score - emission_score
                         num_nucls -= 1
 
                     # adding next chars score
@@ -623,14 +643,17 @@ def fill_hmm_align_matrix(
                         # add new emmission score - chrom and seq at seq_index + offset == char
                         if subfam_seq[seq_index + offset] != ".":
                             hmm_end += 1
-                        emission_score = float(subfam_hmm[str(hmm_end)]['emission'][chroms[i][seq_index + offset]])
-                        align_score = (
-                            align_score
-                            + emission_score
+                        emission_score = float(
+                            subfam_hmm[str(hmm_end)]["emission"][
+                                chroms[i][seq_index + offset]
+                            ]
                         )
+                        align_score = align_score + emission_score
                         num_nucls += 1
 
-                align_matrix[i, col_index] = align_score / num_nucls * chunk_size
+                align_matrix[i, col_index] = (
+                    align_score / num_nucls * chunk_size
+                )
 
                 if align_score == -inf:
                     del align_matrix[i, col_index]
@@ -640,7 +663,7 @@ def fill_hmm_align_matrix(
 
             print(hmm_start + 1)
             print(hmm_end)
-            print(subfam_seq[seq_index + 1: seq_index + offset + 1])
+            print(subfam_seq[seq_index + 1 : seq_index + offset + 1])
             hmm_start += 1
             seq_index += 1
         exit()
@@ -666,7 +689,9 @@ def fill_hmm_align_matrix(
                 subfam_hmm,
             )
 
-            align_matrix[i, col_index - 1 + trailing] = align_score / num_nucls2 * chunk_size
+            align_matrix[i, col_index - 1 + trailing] = (
+                align_score / num_nucls2 * chunk_size
+            )
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
         prev_seq_index: int = seq_index
@@ -691,7 +716,9 @@ def fill_hmm_align_matrix(
                 chrom_seq[seq_index - 1],
                 subfam_hmm,
             )
-            align_matrix[i, col_index] = align_score / (half_chunk + 1) * chunk_size
+            align_matrix[i, col_index] = (
+                align_score / (half_chunk + 1) * chunk_size
+            )
             col_index += 1
 
         # max col_index is assigned to cols
@@ -712,4 +739,3 @@ def fill_hmm_align_matrix(
                 del align_matrix[row, col]
 
     return num_cols, align_matrix
-

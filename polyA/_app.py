@@ -421,9 +421,8 @@ def run():
             ChromSeqs,
             Starts,
             ConsensusStarts,
-            Subfams
+            Subfams,
         )
-        exit()
     else:
         (cols, AlignMatrix) = fill_align_matrix(
             Lamb,
