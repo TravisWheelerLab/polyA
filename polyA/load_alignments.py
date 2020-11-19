@@ -67,7 +67,9 @@ def _parse_terminator_line(line: str) -> bool:
     return line.strip() == "//"
 
 
-def load_alignments(file: TextIO, add_skip_state: bool = False) -> Iterable[Alignment]:
+def load_alignments(
+    file: TextIO, add_skip_state: bool = False
+) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
     See below for an example.
@@ -153,8 +155,8 @@ def load_alignments(file: TextIO, add_skip_state: bool = False) -> Iterable[Alig
 
 
 def chunk_overlapping_alignments(
-        alignments: Iterable[Alignment],
-        add_skip_state: bool = True,
+    alignments: Iterable[Alignment],
+    add_skip_state: bool = True,
 ) -> Iterable[List[Alignment]]:
     """
     Chunk the given alignments into overlapping groups. This allows for
@@ -188,7 +190,9 @@ def chunk_overlapping_alignments(
             yield next_chunk
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
-            next_chunk = [get_skip_state(), alignment] if add_skip_state else [alignment]
+            next_chunk = (
+                [get_skip_state(), alignment] if add_skip_state else [alignment]
+            )
 
         if window_stop is None or alignment.stop > window_stop:
             window_stop = alignment.stop
