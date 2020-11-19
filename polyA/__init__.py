@@ -4,7 +4,7 @@ PolyA is a sequence annotation adjudicator.
 
 __version__ = "0.1.0"
 
-from .alignment import Alignment
+from .alignment import Alignment, get_skip_state
 from .calc_repeat_scores import calculate_repeat_scores
 from .calculate_score import calculate_score
 from .collapse_matrices import collapse_matrices

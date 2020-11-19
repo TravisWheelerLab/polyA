@@ -65,3 +65,24 @@ class Alignment(NamedTuple):
     @subfamily_sequence.setter
     def subfamily_sequence(self, value) -> None:
         self.sequences[1] = value
+
+
+_skip = Alignment(
+    subfamily="skip",
+    chrom="",
+    score=0,
+    start=0,
+    stop=0,
+    consensus_start=0,
+    consensus_stop=0,
+    sequences=["", ""],
+    strand="",
+    flank=0,
+)
+
+
+def get_skip_state():
+    """
+    Return the skip state singleton.
+    """
+    return _skip

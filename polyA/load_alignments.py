@@ -1,5 +1,5 @@
 from typing import Iterable, List, Optional, TextIO, Tuple
-from .alignment import Alignment
+from .alignment import Alignment, get_skip_state
 
 
 def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
@@ -67,7 +67,7 @@ def _parse_terminator_line(line: str) -> bool:
     return line.strip() == "//"
 
 
-def load_alignments(file: TextIO) -> Iterable[Alignment]:
+def load_alignments(file: TextIO, add_skip_state: bool = False) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
     See below for an example.
@@ -85,18 +85,19 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         #=GF CSP 628
         #=GF FL  128
     """
-    yield Alignment(
-        subfamily="skip",
-        chrom="",
-        score=0,
-        start=0,
-        stop=0,
-        consensus_start=0,
-        consensus_stop=0,
-        sequences=["", ""],
-        strand="",
-        flank=0,
-    )
+    if add_skip_state:
+        yield Alignment(
+            subfamily="skip",
+            chrom="",
+            score=0,
+            start=0,
+            stop=0,
+            consensus_start=0,
+            consensus_stop=0,
+            sequences=["", ""],
+            strand="",
+            flank=0,
+        )
 
     meta = {}
     seqs = []
@@ -152,7 +153,8 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
 
 
 def chunk_overlapping_alignments(
-    alignments: Iterable[Alignment],
+        alignments: Iterable[Alignment],
+        add_skip_state: bool = True,
 ) -> Iterable[List[Alignment]]:
     """
     Chunk the given alignments into overlapping groups. This allows for
@@ -162,6 +164,9 @@ def chunk_overlapping_alignments(
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
 
+    TODO: Add option to prepend a skip state to each chunk
+
+    >>> skip = get_skip_state()
     >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0)
     >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0)
     >>> a2 = Alignment("", "", 0, 12, 14, 0, 0, [], "", 0)
@@ -169,12 +174,12 @@ def chunk_overlapping_alignments(
     >>> chunks = list(chunk_overlapping_alignments([a0, a1, a2, a3]))
     >>> len(chunks)
     2
-    >>> chunks[0] == [a0, a1, a2]
+    >>> chunks[0] == [skip, a0, a1, a2]
     True
-    >>> chunks[1] == [a3]
+    >>> chunks[1] == [skip, a3]
     True
     """
-    next_chunk: List[Alignment] = []
+    next_chunk: List[Alignment] = [get_skip_state()] if add_skip_state else []
     window_stop: Optional[int] = None
     for alignment in alignments:
         if window_stop is None or alignment.start <= window_stop:
@@ -183,7 +188,7 @@ def chunk_overlapping_alignments(
             yield next_chunk
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
-            next_chunk = [alignment]
+            next_chunk = [get_skip_state(), alignment] if add_skip_state else [alignment]
 
         if window_stop is None or alignment.stop > window_stop:
             window_stop = alignment.stop
