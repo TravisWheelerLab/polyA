@@ -11,7 +11,6 @@ def fill_node_confidence(
     gap_init: int,
     gap_ext: int,
     lamb: float,
-    infilee: str,
     columns: List[int],
     starts: List[int],
     stops: List[int],
@@ -269,7 +268,7 @@ def fill_node_confidence(
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
         confidence_temp: List[float] = confidence_cm(
-            infilee, temp, subfam_countss, subfams, subfam_rows, tr_count
+            temp, subfam_countss, subfams, subfam_rows, tr_count
         )
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[

@@ -58,6 +58,11 @@ def _parse_terminator_line(line: str) -> bool:
     """
     Return ``True`` if this line contains a terminator
     ("//") or ``False`` otherwise.
+
+    >>> _parse_terminator_line(" // ")
+    True
+    >>> _parse_terminator_line(" / / ")
+    False
     """
     return line.strip() == "//"
 
@@ -65,6 +70,7 @@ def _parse_terminator_line(line: str) -> bool:
 def load_alignments(file: TextIO) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
+    See below for an example.
 
     ::
 
@@ -79,20 +85,18 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         #=GF CSP 628
         #=GF FL  128
     """
-    alignments: List[Alignment] = [
-        Alignment(
-            subfamily="skip",
-            chrom="",
-            score=0,
-            start=0,
-            stop=0,
-            consensus_start=0,
-            consensus_stop=0,
-            sequences=["", ""],
-            strand="",
-            flank=0,
-        ),
-    ]
+    yield Alignment(
+        subfamily="skip",
+        chrom="",
+        score=0,
+        start=0,
+        stop=0,
+        consensus_start=0,
+        consensus_stop=0,
+        sequences=["", ""],
+        strand="",
+        flank=0,
+    )
 
     meta = {}
     seqs = []
@@ -118,37 +122,30 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             #   all required metadata was present
 
             if meta["TQ"] == "t":
-                alignments.append(
-                    Alignment(
-                        subfamily=meta["ID"],
-                        chrom=meta["TR"],
-                        score=int(meta["SC"]),
-                        start=int(meta["ST"]),
-                        stop=int(meta["SP"]),
-                        consensus_start=int(meta["CST"]),
-                        consensus_stop=int(meta["CSP"]),
-                        sequences=[seqs[0][::-1], seqs[1][::-1]],
-                        strand=meta["SD"],
-                        flank=int(meta["FL"]),
-                    )
+                yield Alignment(
+                    subfamily=meta["ID"],
+                    chrom=meta["TR"],
+                    score=int(meta["SC"]),
+                    start=int(meta["ST"]),
+                    stop=int(meta["SP"]),
+                    consensus_start=int(meta["CST"]),
+                    consensus_stop=int(meta["CSP"]),
+                    sequences=[seqs[0][::-1], seqs[1][::-1]],
+                    strand=meta["SD"],
+                    flank=int(meta["FL"]),
                 )
             else:
-                alignments.append(
-                    Alignment(
-                        subfamily=meta["ID"],
-                        chrom=meta["TR"],
-                        score=int(meta["SC"]),
-                        start=int(meta["ST"]),
-                        stop=int(meta["SP"]),
-                        consensus_start=int(meta["CST"]),
-                        consensus_stop=int(meta["CSP"]),
-                        sequences=[seqs[0], seqs[1]],
-                        strand=meta["SD"],
-                        flank=int(meta["FL"]),
-                    )
+                yield Alignment(
+                    subfamily=meta["ID"],
+                    chrom=meta["TR"],
+                    score=int(meta["SC"]),
+                    start=int(meta["ST"]),
+                    stop=int(meta["SP"]),
+                    consensus_start=int(meta["CST"]),
+                    consensus_stop=int(meta["CSP"]),
+                    sequences=[seqs[0], seqs[1]],
+                    strand=meta["SD"],
+                    flank=int(meta["FL"]),
                 )
             meta.clear()
             seqs.clear()
-            continue
-
-    return alignments

@@ -3,7 +3,6 @@ import re
 
 
 def confidence_cm(
-    infile: str,
     region: List[float],
     subfam_counts: Dict[str, float],
     subfams: List[str],
@@ -55,7 +54,7 @@ def confidence_cm(
     score_total: int = 0
 
     # if command line option to include subfam_counts
-    if infile:
+    if subfam_counts:
         # alignment scores
         for index in range(len(region) - repeats):
             subfam: str = subfams[subfam_rows[index]]

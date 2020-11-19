@@ -4,7 +4,7 @@ set -e
 
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seqpos --lambda .1227 "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --lambda .1227 "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 
@@ -26,7 +26,7 @@ done
 #tests soda output
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seqpos --lambda .1227 --viz outfile.viz --heatmap outfile.heatmap "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --lambda .1227 --viz outfile.viz --heatmap outfile.heatmap "$f" ../fixtures/25p41g_edited.matrix;
   rm outfile.viz;
   rm outfile.viz.json;
   rm outfile.heatmap;
@@ -36,6 +36,6 @@ done
 ##tests prior counts
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seqpos --lambda .1227 --priorCounts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --lambda .1227 --prior-counts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done

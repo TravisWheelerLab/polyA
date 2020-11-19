@@ -346,7 +346,7 @@ def fill_align_matrix(
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
     for j in range(num_cols):
-        align_matrix[0, j] = float(skip_align_score)
+        align_matrix[0, j] = skip_align_score
 
     # remove trailing edges that fall off end of matrix
     # can't do this during matrix construction because we don't know how many

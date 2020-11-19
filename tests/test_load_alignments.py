@@ -1,5 +1,4 @@
 from polyA.load_alignments import load_alignments
-from pytest import mark
 
 
 def test_load_alignments_1():

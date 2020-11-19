@@ -1,4 +1,5 @@
-from typing import Callable, Iterable, List, NamedTuple, TextIO
+import re
+from typing import Callable, Dict, Iterable, List, NamedTuple, TextIO
 
 
 class Alignment(NamedTuple):
@@ -17,7 +18,37 @@ class Alignment(NamedTuple):
     strand: str
     flank: int
 
+    chrom_meta: Dict[str, str] = {}
+
     # TODO: George - Remove these mutators once we clean up the padding code
+
+    def _read_chrom_meta(self):
+        if len(self.chrom_meta) > 0:
+            return
+
+        match = re.search(r"(.+):(\d+)-(\d+)", self.chrom)
+        self.chrom_meta["name"] = match.groups()[0]
+        self.chrom_meta["start"] = match.groups()[1]
+        self.chrom_meta["end"] = match.groups()[2]
+
+    @property
+    def chrom_name(self) -> str:
+        self._read_chrom_meta()
+        return self.chrom_meta["name"]
+
+    @property
+    def chrom_start(self) -> int:
+        self._read_chrom_meta()
+        return int(self.chrom_meta["start"])
+
+    @property
+    def chrom_end(self) -> int:
+        self._read_chrom_meta()
+        return int(self.chrom_meta["end"])
+
+    @property
+    def chrom_length(self) -> int:
+        return self.chrom_end - self.chrom_start
 
     @property
     def sequence(self) -> str:

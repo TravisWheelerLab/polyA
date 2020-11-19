@@ -20,6 +20,7 @@ class ConstantLambdaProvider:
 
 
 class EaselLambdaProvider:
+    _matrix: str
     _path: str
 
     def __init__(self, path: str, matrix: str):
