@@ -149,3 +149,43 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
                 )
             meta.clear()
             seqs.clear()
+
+
+def chunk_overlapping_alignments(
+    alignments: Iterable[Alignment],
+) -> Iterable[List[Alignment]]:
+    """
+    Chunk the given alignments into overlapping groups. This allows for
+    more efficient processing for alignments over large regions of sequence
+    (such as an entire genome) where many regions will be empty.
+
+    Precondition: alignments are sorted by their start position and all
+    alignments have start position <= stop position.
+
+    >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0)
+    >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0)
+    >>> a2 = Alignment("", "", 0, 12, 14, 0, 0, [], "", 0)
+    >>> a3 = Alignment("", "", 0, 15, 20, 0, 0, [], "", 0)
+    >>> chunks = list(chunk_overlapping_alignments([a0, a1, a2, a3]))
+    >>> len(chunks)
+    2
+    >>> chunks[0] == [a0, a1, a2]
+    True
+    >>> chunks[1] == [a3]
+    True
+    """
+    next_chunk: List[Alignment] = []
+    window_stop: Optional[int] = None
+    for alignment in alignments:
+        if window_stop is None or alignment.start <= window_stop:
+            next_chunk.append(alignment)
+        else:
+            yield next_chunk
+            # Note: important to create a new list here or we will
+            # mutate the one we just handed back to the caller.
+            next_chunk = [alignment]
+
+        if window_stop is None or alignment.stop > window_stop:
+            window_stop = alignment.stop
+
+    yield next_chunk

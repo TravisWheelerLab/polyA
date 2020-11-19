@@ -161,21 +161,22 @@ def run():
         run_confidence(alignments, lambdaa=lambdaa)
         exit()
 
-    run_full(
-        alignments,
-        tandem_repeats,
-        chunk_size,
-        gap_ext,
-        gap_init,
-        lambdaa,
-        outfile_conf,
-        outfile_viz,
-        outfile_heatmap,
-        print_matrix_pos,
-        print_seq_pos,
-        sub_matrix,
-        subfam_counts,
-    )
+    for chunk in chunk_overlapping_alignments(alignments):
+        run_full(
+            chunk,
+            tandem_repeats,
+            chunk_size,
+            gap_ext,
+            gap_init,
+            lambdaa,
+            outfile_conf,
+            outfile_viz,
+            outfile_heatmap,
+            print_matrix_pos,
+            print_seq_pos,
+            sub_matrix,
+            subfam_counts,
+        )
 
     for fp in [
         infile_prior_counts,

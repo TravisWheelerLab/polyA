@@ -37,7 +37,7 @@ from .lambda_provider import (
     EaselLambdaProvider,
     LambdaProvider,
 )
-from .load_alignments import load_alignments
+from .load_alignments import load_alignments, chunk_overlapping_alignments
 from .matrices import (
     ConsensusMatrix,
     CollapsedMatrices,

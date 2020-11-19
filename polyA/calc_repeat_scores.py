@@ -36,7 +36,7 @@ def calculate_repeat_scores(
     index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
 
     tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, {}]
-    >>> repeats = [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
     >>> align_mat = {}
     >>> active_cols = {}
     >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {})
