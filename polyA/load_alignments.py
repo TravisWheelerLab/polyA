@@ -154,26 +154,26 @@ def load_alignments(
             seqs.clear()
 
 
-def chunk_overlapping_alignments(
+def shard_overlapping_alignments(
     alignments: Iterable[Alignment],
+    shard_gap: int,
     add_skip_state: bool = True,
 ) -> Iterable[List[Alignment]]:
     """
-    Chunk the given alignments into overlapping groups. This allows for
-    more efficient processing for alignments over large regions of sequence
-    (such as an entire genome) where many regions will be empty.
+    Shard the given alignments into overlapping groups, separated by no more
+    than `shard_gap` nucleotides. This allows for more efficient processing
+    for alignments over large regions of sequence (such as an entire genome)
+    where many regions will be empty.
 
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
 
-    TODO: Add option to prepend a skip state to each chunk
-
     >>> skip = get_skip_state()
     >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0)
     >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0)
-    >>> a2 = Alignment("", "", 0, 12, 14, 0, 0, [], "", 0)
-    >>> a3 = Alignment("", "", 0, 15, 20, 0, 0, [], "", 0)
-    >>> chunks = list(chunk_overlapping_alignments([a0, a1, a2, a3]))
+    >>> a2 = Alignment("", "", 0, 12 + 50, 70, 0, 0, [], "", 0)
+    >>> a3 = Alignment("", "", 0, 70 + 51, 130, 0, 0, [], "", 0)
+    >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3], 50))
     >>> len(chunks)
     2
     >>> chunks[0] == [skip, a0, a1, a2]
@@ -184,7 +184,7 @@ def chunk_overlapping_alignments(
     next_chunk: List[Alignment] = [get_skip_state()] if add_skip_state else []
     window_stop: Optional[int] = None
     for alignment in alignments:
-        if window_stop is None or alignment.start <= window_stop:
+        if window_stop is None or alignment.start <= (window_stop + shard_gap):
             next_chunk.append(alignment)
         else:
             yield next_chunk

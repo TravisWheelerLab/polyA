@@ -13,6 +13,7 @@ from .constants import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_GAP_EXT,
     DEFAULT_GAP_INIT,
+    DEFAULT_SHARD_GAP,
     PROB_SKIP_TR,
     PROB_SKIP,
     CHANGE_PROB,
@@ -37,7 +38,7 @@ from .lambda_provider import (
     EaselLambdaProvider,
     LambdaProvider,
 )
-from .load_alignments import load_alignments, chunk_overlapping_alignments
+from .load_alignments import load_alignments, shard_overlapping_alignments
 from .matrices import (
     ConsensusMatrix,
     CollapsedMatrices,

@@ -21,6 +21,7 @@ ARGUMENTS
     --ultra-output <path to file>
     --viz <output path> - prints output format for SODA visualization
     --heatmap <output path> - prints probability file for input into heatmap
+    --shard-gap <int> - allowed gap between sequences in the same shard
 
 OPTIONS
     --help - display help message
@@ -110,6 +111,10 @@ def run():
     print_seq_pos = "--seq-pos" in opts
     confidence_flag = "--confidence" in opts
 
+    shard_gap = (
+        int(opts["--shard-gap"]) if "--shard-gap" in opts else DEFAULT_SHARD_GAP
+    )
+
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
     infile_matrix: str = args[1]
@@ -161,7 +166,7 @@ def run():
         run_confidence(alignments, lambdaa=lambdaa)
         exit()
 
-    for chunk in chunk_overlapping_alignments(alignments):
+    for chunk in shard_overlapping_alignments(alignments, shard_gap=shard_gap):
         run_full(
             chunk,
             tandem_repeats,

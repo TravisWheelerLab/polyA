@@ -19,6 +19,11 @@ DEFAULT_GAP_EXT = -5
 Penalty given to extend a gap in alignment
 """
 
+DEFAULT_SHARD_GAP = 50
+"""
+Allowed gap between sequences for them to be included in the same shard
+"""
+
 NAN_STRING = "NaN"
 """
 The string used to represent "not a number" for serialization and
