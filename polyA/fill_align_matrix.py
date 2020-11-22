@@ -484,7 +484,11 @@ def fill_hmm_align_matrix(
                     )
                     align_score = align_score + emission_score
 
-                check_hmm_postion(hmm_start, hmm_end, subfam_seq[seq_index:seq_index + offset + 1])
+                check_hmm_postion(
+                    hmm_start,
+                    hmm_end,
+                    subfam_seq[seq_index : seq_index + offset + 1],
+                )
                 align_matrix[i, col_index - k] = (
                     align_score * chunk_size / (chunk_size - k)
                 )
@@ -526,7 +530,9 @@ def fill_hmm_align_matrix(
                     align_score * chunk_size / (chunk_size - k)
                 )
 
-        check_hmm_postion(hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset])
+        check_hmm_postion(
+            hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
+        )
         # print(hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset])
         # good here
         # for full sized chunks
@@ -661,7 +667,11 @@ def fill_hmm_align_matrix(
                         align_score = align_score + emission_score
                         num_nucls += 1
                     # print(hmm_start, hmm_end, subfam_seq[seq_index + 1 : seq_index + offset + 1])
-                    check_hmm_postion(hmm_start, hmm_end, subfam_seq[seq_index + 1 : seq_index + offset + 1])
+                    check_hmm_postion(
+                        hmm_start,
+                        hmm_end,
+                        subfam_seq[seq_index + 1 : seq_index + offset + 1],
+                    )
 
                 align_matrix[i, col_index] = (
                     align_score / num_nucls * chunk_size
@@ -678,7 +688,9 @@ def fill_hmm_align_matrix(
 
         # cur chunk seq_index: seq_index + offset
         # print(hmm_start, hmm_end, subfam_seq[seq_index: seq_index + offset])
-        check_hmm_postion(hmm_start, hmm_end, subfam_seq[seq_index: seq_index + offset])
+        check_hmm_postion(
+            hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
+        )
 
         # add trailing cells and normalizes
         hmm_trailing = 0
@@ -686,7 +698,7 @@ def fill_hmm_align_matrix(
             # if col_index - k - trailing >= 0:
             # 15 -> 1 nucleotide before padding
             # trailing is amount to remove
-            if subfam_seq[seq_index + trailing -1] != "-":
+            if subfam_seq[seq_index + trailing - 1] != "-":
                 hmm_trailing += 1
 
             chrom_slice: str = chrom_seq[
