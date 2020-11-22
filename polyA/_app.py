@@ -423,6 +423,7 @@ def run():
             ConsensusStarts,
             Subfams,
         )
+        exit()
     else:
         (cols, AlignMatrix) = fill_align_matrix(
             Lamb,
