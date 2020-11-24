@@ -26,10 +26,11 @@ done
 #tests soda output
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seq-pos --lambda .1227 --viz outfile.viz --heatmap outfile.heatmap "$f" ../fixtures/25p41g_edited.matrix;
-  rm outfile.viz;
-  rm outfile.viz.json;
-  rm outfile.heatmap;
+  python -m polyA --seq-pos --lambda .1227 --soda --heatmap "$f" ../fixtures/25p41g_edited.matrix;
+  ls polya-output.*
+  rm polya-output.*.viz;
+  rm polya-output.*.viz.json;
+  rm polya-output.*.heatmap;
   printf -- "-------------------------------------------------------------\n";
 done
 

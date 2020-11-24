@@ -48,6 +48,7 @@ from .matrices import (
     RowColumn,
     StrandMatrix,
 )
+from .output import Output
 from .pad_sequences import pad_sequences
 from .parameters import (
     Parameters,

@@ -14,13 +14,16 @@ ARGUMENTS
     --lambda [will calculate from substitution matrix if not included]
     --chunk-size (must be odd) [31]
     --esl-path <path to Easel>
-    --confidence - output confidence for a single annoation without running whole algorithm
+    --confidence - output confidence for a single annotation without running whole algorithm
+
+    --output-path - path to a directory where output files will be written
+    --heatmap - output a heatmap file
+    --soda - output files to produce a SODA visualization
+
     --prior-counts <path to file>
     --ultra-path <path to ultra>
     --seq-file <path to file>
     --ultra-output <path to file>
-    --viz <output path> - prints output format for SODA visualization
-    --heatmap <output path> - prints probability file for input into heatmap
     --shard-gap <int> - allowed gap between sequences in the same shard
 
 OPTIONS
@@ -43,8 +46,9 @@ def run():
             "confidence",
             "chunk-size=",
             "prior-counts=",
-            "viz=",
-            "heatmap=",
+            "output-path=",
+            "soda",
+            "heatmap",
             "ultra-path=",
             "seq-file=",
             "ultra-output=",
@@ -64,7 +68,6 @@ def run():
         int(opts["--gap-init"]) if "--gap-init" in opts else DEFAULT_GAP_INIT
     )
     gap_ext = int(opts["--gap-ext"]) if "--gap-ext" in opts else DEFAULT_GAP_EXT
-    lambdaa = float(opts["--lambda"]) if "--lambda" in opts else 0.0
     esl_path = str(opts["--esl-path"]) if "--esl-path" in opts else ""
     chunk_size = (
         int(opts["--chunk-size"])
@@ -77,15 +80,7 @@ def run():
     )
 
     outfile_viz_path = str(opts["--viz"]) if "--viz" in opts else ""
-    outfile_viz = open(outfile_viz_path, "w") if outfile_viz_path else None
-    outfile_conf = (
-        open(outfile_viz_path + ".json", "w") if outfile_viz_path else None
-    )
-
     outfile_heatmap_path = str(opts["--heatmap"]) if "--heatmap" in opts else ""
-    outfile_heatmap = (
-        open(outfile_heatmap_path, "w") if outfile_heatmap_path else None
-    )
 
     # Run ULTRA or load TRs from an output file
     tandem_repeats = []
@@ -124,6 +119,7 @@ def run():
         in_matrix: List[str] = _infile_matrix.readlines()
 
     # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
+    lambdaa = float(opts["--lambda"]) if "--lambda" in opts else 0.0
     if not lambdaa:
         provider = EaselLambdaProvider(esl_path, infile_matrix)
         lambdaa = provider()
@@ -166,7 +162,22 @@ def run():
         run_confidence(alignments, lambdaa=lambdaa)
         exit()
 
-    for chunk in shard_overlapping_alignments(alignments, shard_gap=shard_gap):
+    soda_flag = "--soda" in opts
+    heatmap_flag = "--heatmap" in opts
+
+    output_path = (
+        opts["--output-path"] if "--output-path" in opts else "polya-output"
+    )
+    outputter = Output(output_path)
+
+    for index, chunk in enumerate(
+        shard_overlapping_alignments(alignments, shard_gap=shard_gap)
+    ):
+        soda_viz_file, soda_conf_file = (
+            outputter.get_soda(index) if soda_flag else (None, None)
+        )
+        heatmap_file = outputter.get_heatmap(index) if heatmap_flag else None
+
         run_full(
             chunk,
             tandem_repeats,
@@ -174,20 +185,18 @@ def run():
             gap_ext,
             gap_init,
             lambdaa,
-            outfile_conf,
-            outfile_viz,
-            outfile_heatmap,
+            soda_viz_file,
+            soda_conf_file,
+            heatmap_file,
             print_matrix_pos,
             print_seq_pos,
             sub_matrix,
             subfam_counts,
         )
 
-    for fp in [
-        infile_prior_counts,
-        outfile_conf,
-        outfile_viz,
-        outfile_heatmap,
-    ]:
-        if fp is not None:
-            fp.close()
+        if soda_viz_file is not None:
+            soda_viz_file.close()
+        if soda_conf_file is not None:
+            soda_conf_file.close()
+        if heatmap_file is not None:
+            heatmap_file.close()
