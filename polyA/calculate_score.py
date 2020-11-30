@@ -1,4 +1,5 @@
 from typing import Dict
+from math import log
 
 
 def calculate_score(
@@ -84,5 +85,16 @@ def calculate_hmm_score(
 ) -> float:
     """
     Function description here
+    Seq1 - subfam
+    Seq2 - chrom
+    hmm start - hmm pos of first char
     """
-    return 0.0
+    chunk_score: float = 0
+    return float(chunk_score)
+
+
+def calculate_insertion_score():
+
+    # Return single pos score of gap chunk
+    # 1/(length of gap) * full gap score
+    return 0

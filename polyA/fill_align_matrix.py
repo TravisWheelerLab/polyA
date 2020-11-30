@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple
 
 from polyA.calculate_score import calculate_score
 from polyA.calculate_score import calculate_hmm_score
+from polyA.calculate_score import calculate_insertion_score
 
 
 def fill_align_matrix(
@@ -403,16 +404,20 @@ def fill_hmm_align_matrix(
         temp_index = seq_index
         temp_count = 0
 
-        hmm_offset: int = 0  # gaps in subfam chunk
+        hmm_offset: int = 0  # moves forward in subfam seq
         while temp_count < chunk_size - k:
             if chrom_seq[temp_index] != "-":
                 temp_count += 1
-            if subfam_seq[temp_index] == "-":
+            if subfam_seq[temp_index] != "-":
                 hmm_offset += 1
             temp_index += 1
 
         offset: int = temp_index - seq_index  # gaps in chrom seq
-        hmm_end = hmm_start + offset - hmm_offset - 1
+        if subfam_seq[seq_index + 1] == "-":
+            hmm_end = hmm_start + hmm_offset
+        else:
+            # hmm_offset double counts start char -> -1
+            hmm_end = hmm_start + hmm_offset - 1
 
         # add trailing cells and doesn't normalize
         for trailing in range(1, half_chunk + 1):
@@ -457,24 +462,21 @@ def fill_hmm_align_matrix(
 
         # scores for first part, until we get to full sized chunks
         # hmm start position doesn't change
+        gap_index: int = -1  # track position of insertion chunk
+        insertion_score: float  # score per position in insertion chunk
         for k in range(half_chunk - 1, -1, -1):
             if (
                 chroms[i][seq_index + offset] != "-"  # next in chrom
             ):  # if no new gap introduced, move along seq and add next nucl into score
                 if subfams[i][seq_index + offset] == "-":  # next in subfam
                     # not a gap in chrom, gap in subfam -> insertion
-                    # FIXME: get these from HMM transition
-                    gap_ext = 0  # gap to gap
-                    gap_init = 0  # something else to gap
-                    # look at prev char
-                    if (
-                        subfams[i][seq_index + offset - 1] == "-"
-                    ):  # insertion -> insertion
-                        align_score = align_score + gap_ext
-                    else:  # match -> insertion
-                        align_score = align_score + gap_init
-                else:
-                    # match - move end
+                    if seq_index + offset == gap_index + 1:  # same gap
+                        gap_index += 1
+                    else:  # new gap
+                        insertion_score = calculate_insertion_score()
+                        gap_index = seq_index + offset  # new gap index
+                    align_score = align_score + insertion_score
+                else:  # match
                     hmm_end += 1
                     emission_score = float(
                         subfam_hmm[str(hmm_end)]["emission"][
@@ -515,7 +517,7 @@ def fill_hmm_align_matrix(
                 if subfam_seq[seq_index + 1] == "-":
                     hmm_end = hmm_start + hmm_offset
                 else:
-                    # double counts start -> -1
+                    # hmm_offset double counts start char -> -1
                     hmm_end = hmm_start + hmm_offset - 1
 
                 chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
@@ -618,11 +620,6 @@ def fill_hmm_align_matrix(
 
                 else:
                     # chrom_seq[seq_index + offset] != "-" and chrom_seq[seq_index] != "-"
-                    # removing and adding new char from chrom chunk
-                    if chrom_seq[seq_index + offset] == "-":
-                        print("T1")
-                    elif chrom_seq[seq_index] == "-":
-                        print("T2")
 
                     # align_score from previous segment - prev chars score + next chars score
                     # subtracting prev chars score
