@@ -6,6 +6,7 @@ class Output:
     """
     A class to manage creating output file objects.
     """
+
     base_filename: str
 
     def __init__(self, output_path: str):
