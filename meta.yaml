@@ -20,8 +20,6 @@ requirements:
 test:
   imports:
     - polyA
-  commands:
-    - polyA --help
 
 about:
   home: "https://github.com/traviswheelerlab/polyA"
