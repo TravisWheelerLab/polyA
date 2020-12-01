@@ -34,6 +34,14 @@ build-package:
 publish-package:
 	pipenv run flit publish
 
+.PHONY: build-conda-package
+build-conda-package:
+	conda-build .
+
+.PHONY: publish-conda-package
+publish-conda-package:
+	@echo "NOT IMPLEMENTED"
+
 .PHONY: check
 check: check-fast check-slow check-format
 
@@ -64,6 +72,21 @@ container-build:
 .PHONY: container-push
 container-push:
 	docker push traviswheelerlab/polya-build:${CONTAINER_VERSION}
+
+.PHONY: container-build-conda-package
+container-build-conda-package:
+	docker run --mount src="${PWD}",target=/code,type=bind traviswheelerlab/polya-conda build-conda-package
+
+.PHONY: container-conda
+container-conda: container-conda-build container-conda-push
+
+.PHONY: container-conda-build
+container-conda-build:
+	docker build -t traviswheelerlab/polya-conda:${CONTAINER_VERSION} -f Dockerfile_conda .
+
+.PHONY: container-conda-push
+container-conda-push:
+	docker push traviswheelerlab/polya-conda:${CONTAINER_VERSION}
 
 .PHONY: format
 format:
