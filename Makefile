@@ -37,6 +37,8 @@ publish-package:
 .PHONY: build-conda-package
 build-conda-package:
 	conda-build .
+	mkdir -p conda-dist/
+	conda convert --platform all "$(shell conda-build --output .)" -o conda-dist/
 
 .PHONY: publish-conda-package
 publish-conda-package:

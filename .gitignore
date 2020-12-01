@@ -5,6 +5,9 @@
 dist/
 .pytest_cache/
 
+# Anaconda
+conda-dist/
+
 # Mac
 .DS_Store
 
