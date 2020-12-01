@@ -1,0 +1,15 @@
+tests:
+    alignment:
+        command: python -m polyA --seqpos --lambda .1227 align ../fixtures/25p41g_edited.matrix
+        stdout:
+            file: align.format.output
+
+for f in ../fixtures/*.align.format ;
+do echo "$f";
+  python -m polyA --seqpos --lambda .1227 "$f" ../fixtures/25p41g_edited.matrix;
+  printf -- "-------------------------------------------------------------\n";
+done
+
+# Should we build this programmatically? Or maybe add a shell script that
+# contains all the parameter values except the alignment to make the test
+# config less repetitive.
