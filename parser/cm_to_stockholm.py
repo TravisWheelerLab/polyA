@@ -86,7 +86,7 @@ def get_score_matrix(file_contents):
 
     return score_matrix
 
-def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, f_out_sto):
+def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto):
     """
     prints all info in correct format for stockholm
     """
@@ -108,6 +108,7 @@ def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, co
     f_out_sto.write(f'#=GF CST {consensus_start}\n')
     f_out_sto.write(f'#=GF CSP {consensus_stop}\n')
     f_out_sto.write(f'#=GF FL  {flank}\n')
+    f_out_sto.write(f'#=GF MX  {matrix_name}\n')
 
 
 def get_alignment(alignment_array):
@@ -141,12 +142,13 @@ def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto):
     f_out_sto.write("//\n")
 
 
-def print_score_matrix(filename_out_matrix, score_matrix):
+def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
     """
     print score matrix to its own output file with extension ".matrix"
     """
     f_out_matrix = open(filename_out_matrix, 'w')
-    f_out_matrix.write("matrix1\n")
+    f_out_matrix.write(matrix_name)
+    f_out_matrix.write("\n")
     f_out_matrix.write(score_matrix)
     f_out_matrix.write("//\n")
 
@@ -160,11 +162,12 @@ if __name__ == "__main__":
     f_out_sto = open(filename_out_sto, 'w')
 
     filename_out_matrix = filename_cm + ".matrix"
+    matrix_name = 'matrix1'
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
 
     score_matrix = get_score_matrix(file_contents)
-    print_score_matrix(filename_out_matrix, score_matrix)
+    print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
 
     alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
 
@@ -192,7 +195,7 @@ if __name__ == "__main__":
 
         chrom_seq, subfam_seq = get_alignment(alignment_array)
 
-        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, f_out_sto)
+        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto)
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
