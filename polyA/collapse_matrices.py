@@ -29,7 +29,7 @@ def dp_for_collapse(
     >>> non
     [0, 2, 3]
     """
-    change: float = log(0.0001)  # TODO - what transition penalty to use ??
+    change: float = log(0.000000001)
     stay: float = log(1 - change)
 
     non_empty: List[int] = []
