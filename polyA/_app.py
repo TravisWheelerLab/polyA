@@ -79,9 +79,6 @@ def run():
         open(opts["--prior-counts"], "r") if "--prior-counts" in opts else None
     )
 
-    outfile_viz_path = str(opts["--viz"]) if "--viz" in opts else ""
-    outfile_heatmap_path = str(opts["--heatmap"]) if "--heatmap" in opts else ""
-
     # Run ULTRA or load TRs from an output file
     tandem_repeats = []
     # TODO: Assume ULTRA is in the PATH if not given
@@ -112,42 +109,6 @@ def run():
 
     # input is alignment file of hits region and substitution matrix
     infile: str = args[0]
-    infile_matrix: str = args[1]
-
-    # Other open was moved down to where we load the alignments file
-    with open(infile_matrix) as _infile_matrix:
-        in_matrix: List[str] = _infile_matrix.readlines()
-
-    # if lambda isn't included at command line, run esl_scorematrix to calculate it from scorematrix
-    lambdaa = float(opts["--lambda"]) if "--lambda" in opts else 0.0
-    if not lambdaa:
-        provider = EaselLambdaProvider(esl_path, infile_matrix)
-        lambdaa = provider()
-
-    # reads in the score matrix from file and stores in dict that maps 'char1char2' to the score from the
-    # input substitution matrix - ex: 'AA' = 8
-    sub_matrix: Dict[str, int] = {}
-
-    # add all ambiguity codes just incase matrix doesnt have them
-    nucleotide_codes = "AGCTYRWSKMDVHBXN."
-    for code in nucleotide_codes:
-        for code2 in nucleotide_codes:
-            sub_matrix[code + code2] = 0
-
-    line = in_matrix[0]
-    line = re.sub(r"^\s+", "", line)
-    line = re.sub(r"\s+$", "", line)
-    chars = re.split(r"\s+", line)
-
-    count: int = 0
-    for line in in_matrix[1:]:
-        line = re.sub(r"^\s+", "", line)
-        line = re.sub(r"\s+$", "", line)
-        sub_scores = re.split(r"\s+", line)
-        for i in range(len(sub_scores)):
-            sub_matrix[chars[count] + chars[i]] = int(sub_scores[i])
-        count += 1
-    sub_matrix[".."] = 0
 
     subfam_counts = (
         read_prior_counts(infile_prior_counts, using_tr)
@@ -155,12 +116,17 @@ def run():
         else {}
     )
 
-    with open(infile) as _infile:
-        alignments = list(load_alignments(_infile))
+    # ----------------------------
+    # Load the substitution matrix
+    # ----------------------------
 
-    if confidence_flag:
-        run_confidence(alignments, lambdaa=lambdaa)
-        exit()
+    sub_matrix_path: str = args[1]
+    with open(sub_matrix_path) as _sub_matrix_file:
+        sub_matrix = load_substitution_matrix(_sub_matrix_file)
+
+    # -------------------------------------------------
+    # Flags and parameters related to secondary outputs
+    # -------------------------------------------------
 
     soda_flag = "--soda" in opts
     heatmap_flag = "--heatmap" in opts
@@ -169,6 +135,34 @@ def run():
         opts["--output-path"] if "--output-path" in opts else "polya-output"
     )
     outputter = Output(output_path)
+
+    # -----------------------------
+    # Load alignments to operate on
+    # -----------------------------
+
+    with open(infile) as _infile:
+        alignments = list(load_alignments(_infile))
+
+    # --------------------------------------
+    # Determine the correct value for lambda
+    # --------------------------------------
+
+    lambda_value = float(opts["--lambda"]) if "--lambda" in opts else 0.0
+    if not lambda_value:
+        provider = EaselLambdaProvider(esl_path, sub_matrix_path)
+        lambda_value = provider()
+
+    # --------------------------
+    # Run confidence calculation
+    # --------------------------
+
+    if confidence_flag:
+        run_confidence(alignments, lambdaa=lambda_value)
+        exit()
+
+    # ----------------------------------------------------------------
+    # Loop through the alignment shards and process each independently
+    # ----------------------------------------------------------------
 
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=shard_gap)
@@ -184,7 +178,7 @@ def run():
             chunk_size,
             gap_ext,
             gap_init,
-            lambdaa,
+            lambda_value,
             soda_viz_file,
             soda_conf_file,
             heatmap_file,
