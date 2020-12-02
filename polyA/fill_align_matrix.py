@@ -432,8 +432,8 @@ def fill_hmm_align_matrix(
                 # calculates score for first chunk and puts in align_matrix
                 align_score: float = calculate_hmm_score(
                     hmm_start,
-                    subfam_slice,
                     chrom_slice,
+                    subfam_slice,
                     "",
                     "",
                     subfam_hmm,
@@ -453,7 +453,7 @@ def fill_hmm_align_matrix(
         check_hmm_position(hmm_start, hmm_end, subfam_slice)
         # calculates score for first chunk and puts in align_matrix
         align_score: float = calculate_hmm_score(
-            hmm_start, subfam_slice, chrom_slice, "", "", subfam_hmm
+            hmm_start, chrom_slice, subfam_slice, "", "", subfam_hmm
         )
 
         align_matrix[i, col_index - k] = (
@@ -473,16 +473,23 @@ def fill_hmm_align_matrix(
                     if seq_index + offset == gap_index + 1:  # same gap
                         gap_index += 1
                     else:  # new gap
-                        insertion_score = calculate_insertion_score()
+                        insertion_score = calculate_insertion_score(
+                            hmm_end,
+                            chroms[i][seq_index + offset :],
+                            subfams[i][seq_index + offset],
+                            subfam_hmm,
+                        )
+
                         gap_index = seq_index + offset  # new gap index
-                    align_score = align_score + insertion_score
+                    align_score -= log(insertion_score)
                 else:  # match
                     hmm_end += 1
                     emission_score = float(
-                        subfam_hmm[str(hmm_end)]["emission"][
+                        subfam_hmm[hmm_end]["emission"][
                             chroms[i][seq_index + offset]
                         ]
                     )
+
                     align_score -= log(emission_score)
 
                 check_hmm_position(
@@ -527,8 +534,8 @@ def fill_hmm_align_matrix(
 
                 align_score = calculate_hmm_score(
                     hmm_start,
-                    subfam_slice,
                     chrom_slice,
+                    subfam_slice,
                     subfams[i][seq_index - 1],
                     chroms[i][seq_index - 1],
                     subfam_hmm,
@@ -600,8 +607,8 @@ def fill_hmm_align_matrix(
 
                     align_score = calculate_hmm_score(
                         hmm_start,
-                        subfam_slice,
                         chrom_slice,
+                        subfam_slice,
                         subfam_seq[seq_index],
                         chrom_seq[seq_index],
                         subfam_hmm,
@@ -642,7 +649,7 @@ def fill_hmm_align_matrix(
                             # start of next seq chunk is a gap
                             # char -> gap - didn't move forward
                             emission_score = float(
-                                subfam_hmm[str(hmm_start)]["emission"][
+                                subfam_hmm[hmm_start]["emission"][
                                     chroms[i][seq_index]
                                 ]
                             )
@@ -650,7 +657,7 @@ def fill_hmm_align_matrix(
                             # start of next seq chunk is a char
                             # char -> char
                             emission_score = float(
-                                subfam_hmm[str(hmm_start - 1)]["emission"][
+                                subfam_hmm[hmm_start - 1]["emission"][
                                     chroms[i][seq_index]
                                 ]
                             )
@@ -678,12 +685,12 @@ def fill_hmm_align_matrix(
                     elif subfam_seq[seq_index + offset] == ".":
                         align_score = align_score
                     else:
-                        # add new emmission score
+                        # add new emission score
                         # chrom and seq at seq_index + offset (new chunk end) are chars
                         if subfam_seq[seq_index + offset] != ".":  # not - or .
                             hmm_end += 1
                         emission_score = float(
-                            subfam_hmm[str(hmm_end)]["emission"][
+                            subfam_hmm[hmm_end]["emission"][
                                 chroms[i][seq_index + offset]
                             ]
                         )
@@ -734,8 +741,8 @@ def fill_hmm_align_matrix(
             # calculates score for first chunk and puts in align_matrix
             align_score: float = calculate_hmm_score(
                 hmm_start + hmm_trailing,
-                subfam_slice,
                 chrom_slice,
+                subfam_slice,
                 subfam_seq[seq_index + trailing - 1],
                 chrom_seq[seq_index + trailing - 1],
                 subfam_hmm,
@@ -760,8 +767,8 @@ def fill_hmm_align_matrix(
             check_hmm_position(hmm_start, hmm_end, subfam_slice)
             align_score = calculate_hmm_score(
                 hmm_start,
-                subfam_slice,
                 chrom_slice,
+                subfam_slice,
                 subfam_seq[seq_index - 1],
                 chrom_seq[seq_index - 1],
                 subfam_hmm,

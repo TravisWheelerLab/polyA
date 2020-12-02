@@ -77,24 +77,35 @@ def calculate_score(
 
 def calculate_hmm_score(
     hmm_start: int,
-    seq1: str,
-    seq2: str,
+    chrom: str,
+    subfam: str,
     prev_char_seq1: str,
     prev_char_seq2: str,
     subfam_hmm,
 ) -> float:
     """
     Function description here
-    Seq1 - subfam
-    Seq2 - chrom
     hmm start - hmm pos of first char
     """
     chunk_score: float = 0
     return float(chunk_score)
 
 
-def calculate_insertion_score():
+def calculate_insertion_score(
+    hmm_pos: int,
+    chrom: str,
+    subfam: str,
+    subfam_hmm,
+) -> float:
+    """
+    Function description here
 
-    # Return single pos score of gap chunk
-    # 1/(length of gap) * full gap score
-    return 0
+    """
+    i: int = 0
+    insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
+    while i + 1 < len(subfam) and subfam[i + 1] == "-":
+        insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
+        i += 1
+    i += 1
+    insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
+    return insertion_score / float(i)

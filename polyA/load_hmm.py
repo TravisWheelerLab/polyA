@@ -14,15 +14,15 @@ def load_hmm(file: TextIO, subfams: List[str]):
                 hmm_sub_dict = {}
                 while line and not line.strip().startswith("//"):
                     if line.strip().startswith("HMM"):
-                        char_pos = line.strip().split()[1:]
+                        chars = line.strip().split()[1:]
                         line = file.readline()
-                        transition_pos = line.strip().split()
+                        transitions = line.strip().split()
                     if line.strip().startswith("COMPO"):
                         line = file.readline()
                         unrelated_vals = line.strip().split()
                         unrelated_dict = {}
-                        for i in range(len(char_pos)):
-                            unrelated_dict[char_pos[i]] = unrelated_vals[i]
+                        for i in range(len(chars)):
+                            unrelated_dict[chars[i]] = unrelated_vals[i]
                         hmm_sub_dict["unrelated"] = unrelated_dict
                     if line.strip().split()[0].isdigit():
                         # get per position scores
@@ -32,15 +32,15 @@ def load_hmm(file: TextIO, subfams: List[str]):
                         transition_dict = {}
                         pos = line.strip().split()[0]
                         emmission = line.strip().split()[1:]
-                        for i in range(len(char_pos)):
-                            emmission_dict[char_pos[i]] = emmission[i]
+                        for i in range(len(chars)):
+                            emmission_dict[chars[i]] = emmission[i]
                         file.readline()
                         transition = file.readline().strip().split()
                         for i in range(len(transition)):
-                            transition_dict[transition_pos[i]] = transition[i]
+                            transition_dict[transitions[i]] = transition[i]
                         pos_dict["emission"] = emmission_dict
                         pos_dict["transition"] = transition_dict
-                        hmm_sub_dict[pos] = pos_dict
+                        hmm_sub_dict[int(pos)] = pos_dict
                     line = file.readline()
                 hmm_dict[name] = hmm_sub_dict
         line = file.readline()
