@@ -288,7 +288,6 @@ def fill_align_matrix(
                     break
 
                 col_index += 1
-
             seq_index += 1
 
         # add trailing cells and normalizes
@@ -462,26 +461,26 @@ def fill_hmm_align_matrix(
 
         # scores for first part, until we get to full sized chunks
         # hmm start position doesn't change
-        gap_index: int = -1  # track position of insertion chunk
-        insertion_score: float  # score per position in insertion chunk
+        end_gap_index: int = -1  # index of gap at end of chunk
+        end_insertion_score: float  # score per position for end insertion chunk
         for k in range(half_chunk - 1, -1, -1):
             if (
                 chroms[i][seq_index + offset] != "-"  # next in chrom
             ):  # if no new gap introduced, move along seq and add next nucl into score
                 if subfams[i][seq_index + offset] == "-":  # next in subfam
                     # not a gap in chrom, gap in subfam -> insertion
-                    if seq_index + offset == gap_index + 1:  # same gap
-                        gap_index += 1
+                    if seq_index + offset == end_gap_index + 1:  # same gap
+                        end_gap_index += 1
                     else:  # new gap
-                        insertion_score = calculate_insertion_score(
+                        end_insertion_score = calculate_insertion_score(
                             hmm_end,
                             chroms[i][seq_index + offset :],
                             subfams[i][seq_index + offset],
                             subfam_hmm,
                         )
 
-                        gap_index = seq_index + offset  # new gap index
-                    align_score -= log(insertion_score)
+                        end_gap_index = seq_index + offset  # new gap index
+                    align_score -= log(end_insertion_score)
                 else:  # match
                     hmm_end += 1
                     emission_score = float(
@@ -550,7 +549,8 @@ def fill_hmm_align_matrix(
 
         col_index += 1
         num_nucls: int = chunk_size  # how many nucls contributed to align score
-
+        start_gap_index = -1  # index of gap at start of chunk
+        start_insertion_score: float  # score per position for start insertion chunk
         # seq index -> seq index + 1
         # increase start when char to char, gap to char
         # move to next chunk by adding next chars score and subtracting prev chars score
@@ -568,6 +568,19 @@ def fill_hmm_align_matrix(
 
             if subfam_seq[seq_index + 1] != "-":
                 hmm_start += 1
+
+            # check to update start insertion
+            if subfam_seq[seq_index] == "-":
+                # calc new start insertion
+                if start_gap_index != seq_index:
+                    start_insertion_score = calculate_insertion_score(
+                        hmm_start,
+                        chrom_seq[seq_index:],
+                        subfam_seq[seq_index:],
+                        subfam_hmm,
+                    )
+                start_gap_index = seq_index + 1
+
             # skip over gap at start and not calc a score for the matrix
             if chrom_seq[seq_index + 1] != "-":
                 # if new gap introduced, or gets rid of old gap, recalc offset, rerun CalcScore
@@ -627,22 +640,14 @@ def fill_hmm_align_matrix(
 
                 else:
                     # chrom_seq[seq_index + offset] != "-" and chrom_seq[seq_index] != "-"
-
                     # align_score from previous segment - prev chars score + next chars score
                     # subtracting prev chars score
                     if subfam_seq[seq_index] == "-":
                         # remove insertion score
-                        # remove 1/length of gap * full gap score
-                        # or save a var that is 1 nuc of gap score
                         num_nucls -= 1
+                        # remove -log(score)
+                        align_score += log(start_insertion_score)
 
-                        # What are these scores?
-                        gap_ext = 0
-                        gap_init = 0
-                        if subfam_seq[seq_index - 1] == "-":
-                            align_score = align_score - gap_ext
-                        else:
-                            align_score = align_score - gap_init
                     else:
                         # Both chars at seq_index
                         if subfam_seq[seq_index + 1] == "-":
