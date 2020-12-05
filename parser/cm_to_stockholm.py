@@ -86,7 +86,19 @@ def get_score_matrix(file_contents):
 
     return score_matrix
 
-def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto):
+
+def get_gap_penalties(file_contents):
+    """
+    returns gap_init and gap_ext
+    """
+    m_string = re.search(r'Gap penalties: gap_init: (.+?), gap_ext: (.+?),', file_contents)
+    gap_init = m_string[1]
+    gap_ext = m_string[2]
+
+    return gap_init, gap_ext
+
+
+def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto):
     """
     prints all info in correct format for stockholm
     """
@@ -109,6 +121,8 @@ def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, co
     f_out_sto.write(f'#=GF CSP {consensus_stop}\n')
     f_out_sto.write(f'#=GF FL  {flank}\n')
     f_out_sto.write(f'#=GF MX  {matrix_name}\n')
+    f_out_sto.write(f'#=GF GI  {gap_init}\n')
+    f_out_sto.write(f'#=GF GE  {gap_ext}\n')
 
 
 def get_alignment(alignment_array):
@@ -169,6 +183,8 @@ if __name__ == "__main__":
     score_matrix = get_score_matrix(file_contents)
     print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
 
+    gap_init, gap_ext = get_gap_penalties(file_contents)
+
     alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
 
     for region in alignments:
@@ -195,7 +211,7 @@ if __name__ == "__main__":
 
         chrom_seq, subfam_seq = get_alignment(alignment_array)
 
-        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto)
+        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto)
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
