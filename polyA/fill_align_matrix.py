@@ -14,7 +14,7 @@ def fill_align_matrix(
     subfams: List[str],
     chroms: List[str],
     starts: List[int],
-    sub_matrix: Dict[str, int],
+    sub_matrices: List[Dict[str, int]],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
@@ -51,7 +51,7 @@ def fill_align_matrix(
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}
+    >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
     >>> (c, m) = fill_align_matrix(0.1, 0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
     >>> c
     41
@@ -67,6 +67,7 @@ def fill_align_matrix(
     for i in range(1, len(chroms)):
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
+        sub_matrix = sub_matrices[i]
 
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,

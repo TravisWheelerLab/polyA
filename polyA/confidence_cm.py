@@ -94,8 +94,8 @@ def confidence_cm(
 
 
 def confidence_only(
-    lambdaa: float,
     region: List[float],
+    lambs: List[float],
 ) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment scores. Loops
@@ -111,8 +111,11 @@ def confidence_only(
     output:
     confidence_list: list of confidence values for competing annotations
 
-    >>> reg = [100., 55., 1.,]
-    >>> conf = confidence_only(.1227, reg)
+    TODO: Update doctest to account for different lambda values
+
+    >>> reg = [100., 55., 1.]
+    >>> lambs = [.1227] * 3
+    >>> conf = confidence_only(reg, lambs)
     >>> conf
     [0.9843787551069454, 0.015380918048546022, 0.0002403268445085316]
     """
@@ -122,7 +125,7 @@ def confidence_only(
 
     # alignment scores
     for index in range(len(region)):
-        converted_score = 2 ** int(region[index] * lambdaa)
+        converted_score = 2 ** int(region[index] * lambs[index])
         confidence_list.append(converted_score)
         score_total += converted_score
 

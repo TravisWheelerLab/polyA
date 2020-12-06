@@ -11,7 +11,6 @@ usage: {argv[0]} alignFile subMatrixFile\n
 ARGUMENTS
     --gap-init [-25]
     --gap-ext [-5]
-    --lambda [will calculate from substitution matrix if not included]
     --chunk-size (must be odd) [31]
     --esl-path <path to Easel>
     --confidence - output confidence for a single annotation without running whole algorithm
@@ -116,13 +115,26 @@ def run():
         else {}
     )
 
+    # --------------------------------------
+    # Determine the correct value for lambda
+    # --------------------------------------
+
+    # FIXME: Assign only unassigned lambda values in a list
+    # raw_lambs = [sub_matrices[a.sub_matrix_name] for a in alignments]
+    # lambs = [l if l is not None else provider() for l in raw_lambs]
+    # if not lambda_value:
+    #     provider = EaselLambdaProvider(esl_path, sub_matrix_path)
+    #     lambda_value = provider()
+
+    lambda_provider = EaselLambdaProvider(esl_path)
+
     # ----------------------------
     # Load the substitution matrix
     # ----------------------------
 
     sub_matrix_path: str = args[1]
     with open(sub_matrix_path) as _sub_matrix_file:
-        sub_matrix = load_substitution_matrix(_sub_matrix_file)
+        sub_matrices = load_substitution_matrices(_sub_matrix_file)
 
     # -------------------------------------------------
     # Flags and parameters related to secondary outputs
@@ -142,15 +154,6 @@ def run():
 
     with open(infile) as _infile:
         alignments = list(load_alignments(_infile))
-
-    # --------------------------------------
-    # Determine the correct value for lambda
-    # --------------------------------------
-
-    lambda_value = float(opts["--lambda"]) if "--lambda" in opts else 0.0
-    if not lambda_value:
-        provider = EaselLambdaProvider(esl_path, sub_matrix_path)
-        lambda_value = provider()
 
     # --------------------------
     # Run confidence calculation
@@ -184,7 +187,7 @@ def run():
             heatmap_file,
             print_matrix_pos,
             print_seq_pos,
-            sub_matrix,
+            sub_matrices,
             subfam_counts,
         )
 

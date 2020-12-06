@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from polyA import confidence_cm
+from polyA import SubMatrixCollection, confidence_cm
 from polyA.calculate_score import calculate_score
 from polyA.sum_repeat_scores import SumRepeatScores
 
@@ -19,7 +19,7 @@ def fill_node_confidence(
     subfam_seqs: List[str],
     chrom_seqs: List[str],
     subfam_countss: Dict[str, float],
-    sub_matrix: Dict[str, int],
+    sub_matrix: SubMatrixCollection,
     repeat_scores: Dict[int, float],
     tr_count: int,
 ) -> Dict[Tuple[str, int], float]:

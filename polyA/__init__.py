@@ -63,7 +63,11 @@ from .printers import (
     print_results_soda,
 )
 from .prior_counts import read_prior_counts
-from .substitution_matrix import load_substitution_matrix
+from .substitution_matrix import (
+    load_substitution_matrices,
+    SubMatrix,
+    SubMatrixCollection,
+)
 from .ultra_provider import (
     UltraProvider,
     UltraOutput,

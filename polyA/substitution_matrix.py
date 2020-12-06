@@ -1,40 +1,113 @@
 import re
-from typing import Dict, TextIO
-
-SubMatrix = Dict[str, int]
+from typing import Dict, List, Optional, TextIO, Tuple
 
 
-def load_substitution_matrix(file: TextIO) -> SubMatrix:
+ScoresDict = Dict[str, int]
+
+
+class SubMatrix:
     """
-    Reads the score matrix from a file and returns a dictionary that
-    maps '<char1><char2>' to the score from the input substitution
+    A single substitution matrix, including its name and lambda value.
+    The lambda value may be `None`, in which case it must be computed
+    before the matrix can be used.
+
+    A single matrix maps '<char1><char2>' (a pair of characters from
+    the input alphabet) to the score from the input substitution
     matrix.
 
     For example: 'AA' => 8
+    """
+
+    lamb: Optional[float] = None
+    name: str
+    scores: ScoresDict
+
+    def __init__(self, name: str, lamb: Optional[float] = None):
+        self.lamb = lamb
+        self.name = name
+        self.scores = {}
+
+
+SubMatrixCollection = Dict[str, SubMatrix]
+
+
+def _parse_matrix_header(line: str) -> Tuple[str, Optional[float]]:
+    """
+    Attempt to parse a matrix header from the given line, containing
+    a matrix name and, optionally, a lambda value.
+    """
+    clean_line = re.sub(r"^\s+|\s+$", "", line)
+    tokens = re.split(r"\s", clean_line)
+
+    if len(tokens) == 0:
+        raise RuntimeError("incomplete substitution matrix header")
+    if len(tokens) > 2:
+        raise RuntimeError("invalid substitution matrix header")
+
+    if len(tokens) == 1:
+        return tokens[0], None
+    if len(tokens) == 2:
+        return tokens[0], float(tokens[1])
+
+
+def _parse_chars(line: str) -> List[str]:
+    clean_line = re.sub(r"^\s+|\s+$", "", line)
+    return re.split(r"\s+", clean_line)
+
+
+def load_substitution_matrices(
+    file: TextIO,
+    alphabet_chars: str = "AGCTYRWSKMDVHBXN",
+    ambiguity_chars: str = ".",
+) -> SubMatrixCollection:
+    """
+    Reads a set of score matrices from a file and returns a
+    `SubMatrixCollection` that contains the matrices and any lambda
+    values associated with them.
+
+    Each matrix has a name, which is then specified for each
+    alignment that is to be adjudicated.
 
     TODO: Write a doctest for this
+    TODO: Add additional ambiguity codes to default value
     """
-    sub_matrix: SubMatrix = {}
+    collection: SubMatrixCollection = {}
 
-    # TODO: Add all ambiguity codes
-    nucleotide_codes = "AGCTYRWSKMDVHBXN."
+    while True:
+        next_scores: ScoresDict = {}
 
-    for code1 in nucleotide_codes:
-        for code2 in nucleotide_codes:
-            sub_matrix[code1 + code2] = 0
+        for char1 in alphabet_chars + ambiguity_chars:
+            for char2 in alphabet_chars + ambiguity_chars:
+                next_scores[char1 + char2] = 0
 
-    line = next(file)
-    line = re.sub(r"^\s+", "", line)
-    line = re.sub(r"\s+$", "", line)
-    chars = re.split(r"\s+", line)
+        try:
+            header_line = next(file)
+            name, lamb = _parse_matrix_header(header_line)
+        except StopIteration:
+            break
 
-    count: int = 0
-    for line in file:
-        line = re.sub(r"^\s+", "", line)
-        line = re.sub(r"\s+$", "", line)
-        sub_scores = re.split(r"\s+", line)
-        for i in range(len(sub_scores)):
-            sub_matrix[chars[count] + chars[i]] = int(sub_scores[i])
-        count += 1
+        try:
+            chars_line = next(file)
+            chars = _parse_chars(chars_line)
+        except StopIteration:
+            raise RuntimeError("dangling substitution matrix header")
 
-    return sub_matrix
+        count: int = 0
+        for line in file:
+            if "//" in line:
+                break
+
+            clean_line = re.sub(r"^\s+|\s+$", "", line)
+            sub_scores = re.split(r"\s+", clean_line)
+            for i in range(len(sub_scores)):
+                next_scores[chars[count] + chars[i]] = int(sub_scores[i])
+            count += 1
+
+        if len(next_scores) == 0:
+            raise RuntimeError("missing substitution matrix values")
+
+        sub_matrix = SubMatrix(name, lamb)
+        sub_matrix.scores = next_scores
+        collection[name] = sub_matrix
+
+    return collection
