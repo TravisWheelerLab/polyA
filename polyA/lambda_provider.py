@@ -3,7 +3,7 @@ import re
 from tempfile import NamedTemporaryFile
 from typing import Callable, Dict
 
-LambdaProvider = Callable[[str], float]
+LambdaProvider = Callable[[Dict[str, int]], float]
 """
 A callback that accepts a substitution matrix name
 and returns the corresponding lambda value for that
@@ -17,7 +17,7 @@ class ConstantLambdaProvider:
     value passed when called.
 
     >>> p: LambdaProvider = ConstantLambdaProvider(1.0)
-    >>> p("foo")
+    >>> p({})
     1.0
     """
 
@@ -26,7 +26,7 @@ class ConstantLambdaProvider:
     def __init__(self, value: float):
         self._lambda = value
 
-    def __call__(self, name: str) -> float:
+    def __call__(self, matrix: Dict[str, int]) -> float:
         return self._lambda
 
 
@@ -37,20 +37,14 @@ class EaselLambdaProvider:
     """
 
     _path: str
-    _matrices: Dict[str, Dict[str, int]]
 
-    def __init__(self, easel_path: str, matrices: Dict[str, Dict[str, int]]):
+    def __init__(self, easel_path: str):
         self._path = easel_path
-        self._matrices = matrices
 
-    def __call__(self, name: str) -> float:
-        if name not in self._matrices:
-            raise RuntimeError(f"matrix named '{name}' not found")
-
+    def __call__(self, matrix: Dict[str, int]) -> float:
         # Create the temporary matrix file
         with NamedTemporaryFile("w", delete=False) as matrix_file:
             temp_matrix_path = matrix_file.name
-            matrix = self._matrices[name]
             chars = [k[0] for k in matrix]
             matrix_file.write(" ".join(chars) + "\n")
             for char1 in chars:

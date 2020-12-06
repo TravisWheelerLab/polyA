@@ -4,14 +4,14 @@ set -e
 
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seq-pos --lambda .1227 "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 
 # tests confidence only option - use --lambda just so doesn't run esl_scorematrix
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --lambda .1227 --confidence "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --confidence "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 
@@ -26,7 +26,7 @@ done
 #tests soda output
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seq-pos --lambda .1227 --soda --heatmap "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --soda --heatmap "$f" ../fixtures/25p41g_edited.matrix;
   ls polya-output.*
   rm polya-output.*.viz;
   rm polya-output.*.viz.json;
@@ -37,6 +37,6 @@ done
 ##tests prior counts
 for f in ../fixtures/ex*.sto;
 do echo "$f";
-  python -m polyA --seq-pos --lambda .1227 --prior-counts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --prior-counts ../fixtures/SubfamPriorCounts.txt "$f" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done

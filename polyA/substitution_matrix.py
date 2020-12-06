@@ -1,5 +1,15 @@
 import re
+import logging
 from typing import Dict, List, Optional, TextIO, Tuple
+
+from .lambda_provider import LambdaProvider
+
+
+_logger = logging.root.getChild(__name__)
+
+
+class ParseError(RuntimeError):
+    pass
 
 
 ScoresDict = Dict[str, int]
@@ -22,7 +32,7 @@ class SubMatrix:
     name: str
     scores: ScoresDict
 
-    def __init__(self, name: str, lamb: Optional[float] = None):
+    def __init__(self, name: str, lamb: float):
         self.lamb = lamb
         self.name = name
         self.scores = {}
@@ -40,9 +50,9 @@ def _parse_matrix_header(line: str) -> Tuple[str, Optional[float]]:
     tokens = re.split(r"\s", clean_line)
 
     if len(tokens) == 0:
-        raise RuntimeError("incomplete substitution matrix header")
+        raise ParseError(f"incomplete substitution matrix header: '{line}'")
     if len(tokens) > 2:
-        raise RuntimeError("invalid substitution matrix header")
+        raise ParseError(f"invalid substitution matrix header: '{line}'")
 
     if len(tokens) == 1:
         return tokens[0], None
@@ -57,6 +67,7 @@ def _parse_chars(line: str) -> List[str]:
 
 def load_substitution_matrices(
     file: TextIO,
+    lambda_provider: LambdaProvider,
     alphabet_chars: str = "AGCTYRWSKMDVHBXN",
     ambiguity_chars: str = ".",
 ) -> SubMatrixCollection:
@@ -71,6 +82,8 @@ def load_substitution_matrices(
     TODO: Write a doctest for this
     TODO: Add additional ambiguity codes to default value
     """
+    _logger.debug(f"load_substitution_matrix({file.name})")
+
     collection: SubMatrixCollection = {}
 
     while True:
@@ -90,7 +103,7 @@ def load_substitution_matrices(
             chars_line = next(file)
             chars = _parse_chars(chars_line)
         except StopIteration:
-            raise RuntimeError("dangling substitution matrix header")
+            raise ParseError("dangling substitution matrix header")
 
         count: int = 0
         for line in file:
@@ -104,7 +117,12 @@ def load_substitution_matrices(
             count += 1
 
         if len(next_scores) == 0:
-            raise RuntimeError("missing substitution matrix values")
+            raise ParseError(
+                f"missing substitution matrix values: '{file.name}'"
+            )
+
+        if lamb is None:
+            lamb = lambda_provider(next_scores)
 
         sub_matrix = SubMatrix(name, lamb)
         sub_matrix.scores = next_scores

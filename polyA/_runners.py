@@ -97,7 +97,7 @@ def run_full(
     chunk_size: int,
     gap_ext: int,
     gap_init: int,
-    lambdaa: float,
+    lambda_values: List[float],
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
     outfile_heatmap: Optional[TextIO],
@@ -177,7 +177,7 @@ def run_full(
     rows: int = seq_count
 
     cols, align_matrix = fill_align_matrix(
-        lambdaa,
+        lambda_values,
         start_all,
         chunk_size,
         gap_ext,
@@ -398,7 +398,6 @@ def run_full(
             start_all,
             gap_init,
             gap_ext,
-            lambdaa,
             non_empty_columns,
             starts_matrix,
             stops_matrix,
@@ -407,7 +406,7 @@ def run_full(
             subfamily_sequences_matrix,
             chromosome_sequences_matrix,
             subfam_counts,
-            sub_matrix_scores,
+            substitution_matrices,
             repeat_scores,
             len(tandem_repeats),
         )

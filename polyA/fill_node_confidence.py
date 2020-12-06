@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple
 
-from polyA import SubMatrixCollection, confidence_cm
-from polyA.calculate_score import calculate_score
-from polyA.sum_repeat_scores import SumRepeatScores
+from .confidence_cm import confidence_cm
+from .substitution_matrix import SubMatrix
+from .calculate_score import calculate_score
+from .sum_repeat_scores import SumRepeatScores
 
 
 def fill_node_confidence(
@@ -10,7 +11,6 @@ def fill_node_confidence(
     start_all: int,
     gap_init: int,
     gap_ext: int,
-    lamb: float,
     columns: List[int],
     starts: List[int],
     stops: List[int],
@@ -19,7 +19,7 @@ def fill_node_confidence(
     subfam_seqs: List[str],
     chrom_seqs: List[str],
     subfam_countss: Dict[str, float],
-    sub_matrix: SubMatrixCollection,
+    sub_matrices: List[SubMatrix],
     repeat_scores: Dict[int, float],
     tr_count: int,
 ) -> Dict[Tuple[str, int], float]:
@@ -52,7 +52,7 @@ def fill_node_confidence(
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
     >>> rep_scores = {}
-    >>> node_conf = fill_node_confidence(3, 0, -25, -5, 0.1227, non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat, rep_scores, 0)
+    >>> node_conf = fill_node_confidence(3, 0, -25, -5, [0.1227] * 3, non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat, rep_scores, 0)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.19999999999999998, ('n2', 1): 0.7999999999999999, ('skip', 2): 0.0, ('n1', 2): 0.19999999999999998, ('n2', 2): 0.7999999999999999}
     """
@@ -70,6 +70,10 @@ def fill_node_confidence(
     begin_node0: int = columns[changes_position[0]]
     # alignment subfams
     for subfam_index0 in range(1, len(subfams) - tr_count):
+        # TODO(Kaitlin): Is this the correct index to use to get lambda?
+        sub_matrix = sub_matrices[subfam_index0]
+        lamb = sub_matrix.lamb
+
         count: int = 0
         align_score0: float = 0.0
         for i in range(
@@ -91,7 +95,7 @@ def fill_node_confidence(
             and begin_node0 <= stops[subfam_index0] - start_all
         ):
             align_score0 = lamb * calculate_score(
-                gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix
+                gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix.scores
             )
 
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0

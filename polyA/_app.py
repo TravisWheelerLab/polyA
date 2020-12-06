@@ -1,10 +1,12 @@
-import re
 from getopt import getopt
+import logging
 from sys import argv
-from typing import Dict, List
 
 from polyA._runners import run_confidence, run_full
 from polyA import *
+
+logging.root.addHandler(logging.StreamHandler())
+logging.root.setLevel(logging.DEBUG)
 
 helpMessage: str = f"""
 usage: {argv[0]} alignFile subMatrixFile\n
@@ -115,26 +117,17 @@ def run():
         else {}
     )
 
-    # --------------------------------------
-    # Determine the correct value for lambda
-    # --------------------------------------
-
-    # FIXME: Assign only unassigned lambda values in a list
-    # raw_lambs = [sub_matrices[a.sub_matrix_name] for a in alignments]
-    # lambs = [l if l is not None else provider() for l in raw_lambs]
-    # if not lambda_value:
-    #     provider = EaselLambdaProvider(esl_path, sub_matrix_path)
-    #     lambda_value = provider()
-
-    lambda_provider = EaselLambdaProvider(esl_path)
-
     # ----------------------------
     # Load the substitution matrix
     # ----------------------------
 
+    lambda_provider = EaselLambdaProvider(esl_path)
+
     sub_matrix_path: str = args[1]
     with open(sub_matrix_path) as _sub_matrix_file:
-        sub_matrices = load_substitution_matrices(_sub_matrix_file)
+        sub_matrices = load_substitution_matrices(
+            _sub_matrix_file, lambda_provider
+        )
 
     # -------------------------------------------------
     # Flags and parameters related to secondary outputs
@@ -155,12 +148,17 @@ def run():
     with open(infile) as _infile:
         alignments = list(load_alignments(_infile))
 
+    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+
     # --------------------------
     # Run confidence calculation
     # --------------------------
 
     if confidence_flag:
-        run_confidence(alignments, lambdaa=lambda_value)
+        run_confidence(
+            alignments,
+            lambs=lambda_values,
+        )
         exit()
 
     # ----------------------------------------------------------------
@@ -181,7 +179,7 @@ def run():
             chunk_size,
             gap_ext,
             gap_init,
-            lambda_value,
+            lambda_values,
             soda_viz_file,
             soda_conf_file,
             heatmap_file,
