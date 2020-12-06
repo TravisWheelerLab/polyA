@@ -86,20 +86,10 @@ def load_alignments(
         #=GF CST 135
         #=GF CSP 628
         #=GF FL  128
+        #=GF MX  20p41g.matrix
     """
     if add_skip_state:
-        yield Alignment(
-            subfamily="skip",
-            chrom="",
-            score=0,
-            start=0,
-            stop=0,
-            consensus_start=0,
-            consensus_stop=0,
-            sequences=["", ""],
-            strand="",
-            flank=0,
-        )
+        yield get_skip_state()
 
     meta = {}
     seqs = []
@@ -136,6 +126,7 @@ def load_alignments(
                     sequences=[seqs[0][::-1], seqs[1][::-1]],
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
+                    sub_matrix_name=meta["MX"],
                 )
             else:
                 yield Alignment(
@@ -149,6 +140,7 @@ def load_alignments(
                     sequences=[seqs[0], seqs[1]],
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
+                    sub_matrix_name=meta["MX"],
                 )
             meta.clear()
             seqs.clear()

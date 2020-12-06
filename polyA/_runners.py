@@ -6,7 +6,10 @@ from typing import Dict, List, Optional, TextIO, Tuple
 from polyA import *
 
 
-def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
+def run_confidence(
+    alignments: List[Alignment],
+    lambs: List[float],
+) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
     """
@@ -14,8 +17,13 @@ def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
     running the entire algorithm.
 
     :param alignments: list of alignments to run on
-    :param lambdaa: the value of lambda to use (from Easel)
+    :param lambs: the values of lambda to use for each alignment (from Easel)
     """
+    if len(alignments) != len(lambs):
+        raise RuntimeError(
+            "number of alignments must match number of lambda values"
+        )
+
     subfams = []
     subfam_rows = []
     scores = []
@@ -25,7 +33,7 @@ def run_confidence(alignments: List[Alignment], lambdaa: float) -> None:
         subfam_rows.append(i)
         scores.append(a.score)
 
-    confidence_list = confidence_only(lambdaa, scores)
+    confidence_list = confidence_only(scores, lambs)
     confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
 
     # TODO: Provide a writer to the function
@@ -89,13 +97,13 @@ def run_full(
     chunk_size: int,
     gap_ext: int,
     gap_init: int,
-    lambdaa: float,
+    lambda_values: List[float],
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
     outfile_heatmap: Optional[TextIO],
     print_matrix_pos: bool,
     print_seq_pos: bool,
-    subfam_matrix_scores: Dict[str, int],
+    sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
 ) -> None:
     seq_count = len(alignments)
@@ -119,6 +127,7 @@ def run_full(
     subfamily_sequences_matrix: List[str] = []
     chromosome_sequences_matrix: List[str] = []
     flanks_matrix: List[int] = []
+    substitution_matrices: List[SubMatrix] = []
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
@@ -132,6 +141,9 @@ def run_full(
         subfamily_sequences_matrix.append(alignment.subfamily_sequence)
         chromosome_sequences_matrix.append(alignment.sequence)
         flanks_matrix.append(alignment.flank)
+        substitution_matrices.append(
+            sub_matrix_scores[alignment.sub_matrix_name]
+        )
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}
@@ -165,7 +177,7 @@ def run_full(
     rows: int = seq_count
 
     cols, align_matrix = fill_align_matrix(
-        lambdaa,
+        lambda_values,
         start_all,
         chunk_size,
         gap_ext,
@@ -174,7 +186,7 @@ def run_full(
         subfamily_sequences_matrix,
         chromosome_sequences_matrix,
         starts_matrix,
-        subfam_matrix_scores,
+        [sm.scores for sm in substitution_matrices],
     )
 
     # originally NonEmptyColumns and ActiveCells have trailing edge included
@@ -386,7 +398,6 @@ def run_full(
             start_all,
             gap_init,
             gap_ext,
-            lambdaa,
             non_empty_columns,
             starts_matrix,
             stops_matrix,
@@ -395,7 +406,7 @@ def run_full(
             subfamily_sequences_matrix,
             chromosome_sequences_matrix,
             subfam_counts,
-            subfam_matrix_scores,
+            substitution_matrices,
             repeat_scores,
             len(tandem_repeats),
         )

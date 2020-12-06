@@ -7,7 +7,7 @@ for f in ../fixtures/ultra_test_files/*.fa ;
 do echo "$f";
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
-  python -m polyA --seq-pos --lambda .1227 --ultra-output "$ultra_output" "$align_file" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --ultra-output "$ultra_output" "$align_file" ../fixtures/25p41g_edited.matrix;
   printf -- "-------------------------------------------------------------\n";
 done
 
@@ -16,7 +16,7 @@ for f in ../fixtures/ultra_test_files/*.fa ;
 do echo "$f";
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
-  python -m polyA --seq-pos --lambda .1227 --soda --heatmap --ultra-output "$ultra_output" "$align_file" ../fixtures/25p41g_edited.matrix;
+  python -m polyA --seq-pos --soda --heatmap --ultra-output "$ultra_output" "$align_file" ../fixtures/25p41g_edited.matrix;
   ls polya-output.*
   rm polya-output.*.viz;
   rm polya-output.*.viz.json;

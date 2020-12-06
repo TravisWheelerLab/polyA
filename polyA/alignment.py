@@ -1,5 +1,5 @@
 import re
-from typing import Callable, Dict, Iterable, List, NamedTuple, TextIO
+from typing import Dict, List, NamedTuple
 
 
 class Alignment(NamedTuple):
@@ -17,6 +17,7 @@ class Alignment(NamedTuple):
     sequences: List[str]
     strand: str
     flank: int
+    sub_matrix_name: str
 
     chrom_meta: Dict[str, str] = {}
 
@@ -78,6 +79,7 @@ _skip = Alignment(
     sequences=["", ""],
     strand="",
     flank=0,
+    sub_matrix_name="",
 )
 
 
