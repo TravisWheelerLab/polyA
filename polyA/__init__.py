@@ -11,8 +11,6 @@ from .collapse_matrices import collapse_matrices
 from .confidence_cm import confidence_cm, confidence_only
 from .constants import (
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_GAP_EXT,
-    DEFAULT_GAP_INIT,
     DEFAULT_SHARD_GAP,
     PROB_SKIP_TR,
     PROB_SKIP,
