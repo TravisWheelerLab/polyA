@@ -141,11 +141,15 @@ def run_full(
         subfamily_sequences_matrix.append(alignment.subfamily_sequence)
         chromosome_sequences_matrix.append(alignment.sequence)
         flanks_matrix.append(alignment.flank)
-        substitution_matrices.append(
-            sub_matrix_scores[alignment.sub_matrix_name]
-        )
         gap_inits.append(alignment.gap_init)
         gap_exts.append(alignment.gap_ext)
+
+        if alignment.sub_matrix_name in sub_matrix_scores:
+            substitution_matrices.append(
+                sub_matrix_scores[alignment.sub_matrix_name]
+            )
+        else:
+            substitution_matrices.append(SubMatrix("skip", 0.0))
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}
