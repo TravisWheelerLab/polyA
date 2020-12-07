@@ -68,14 +68,12 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
         stdout.write("start\tstop\tID\tname\n")
         stdout.write("----------------------------------------\n")
         stdout.write(
-            f"{0}\t{target.stop - target.start}\t1111\t{target.subfamily}\n"
+            f"{0}\t{target.stop - target.start}\tNA\t{target.subfamily}\n"
         )
     else:
         stdout.write("start\tstop\tID\tname\n")
         stdout.write("----------------------------------------\n")
-        stdout.write(
-            f"{target.start}\t{target.stop}\t1111\t{target.subfamily}\n"
-        )
+        stdout.write(f"{target.start}\t{target.stop}\tNA\t{target.subfamily}\n")
 
 
 def _change_probs(seq_count: int) -> Tuple[float, float, float]:
@@ -357,17 +355,14 @@ def run_full(
         collapsed_matrices,
     )
 
-    node_id = START_ID
-
     # node_ids for each nucleotide will be assigned during DP backtrace
-    node_ids = [0] * cols
+    node_ids = [""] * cols
 
     changes_orig: List[str] = []
     changes_position_orig: List[int] = []
     non_empty_columns_orig: List[int] = []
 
-    (node_id, changes_position, changes) = get_path(
-        node_id,
+    (changes_position, changes) = get_path(
         non_empty_columns,
         node_ids,
         changes_orig,
@@ -480,8 +475,7 @@ def run_full(
         changes.clear()
         changes_position.clear()
 
-        (node_id, changes_position, changes) = get_path(
-            node_id,
+        (changes_position, changes) = get_path(
             non_empty_columns,
             node_ids,
             changes,

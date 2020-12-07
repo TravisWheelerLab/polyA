@@ -1,11 +1,11 @@
 from math import inf
+from uuid import uuid4
 from typing import Dict, List, Tuple
 
 
 def get_path(
-    temp_id: int,
     columns: List[int],
-    ids: List[int],
+    ids: List[str],
     changes_orig: List[str],
     changes_position_orig: List[int],
     columns_orig: List[int],
@@ -14,7 +14,7 @@ def get_path(
     active_cells_collapse: Dict[int, List[int]],
     origin_matrix: Dict[Tuple[int, int], int],
     same_subfam_change_matrix: Dict[Tuple[int, int], int],
-) -> Tuple[int, List[int], List[str]]:
+) -> Tuple[List[int], List[str]]:
     """
     back traces through origin matrix to get most probable path through the DP matrix.
     Finds where the path switches to a different row and populates Changes and ChangesPosition.
@@ -45,15 +45,13 @@ def get_path(
     updates input list ids
 
     >>> non_cols = [0, 1, 2, 3]
-    >>> idss = [0, 0, 0, 0]
+    >>> idss = ["", "", "", ""]
     >>> subs = ["s1", "s2"]
     >>> active_col = {0: [0, 1], 1: [0, 1], 2: [0, 1], 3: [0, 1]}
     >>> last_col = [-100, -10]
     >>> orig_mat = {(0, 0): 0, (1, 0): 1, (0, 1): 0, (1, 1): 0, (0, 2): 0, (1, 2): 0, (0, 3): 0, (1, 3): 1}
     >>> same_sub_mat = {}
-    >>> (temp_idd, changes_pos, changess) = get_path(1111, non_cols, idss, [], [], [], subs, last_col, active_col, orig_mat, same_sub_mat)
-    >>> temp_idd
-    3579
+    >>> (changes_pos, changess) = get_path(non_cols, idss, [], [], [], subs, last_col, active_col, orig_mat, same_sub_mat)
     >>> changes_pos
     [0, 2, 3]
     >>> changess
@@ -76,7 +74,9 @@ def get_path(
 
     prev_row_index: int = origin_matrix[max_row_index, columns[-1]]
 
-    ids[columns[-1]] = temp_id
+    current_id = uuid4().hex
+
+    ids[columns[-1]] = current_id
 
     # last column is a skip state pad
     changes_position.append(len(columns) - 1)
@@ -87,7 +87,7 @@ def get_path(
         prev_column: int = columns[columns_index - 1]
         curr_column: int = columns[columns_index]
 
-        ids[columns[columns_index - 1]] = temp_id
+        ids[columns[columns_index - 1]] = current_id
 
         # updates the original node labels if they change when being stitched
         for i in range(len(changes_position_orig) - 1):
@@ -97,25 +97,22 @@ def get_path(
                 ]
 
         if prev_row_index != origin_matrix[prev_row_index, prev_column]:
-            temp_id += 1234
+            current_id = uuid4().hex
             changes_position.append(columns_index - 1)
             changes.append(subfams_collapse[prev_row_index])
         else:
             if (prev_row_index, prev_column) in same_subfam_change_matrix:
-                temp_id += 1234
+                current_id = uuid4().hex
                 changes_position.append(columns_index - 1)
                 changes.append(subfams_collapse[prev_row_index])
 
         prev_row_index = origin_matrix[prev_row_index, prev_column]
 
-    ids[columns[0]] = temp_id
+    ids[columns[0]] = current_id
     changes_position.append(0)
     changes.append(subfams_collapse[prev_row_index])
 
     changes.reverse()
     changes_position.reverse()
 
-    # changes ID for next round of stitching, so when starts stitching will have unique ID
-    temp_id += 1234
-
-    return temp_id, changes_position, changes
+    return changes_position, changes

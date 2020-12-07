@@ -78,7 +78,7 @@ def print_results(
     changes_orig: List[str],
     changespos_orig: List[int],
     columns_orig: List[int],
-    ids: List[int],
+    ids: List[str],
 ) -> None:
     """
     prints the final results
@@ -105,7 +105,7 @@ def print_results_sequence(
     changes_orig: List[str],
     changespos_orig: List[int],
     columns_orig: List[int],
-    ids: List[int],
+    ids: List[str],
 ) -> None:
     """
     prints final results
@@ -133,7 +133,7 @@ def print_results_chrom(
     changes_orig: List[str],
     changespos_orig: List[int],
     columns_orig: List[int],
-    ids: List[int],
+    ids: List[str],
 ) -> None:
     """
     prints final results
@@ -182,7 +182,7 @@ def print_results_soda(
     consensus_matrix_collapse: Dict[Tuple[int, int], int],
     subfams_collapse_index: Dict[str, int],
     node_confidence_orig: Dict[Tuple[str, int], float],
-    ids: List[int],
+    ids: List[str],
 ) -> None:
     """
     prints the results in the proper format to input into the SODA visualization tool
