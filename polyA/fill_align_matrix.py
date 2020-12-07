@@ -69,6 +69,8 @@ def fill_align_matrix(
         chrom_seq: str = chroms[i]
         sub_matrix = sub_matrices[i]
         lamb = lambda_values[i]
+        gap_init = gap_inits[i]
+        gap_ext = gap_exts[i]
 
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
