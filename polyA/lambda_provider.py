@@ -45,8 +45,9 @@ class EaselLambdaProvider:
         # Create the temporary matrix file
         with NamedTemporaryFile("w", delete=False) as matrix_file:
             temp_matrix_path = matrix_file.name
-            chars = [k[0] for k in matrix]
+            chars = set([k[0] for k in matrix])
             matrix_file.write(" ".join(chars) + "\n")
+
             for char1 in chars:
                 line = " ".join([str(matrix[char1 + char2]) for char2 in chars])
                 matrix_file.write(line + "\n")
