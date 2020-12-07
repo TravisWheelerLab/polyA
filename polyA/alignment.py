@@ -18,6 +18,8 @@ class Alignment(NamedTuple):
     strand: str
     flank: int
     sub_matrix_name: str
+    gap_init: int
+    gap_ext: int
 
     chrom_meta: Dict[str, str] = {}
 
@@ -80,6 +82,8 @@ _skip = Alignment(
     strand="",
     flank=0,
     sub_matrix_name="",
+    gap_init=0,
+    gap_ext=0,
 )
 
 

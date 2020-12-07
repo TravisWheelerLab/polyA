@@ -11,8 +11,6 @@ logging.root.setLevel(logging.DEBUG)
 helpMessage: str = f"""
 usage: {argv[0]} alignFile subMatrixFile\n
 ARGUMENTS
-    --gap-init [-25]
-    --gap-ext [-5]
     --chunk-size (must be odd) [31]
     --esl-path <path to Easel>
     --confidence - output confidence for a single annotation without running whole algorithm
@@ -39,8 +37,6 @@ def run():
         argv[1:],
         "",
         [
-            "gap-init=",
-            "gap-ext=",
             "skipScore=",
             "lambda=",
             "esl-path=",
@@ -65,10 +61,6 @@ def run():
         print(helpMessage)
         exit(0)
 
-    gap_init = (
-        int(opts["--gap-init"]) if "--gap-init" in opts else DEFAULT_GAP_INIT
-    )
-    gap_ext = int(opts["--gap-ext"]) if "--gap-ext" in opts else DEFAULT_GAP_EXT
     esl_path = str(opts["--esl-path"]) if "--esl-path" in opts else ""
     chunk_size = (
         int(opts["--chunk-size"])
@@ -177,8 +169,6 @@ def run():
             chunk,
             tandem_repeats,
             chunk_size,
-            gap_ext,
-            gap_init,
             lambda_values,
             soda_viz_file,
             soda_conf_file,

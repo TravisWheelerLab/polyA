@@ -9,8 +9,8 @@ from .sum_repeat_scores import SumRepeatScores
 def fill_node_confidence(
     nodes: int,
     start_all: int,
-    gap_init: int,
-    gap_ext: int,
+    gap_inits: List[int],
+    gap_exts: List[int],
     columns: List[int],
     starts: List[int],
     stops: List[int],
@@ -70,9 +70,12 @@ def fill_node_confidence(
     begin_node0: int = columns[changes_position[0]]
     # alignment subfams
     for subfam_index0 in range(1, len(subfams) - tr_count):
-        # TODO(Kaitlin): Is this the correct index to use to get lambda?
+        # TODO(Kaitlin): Is this the correct index to use to get lambda and gaps?
         sub_matrix = sub_matrices[subfam_index0]
         lamb = sub_matrix.lamb
+
+        gap_init = gap_inits[subfam_index0]
+        gap_ext = gap_exts[subfam_index0]
 
         count: int = 0
         align_score0: float = 0.0
@@ -95,7 +98,13 @@ def fill_node_confidence(
             and begin_node0 <= stops[subfam_index0] - start_all
         ):
             align_score0 = lamb * calculate_score(
-                gap_ext, gap_init, subfam0, chrom0, "", "", sub_matrix.scores
+                gap_ext,
+                gap_init,
+                subfam0,
+                chrom0,
+                "",
+                "",
+                sub_matrix.scores,
             )
 
         node_confidence_temp[subfam_index0 * nodes + 0] = align_score0
@@ -114,7 +123,9 @@ def fill_node_confidence(
             and begin_node0 <= stops[subfam_index0] - start_all
         ):
             rep_sum_score0 = SumRepeatScores(
-                begin_node0, end_node0, repeat_scores
+                begin_node0,
+                end_node0,
+                repeat_scores,
             )
         node_confidence_temp[subfam_index0 * nodes + 0] = rep_sum_score0
 
@@ -154,6 +165,12 @@ def fill_node_confidence(
             subfam: str = subfam_seqs[subfam_index][begin_node:end_node]
             chrom: str = chrom_seqs[subfam_index][begin_node:end_node]
 
+            sub_matrix = sub_matrices[subfam_index]
+            lamb = sub_matrix.lamb
+
+            gap_init = gap_inits[subfam_index]
+            gap_ext = gap_exts[subfam_index]
+
             align_score: float = 0.0
             # if whole alignment is padding - don't run CalcScore
             if (
@@ -167,7 +184,7 @@ def fill_node_confidence(
                     chrom,
                     lastprev_subfam,
                     lastprev_chrom,
-                    sub_matrix,
+                    sub_matrix.scores,
                 )
             node_confidence_temp[
                 subfam_index * nodes + node_index
@@ -230,6 +247,12 @@ def fill_node_confidence(
         subfam2: str = subfam_seqs[subfam_index2][begin_node2 : end_node2 + 1]
         chrom2: str = chrom_seqs[subfam_index2][begin_node2 : end_node2 + 1]
 
+        sub_matrix = sub_matrices[subfam_index2]
+        lamb = sub_matrix.lamb
+
+        gap_init = gap_inits[subfam_index2]
+        gap_ext = gap_exts[subfam_index2]
+
         align_score2: float = 0.0
         # if whole alignment is padding - don't run CalcScore
         if (
@@ -243,7 +266,7 @@ def fill_node_confidence(
                 chrom2,
                 lastprev_subfam2,
                 lastprev_chrom2,
-                sub_matrix,
+                sub_matrix.scores,
             )
         node_confidence_temp[subfam_index2 * nodes + nodes - 1] = align_score2
     # last node TRs

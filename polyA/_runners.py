@@ -95,8 +95,6 @@ def run_full(
     alignments: List[Alignment],
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
-    gap_ext: int,
-    gap_init: int,
     lambda_values: List[float],
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
@@ -128,6 +126,8 @@ def run_full(
     chromosome_sequences_matrix: List[str] = []
     flanks_matrix: List[int] = []
     substitution_matrices: List[SubMatrix] = []
+    gap_inits: List[int] = []
+    gap_exts: List[int] = []
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
@@ -144,6 +144,8 @@ def run_full(
         substitution_matrices.append(
             sub_matrix_scores[alignment.sub_matrix_name]
         )
+        gap_inits.append(alignment.gap_init)
+        gap_exts.append(alignment.gap_ext)
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}
@@ -180,8 +182,8 @@ def run_full(
         lambda_values,
         start_all,
         chunk_size,
-        gap_ext,
-        gap_init,
+        gap_inits,
+        gap_exts,
         SKIP_ALIGN_SCORE,
         subfamily_sequences_matrix,
         chromosome_sequences_matrix,
@@ -396,8 +398,8 @@ def run_full(
         node_confidence = fill_node_confidence(
             node_count,
             start_all,
-            gap_init,
-            gap_ext,
+            gap_inits,
+            gap_exts,
             non_empty_columns,
             starts_matrix,
             stops_matrix,
