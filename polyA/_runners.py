@@ -95,7 +95,6 @@ def run_full(
     alignments: List[Alignment],
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
-    lambda_values: List[float],
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
     outfile_heatmap: Optional[TextIO],
@@ -128,6 +127,7 @@ def run_full(
     substitution_matrices: List[SubMatrix] = []
     gap_inits: List[int] = []
     gap_exts: List[int] = []
+    lambda_values: List[float] = []
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
@@ -148,8 +148,12 @@ def run_full(
             substitution_matrices.append(
                 sub_matrix_scores[alignment.sub_matrix_name]
             )
+            lambda_values.append(
+                sub_matrix_scores[alignment.sub_matrix_name].lamb
+            )
         else:
             substitution_matrices.append(SubMatrix("skip", 0.0))
+            lambda_values.append(0.0)
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}

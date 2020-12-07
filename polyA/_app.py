@@ -5,9 +5,6 @@ from sys import argv
 from polyA._runners import run_confidence, run_full
 from polyA import *
 
-logging.root.addHandler(logging.StreamHandler())
-logging.root.setLevel(logging.DEBUG)
-
 helpMessage: str = f"""
 usage: {argv[0]} alignFile subMatrixFile\n
 ARGUMENTS
@@ -24,6 +21,8 @@ ARGUMENTS
     --seq-file <path to file>
     --ultra-output <path to file>
     --shard-gap <int> - allowed gap between sequences in the same shard
+
+    --debug - produce additional output for debugging
 
 OPTIONS
     --help - display help message
@@ -52,9 +51,15 @@ def run():
             "help",
             "matrix-pos",
             "seq-pos",
+            "debug",
         ],
     )
     opts = dict(raw_opts)
+
+    debug_mode = "--debug" in opts
+    if debug_mode:
+        logging.root.addHandler(logging.StreamHandler())
+        logging.root.setLevel(logging.DEBUG)
 
     help_flag = "--help" in opts
     if help_flag:
@@ -140,11 +145,11 @@ def run():
     with open(infile) as _infile:
         alignments = list(load_alignments(_infile))
 
-    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
-
     # --------------------------
     # Run confidence calculation
     # --------------------------
+
+    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
 
     if confidence_flag:
         run_confidence(
@@ -169,7 +174,6 @@ def run():
             chunk,
             tandem_repeats,
             chunk_size,
-            lambda_values,
             soda_viz_file,
             soda_conf_file,
             heatmap_file,
