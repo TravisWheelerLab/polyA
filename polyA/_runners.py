@@ -76,7 +76,6 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
         stdout.write(
             f"{target.start}\t{target.stop}\t1111\t{target.subfamily}\n"
         )
-    exit()
 
 
 def _change_probs(seq_count: int) -> Tuple[float, float, float]:
@@ -110,6 +109,7 @@ def run_full(
 
     if seq_count == 2:
         _handle_single_alignment(target, print_matrix_pos)
+        return
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
