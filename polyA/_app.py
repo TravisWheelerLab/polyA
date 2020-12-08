@@ -51,6 +51,7 @@ def run():
             "help",
             "matrix-pos",
             "seq-pos",
+            "shard-gap=",
             "debug",
         ],
     )
