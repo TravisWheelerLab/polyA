@@ -52,7 +52,7 @@ def fill_align_matrix(
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
     >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
-    >>> (c, m) = fill_align_matrix([0.0, 1.0, 1.0], 0, 31, [0, -5, -5], [0, -25, -25], 1, subs, chros, strts, sub_mat)
+    >>> (c, m) = fill_align_matrix([0.0, 0.1, 0.1], 0, 31, [0, -25, -25], [0, -5, -5], 1.0, subs, chros, strts, sub_mat)
     >>> c
     41
     >>> m
