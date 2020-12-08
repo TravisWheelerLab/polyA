@@ -33,6 +33,15 @@ def test_load_alignments_1():
     assert first.flank == 548
     assert second.flank == 2755
 
+    assert first.sub_matrix_name == "matrix1"
+    assert second.sub_matrix_name == "matrix2"
+
+    assert first.gap_init == 1
+    assert second.gap_init == 2
+
+    assert first.gap_ext == 11
+    assert second.gap_ext == 22
+
 
 # test to make sure seqs get flipped with reverse is on target (TQ == 't')
 def test_load_alignments_2():

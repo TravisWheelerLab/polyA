@@ -6,8 +6,6 @@ from typing import List, Optional, TextIO
 from polyA._exceptions import ValidationException
 from polyA.constants import (
     DEFAULT_CHUNK_SIZE,
-    DEFAULT_GAP_EXT,
-    DEFAULT_GAP_INIT,
 )
 from polyA.matrices import SupportMatrix
 
@@ -29,10 +27,6 @@ class Options:
 
     >>> import sys
     >>> o = Options()
-    >>> o.gap_ext == DEFAULT_GAP_EXT
-    True
-    >>> o.gap_init == DEFAULT_GAP_INIT
-    True
     >>> o.log_file.name == sys.stderr.name
     True
     >>> o = Options(['--log-file', 'foo.txt'])
@@ -76,18 +70,6 @@ class Options:
             help="Path list of column indices to run on",
         )
         parser.add_argument(
-            "--gap-ext",
-            type=int,
-            help="penalty to extend gap in alignment, default = -5",
-            default=DEFAULT_GAP_EXT,
-        )
-        parser.add_argument(
-            "--gap-init",
-            type=int,
-            help="penalty to initialize gap in alignment, default = -25",
-            default=DEFAULT_GAP_INIT,
-        )
-        parser.add_argument(
             "--log-file",
             type=str,
             help="File to log to, or stdout, stderr, or none",
@@ -111,8 +93,6 @@ class Options:
         self._parse_benchmark(namespace)
         self._parse_chunk_size(namespace)
         self._parse_columns(namespace)
-        self._parse_gap_ext(namespace)
-        self._parse_gap_init(namespace)
         self._parse_log_file(namespace)
 
     def _parse_benchmark(self, namespace: Namespace) -> None:
@@ -141,20 +121,6 @@ class Options:
         with open(namespace.columns) as columnsFile:
             columns_lines = columnsFile.readlines()
         self.columns = [int(c) for c in columns_lines]
-
-    def _parse_gap_ext(self, namespace: Namespace) -> None:
-        if namespace.gap_ext is None:
-            self.gap_ext = DEFAULT_GAP_EXT
-            return
-
-        self.gap_ext = int(namespace.gap_ext)
-
-    def _parse_gap_init(self, namespace: Namespace) -> None:
-        if namespace.gap_init is None:
-            self.gap_init = DEFAULT_GAP_INIT
-            return
-
-        self.gap_init = int(namespace.gap_init)
 
     def _parse_log_file(self, namespace: Namespace) -> None:
         if namespace.log_file is None or namespace.log_file == "stderr":
