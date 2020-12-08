@@ -1,4 +1,6 @@
 ![PolyA CI](https://github.com/TravisWheelerLab/polyA/workflows/PolyA%20CI/badge.svg)
+![GitHub](https://img.shields.io/github/license/TravisWheelerLab/polyA)
+![PyPI](https://img.shields.io/pypi/v/polyA)
 
 # AAAAAAAAAAAAAAAA (PolyA):
 #### a tool for adjudicating between competing annotations of biological sequences 
