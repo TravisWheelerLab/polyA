@@ -56,8 +56,12 @@ def get_path(
     [0, 2, 3]
     >>> changess
     ['s1', 's2']
-    >>> idss
-    [2345, 2345, 1111, 1111]
+    >>> idss[0] == idss[1]
+    True
+    >>> idss[2] == idss[3]
+    True
+    >>> idss[0] != idss[2]
+    True
     """
 
     maxxx: float = -inf

@@ -50,9 +50,11 @@ def fill_node_confidence(
     >>> s_seqs = ['', 'AAA-TTTTT-', 'TTTTTTTTTT']
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
+    >>> sub_mat = SubMatrix("", 0.1227)
+    >>> sub_mat.scores = {"AA": 1, "AT": -1, "TA": -1, "TT": 1}
+    >>> sub_mats = [sub_mat] * 3
     >>> rep_scores = {}
-    >>> node_conf = fill_node_confidence(3, 0, -25, -5, [0.1227] * 3, non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mat, rep_scores, 0)
+    >>> node_conf = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.19999999999999998, ('n2', 1): 0.7999999999999999, ('skip', 2): 0.0, ('n1', 2): 0.19999999999999998, ('n2', 2): 0.7999999999999999}
     """
