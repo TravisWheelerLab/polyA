@@ -77,18 +77,58 @@ def calculate_score(
 
 def calculate_hmm_score(
     hmm_start: int,
+    prev_char_chrom: str,
+    chrom_slice: str,
+    subfam_slice: str,
     chrom: str,
     subfam: str,
-    prev_char_seq1: str,
-    prev_char_seq2: str,
+    insertion_score: float,
+    insertion_index: int,
     subfam_hmm,
 ) -> float:
     """
     Function description here
     hmm start - hmm pos of first char
     """
+    # need prev insertion score and index
     chunk_score: float = 0
-    return float(chunk_score)
+    hmm_pos = hmm_start
+    for i in range(len(chrom_slice)):
+        if chrom_slice[i] == ".":
+            break
+        elif chrom_slice[i] == "-":
+            print(chrom_slice[i::])
+            if prev_char_chrom != "-":
+                # match to deletion
+                chunk_score += float(
+                    subfam_hmm[hmm_pos - 1]["transition"]["m->d"]
+                )
+            else:
+                # deletion to deletion
+                chunk_score += float(
+                    subfam_hmm[hmm_pos - 1]["transition"]["d->d"]
+                )
+            if chrom_slice[i + 1] != "-":
+                # FIXME: if slice is just a deletion for trailing
+                # deletion to match
+                chunk_score += float(subfam_hmm[hmm_pos]["transition"]["d->m"])
+            hmm_pos += 1
+        elif subfam_slice[i] == "-":
+            # check if new insertion
+            if insertion_index + 1 != i:
+                insertion_score = calculate_insertion_score(
+                    hmm_pos, chrom[i::], subfam[i::], subfam_hmm
+                )
+            insertion_index = i
+            chunk_score += insertion_score
+        else:
+            # match
+            chunk_score += float(
+                subfam_hmm[hmm_pos]["emission"][chrom_slice[i]]
+            )
+            hmm_pos += 1
+        prev_char_chrom = chrom_slice[i]
+    return chunk_score
 
 
 def calculate_insertion_score(
