@@ -68,8 +68,6 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
 
     id = uuid4().hex
     if print_matrix_pos:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
         stdout.write(
             f"{0}\t{target.stop - target.start}\t{id}\t{target.subfamily}\n"
         )
