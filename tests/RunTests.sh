@@ -40,6 +40,6 @@ done
 for f in ../fixtures/ex*.sto;
 do echo "$f";
   m=${f%sto}matrix
-  python -m polyA --sequence-position --shard-gap 10000 --soda --heatmap --output-path $f "$f" "$m";
+  python -m polyA --matrix-position --shard-gap 10000 "$f" "$m";
   printf -- "-------------------------------------------------------------\n";
 done
