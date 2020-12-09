@@ -42,24 +42,21 @@ class ApplicationUltraProvider:
 
     def __init__(
         self,
-        sequence_path: str,
+        sequence_path: str = "",
         ultra_output_path: str = "",
-        ultra_path: str = "",
+        ultra_path: str = "ultra",
     ):
-        if ultra_output_path == "" and ultra_path == "":
+        if ultra_output_path == "" and sequence_path == "":
             raise RuntimeError(
-                "Must provide either ultra output path or ultra path"
+                "must provide either ultra output path or sequence file path"
             )
-
-        if ultra_path != "" and sequence_path == "":
-            raise RuntimeError("A sequence file path is required to run ultra")
 
         self._sequence_path = sequence_path
         self._ultra_output_path = ultra_output_path
         self._ultra_path = ultra_path
 
     def __call__(self) -> UltraOutput:
-        if self._ultra_path:
+        if self._sequence_path:
             ultra_stream = os.popen(
                 self._ultra_path + "-ss" + self._sequence_path
             )
