@@ -72,8 +72,6 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
             f"{0}\t{target.stop - target.start}\t{id}\t{target.subfamily}\n"
         )
     else:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
         stdout.write(
             f"{target.start}\t{target.stop}\t{id}\t{target.subfamily}\n"
         )
