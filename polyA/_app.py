@@ -1,116 +1,91 @@
-from getopt import getopt
 import logging
-from sys import argv
+from sys import argv, stderr
+from typing import List
 
-from polyA._runners import run_confidence, run_full
-from polyA import *
-
-helpMessage: str = f"""
-usage: {argv[0]} alignFile subMatrixFile\n
-ARGUMENTS
-    --chunk-size (must be odd) [31]
-    --esl-path <path to Easel>
-    --confidence - output confidence for a single annotation without running whole algorithm
-
-    --output-path - path to a directory where output files will be written
-    --heatmap - output a heatmap file
-    --soda - output files to produce a SODA visualization
-
-    --prior-counts <path to file>
-    --ultra-path <path to ultra>
-    --seq-file <path to file>
-    --ultra-output <path to file>
-    --shard-gap <int> - allowed gap between sequences in the same shard
-
-    --debug - produce additional output for debugging
-
-OPTIONS
-    --help - display help message
-    --matrix-pos - prints output in terms of matrix position
-    --seq-pos - prints output in terms of target sequence position
-"""
+from ._options import Options
+from ._runners import run_confidence, run_full
+from .lambda_provider import EaselLambdaProvider
+from .load_alignments import load_alignments, shard_overlapping_alignments
+from .output import Output
+from .prior_counts import read_prior_counts
+from .substitution_matrix import load_substitution_matrices
+from .ultra_provider import ApplicationUltraProvider, TandemRepeat
 
 
-def run():
-    raw_opts, args = getopt(
-        argv[1:],
-        "",
-        [
-            "skipScore=",
-            "lambda=",
-            "esl-path=",
-            "confidence",
-            "chunk-size=",
-            "prior-counts=",
-            "output-path=",
-            "soda",
-            "heatmap",
-            "ultra-path=",
-            "seq-file=",
-            "ultra-output=",
-            "help",
-            "matrix-pos",
-            "seq-pos",
-            "shard-gap=",
-            "debug",
-        ],
+class AppError(RuntimeError):
+    pass
+
+
+def _configure_logging(opts: Options) -> None:
+    if opts.log_file_path != "":
+        log_file = open(opts.log_file_path, "w")
+    else:
+        log_file = stderr
+    handler = logging.StreamHandler(log_file)
+
+    formatter = logging.Formatter(
+        fmt="{levelname} ({name}) - {message}", style="{"
     )
-    opts = dict(raw_opts)
+    handler.setFormatter(formatter)
 
-    debug_mode = "--debug" in opts
-    if debug_mode:
-        logging.root.addHandler(logging.StreamHandler())
-        logging.root.setLevel(logging.DEBUG)
+    logger = logging.getLogger(__package__)
+    logger.addHandler(handler)
 
-    help_flag = "--help" in opts
-    if help_flag:
-        print(helpMessage)
-        exit(0)
+    if opts.log_level == "debug":
+        logger.setLevel(logging.DEBUG)
+    elif opts.log_level == "verbose":
+        logger.setLevel(logging.INFO)
+    elif opts.log_level == "normal":
+        logger.setLevel(logging.WARNING)
+    elif opts.log_level == "quiet":
+        logger.setLevel(logging.CRITICAL)
 
-    esl_path = str(opts["--esl-path"]) if "--esl-path" in opts else ""
-    chunk_size = (
-        int(opts["--chunk-size"])
-        if "--chunk-size" in opts
-        else DEFAULT_CHUNK_SIZE
-    )
 
-    infile_prior_counts = (
-        open(opts["--prior-counts"], "r") if "--prior-counts" in opts else None
-    )
+def _configure_tandem_repeats(opts: Options) -> List[TandemRepeat]:
+    if opts.ultra_data_path and opts.sequence_file_path:
+        # This is ambiguous so we bail out
+        raise AppError("cannot specify both ultra data and sequence files")
 
-    # Run ULTRA or load TRs from an output file
     tandem_repeats = []
-    # TODO: Assume ULTRA is in the PATH if not given
-    # Right now we assume that if the user provided either an ultra
-    # path OR a path to an ultra output file then they want to run
-    # the TR code. In the future we will want a better way to indicate
-    # that since we will assume ultra is in the PATH.
-    ultra_path = str(opts["--ultra-path"]) if "--ultra-path" in opts else ""
-    ultra_output_path = (
-        str(opts["--ultra-output"]) if "--ultra-output" in opts else ""
-    )
-    using_tr = bool(ultra_output_path) or bool(ultra_path)
-    if using_tr:
-        seq_file_path = str(opts["--seq-file"]) if "--seq-file" in opts else ""
+
+    if opts.ultra_data_path or opts.sequence_file_path:
+        # Run ULTRA or load TRs from an output file
         provider = ApplicationUltraProvider(
-            seq_file_path, ultra_output_path, ultra_path
+            opts.sequence_file_path,
+            opts.ultra_data_path,
+            opts.ultra_path,
         )
         ultra_output = provider()
         tandem_repeats = ultra_output.tandem_repeats
 
-    print_matrix_pos = "--matrix-pos" in opts
-    print_seq_pos = "--seq-pos" in opts
-    confidence_flag = "--confidence" in opts
+    return tandem_repeats
 
-    shard_gap = (
-        int(opts["--shard-gap"]) if "--shard-gap" in opts else DEFAULT_SHARD_GAP
+
+def run():
+    opts = Options(argv[1:])
+    _configure_logging(opts)
+
+    # help_flag = "--help" in opts
+    # if help_flag:
+    #     print(helpMessage)
+    #     exit(0)
+
+    # ----------------------------
+    # Tandem Repeat initialization
+    # ----------------------------
+
+    tandem_repeats = _configure_tandem_repeats(opts)
+
+    # -----------------
+    # Sub-family counts
+    # -----------------
+
+    infile_prior_counts = (
+        open(opts.prior_counts_path, "r") if opts.prior_counts_path else None
     )
 
-    # input is alignment file of hits region and substitution matrix
-    infile: str = args[0]
-
     subfam_counts = (
-        read_prior_counts(infile_prior_counts, using_tr)
+        read_prior_counts(infile_prior_counts, bool(tandem_repeats))
         if infile_prior_counts is not None
         else {}
     )
@@ -119,31 +94,23 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
-    lambda_provider = EaselLambdaProvider(esl_path)
-
-    sub_matrix_path: str = args[1]
-    with open(sub_matrix_path) as _sub_matrix_file:
+    _lambda_provider = EaselLambdaProvider(opts.easel_path)
+    with open(opts.sub_matrices_path) as _sub_matrices_file:
         sub_matrices = load_substitution_matrices(
-            _sub_matrix_file, lambda_provider
+            _sub_matrices_file, _lambda_provider
         )
 
     # -------------------------------------------------
     # Flags and parameters related to secondary outputs
     # -------------------------------------------------
 
-    soda_flag = "--soda" in opts
-    heatmap_flag = "--heatmap" in opts
-
-    output_path = (
-        opts["--output-path"] if "--output-path" in opts else "polya-output"
-    )
-    outputter = Output(output_path)
+    outputter = Output(opts.output_path)
 
     # -----------------------------
     # Load alignments to operate on
     # -----------------------------
 
-    with open(infile) as _infile:
+    with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
 
     # --------------------------
@@ -152,7 +119,7 @@ def run():
 
     lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
 
-    if confidence_flag:
+    if opts.confidence:
         run_confidence(
             alignments,
             lambs=lambda_values,
@@ -164,22 +131,22 @@ def run():
     # ----------------------------------------------------------------
 
     for index, chunk in enumerate(
-        shard_overlapping_alignments(alignments, shard_gap=shard_gap)
+        shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
         soda_viz_file, soda_conf_file = (
-            outputter.get_soda(index) if soda_flag else (None, None)
+            outputter.get_soda(index) if opts.soda else (None, None)
         )
-        heatmap_file = outputter.get_heatmap(index) if heatmap_flag else None
+        heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
         run_full(
             chunk,
             tandem_repeats,
-            chunk_size,
+            opts.chunk_size,
             soda_viz_file,
             soda_conf_file,
             heatmap_file,
-            print_matrix_pos,
-            print_seq_pos,
+            opts.matrix_position,
+            opts.sequence_position,
             sub_matrices,
             subfam_counts,
         )
