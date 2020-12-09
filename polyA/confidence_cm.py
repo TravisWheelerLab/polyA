@@ -111,8 +111,6 @@ def confidence_only(
     output:
     confidence_list: list of confidence values for competing annotations
 
-    TODO: Update doctest to account for different lambda values
-
     >>> reg = [100., 55., 1.]
     >>> lambs = [.1227] * 3
     >>> conf = confidence_only(reg, lambs)

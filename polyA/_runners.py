@@ -36,7 +36,6 @@ def run_confidence(
     confidence_list = confidence_only(scores, lambs)
     confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
 
-    # TODO: Provide a writer to the function
     stdout.write(f"query_label\tconfidence\n")
     for i in range(len(subfams_copy) - 1, 0, -1):
         if confidence_list[i]:
@@ -44,7 +43,6 @@ def run_confidence(
 
 
 def _validate_target(target: Alignment) -> None:
-    # TODO: Switch to using a Logger
     if target.chrom_length == 0:
         Logger(__name__).warning(
             """No chromosome position information found
