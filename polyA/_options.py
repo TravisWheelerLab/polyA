@@ -117,7 +117,7 @@ class Options:
         parser.add_argument(
             "--easel-path",
             metavar="BIN",
-            default="esl_scorematrix",
+            default="",
             help="Path to the esl_scorematrix program, if necessary (assumed to be in PATH)",
         )
         parser.add_argument(

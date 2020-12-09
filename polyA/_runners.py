@@ -65,14 +65,10 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
     to run anything because we know that subfam is the annotation.
     """
     if print_matrix_pos:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
         stdout.write(
             f"{0}\t{target.stop - target.start}\tNA\t{target.subfamily}\n"
         )
     else:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
         stdout.write(f"{target.start}\t{target.stop}\tNA\t{target.subfamily}\n")
 
 
