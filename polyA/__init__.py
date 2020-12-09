@@ -48,10 +48,6 @@ from .matrices import (
 )
 from .output import Output
 from .pad_sequences import pad_sequences
-from .parameters import (
-    Parameters,
-    EaselRunner,
-)
 from .printers import (
     print_matrix_hash,
     print_matrix_support,

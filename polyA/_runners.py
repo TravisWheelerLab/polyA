@@ -64,16 +64,19 @@ def _handle_single_alignment(target: Alignment, print_matrix_pos: bool) -> None:
     If there is only one subfam in the alignment file, no need
     to run anything because we know that subfam is the annotation.
     """
+    from uuid import uuid4
+
+    id = uuid4().hex
     if print_matrix_pos:
-        stdout.write("start\tstop\tID\tname\n")
-        stdout.write("----------------------------------------\n")
         stdout.write(
-            f"{0}\t{target.stop - target.start}\tNA\t{target.subfamily}\n"
+            f"{0}\t{target.stop - target.start}\t{id}\t{target.subfamily}\n"
         )
     else:
         stdout.write("start\tstop\tID\tname\n")
         stdout.write("----------------------------------------\n")
-        stdout.write(f"{target.start}\t{target.stop}\tNA\t{target.subfamily}\n")
+        stdout.write(
+            f"{target.start}\t{target.stop}\t{id}\t{target.subfamily}\n"
+        )
 
 
 def _change_probs(seq_count: int) -> Tuple[float, float, float]:
@@ -106,6 +109,7 @@ def run_full(
     _validate_target(target)
 
     if seq_count == 2:
+        # Only one alignment other than the skip state
         _handle_single_alignment(target, print_matrix_pos)
         return
 

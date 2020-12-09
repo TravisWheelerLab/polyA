@@ -86,8 +86,8 @@ def print_results(
 
     TODO: Refactor to accept a TextIO instance
     """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
+    # stdout.write("start\tstop\tID\tname\n")
+    # stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
             stdout.write(str(columns_orig[changespos_orig[i]]))
@@ -111,8 +111,8 @@ def print_results_sequence(
     prints final results
     prints start and stop in terms of input target sequence
     """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
+    # stdout.write("start\tstop\tID\tname\n")
+    # stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart - 1))
@@ -139,8 +139,8 @@ def print_results_chrom(
     prints final results
     prints start and stop in terms of chromosome/target position
     """
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
+    # stdout.write("start\tstop\tID\tname\n")
+    # stdout.write("----------------------------------------\n")
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
             stdout.write(
