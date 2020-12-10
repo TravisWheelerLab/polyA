@@ -3,83 +3,145 @@
 ![PyPI](https://img.shields.io/pypi/v/polyA)
 
 # AAAAAAAAAAAAAAAA (PolyA):
-#### a tool for adjudicating between competing annotations of biological sequences 
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
 > **A**nnotations, **A**stutely **A**djoin **A**butting **A**lignments,
-> **A**nd **A**lso **A**mputate **A**nything **A**miss.
+> **A**nd **A**lso **A**mputate **A**nything **A**miss
+
+A tool for adjudicating between competing annotations of biological sequences.
 
 ## About
 
-A common annotation process compares an unannotated sequence to a collection of known sequences.
-Sometimes, more than one of the queries shows a significant match to the target. Current 
-annotation processes choose the 'true' match based on highest alignment score. In databases
-with highly similar sequences, more than one query may match with high alignment scores, this
-method is no longer reliable because it is possible that either query is the true sequence, and 
-it falsely implies certainty in the true match. PolyA produces confidence estimates for 
-competing annotations to eliminate implying false certainty in the annotations. In addition, 
-polyA can identify instances of gene conversion and homologous recombination, and find the 
-exact genomic location of the switch between sequences. It can also clarify ambiguous boundaries
-between neighboring elements due to homologous over extension. It can also find sequence nesting,
-identifying the inserted sequence along with the original sequence that was inserted into.
+Annotation of a biological sequence is usually performed by aligning that
+sequence to a database of known sequence elements. When that database contains
+elements that are highly similar to each other, the proper annotation may
+be ambiguous, because several entries in the database produce high-scoring
+alignments. Typical annotation methods work by assigning a label based
+on the candidate annotation with the highest alignment score; this can
+overstate annotation certainty, mislabel boundaries, and fails to identify
+large scale rearrangements or insertions within the annotated sequence.
 
-
-## The Algorithm
-
-Using our confidence score analysis enables a jumping HMM approach. Allowing transitions between
-competing queries identifies switches between nucleotide elements. These switches are a result of 
-gene conversion, homologous recombination, neighboring elements or sequence nesting.
-
-Our algorithm has 3 parts: 
-
-1. Confidence calculations. This gives us the probablilites each competing query is the true 
-source of the target. 
-2. Position specific confidence creates a computationally efficient mechanism for 
-allowing for transitions between query annotations. This identifies gene conversion, homologous recombination,
-nested elements, and boundaries between adjacent elements.  
-3. Graph Algorithm finds nested sequences. 
-	
-For a more detailed description view the [poster](/publications/AlgorithmPoster.pdf)
-<!-- TODO: Kaitlin - add link to paper -->
+PolyA is a software tool that adjudicates between competing alignment-based
+annotations by computing estimates of annotation confidence, identifying a
+trace with maximal confidence, and recursively splicing/stitching inserted
+elements. PolyA communicates annotation certainty, identifies large scale
+rearrangements, and detects boundaries between neighboring elements.
 
 ## Using
 
-### Input File Format
+PolyA may be consumed as an ordinary Python package:
+
+Install using the `pip` tool:
+
+```
+pip install polyA
+```
+
+Run from the command line:
+
+```
+polyA -h
+```
+
+or
+
+```
+python -m polyA -h
+```
+
+### Command Line
+
+```
+usage: polyA [-h] [--chunk-size CHUNK_SIZE] [--confidence]
+             [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences FILE]
+             [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
+             [--heatmap] [--log-file FILE] [--log-level LEVEL]
+             [--matrix-position] [--output-path PATH] [--sequence-position]
+             [--soda]
+             FILE FILE
+
+PolyA sequence adjudication tool
+
+positional arguments:
+  FILE                  Alignments file in Stockholm format
+  FILE                  Substitution matrices file in PolyA matrix format
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --chunk-size CHUNK_SIZE
+                        Size of the window in base pairs analyzed together
+  --confidence          Run the confidence calculation and then exit
+  --prior-counts FILE   TODO(Kaitlin)
+  --shard-gap SHARD_GAP
+                        Maximum alignment gap before sharding occurs
+  --sequences FILE      TODO(Aubrey)
+  --ultra-data FILE     TODO(Audrey)
+  --easel-path BIN      Path to the esl_scorematrix program, if necessary
+                        (assumed to be in PATH)
+  --ultra-path BIN      Path to the ULTRA binary to use, if necessary (assumed
+                        to be in PATH)
+  --heatmap             Write a heatmap file to the output directory
+  --log-file FILE       File to store log output in, defaults to stderr
+  --log-level LEVEL     Logging level to use, 'debug' is the most noisy
+  --matrix-position     Produce output in terms of the matrix position
+  --output-path PATH    Directory to write output files to, defaults to
+                        working directory
+  --sequence-position   Produce output in terms of the target sequence
+                        position
+  --soda                Write a SODA visualization file to the output
+                        directory
+```
+
+### Input Formats
+
+PolyA accepts two required inputs and several optional inputs that
+affect its behavior. The required inputs are an alignment file which
+must contain alignments for all possible queries matching the target
+sequence. This file must be in
+[Stockholm](https://sonnhammer.sbc.su.se/Stockholm.html) format with
+several custom metadata fields. The other required input is a set of
+substitution matrices. This file uses a custom, but extremely simple
+format.
 	
-#### Alignment Files
+#### Alignment File Format
 
-Alignments for all possible queries matching target sequence in single stockhold format file.
+Alignments for all possible queries matching the target sequence
+should be contained in a single file in Stockholm format.
 
-Special information fields required are:
+There are several special metadata fields that must exist for each
+alignment in this file. See the example below. An explanation is
+indented to the right of each field with additional detail as noted.
 
 ```
-#=GF ID  MERX#DNA/TcMar-Tigger              * query sequence name
-#=GF TR  chr1:11543-28567                   target sequence
-#=GF SC  1153                               alignment score
-#=GF SD  +                                  strand
-#=GF TQ  -1                                 ** see below
-#=GF ST  127                                alignment start position on target
-#=GF SP  601                                alignment stop position on target
-#=GF CST 135                                alignment start position on query
-#=GF CSP 628                                alignment stop position on query
-#=GF FL  128                                *** see below
-#=GF MX  matrix_name                        name of substritution matrix file used to create alignment
-
-* query sequence names must be in the format 'name#family/class'
-
-** TQ: 'q' if alignment is on reverse strand and the reversed sequence 
-is the query. 't' if alignment is on reverse strand and the reversed 
-sequence is the target. '-1' if alignment is on positive strand. 
-
-*** FL: flanking region of unaligned query sequence.
-Ex1: query sequence of length 100 aligns from 1-75, FL = 25. 
-Ex2: query sequence of length 100 aligns from 10-100, FL = 9. 
+#=GF ID  MERX#DNA/TcMar-Tigger    query sequence (1)
+#=GF TR  chr1:11543-28567         target sequence
+#=GF SC  1153                     alignment score
+#=GF SD  +                        strand
+#=GF TQ  -1                       (2)
+#=GF ST  127                      alignment start position on target
+#=GF SP  601                      alignment stop position on target
+#=GF CST 135                      alignment start position on query
+#=GF CSP 628                      alignment stop position on query
+#=GF FL  128                      (3)
+#=GF MX  matrix_name              (4)
 ```
+
+  * (1) query sequence names must be in the format 'name#family/class'
+  * (2) valid values: 'q' if the alignment is on the reverse
+    strand and the reversed sequence is the query; 't' if the alignment
+    is on the reverse strand and the reversed sequence is the target;
+    '-1' if the alignment is on the positive strand
+  * (3) the flanking region of the unaligned query sequence
+  * (4) the name of the substitution matrix file used to create alignment
 
 #### Creating Alignment files from cross_match alignments
 
+TODO(George): Ship the parsers with the PyPI package
+
 We include a parser to convert cross_match alignment files to stockholm
 alignments. 
+
+TODO(Kaitlin): Document how the rm converter works
 
 ```
 usage: python parser/cm_to_stockholm.py align_file.cm
@@ -91,7 +153,7 @@ output (can be input directly into polyA):
 #### Substitution Matrix Files
 
 Substitution matrix file example format (can include ambiguity codes):
-* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with correspoding and matching matrix names
+* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with corresponding and matching matrix names
 * if lambda is not included polyA will use esl_scorematrix to calculate it for all matrices
 
 ```
@@ -120,7 +182,9 @@ A FASTA file of the target sequence is needed when using ULTRA.
 The target sequence must be the same genomic region that was used 
 to get the cross_match alignment file.
 
-### Output file format
+### Output Formats
+
+TODO(Kaitlin): This is no longer the right output format
 
 ```
 start   stop    IDnum*   query
@@ -187,6 +251,9 @@ esl_scorematrix is a part of the esl package in the [hmmer software suite](https
 
 ### Using at the command line
 
+TODO(George): Move this section up after installation
+TODO(George): This help output is now incorrect
+
 ```
 usage: python -m polyA alignFile subMatrixFile
     ARGUMENTS
@@ -210,6 +277,8 @@ usage: python -m polyA alignFile subMatrixFile
 ```
 
 ## Development
+
+TODO(George): Mention flit install and the --symlink option (add a make target)
 
 This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
 installed through Homebrew for Mac users. It must be installed before the
