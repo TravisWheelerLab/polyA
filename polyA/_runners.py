@@ -126,6 +126,7 @@ def run_full(
     gap_inits: List[int] = []
     gap_exts: List[int] = []
     lambda_values: List[float] = []
+    kimura_values: List[float] = []
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
@@ -141,6 +142,7 @@ def run_full(
         flanks_matrix.append(alignment.flank)
         gap_inits.append(alignment.gap_init)
         gap_exts.append(alignment.gap_ext)
+        kimura_values.append(alignment.kimura_divergence)
 
         if alignment.sub_matrix_name in sub_matrix_scores:
             substitution_matrices.append(
@@ -308,6 +310,7 @@ def run_full(
         non_empty_columns,
         subfamily_matrix,
         strands_matrix,
+        kimura_values,
         active_cells,
         support_matrix,
         consensus_matrix,
@@ -318,6 +321,7 @@ def run_full(
     active_cells_collapse = collapsed_matrices.active_rows
     consensus_matrix_collapse = collapsed_matrices.consensus_matrix
     strand_matrix_collapse = collapsed_matrices.strand_matrix
+    kimura_matrix_collapse = collapsed_matrices.kimura_matrix
     subfams_collapse_index = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
 
@@ -502,6 +506,7 @@ def run_full(
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
+            kimura_matrix_collapse,
         )
     elif print_seq_pos:
         print_results_sequence(
@@ -510,6 +515,7 @@ def run_full(
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
+            kimura_matrix_collapse,
         )
     else:
         print_results_chrom(
@@ -519,6 +525,7 @@ def run_full(
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
+            kimura_matrix_collapse,
         )
 
     if outfile_viz:

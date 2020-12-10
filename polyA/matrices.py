@@ -8,6 +8,8 @@ ConsensusMatrix = Dict[RowColumn, int]
 
 StrandMatrix = Dict[RowColumn, str]
 
+KimuraMatrix = Dict[Tuple[str, int], float]
+
 SupportMatrix = Dict[RowColumn, float]
 
 
@@ -57,6 +59,12 @@ class CollapsedMatrices(NamedTuple):
     # This is a collapsed matrix with no redundant subfamilies as rows. Each cell in matrix is
     # the strand of the consensus sequence that aligned at the corresponding column position of
     # the sequence.
+
+    kimura_matrix: KimuraMatrix
+    # strand_matrix_collapse: Hash implementation of sparse 2D matrix used along with DP matrices.
+    # Tuple[str, int] as key. String is the subfamily name of the row, int is the column in matrix.
+    # This is a collapsed matrix with no redundant subfamilies as rows. Each cell in matrix is
+    # the kimura value of the alignment that corresponds to that matrix position.
 
     support_matrix: SupportMatrix
     # support_matrix_collapse: Collapsed version of Support matrix. There may be duplicate rows of the

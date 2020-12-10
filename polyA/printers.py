@@ -79,6 +79,7 @@ def print_results(
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
+    kimura_matrix_collapse: Dict[Tuple[int, int], float],
 ) -> None:
     """
     prints the final results
@@ -88,13 +89,18 @@ def print_results(
     """
     for i in range(len(changes_orig)):
         if str(changes_orig[i]) != "skip":
-            stdout.write(str(columns_orig[changespos_orig[i]]))
+            start = columns_orig[changespos_orig[i]]
+            stop = columns_orig[changespos_orig[i + 1] - 1]
+            middle = int((stop - start) / 2) + start
+            stdout.write(str(start))
             stdout.write("\t")
-            stdout.write(str(columns_orig[changespos_orig[i + 1] - 1]))
+            stdout.write(str(stop))
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
+            stdout.write("\t")
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
             stdout.write("\n")
 
 
@@ -104,12 +110,16 @@ def print_results_sequence(
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
+    kimura_matrix_collapse: Dict[Tuple[int, int], float],
 ) -> None:
     """
     prints final results
     prints start and stop in terms of input target sequence
     """
     for i in range(len(changes_orig)):
+        start = columns_orig[changespos_orig[i]]
+        stop = columns_orig[changespos_orig[i + 1] - 1]
+        middle = int((stop - start) / 2) + start
         if str(changes_orig[i]) != "skip":
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart - 1))
             stdout.write("\t")
@@ -120,6 +130,8 @@ def print_results_sequence(
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
+            stdout.write("\t")
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
             stdout.write("\n")
 
 
@@ -130,12 +142,16 @@ def print_results_chrom(
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
+    kimura_matrix_collapse: Dict[Tuple[int, int], float],
 ) -> None:
     """
     prints final results
     prints start and stop in terms of chromosome/target position
     """
     for i in range(len(changes_orig)):
+        start = columns_orig[changespos_orig[i]]
+        stop = columns_orig[changespos_orig[i + 1] - 1]
+        middle = int((stop - start) / 2) + start
         if str(changes_orig[i]) != "skip":
             stdout.write(
                 str(
@@ -158,6 +174,8 @@ def print_results_chrom(
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
+            stdout.write("\t")
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
             stdout.write("\n")
 
 

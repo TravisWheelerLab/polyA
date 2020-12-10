@@ -111,6 +111,7 @@ def collapse_matrices(
     columns: List[int],
     subfams: List[str],
     strands: List[str],
+    kimuras: List[float],
     active_cells: Dict[int, List[int]],
     support_matrix: SupportMatrix,
     consensus_matrix: ConsensusMatrix,
@@ -134,15 +135,18 @@ def collapse_matrices(
     >>> active = {0: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
     >>> subs = ["s1", "s2", "s1"]
     >>> strandss = ["+", "-", "-"]
+    >>> kims = [0.0, 0.0, 0.0]
     >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
     >>> con_mat = {(0, 0): 0, (0, 2): 1, (0, 3): 2, (1, 0): 0, (1, 2): 1, (1, 3): 2, (2, 0): 0, (2, 2): 3, (2, 3): 10}
-    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, non_cols, subs, strandss, active, sup_mat, con_mat)
+    >>> (r, con_mat_col, strand_mat_col, kim_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, non_cols, subs, strandss, kims, active, sup_mat, con_mat)
     >>> r
     2
     >>> con_mat_col
     {(1, 0): 0, (1, 2): 1, (1, 3): 2, (0, 0): 0, (0, 2): 3, (0, 3): 10}
     >>> strand_mat_col
     {(1, 0): '-', (1, 2): '-', (1, 3): '-', (0, 0): '-', (0, 2): '-', (0, 3): '-'}
+    >>> kim_mat_col
+    {('s2', 0): 0.0, ('s2', 2): 0.0, ('s2', 3): 0.0, ('s1', 0): 0.0, ('s1', 2): 0.0, ('s1', 3): 0.0}
     >>> sup_mat_col
     {(1, 0): 0.2, (1, 2): 0.2, (1, 3): 0.2, (0, 0): 0.1, (0, 2): 0.1, (0, 3): 0.9}
     >>> sub_col
@@ -155,6 +159,7 @@ def collapse_matrices(
     """
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
+    kimura_matrix_collapse: Dict[Tuple[str, int], float] = {}
     support_matrix_collapse: Dict[Tuple[int, int], float] = {}
     subfams_collapse: List[str] = []
     subfams_collapse_temp: Dict[
@@ -194,6 +199,7 @@ def collapse_matrices(
                 strand_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index
                 ] = strands[row_index]
+                kimura_matrix_collapse[subfam, col_index] = kimuras[row_index]
                 support_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index
                 ] = support_matrix[row_index, col_index]
@@ -225,6 +231,7 @@ def collapse_matrices(
             strand_matrix_collapse[
                 subfams_collapse_temp[subfam], collapse_col
             ] = strands[collapse_row]
+            kimura_matrix_collapse[subfam, collapse_col] = kimuras[collapse_row]
 
     row_num_update: int = len(subfams_collapse)
 
@@ -232,6 +239,7 @@ def collapse_matrices(
         row_num_update,
         consensus_matrix_collapse,
         strand_matrix_collapse,
+        kimura_matrix_collapse,
         support_matrix_collapse,
         subfams_collapse,
         active_cells_collapse,

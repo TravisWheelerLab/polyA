@@ -130,7 +130,7 @@ def run():
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
 
-    stdout.write("start\tstop\tID\tname\n")
+    stdout.write("start\tstop\tID\tname\tkimura divergence\n")
     stdout.write("----------------------------------------\n")
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)

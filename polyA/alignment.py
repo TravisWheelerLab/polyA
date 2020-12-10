@@ -20,6 +20,7 @@ class Alignment(NamedTuple):
     sub_matrix_name: str
     gap_init: int
     gap_ext: int
+    kimura_divergence: float
 
     chrom_meta: Dict[str, str] = {}
 
@@ -84,6 +85,7 @@ _skip = Alignment(
     sub_matrix_name="",
     gap_init=0,
     gap_ext=0,
+    kimura_divergence=0,
 )
 
 
