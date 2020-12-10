@@ -11,11 +11,6 @@ class Options:
     """
     A typed container to hold program options and parameters.
 
-    TODO(George): Option for normal output target?
-    TODO(George): Options for output formats?
-    TODO(George): Read options from a file by default or with a different script?
-    TODO(George): Accept input from a pipe?
-
     >>> o = Options()
     >>> o.log_file_path
     ''
@@ -51,7 +46,6 @@ class Options:
 
     heatmap: bool
     log_file_path: str
-    # TODO(George): Might as well make this the actual log level
     log_level: Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
     output_path: str
@@ -64,7 +58,6 @@ class Options:
             prog=__package__,
         )
 
-        # FIXME(George): Make sure these each only consume one argument
         parser.add_argument(
             "alignments_file_path",
             metavar="FILE",
@@ -100,7 +93,6 @@ class Options:
             default=DEFAULT_SHARD_GAP,
             help="Maximum alignment gap before sharding occurs",
         )
-        # TODO(Aubrey): Decide on a better name for this one, if possible
         parser.add_argument(
             "--sequences",
             metavar="FILE",

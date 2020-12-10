@@ -72,7 +72,6 @@ def fill_node_confidence(
     begin_node0: int = columns[changes_position[0]]
     # alignment subfams
     for subfam_index0 in range(1, len(subfams) - tr_count):
-        # TODO(Kaitlin): Is this the correct index to use to get lambda and gaps?
         sub_matrix = sub_matrices[subfam_index0]
         lamb = sub_matrix.lamb
 
