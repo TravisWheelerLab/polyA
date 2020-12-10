@@ -94,23 +94,21 @@ optional arguments:
 
 ### Input Formats
 
-PolyA accepts two required inputs and several optional inputs that
-affect its behavior. The required inputs are an alignment file which
-must contain alignments for all possible queries matching the target
-sequence. This file must be in
-[Stockholm](https://sonnhammer.sbc.su.se/Stockholm.html) format with
-several custom metadata fields. The other required input is a set of
-substitution matrices. This file uses a custom, but extremely simple
-format.
+PolyA accepts two required inputs and several optional inputs that affect
+its behavior. The required inputs are an alignment file which must contain
+alignments for all possible queries matching the target sequence. This file
+must be in [Stockholm](https://sonnhammer.sbc.su.se/Stockholm.html) format
+with several custom metadata fields. The other required input is a set of
+substitution matrices. This file uses a custom, but extremely simple format.
 	
 #### Alignment File Format
 
-Alignments for all possible queries matching the target sequence
-should be contained in a single file in Stockholm format.
+Alignments for all possible queries matching the target sequence should be
+contained in a single file in Stockholm format.
 
-There are several special metadata fields that must exist for each
-alignment in this file. See the example below. An explanation is
-indented to the right of each field with additional detail as noted.
+There are several special metadata fields that must exist for each alignment in
+this file. See the example below. An explanation is indented to the right of
+each field with additional detail as noted.
 
 ```
 #=GF ID  MERX#DNA/TcMar-Tigger    query sequence (1)
@@ -139,7 +137,7 @@ indented to the right of each field with additional detail as noted.
 TODO(George): Ship the parsers with the PyPI package
 
 We include a parser to convert cross_match alignment files to stockholm
-alignments. 
+alignments.
 
 TODO(Kaitlin): Document how the rm converter works
 
