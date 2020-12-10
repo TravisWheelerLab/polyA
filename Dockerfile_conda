@@ -1,0 +1,9 @@
+FROM continuumio/anaconda3:latest
+
+RUN apt-get -y install build-essential
+RUN conda install conda-build
+
+VOLUME [ "/code" ]
+WORKDIR /code
+
+ENTRYPOINT [ "make" ]

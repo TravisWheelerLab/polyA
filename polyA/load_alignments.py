@@ -1,5 +1,5 @@
 from typing import Iterable, List, Optional, TextIO, Tuple
-from .alignment import Alignment
+from .alignment import Alignment, get_skip_state
 
 
 def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
@@ -58,13 +58,21 @@ def _parse_terminator_line(line: str) -> bool:
     """
     Return ``True`` if this line contains a terminator
     ("//") or ``False`` otherwise.
+
+    >>> _parse_terminator_line(" // ")
+    True
+    >>> _parse_terminator_line(" / / ")
+    False
     """
     return line.strip() == "//"
 
 
-def load_alignments(file: TextIO) -> Iterable[Alignment]:
+def load_alignments(
+    file: TextIO, add_skip_state: bool = False
+) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
+    See below for an example.
 
     ::
 
@@ -78,21 +86,12 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
         #=GF CST 135
         #=GF CSP 628
         #=GF FL  128
+        #=GF MX  20p41g.matrix
+        #=GF GI -25
+        #=GF GE -5
     """
-    alignments: List[Alignment] = [
-        Alignment(
-            subfamily="skip",
-            chrom="",
-            score=0,
-            start=0,
-            stop=0,
-            consensus_start=0,
-            consensus_stop=0,
-            sequences=["", ""],
-            strand="",
-            flank=0,
-        ),
-    ]
+    if add_skip_state:
+        yield get_skip_state()
 
     meta = {}
     seqs = []
@@ -118,37 +117,82 @@ def load_alignments(file: TextIO) -> Iterable[Alignment]:
             #   all required metadata was present
 
             if meta["TQ"] == "t":
-                alignments.append(
-                    Alignment(
-                        subfamily=meta["ID"],
-                        chrom=meta["TR"],
-                        score=int(meta["SC"]),
-                        start=int(meta["ST"]),
-                        stop=int(meta["SP"]),
-                        consensus_start=int(meta["CST"]),
-                        consensus_stop=int(meta["CSP"]),
-                        sequences=[seqs[0][::-1], seqs[1][::-1]],
-                        strand=meta["SD"],
-                        flank=int(meta["FL"]),
-                    )
+                yield Alignment(
+                    subfamily=meta["ID"],
+                    chrom=meta["TR"],
+                    score=int(meta["SC"]),
+                    start=int(meta["ST"]),
+                    stop=int(meta["SP"]),
+                    consensus_start=int(meta["CST"]),
+                    consensus_stop=int(meta["CSP"]),
+                    sequences=[seqs[0][::-1], seqs[1][::-1]],
+                    strand=meta["SD"],
+                    flank=int(meta["FL"]),
+                    sub_matrix_name=meta["MX"],
+                    gap_init=int(meta["GI"]),
+                    gap_ext=float(meta["GE"]),
                 )
             else:
-                alignments.append(
-                    Alignment(
-                        subfamily=meta["ID"],
-                        chrom=meta["TR"],
-                        score=int(meta["SC"]),
-                        start=int(meta["ST"]),
-                        stop=int(meta["SP"]),
-                        consensus_start=int(meta["CST"]),
-                        consensus_stop=int(meta["CSP"]),
-                        sequences=[seqs[0], seqs[1]],
-                        strand=meta["SD"],
-                        flank=int(meta["FL"]),
-                    )
+                yield Alignment(
+                    subfamily=meta["ID"],
+                    chrom=meta["TR"],
+                    score=int(meta["SC"]),
+                    start=int(meta["ST"]),
+                    stop=int(meta["SP"]),
+                    consensus_start=int(meta["CST"]),
+                    consensus_stop=int(meta["CSP"]),
+                    sequences=[seqs[0], seqs[1]],
+                    strand=meta["SD"],
+                    flank=int(meta["FL"]),
+                    sub_matrix_name=meta["MX"],
+                    gap_init=int(meta["GI"]),
+                    gap_ext=float(meta["GE"]),
                 )
             meta.clear()
             seqs.clear()
-            continue
 
-    return alignments
+
+def shard_overlapping_alignments(
+    alignments: Iterable[Alignment],
+    shard_gap: int,
+    add_skip_state: bool = True,
+) -> Iterable[List[Alignment]]:
+    """
+    Shard the given alignments into overlapping groups, separated by no more
+    than `shard_gap` nucleotides. This allows for more efficient processing
+    for alignments over large regions of sequence (such as an entire genome)
+    where many regions will be empty.
+
+    Precondition: alignments are sorted by their start position and all
+    alignments have start position <= stop position.
+
+    >>> skip = get_skip_state()
+    >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0, "", 0, 0)
+    >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0, "", 0, 0)
+    >>> a2 = Alignment("", "", 0, 12 + 50, 70, 0, 0, [], "", 0, "", 0, 0)
+    >>> a3 = Alignment("", "", 0, 70 + 51, 130, 0, 0, [], "", 0, "", 0, 0)
+    >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3], 50))
+    >>> len(chunks)
+    2
+    >>> chunks[0] == [skip, a0, a1, a2]
+    True
+    >>> chunks[1] == [skip, a3]
+    True
+    """
+    next_chunk: List[Alignment] = [get_skip_state()] if add_skip_state else []
+    window_stop: Optional[int] = None
+    for alignment in alignments:
+        if window_stop is None or alignment.start <= (window_stop + shard_gap):
+            next_chunk.append(alignment)
+        else:
+            yield next_chunk
+            # Note: important to create a new list here or we will
+            # mutate the one we just handed back to the caller.
+            next_chunk = (
+                [get_skip_state(), alignment] if add_skip_state else [alignment]
+            )
+
+        if window_stop is None or alignment.stop > window_stop:
+            window_stop = alignment.stop
+
+    yield next_chunk

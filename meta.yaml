@@ -1,0 +1,35 @@
+{% set version = "0.1.0" %}
+
+package:
+  name: "polya"
+  version: "{{ version }}"
+
+source:
+  url: "dist/polyA-{{ version }}.tar.gz"
+
+requirements:
+  build:
+    - 'python >=3.8'
+    - setuptools
+  host:
+    - 'python >=3.8'
+    - pip
+  run:
+    - 'python >=3.8'
+
+test:
+  imports:
+    - polyA
+
+about:
+  home: "https://github.com/traviswheelerlab/polyA"
+  license: "BSD-3-Clause"
+  license_family: BSD
+  license_file: LICENSE
+  summary: "A tool for biological sequence annotation."
+  doc_url: "https://github.com/traviswheelerlab/polyA"
+  dev_url: "https://github.com/traviswheelerlab/polyA"
+
+extra:
+  recipe-maintainers:
+    - glesica

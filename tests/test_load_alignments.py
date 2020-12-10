@@ -1,10 +1,10 @@
+from polyA import get_skip_state
 from polyA.load_alignments import load_alignments
-from pytest import mark
 
 
 def test_load_alignments_1():
     with open(f"fixtures/alignment1.sto", "r") as file:
-        skip, first, second = load_alignments(file)
+        skip, first, second = load_alignments(file, add_skip_state=True)
 
     assert first.subfamily == "L2#LINE/L2"
     assert second.subfamily == "Charlie12#DNA/hAT-Charlie"
@@ -33,11 +33,27 @@ def test_load_alignments_1():
     assert first.flank == 548
     assert second.flank == 2755
 
+    assert first.sub_matrix_name == "matrix1"
+    assert second.sub_matrix_name == "matrix2"
+
+    assert first.gap_init == 1
+    assert second.gap_init == 2
+
+    assert first.gap_ext == 11
+    assert second.gap_ext == 22
+
 
 # test to make sure seqs get flipped with reverse is on target (TQ == 't')
 def test_load_alignments_2():
     with open(f"fixtures/alignment2.sto", "r") as file:
-        skip, first = load_alignments(file)
+        skip, first = load_alignments(file, add_skip_state=True)
 
     assert first.sequence.startswith("AACAAGAA")
     assert first.subfamily_sequence.startswith("AAAAAAAAA")
+
+
+def test_load_alignments_no_skip_state():
+    with open(f"fixtures/alignment2.sto", "r") as file:
+        alignments = list(load_alignments(file, add_skip_state=False))
+
+    assert alignments[0] is not get_skip_state()

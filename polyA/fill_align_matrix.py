@@ -5,16 +5,16 @@ from polyA.calculate_score import calculate_score
 
 
 def fill_align_matrix(
-    lambdaa: float,
+    lambda_values: List[float],
     edge_start: int,
     chunk_size: int,
-    gap_ext: int,
-    gap_init: int,
+    gap_inits: List[int],
+    gap_exts: List[int],
     skip_align_score: float,
     subfams: List[str],
     chroms: List[str],
     starts: List[int],
-    sub_matrix: Dict[str, int],
+    sub_matrices: List[Dict[str, int]],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
@@ -51,8 +51,8 @@ def fill_align_matrix(
     >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}
-    >>> (c, m) = fill_align_matrix(0.1, 0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
+    >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
+    >>> (c, m) = fill_align_matrix([0.0, 0.1, 0.1], 0, 31, [0, -25, -25], [0, -5, -5], 1.0, subs, chros, strts, sub_mat)
     >>> c
     41
     >>> m
@@ -67,6 +67,10 @@ def fill_align_matrix(
     for i in range(1, len(chroms)):
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
+        sub_matrix = sub_matrices[i]
+        lamb = lambda_values[i]
+        gap_init = gap_inits[i]
+        gap_ext = gap_exts[i]
 
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
@@ -110,7 +114,7 @@ def fill_align_matrix(
 
                 num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
 
-                align_matrix[i, col_index - k - trailing] = lambdaa * (
+                align_matrix[i, col_index - k - trailing] = lamb * (
                     align_score * num_nucls0 / chunk_size
                 )  # already to scale so don't need to * chunk_size and / chunk_size
 
@@ -122,7 +126,7 @@ def fill_align_matrix(
         align_score: float = calculate_score(
             gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
         )
-        align_matrix[i, col_index - k] = lambdaa * (
+        align_matrix[i, col_index - k] = lamb * (
             align_score * chunk_size / (chunk_size - k)
         )
 
@@ -146,7 +150,7 @@ def fill_align_matrix(
                         ]
                     )
 
-                align_matrix[i, col_index - k] = lambdaa * (
+                align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -175,7 +179,7 @@ def fill_align_matrix(
                     chroms[i][seq_index - 1],
                     sub_matrix,
                 )
-                align_matrix[i, col_index - k] = lambdaa * (
+                align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -277,7 +281,7 @@ def fill_align_matrix(
                         )
                         num_nucls += 1
 
-                align_matrix[i, col_index] = lambdaa * (
+                align_matrix[i, col_index] = lamb * (
                     align_score / num_nucls * chunk_size
                 )
 
@@ -312,7 +316,7 @@ def fill_align_matrix(
                 sub_matrix,
             )
 
-            align_matrix[i, col_index - 1 + trailing] = lambdaa * (
+            align_matrix[i, col_index - 1 + trailing] = lamb * (
                 align_score / num_nucls2 * chunk_size
             )
 
@@ -334,7 +338,7 @@ def fill_align_matrix(
                 chrom_seq[seq_index - 1],
                 sub_matrix,
             )
-            align_matrix[i, col_index] = lambdaa * (
+            align_matrix[i, col_index] = lamb * (
                 align_score / (half_chunk + 1) * chunk_size
             )
             col_index += 1
@@ -346,7 +350,7 @@ def fill_align_matrix(
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
     for j in range(num_cols):
-        align_matrix[0, j] = float(skip_align_score)
+        align_matrix[0, j] = skip_align_score
 
     # remove trailing edges that fall off end of matrix
     # can't do this during matrix construction because we don't know how many

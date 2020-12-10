@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
+from .ultra_provider import TandemRepeat
 
-def CalcRepeatScores(
-    tandem_repeats,
+
+def calculate_repeat_scores(
+    tandem_repeats: List[TandemRepeat],
     chunk_size: int,
     start_all: int,
     row_num: int,
@@ -34,10 +36,10 @@ def CalcRepeatScores(
     index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
 
     tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, {}]
-    >>> repeats = [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
     >>> align_mat = {}
     >>> active_cols = {}
-    >>> rep_scores = CalcRepeatScores(repeats, 5, 4, 1, active_cols, align_mat, {})
+    >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {})
     >>> align_mat
     {(1, 2): 3.3333333333333335, (1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0, (2, 13): 3.125, (2, 14): 1.6666666666666667}
     >>> active_cols
@@ -51,10 +53,10 @@ def CalcRepeatScores(
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start_rep = rep["Start"] + 1
+        start_rep = rep.start + 1
         col_index = start_rep - (start_all)
-        length = rep["Length"]
-        pos_scores = rep["PositionScoreDelta"].split(":")
+        length = rep.length
+        pos_scores = rep.position_scores
 
         # calc score for first chunk
         score: float = 0
@@ -62,8 +64,8 @@ def CalcRepeatScores(
         k = int((chunk_size - 1) / 2)
         # gets 0 to 15
         while j <= k and j < length:
-            score += float(pos_scores[j])
-            repeat_scores[col_index + j] = float(pos_scores[j])
+            score += pos_scores[j]
+            repeat_scores[col_index + j] = pos_scores[j]
             j += 1
         window_size = j
 

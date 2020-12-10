@@ -3,7 +3,6 @@ import re
 
 
 def confidence_cm(
-    infile: str,
     region: List[float],
     subfam_counts: Dict[str, float],
     subfams: List[str],
@@ -32,7 +31,7 @@ def confidence_cm(
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> conf = confidence_cm("infile", [2, 1, 1], counts, subs, [0, 1, 2], 0)
+    >>> conf = confidence_cm([2, 1, 1], counts, subs, [0, 1, 2], 0)
     >>> f"{conf[0]:.2f}"
     '0.50'
     >>> f"{conf[1]:.2f}"
@@ -42,7 +41,7 @@ def confidence_cm(
 
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
-    >>> conf = confidence_cm("infile", [2, 1, 0.7], counts, subs, [0, 1, 3], 1)
+    >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1)
     >>> f"{conf[0]:.2f}"
     '0.65'
     >>> f"{conf[1]:.2f}"
@@ -55,7 +54,7 @@ def confidence_cm(
     score_total: int = 0
 
     # if command line option to include subfam_counts
-    if infile:
+    if subfam_counts:
         # alignment scores
         for index in range(len(region) - repeats):
             subfam: str = subfams[subfam_rows[index]]
@@ -95,8 +94,8 @@ def confidence_cm(
 
 
 def confidence_only(
-    lambdaa: float,
     region: List[float],
+    lambs: List[float],
 ) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment scores. Loops
@@ -112,8 +111,9 @@ def confidence_only(
     output:
     confidence_list: list of confidence values for competing annotations
 
-    >>> reg = [100., 55., 1.,]
-    >>> conf = confidence_only(.1227, reg)
+    >>> reg = [100., 55., 1.]
+    >>> lambs = [.1227] * 3
+    >>> conf = confidence_only(reg, lambs)
     >>> conf
     [0.9843787551069454, 0.015380918048546022, 0.0002403268445085316]
     """
@@ -123,7 +123,7 @@ def confidence_only(
 
     # alignment scores
     for index in range(len(region)):
-        converted_score = 2 ** int(region[index] * lambdaa)
+        converted_score = 2 ** int(region[index] * lambs[index])
         confidence_list.append(converted_score)
         score_total += converted_score
 
