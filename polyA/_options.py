@@ -85,7 +85,7 @@ class Options:
             "--prior-counts",
             metavar="FILE",
             default="",
-            help="TODO(Kaitlin)",
+            help="File containing query genomic counts",
         )
         parser.add_argument(
             "--shard-gap",
@@ -97,7 +97,7 @@ class Options:
             "--sequences",
             metavar="FILE",
             default="",
-            help="TODO(Aubrey)",
+            help="TODO(Audrey)",
         )
         parser.add_argument(
             "--ultra-data",

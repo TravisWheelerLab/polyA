@@ -22,7 +22,8 @@ deserialization.
 
 PROB_SKIP = 0.4  # about 60% of genome is TE derived
 """
-TODO(Kaitlin) Explain this better and rename if necessary
+used for prior counts, about 60% of genome is TE derived, so the skip
+state will have a prob of 40%
 """
 
 PROB_SKIP_TR = 0.06
@@ -32,12 +33,14 @@ About 6% of the genome is expected to be tandem repeats.
 
 SAME_PROB_LOG = 0.0
 """
-TODO(Kaitlin): Explain this and why we set it to zero
+penalty for staying int he same state in the DP.
+mathematically not exactly 0, but in python log(1-10e-45) = 0
+so set to 0 and avoid doing the math
 """
 
 SKIP_ALIGN_SCORE = 5.0
 """
-TODO(Kaitlin): Explain this and why we use this value
+alignment score given to skip state, no lambda adjustment needed
 """
 
 START_ID = 1111
