@@ -130,7 +130,7 @@ def load_alignments(
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
                     gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+                    gap_ext=float(meta["GE"]),
                 )
             else:
                 yield Alignment(
@@ -146,7 +146,7 @@ def load_alignments(
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
                     gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+                    gap_ext=float(meta["GE"]),
                 )
             meta.clear()
             seqs.clear()
