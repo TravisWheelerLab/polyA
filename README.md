@@ -110,6 +110,8 @@ There are several special metadata fields that must exist for each alignment in
 this file. See the example below. An explanation is indented to the right of
 each field with additional detail as noted.
 
+TODO(George): Pull in changes from isolate-matrices branch
+
 ```
 #=GF ID  MERX#DNA/TcMar-Tigger    query sequence (1)
 #=GF TR  chr1:11543-28567         target sequence
@@ -174,7 +176,9 @@ matrix_name2 lambda2(optional)
 ...
 ```
 
-#### Sequence File
+#### Sequence File (Optional)
+
+TODO(Audrey): Expand with description of what needs to be included and example
 
 A FASTA file of the target sequence is needed when using ULTRA.
 The target sequence must be the same genomic region that was used 
@@ -199,6 +203,9 @@ the same ancestral sequence.
 
 #### Confidence only output file format
 
+TODO(Kaitlin): Explain what this means and what you use it for
+TODO(Kaitlin): Verify that this format is still correct
+
 ```
 query_label         confidence
 LTR40a#LTR/ERVL     0.875
@@ -208,15 +215,22 @@ LTR40c#LTR/ERVL     0.001
 ```
 
 ### Extensions
+
 #### Visualizing annotations using SODA
-<!-- TODO: Kaitlin - finish this once SODA is ready -->
+
+TODO(Kaitlin): Finish this once SODA is ready
+TODO(Audrey): Add updated user explanation
+
 This section is a work in progress and will be released in the coming weeks. 
 
 #### Prior Counts Files
 
+TODO(Kaitlin): Explain what this does and why a user might want it
+
 The command line option --priorCounts prior_counts.txt includes prior
 genome counts in confidence calculations (see paper for more details)
-<!-- TODO: Kaitlin - add link to paper -->
+
+TODO(Kaitlin): Add link to paper
 
 Prior counts file example format:
 ```
@@ -229,6 +243,8 @@ L1PA7_5end  13261
 
 #### Using ULTRA
 
+TODO(Audrey): Expand explanation of why this is useful
+
 The command line options --seqFile seq.fasta with --ultraPath ultra_path 
 will include tandem repeats in the competing annotations of the sequence.
 The option --ultraOutput ultra_output.txt can also be used if ULTRA was 
@@ -236,6 +252,8 @@ ran on seq.fasta prior.
 
 
 ### Additional software
+
+TODO(George): Spruce up these instructions
 
 esl_scorematrix is a part of the esl package in the [hmmer software suite](https://github.com/EddyRivasLab/hmmer/)
 
