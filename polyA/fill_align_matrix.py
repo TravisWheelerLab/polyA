@@ -90,15 +90,22 @@ def fill_align_matrix(
             temp_index += 1
 
         offset: int = temp_index - seq_index
+        trailing_offset: int = 0
 
-        # add trailing cells and doesn't normalize
+        # add trailing cells
         for trailing in range(1, half_chunk + 1):
             if col_index - k - trailing >= 1:
+
+                temp_index = seq_index + offset + trailing_offset - trailing - 1
+                while chrom_seq[temp_index] == "-":
+                    trailing_offset -= 1
+                    temp_index -= 1
+
                 chrom_slice: str = chrom_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
                 subfam_slice: str = subfam_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
 
                 # calculates score for first chunk and puts in align_matrix
@@ -112,11 +119,15 @@ def fill_align_matrix(
                     sub_matrix,
                 )
 
-                num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
+                num_nucls0 = (
+                    (seq_index + offset + trailing_offset - trailing)
+                    - seq_index
+                    + 1
+                )
 
                 align_matrix[i, col_index - k - trailing] = lamb * (
                     align_score * num_nucls0 / chunk_size
-                )  # already to scale so don't need to * chunk_size and / chunk_size
+                )
 
         # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
@@ -293,14 +304,20 @@ def fill_align_matrix(
 
             seq_index += 1
 
-        # add trailing cells and normalizes
+        # add trailing cells
+        trailing_offset = 0
         for trailing in range(1, half_chunk + 1):
             # if col_index - k - trailing >= 0:
+            temp_index = seq_index + trailing
+            while chrom_seq[temp_index] == "-":
+                trailing_offset += 1
+                temp_index -= 1
+
             chrom_slice: str = chrom_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
             subfam_slice: str = subfam_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
 
             num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
