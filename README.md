@@ -74,8 +74,8 @@ optional arguments:
   --prior-counts FILE   TODO(Kaitlin)
   --shard-gap SHARD_GAP
                         Maximum alignment gap before sharding occurs
-  --sequences FILE      TODO(Aubrey)
-  --ultra-data FILE     TODO(Audrey)
+  --sequences FILE      FASTA file of the target sequence to be used for ULTRA
+  --ultra-data FILE     Text file of the output from ULTRA with the the target sequence
   --easel-path BIN      Path to the esl_scorematrix program, if necessary
                         (assumed to be in PATH)
   --ultra-path BIN      Path to the ULTRA binary to use, if necessary (assumed
@@ -178,11 +178,23 @@ matrix_name2 lambda2(optional)
 
 #### Sequence File (Optional)
 
-TODO(Audrey): Expand with description of what needs to be included and example
-
 A FASTA file of the target sequence is needed when using ULTRA.
 The target sequence must be the same genomic region that was used 
-to get the cross_match alignment file.
+to get the cross_match alignment file. This file must follow the
+format of  
+```
+>chrom:start-end
+target_sequence  
+```
+as shown in the example.
+
+Sequence file example format:
+```
+>chr1:152302175-152325203
+AATAGTTTATTTTTAATTTAGATGCAGCTTACTATAATATTAATTATGTCCAAGATGATT
+TTTTGAATACAGAATACTAGAATTCCAATAGAAGGATAATAGAGAAAGATGTGCTAGCCC
+...
+```
 
 ### Output Formats
 
@@ -219,8 +231,13 @@ LTR40c#LTR/ERVL     0.001
 #### Visualizing annotations using SODA
 
 TODO(Kaitlin): Finish this once SODA is ready
+<!--
 TODO(Audrey): Add updated user explanation
-
+The command line option --soda will output the annotation data to a single json file 
+to be used in SODA.
+The visualization will also give information about the original alignment that each output
+family annotation belongs to.
+-->
 This section is a work in progress and will be released in the coming weeks. 
 
 #### Prior Counts Files
@@ -243,12 +260,12 @@ L1PA7_5end  13261
 
 #### Using ULTRA
 
-TODO(Audrey): Expand explanation of why this is useful
-
-The command line options --seqFile seq.fasta with --ultraPath ultra_path 
-will include tandem repeats in the competing annotations of the sequence.
-The option --ultraOutput ultra_output.txt can also be used if ULTRA was 
-ran on seq.fasta prior.
+The optional use of ULTRA allows polyA to include tandem repeats (TRs) in the competing annotations
+of the target sequence. Doing so removes the dependency on pre-masking TRs prior to annotation, allows 
+TRs to outcompete potentially weak fragmentary family annotation , and allows a family annotation
+to outcompete a TR.
+The command line option --sequences seq.fasta (with --ultra-path if necessary) will
+run ULTRA with polyA or --ultra-data ultra_data.txt can be used if ULTRA was ran on seq.fasta prior.
 
 
 ### Additional software
