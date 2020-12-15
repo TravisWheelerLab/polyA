@@ -9,9 +9,14 @@ The width of the "window" used to break a sequence up into segments.
 Measured in base pairs.
 """
 
-DEFAULT_SHARD_GAP = 50
+INFINITE_SHARD_GAP = -1
 """
-Allowed gap between sequences for them to be included in the same shard
+A magic value that indicates no sharding should occur.
+"""
+
+DEFAULT_SHARD_GAP = INFINITE_SHARD_GAP
+"""
+Allowed gap between sequences for them to be included in the same shard.
 """
 
 NAN_STRING = "NaN"
