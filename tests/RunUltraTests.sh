@@ -2,24 +2,30 @@
 
 set -e
 
-# test with ultra output
 for f in ../fixtures/ultra_test_files/*.fa ;
 do echo "$f";
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
   m="${f}.cm.matrix";
+
+  set -x
   python -m polyA --sequence-position --ultra-data "$ultra_output" "$align_file" "$m";
+  set +x
+
   printf -- "-------------------------------------------------------------\n";
 done
 
 
-#tests soda output
 for f in ../fixtures/ultra_test_files/*.fa ;
 do echo "$f";
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
-   m="${f}.cm.matrix";
+  m="${f}.cm.matrix";
+
+  set -x
   python -m polyA --sequence-position --soda --heatmap --ultra-data "$ultra_output" "$align_file" "$m";
+  set +x
+
   ls output.*
   rm output.*.viz;
   rm output.*.viz.json;
