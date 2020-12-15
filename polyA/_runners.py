@@ -71,10 +71,10 @@ def _handle_single_alignment(
         stdout.write(
             f"{target.start}\t{target.stop}\t{id}\t{target.subfamily}\n"
         )
-    elif print_matrix_pos:
-        stdout.write(
-            f"{1}\t{target.stop-target.start+1}\t{id}\t{target.subfamily}\n"
-        )
+    # elif print_matrix_pos:
+    #     stdout.write(
+    #         f"{1}\t{target.stop-target.start+1}\t{id}\t{target.subfamily}\n"
+    #     )
     else:
         stdout.write(
             f"{target.start+target.chrom_start}\t{target.stop+target.chrom_start}\t{id}\t{target.subfamily}\n"
