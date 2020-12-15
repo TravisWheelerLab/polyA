@@ -60,6 +60,7 @@ def _validate_target(target: Alignment) -> None:
 def _handle_single_alignment(
     target: Alignment,
     print_seq_pos: bool,
+    print_matrix_pos: bool,
 ) -> None:
     """
     If there is only one subfam in the alignment file, no need
@@ -71,6 +72,10 @@ def _handle_single_alignment(
     if print_seq_pos:
         stdout.write(
             f"{target.start}\t{target.stop}\t{id}\t{target.subfamily}\n"
+        )
+    elif print_matrix_pos:
+        stdout.write(
+            f"{1}\t{target.stop - target.start + 1}\t{id}\t{target.subfamily}\n"
         )
     else:
         stdout.write(
@@ -109,7 +114,7 @@ def run_full(
 
     if seq_count == 2:
         # Only one alignment other than the skip state
-        _handle_single_alignment(target, print_seq_pos)
+        _handle_single_alignment(target, print_seq_pos, print_matrix_pos)
         return
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
