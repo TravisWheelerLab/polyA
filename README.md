@@ -110,8 +110,6 @@ There are several special metadata fields that must exist for each alignment in
 this file. See the example below. An explanation is indented to the right of
 each field with additional detail as noted.
 
-TODO(George): Pull in changes from isolate-matrices branch
-
 ```
 #=GF ID  MERX#DNA/TcMar-Tigger    query sequence (1)
 #=GF TR  chr1:11543-28567         target sequence
@@ -124,6 +122,8 @@ TODO(George): Pull in changes from isolate-matrices branch
 #=GF CSP 628                      alignment stop position on query
 #=GF FL  128                      (3)
 #=GF MX  matrix_name              (4)
+#=GF GI -25                       gap init
+#=GF GE -5                        gap extension
 ```
 
   * (1) query sequence names must be in the format 'name#family/class'
@@ -136,16 +136,14 @@ TODO(George): Pull in changes from isolate-matrices branch
 
 #### Creating Alignment files from cross_match alignments
 
-TODO(George): Ship the parsers with the PyPI package
-
 We include a parser to convert cross_match alignment files to stockholm
-alignments.
-
-TODO(Kaitlin): Document how the rm converter works
+alignments. This can be executed with the `cm_to_stockholm` script (installed
+with PolyA) or through the `polyA.converters` module (`python -m
+polyA.converters.cm_to_stockholm`).
 
 ```
-usage: python parser/cm_to_stockholm.py align_file.cm
-output (can be input directly into polyA): 
+usage: cm_to_stockholm align_file.cm
+outputs (can be input directly into polyA): 
     align_file.cm.sto
     align_file.cm.matrix
 ```

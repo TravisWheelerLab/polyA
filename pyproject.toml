@@ -4,6 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.scripts]
 polyA = "polyA.__main__:main"
+cm_to_stockholm = "polyA.converters:cm_to_stockholm"
 
 [tool.flit.metadata]
 module = "polyA"

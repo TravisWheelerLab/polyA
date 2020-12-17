@@ -1,6 +1,5 @@
 import sys
 import re
-from sys import stdout
 
 
 def read_file(filename_cm):
@@ -12,7 +11,6 @@ def read_file(filename_cm):
         file_contents = f_cm.read()
 
     return file_contents
-
 
 
 def get_info(info_array):
@@ -98,7 +96,8 @@ def get_gap_penalties(file_contents):
     return gap_init, gap_ext
 
 
-def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto):
+def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name,
+               gap_init, gap_ext, f_out_sto):
     """
     prints all info in correct format for stockholm
     """
@@ -138,7 +137,7 @@ def get_alignment(alignment_array):
         if m_chrom:
             chrom_seq += m_chrom.group(1)
 
-        m_subfam = re.search(r'.+?\s\d+\s(.+?)\s\d+', alignment_array[i+2])
+        m_subfam = re.search(r'.+?\s\d+\s(.+?)\s\d+', alignment_array[i + 2])
         if m_chrom:
             subfam_seq += m_subfam.group(1)
 
@@ -167,8 +166,7 @@ def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
     f_out_matrix.write("//\n")
 
 
-
-if __name__ == "__main__":
+def main():
     filename_cm = sys.argv[1]
     file_contents = read_file(filename_cm)
 
@@ -211,7 +209,12 @@ if __name__ == "__main__":
 
         chrom_seq, subfam_seq = get_alignment(alignment_array)
 
-        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto)
+        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name,
+                   gap_init, gap_ext, f_out_sto)
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
+
+
+if __name__ == "__main__":
+    main()
