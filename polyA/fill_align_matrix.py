@@ -308,10 +308,10 @@ def fill_align_matrix(
         trailing_offset = 0
         for trailing in range(1, half_chunk + 1):
             # if col_index - k - trailing >= 0:
-            temp_index = seq_index + trailing
+            temp_index = seq_index + trailing + trailing_offset
             while chrom_seq[temp_index] == "-":
                 trailing_offset += 1
-                temp_index -= 1
+                temp_index += 1
 
             chrom_slice: str = chrom_seq[
                 seq_index + trailing + trailing_offset : seq_index + offset - 1
