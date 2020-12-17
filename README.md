@@ -270,10 +270,24 @@ run ULTRA with polyA or --ultra-data ultra_data.txt can be used if ULTRA was ran
 
 TODO(George): Spruce up these instructions
 
-esl_scorematrix is a part of the esl package in the [hmmer software suite](https://github.com/EddyRivasLab/hmmer/)
+The esl_scorematrix utility is a part of the esl package in the [hmmer software
+suite](https://github.com/EddyRivasLab/hmmer/).
 
-  - will compute lambda for the input score matrix
-  - not needed if including lambda as a command line argument
+We use it to compute a `lambda` value for each score matrix, unless one is given
+in the matrix file. The easiest way to run the utility, either manually or as
+part of the PolyA pipeline is to use the [Docker
+container](https://hub.docker.com/r/traviswheelerlab/polya-esl_scorematrix) we
+provide.
+
+It is then possible to run `esl_scorematrix` with the following command (which
+just shows the help information):
+
+```
+docker run --mount src="${PWD}",target=/data,type=bind traviswheelerlab/polya-esl_scorematrix -h
+```
+
+Paths passed to the command will need to be relative to `/data`, which is
+mounted as the current working directory outside the container.
 
 [ULTRA](https://github.com/TravisWheelerLab/ultra)
 
