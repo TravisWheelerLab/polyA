@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from typing import List, Literal, Optional
 
+from . import __version__
 from .constants import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SHARD_GAP,
@@ -60,42 +61,50 @@ class Options:
 
         parser.add_argument(
             "alignments_file_path",
-            metavar="FILE",
-            help="Alignments file in Stockholm format",
+            metavar="ALIGNMENTS",
+            help="alignments file in Stockholm format",
         )
         parser.add_argument(
             "sub_matrices_path",
-            metavar="FILE",
-            help="Substitution matrices file in PolyA matrix format",
+            metavar="MATRICES",
+            help="substitution matrices file in PolyA matrix format",
+        )
+
+        parser.add_argument(
+            "-v",
+            "--version",
+            action="version",
+            version=__version__,
+            help="show version and exit",
         )
 
         parser.add_argument(
             "--chunk-size",
             type=int,
             default=DEFAULT_CHUNK_SIZE,
-            help="Size of the window in base pairs analyzed together",
+            help="size of the window in base pairs analyzed together",
         )
         parser.add_argument(
             "--confidence",
             action="store_true",
             default=False,
-            help="Run the confidence calculation and then exit",
+            help="run the confidence calculation and then exit",
         )
         parser.add_argument(
             "--prior-counts",
             metavar="FILE",
             default="",
-            help="File containing query genomic counts",
+            help="file containing query genomic counts",
         )
         parser.add_argument(
             "--shard-gap",
             type=int,
             default=DEFAULT_SHARD_GAP,
-            help="Maximum alignment gap before sharding occurs",
+            help="maximum alignment gap before sharding occurs",
         )
         parser.add_argument(
             "--sequences",
-            metavar="FILE",
+            metavar="SEQS",
             default="",
             help="TODO(Audrey)",
         )
@@ -110,56 +119,56 @@ class Options:
             "--easel-path",
             metavar="BIN",
             default="",
-            help="Path to the esl_scorematrix program, if necessary (assumed to be in PATH)",
+            help="path to the esl_scorematrix program, if necessary (assumed to be in PATH)",
         )
         parser.add_argument(
             "--ultra-path",
             metavar="BIN",
             default="ultra",
-            help="Path to the ULTRA binary to use, if necessary (assumed to be in PATH)",
+            help="path to the ULTRA binary to use, if necessary (assumed to be in PATH)",
         )
 
         parser.add_argument(
             "--heatmap",
             action="store_true",
             default=False,
-            help="Write a heatmap file to the output directory",
+            help="write a heatmap file to the output directory",
         )
         parser.add_argument(
             "--log-file",
-            metavar="FILE",
+            metavar="LOG",
             default="",
-            help="File to store log output in, defaults to stderr",
+            help="file to store log output in, defaults to stderr",
         )
         parser.add_argument(
             "--log-level",
             metavar="LEVEL",
             choices=["debug", "verbose", "normal", "quiet"],
-            help="Logging level to use, 'debug' is the most noisy",
+            help="logging level to use, 'debug' is the most noisy",
         )
         parser.add_argument(
             "--matrix-position",
             action="store_true",
             default=False,
-            help="Produce output in terms of the matrix position",
+            help="produce output in terms of the matrix position",
         )
         parser.add_argument(
             "--output-path",
             metavar="PATH",
             default=".",
-            help="Directory to write output files to, defaults to working directory",
+            help="directory to write output files to, defaults to working directory",
         )
         parser.add_argument(
             "--sequence-position",
             action="store_true",
             default=False,
-            help="Produce output in terms of the target sequence position",
+            help="produce output in terms of the target sequence position",
         )
         parser.add_argument(
             "--soda",
             action="store_true",
             default=False,
-            help="Write a SODA visualization file to the output directory",
+            help="write a SODA visualization file to the output directory",
         )
 
         namespace: Namespace
