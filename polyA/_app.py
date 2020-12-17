@@ -74,7 +74,7 @@ def run():
     # Tandem Repeat initialization
     # ----------------------------
 
-    tandem_repeats = _configure_tandem_repeats(opts)
+    tandem_repeats = _configure_tandem_repeats(opts)  # either has stuff or doesn't
 
     # -----------------
     # Sub-family counts
@@ -129,12 +129,54 @@ def run():
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
+    # for tr in tandem_repeats:
+    #    print(tr.start, tr.start + tr.length - 1)
 
     stdout.write("start\tstop\tID\tname\n")
     stdout.write("----------------------------------------\n")
+    # break TRs up to fit chunks
+    # a chunk is a list of alignments
+    # desert | chunk | desert | chunk | desert
+    tr_start: int = 0
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
+        # TRs and alignments are sorted by start pos
+        # chunk[0] - first one is always skip state
+        chunk_start = chunk[1].start
+        chunk_stop = chunk[len(chunk) - 1].stop
+        tandem_repeats_chunk: List = []
+        tr_end = tr_start
+        # get TRs fully in desert
+        # TR stop < chunk_start
+        # print("desert TRs:")
+        while tr_end < len(tandem_repeats):
+            # add to new tr list
+            if tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1 < chunk_start:
+                # TR is fully before chunk, keep searching for more
+                # print(tandem_repeats[tr_end].start, tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1)
+                tr_end += 1
+            else:
+                # no more TRs before chunk
+                break
+        tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
+        # print desert TRs
+        # print("chunk start", chunk_start)
+        # print("chunk stop", chunk_stop)
+
+        # get TRs loosely between chunk start and chunk stop from tandem_repeats
+        # use those to be in run_full
+        # print("TRs in chunk:")
+        tr_start = tr_end
+        while tr_end < len(tandem_repeats):
+            if tandem_repeats[tr_end].start < chunk_stop:
+                # print(tandem_repeats[tr_end].start, tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1)
+                tr_end += 1
+            else:
+                break
+        tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
+        tr_start = tr_end
+
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
@@ -142,7 +184,7 @@ def run():
 
         run_full(
             chunk,
-            tandem_repeats,
+            tandem_repeats_chunk,
             opts.chunk_size,
             soda_viz_file,
             soda_conf_file,
@@ -159,3 +201,7 @@ def run():
             soda_conf_file.close()
         if heatmap_file is not None:
             heatmap_file.close()
+
+    # print out leftover TRs if any
+    print("TRs at end")
+    print(tandem_repeats[tr_end::])
