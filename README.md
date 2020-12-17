@@ -51,44 +51,48 @@ python -m polyA -h
 
 ### Command Line
 
+Command line usage is available with `polyA -h`. It is also included below for
+convenience.
+
 ```
-usage: polyA [-h] [--chunk-size CHUNK_SIZE] [--confidence]
-             [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences FILE]
+usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
+             [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences SEQS]
              [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
-             [--heatmap] [--log-file FILE] [--log-level LEVEL]
+             [--heatmap] [--log-file LOG] [--log-level LEVEL]
              [--matrix-position] [--output-path PATH] [--sequence-position]
              [--soda]
-             FILE FILE
+             ALIGNMENTS MATRICES
 
 PolyA sequence adjudication tool
 
 positional arguments:
-  FILE                  Alignments file in Stockholm format
-  FILE                  Substitution matrices file in PolyA matrix format
+  ALIGNMENTS            alignments file in Stockholm format
+  MATRICES              substitution matrices file in PolyA matrix format
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         show version and exit
   --chunk-size CHUNK_SIZE
-                        Size of the window in base pairs analyzed together
-  --confidence          Run the confidence calculation and then exit
-  --prior-counts FILE   TODO(Kaitlin)
+                        size of the window in base pairs analyzed together
+  --confidence          run the confidence calculation and then exit
+  --prior-counts FILE   file containing query genomic counts
   --shard-gap SHARD_GAP
-                        Maximum alignment gap before sharding occurs
-  --sequences FILE      FASTA file of the target sequence to be used for ULTRA
-  --ultra-data FILE     Text file of the output from ULTRA with the the target sequence
-  --easel-path BIN      Path to the esl_scorematrix program, if necessary
+                        maximum alignment gap before sharding occurs
+  --sequences SEQS      TODO(Audrey)
+  --ultra-data FILE     TODO(Audrey)
+  --easel-path BIN      path to the esl_scorematrix program, if necessary
                         (assumed to be in PATH)
-  --ultra-path BIN      Path to the ULTRA binary to use, if necessary (assumed
+  --ultra-path BIN      path to the ULTRA binary to use, if necessary (assumed
                         to be in PATH)
-  --heatmap             Write a heatmap file to the output directory
-  --log-file FILE       File to store log output in, defaults to stderr
-  --log-level LEVEL     Logging level to use, 'debug' is the most noisy
-  --matrix-position     Produce output in terms of the matrix position
-  --output-path PATH    Directory to write output files to, defaults to
+  --heatmap             write a heatmap file to the output directory
+  --log-file LOG        file to store log output in, defaults to stderr
+  --log-level LEVEL     logging level to use, 'debug' is the most noisy
+  --matrix-position     produce output in terms of the matrix position
+  --output-path PATH    directory to write output files to, defaults to
                         working directory
-  --sequence-position   Produce output in terms of the target sequence
+  --sequence-position   produce output in terms of the target sequence
                         position
-  --soda                Write a SODA visualization file to the output
+  --soda                write a SODA visualization file to the output
                         directory
 ```
 
@@ -268,10 +272,9 @@ run ULTRA with polyA or --ultra-data ultra_data.txt can be used if ULTRA was ran
 
 ### Additional software
 
-TODO(George): Spruce up these instructions
-
-The esl_scorematrix utility is a part of the esl package in the [hmmer software
-suite](https://github.com/EddyRivasLab/hmmer/).
+The `esl_scorematrix` utility is a part of the Easel package in the [HMMER
+software suite](http://hmmer.org). Its source code is available at
+[https://github.com/EddyRivasLab/easel/].
 
 We use it to compute a `lambda` value for each score matrix, unless one is given
 in the matrix file. The easiest way to run the utility, either manually or as
@@ -293,41 +296,13 @@ mounted as the current working directory outside the container.
 
   - will detect tandem repeat regions in a sequence FASTA file
 
-
-### Using at the command line
-
-TODO(George): Move this section up after installation
-TODO(George): This help output is now incorrect
-
-```
-usage: python -m polyA alignFile subMatrixFile
-    ARGUMENTS
-        --GapInit[-25]
-        --getExt[-5]
-        --lambda [will calculate from substitution matrix if not included]
-        --segmentsize (must be odd) [31]
-        --eslPath esl_path
-        --confidence - output confidence for a single annoation without running the whole algorithm
-        --priorCounts prior_counts.txt
-        --ultraPath ultra_path
-        --seqFile genomic_region.fasta
-        --ultraOutput ultra_output.txt
-        --viz outfile - prints output format for SODA visualization
-        --heatmap outfile - prints probability file for input into heatmap
-    
-    OPTIONS
-        --help - display help message
-        --matrixpos - prints output in terms of matrix position
-        --sequencepos - prints output in terms of target sequence position
-```
-
 ## Development
 
 TODO(George): Mention flit install and the --symlink option (add a make target)
 
 This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
 installed through Homebrew for Mac users. It must be installed before the
-Makefile targets or the other commands listed in this document will work.
+Makefile targets, or the other commands listed in this document will work.
 
 In order to run a command which relies on the project virtual environment, such
 as `python foo.py`, it is necessary to either run `pipenv shell` first, which
