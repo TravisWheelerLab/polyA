@@ -10,6 +10,7 @@ from .output import Output
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
 from .ultra_provider import ApplicationUltraProvider, TandemRepeat
+from .printers import print_results_tandem_repeats
 
 
 class AppError(RuntimeError):
@@ -152,13 +153,15 @@ def run():
                 < chunk_start
             ):
                 # TR is fully before chunk, keep searching for more
+                print("desert TR")
                 tr_end += 1
             else:
                 # no more TRs before cur chunk
                 break
         tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
-        # print desert TRs in output format
-        # FIXME: add desert TRs as part of run full to print in the correct format?
+        print_results_tandem_repeats(
+            tandem_repeats_desert, opts.sequence_position
+        )
 
         # get TRs loosely between chunk start and chunk stop
         # use in run_full
@@ -208,5 +211,6 @@ def run():
             heatmap_file.close()
 
     # FIXME: print out leftover TRs (start ahead of last chunk)
-    print("TRs at end")
-    print(tandem_repeats[tr_end::])
+    print_results_tandem_repeats(
+        tandem_repeats[tr_end::], opts.sequence_position
+    )

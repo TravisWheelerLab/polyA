@@ -2,8 +2,10 @@ import json
 from math import inf
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Union
+from uuid import uuid4
 
 from polyA.matrices import SupportMatrix
+from .ultra_provider import TandemRepeat
 
 
 def print_matrix_hash(
@@ -159,6 +161,29 @@ def print_results_chrom(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\n")
+
+
+def print_results_tandem_repeats(
+    tandem_repeats: List[TandemRepeat],
+    print_seq_pos: bool,
+) -> None:
+    """
+    Prints TRs only
+    """
+    if print_seq_pos:
+        for tr in tandem_repeats:
+            stdout.write(str(tr.start))
+            stdout.write("\t")
+            stdout.write(str(tr.start + tr.length - 1))
+            stdout.write("\t")
+            stdout.write(uuid4().hex)
+            stdout.write("\t")
+            stdout.write("Tandem Repeat")
+            stdout.write("\n")
+
+    else:
+        # chrom pos
+        print("tr")
 
 
 def print_results_soda(
