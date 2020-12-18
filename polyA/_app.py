@@ -3,7 +3,7 @@ from sys import argv, stderr, stdout
 from typing import List
 
 from ._options import Options
-from ._runners import run_confidence, run_full
+from ._runners import run_confidence, run_full, _validate_target
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import load_alignments, shard_overlapping_alignments
 from .output import Output
@@ -140,12 +140,14 @@ def run():
     stdout.write("----------------------------------------\n")
     tr_start: int = 0
     tr_end: int = 0
+    target = alignments[1]
+    _validate_target(target)
+    chrom_start: int = target.chrom_start
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
         chunk_start = chunk[1].start
         chunk_stop = chunk[len(chunk) - 1].stop
-        tandem_repeats_chunk: List = []
         # get TRs fully in desert
         while tr_end < len(tandem_repeats):
             if (
@@ -160,7 +162,7 @@ def run():
                 break
         tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
         print_results_tandem_repeats(
-            tandem_repeats_desert, opts.sequence_position
+            tandem_repeats_desert, opts.sequence_position, chrom_start
         )
 
         # get TRs loosely between chunk start and chunk stop
@@ -210,7 +212,6 @@ def run():
         if heatmap_file is not None:
             heatmap_file.close()
 
-    # FIXME: print out leftover TRs (start ahead of last chunk)
     print_results_tandem_repeats(
-        tandem_repeats[tr_end::], opts.sequence_position
+        tandem_repeats[tr_end::], opts.sequence_position, chrom_start
     )
