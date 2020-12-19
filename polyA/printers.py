@@ -143,7 +143,7 @@ def print_results_chrom(
                     columns_orig[changespos_orig[i]]
                     + edgestart
                     + chrom_start
-                    - 2
+                    - 2 # -1 for padding at start of DP, -1 for overlap between edgestart and chrom_start
                 )
             )
             stdout.write("\t")
@@ -152,7 +152,7 @@ def print_results_chrom(
                     columns_orig[changespos_orig[i + 1] - 1]
                     + edgestart
                     + chrom_start
-                    - 2
+                    - 2 # -1 for padding at start of DP, -1 for overlap between edgestart and chrom_start
                 )
             )
             stdout.write("\t")
