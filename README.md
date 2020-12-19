@@ -200,16 +200,15 @@ TTTTGAATACAGAATACTAGAATTCCAATAGAAGGATAATAGAGAAAGATGTGCTAGCCC
 
 ### Output Formats
 
-TODO(Kaitlin): This is no longer the right output format
-
 ```
-start   stop    IDnum*   query
-1       362     1111	L1PREC2_3end
-363     567	2345	AluJr
-568     833	3579	AluYb8
-834     964	1245	AluJr
-965     980	6047	L1MA4A_3end
-981     1497	1111	L1PREC2_3end
+start   stop    ID  name
+----------------------------------------
+11990879    11991268    eaa042dd09f944f68dba2fd4727c64e2    LTR40a#LTR/ERVL
+11991272    11991444    fb5ef5e0e2ca4e05837ddc34ca7ef9e4    MSTA1#LTR/ERVL-MaLR
+11991445    11991562    bdfc4039b7d947d0b25bf1115cc282ed    AluJr4#SINE/Alu
+11991563    11991573    4871d91441a146209b98f645feae68c8    FLAM_C#SINE/Alu
+11991574    11991818    fb5ef5e0e2ca4e05837ddc34ca7ef9e4    MSTB1#LTR/ERVL-MaLR
+11991819    11991875    eaa042dd09f944f68dba2fd4727c64e2    LTR40a#LTR/ERVL
 
 * Matching IDnums correspond to partial sequences that originate from 
 the same ancestral sequence.
