@@ -1,4 +1,4 @@
-CHANGE_PROB = 10 ** -45
+CHANGE_PROB = 10 ** -55
 """
 The base probability of changing annotations.
 """
