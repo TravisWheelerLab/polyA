@@ -141,7 +141,7 @@ def run():
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
         run_full(
-            chunk,
+            chunk.alignments,
             tandem_repeats,
             opts.chunk_size,
             soda_viz_file,

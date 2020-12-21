@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, TextIO, Tuple
+from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
 from .alignment import Alignment, get_skip_state
 from .constants import INFINITE_SHARD_GAP
@@ -154,11 +154,17 @@ def load_alignments(
             seqs.clear()
 
 
+class Shard(NamedTuple):
+    start: int
+    stop: int
+    alignments: List[Alignment]
+
+
 def shard_overlapping_alignments(
     alignments: Iterable[Alignment],
     shard_gap: int,
     add_skip_state: bool = True,
-) -> Iterable[List[Alignment]]:
+) -> Iterable[Shard]:
     """
     Shard the given alignments into overlapping groups, separated by no more
     than `shard_gap` nucleotides. This allows for more efficient processing
@@ -176,32 +182,60 @@ def shard_overlapping_alignments(
     >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3], 50))
     >>> len(chunks)
     2
-    >>> chunks[0] == [skip, a0, a1, a2]
+    >>> chunks[0].start
+    0
+    >>> chunks[0].stop
+    95
+    >>> chunks[0].alignments == [skip, a0, a1, a2]
     True
-    >>> chunks[1] == [skip, a3]
+    >>> chunks[1].start
+    96
+    >>> chunks[1].stop
+    130
+    >>> chunks[1].alignments == [skip, a3]
     True
     """
-    next_chunk: List[Alignment] = [get_skip_state()] if add_skip_state else []
-    window_stop: Optional[int] = None
+    shard_alignments: List[Alignment] = (
+        [get_skip_state()] if add_skip_state else []
+    )
+    shard_start = 0
+    shard_stop = None
+
     for alignment in alignments:
-        is_start = window_stop is None
+        is_start = shard_stop is None
         is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
+
+        if is_start:
+            shard_stop = alignment.stop
 
         if (
             is_start
             or is_infinite_gap
-            or alignment.start <= (window_stop + shard_gap)
+            or alignment.start <= (shard_stop + shard_gap)
         ):
-            next_chunk.append(alignment)
+            if shard_stop < alignment.stop:
+                shard_stop = alignment.stop
+
+            shard_alignments.append(alignment)
         else:
-            yield next_chunk
+            shard_stop += int(shard_gap / 2)
+            yield Shard(
+                start=shard_start,
+                stop=shard_stop,
+                alignments=shard_alignments,
+            )
+
+            shard_start = shard_stop + 1
+            shard_stop = shard_start
+
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
-            next_chunk = (
+            shard_alignments = (
                 [get_skip_state(), alignment] if add_skip_state else [alignment]
             )
 
-        if is_start or alignment.stop > window_stop:
-            window_stop = alignment.stop
-
-    yield next_chunk
+    yield Shard(
+        start=shard_start,
+        stop=shard_alignments[-1].stop,
+        alignments=shard_alignments,
+    )
