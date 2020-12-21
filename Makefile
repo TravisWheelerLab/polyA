@@ -26,6 +26,10 @@ FMT_OPTS := -t py38 -l 80
 TEST_CMD := ${PYTHON_CMD} -m pytest
 TEST_TARGETS := tests/ polyA/
 
+.PHONY: containerized
+containerized:
+	docker run --mount src="${PWD}",target=/code,type=bind traviswheelerlab/polya-build ${TASK}
+
 .PHONY: build-package
 build-package:
 	pipenv run flit build
