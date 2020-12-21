@@ -165,17 +165,18 @@ def print_results_chrom(
 
 def print_results_tandem_repeats(
     tandem_repeats: List[TandemRepeat],
+    print_matrix_position: bool,
     print_seq_pos: bool,
     chrom_start: int,
 ) -> None:
     """
     Prints TRs only
     """
-    if print_seq_pos:
+    if print_matrix_position or not print_seq_pos:
         for tr in tandem_repeats:
-            stdout.write(str(tr.start))
+            stdout.write(str(tr.start + chrom_start - 1))
             stdout.write("\t")
-            stdout.write(str(tr.start + tr.length - 1))
+            stdout.write(str(tr.start + tr.length - 1 + chrom_start - 1))
             stdout.write("\t")
             stdout.write(uuid4().hex)
             stdout.write("\t")
@@ -183,9 +184,9 @@ def print_results_tandem_repeats(
             stdout.write("\n")
     else:
         for tr in tandem_repeats:
-            stdout.write(str(tr.start + chrom_start - 1))
+            stdout.write(str(tr.start))
             stdout.write("\t")
-            stdout.write(str(tr.start + tr.length - 1 + chrom_start - 1))
+            stdout.write(str(tr.start + tr.length - 1))
             stdout.write("\t")
             stdout.write(uuid4().hex)
             stdout.write("\t")

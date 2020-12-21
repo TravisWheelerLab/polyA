@@ -162,12 +162,13 @@ def run():
                 break
         tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
         print_results_tandem_repeats(
-            tandem_repeats_desert, opts.sequence_position, chrom_start
+            tandem_repeats_desert, opts.matrix_position, opts.sequence_position, chrom_start
         )
 
         # get TRs loosely between chunk start and chunk stop
         # use in run_full
         tr_start = tr_end
+        # chunk w/ TR | desert w/ same TR | chunk w/ TR
         if tr_start > 0 and tr_start <= len(tandem_repeats):
             if (
                 tandem_repeats[tr_start - 1].start
@@ -180,7 +181,6 @@ def run():
                 tr_start -= 1
         while tr_end < len(tandem_repeats):
             if tandem_repeats[tr_end].start < chunk_stop:
-                # print(tandem_repeats[tr_end].start, tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1)
                 tr_end += 1
             else:
                 break
@@ -191,6 +191,7 @@ def run():
             outputter.get_soda(index) if opts.soda else (None, None)
         )
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
+        # FIXME: print desert TRs to file
 
         run_full(
             chunk,
@@ -213,5 +214,6 @@ def run():
             heatmap_file.close()
 
     print_results_tandem_repeats(
-        tandem_repeats[tr_end::], opts.sequence_position, chrom_start
+        tandem_repeats[tr_end::], opts.matrix_position, opts.sequence_position, chrom_start
     )
+    # FIXME: print last ones to soda
