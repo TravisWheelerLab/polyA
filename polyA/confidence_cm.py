@@ -25,6 +25,7 @@ def confidence_cm(
     subfams: list of subfam names
     subfam_rows: list of subfamily rows that correspond to the the subfams of the region scores
     repeats: number of tandem repeat scores found at the end of the region
+    node_confidence_bool: if 0 - confidence for filling DP matrices, if 1 - confidence for nodes
 
     output:
     confidence_list: list of confidence values for competing annotations, each input alignment
@@ -100,6 +101,7 @@ def confidence_cm(
         confidence_list[index] = confidence_list[index] / score_total
 
     # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
+    # do not do this when conputing node confidence (skip state is not used)
     if confidence_list[0] < 0.01 and not node_confidence_bool:
         summ = 0
         for i in range(1, len(confidence_list)):
