@@ -216,8 +216,9 @@ the same ancestral sequence.
 
 #### Confidence only output file format
 
-TODO(Kaitlin): Explain what this means and what you use it for
-TODO(Kaitlin): Verify that this format is still correct
+Computes confidence of a single input alignment region. Does not perform 
+annotation or adjudication, simply outputs the confidence of all competing 
+queries given in the input.
 
 ```
 query_label         confidence
@@ -230,8 +231,6 @@ LTR40c#LTR/ERVL     0.001
 ### Extensions
 
 #### Visualizing annotations using SODA
-
-TODO(Kaitlin): Finish this once SODA is ready
 <!--
 TODO(Audrey): Add updated user explanation
 The command line option --soda will output the annotation data to a single json file 
@@ -243,10 +242,9 @@ This section is a work in progress and will be released in the coming weeks.
 
 #### Prior Counts Files
 
-TODO(Kaitlin): Explain what this does and why a user might want it
-
-The command line option --priorCounts prior_counts.txt includes prior
-genome counts in confidence calculations (see paper for more details)
+Default confidence calculations assume a uniform distribution over all
+competing queries. In the case of non uniform priors, the command line option --prior-counts prior_counts.txt includes prior
+genome counts in confidence calculations (see paper for more details). 
 
 TODO(Kaitlin): Add link to paper
 
@@ -376,6 +374,7 @@ BSD license. See `LICENSE`.
 [Wheeler Lab](http://wheelerlab.org) at the University of Montana.
 
   - Kaitlin Carey
+  - Audrey Shingleton
   - Audrey Shingleton
   - George Lesica
   - Jack Roddy
