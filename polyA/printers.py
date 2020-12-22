@@ -170,7 +170,7 @@ def print_results_tandem_repeats(
     chrom_start: int,
 ) -> None:
     """
-    Prints TRs only
+    prints TRs only
     """
     if print_matrix_position or not print_seq_pos:
         for tr in tandem_repeats:
