@@ -187,6 +187,7 @@ def fill_node_confidence(
                     lastprev_chrom,
                     sub_matrix.scores,
                 )
+
             node_confidence_temp[
                 subfam_index * nodes + node_index
             ] = align_score
@@ -296,7 +297,7 @@ def fill_node_confidence(
         for row_index in range(1, len(subfams)):
             temp.append(node_confidence_temp[row_index * nodes + node_index4])
         confidence_temp: List[float] = confidence_cm(
-            temp, subfam_countss, subfams, subfam_rows, tr_count
+            temp, subfam_countss, subfams, subfam_rows, tr_count, 1
         )
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[
