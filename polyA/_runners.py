@@ -67,6 +67,7 @@ def _handle_single_alignment(
     to run anything because we know that subfam is the annotation.
     """
     from uuid import uuid4
+
     print("single alignment")
     last_print: (str, int) = (
         target.subfamily,

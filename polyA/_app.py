@@ -5,7 +5,10 @@ from typing import List
 from ._options import Options
 from ._runners import run_confidence, run_full, _validate_target
 from .lambda_provider import EaselLambdaProvider
-from .load_alignments import load_alignments, shard_overlapping_alignments
+from .load_alignments import (
+    load_alignments,
+    shard_overlapping_alignments,
+)
 from .output import Output
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
@@ -149,10 +152,6 @@ def run():
     ):
         chunk_start = chunk.alignments[1].start
         chunk_stop = chunk.alignments[len(chunk.alignments) - 1].stop
-        print("chunk start, stop")
-        print(chunk.start, chunk.stop)
-        print("alignments in chunk:")
-        print(len(chunk.alignments))
         # get TRs fully in desert
         while tr_end < len(tandem_repeats):
             if (
