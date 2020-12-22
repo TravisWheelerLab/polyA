@@ -187,7 +187,7 @@ def fill_node_confidence(
                     lastprev_chrom,
                     sub_matrix.scores,
                 )
-            #                 print(subfam_index)
+
             node_confidence_temp[
                 subfam_index * nodes + node_index
             ] = align_score
