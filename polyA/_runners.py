@@ -67,8 +67,11 @@ def _handle_single_alignment(
     to run anything because we know that subfam is the annotation.
     """
     from uuid import uuid4
-
-    last_print: (str, int) = (target.subfamily, target.stop + target.chrom_start)
+    print("single alignment")
+    last_print: (str, int) = (
+        target.subfamily,
+        target.stop + target.chrom_start,
+    )
     id = uuid4().hex
     if print_seq_pos:
         stdout.write(
@@ -108,7 +111,6 @@ def run_full(
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
-    prev_tr: TandemRepeat,
 ) -> (str, int):
     # name, start, stop
     seq_count = len(alignments)
@@ -119,7 +121,9 @@ def run_full(
     last_print: (str, int)
     if seq_count == 2:
         # Only one alignment other than the skip state
-        last_print = _handle_single_alignment(target, print_seq_pos, print_matrix_pos)
+        last_print = _handle_single_alignment(
+            target, print_seq_pos, print_matrix_pos
+        )
         return last_print
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
@@ -512,7 +516,13 @@ def run_full(
     while changes_orig[i] == "skip":
         i -= 1
     # subfam, end in chrom
-    last_print = (changes_orig[i], non_empty_columns_orig[changes_position_orig[i + 1] - 1] + start_all + target.chrom_start - 1)
+    last_print = (
+        changes_orig[i],
+        non_empty_columns_orig[changes_position_orig[i + 1] - 1]
+        + start_all
+        + target.chrom_start
+        - 1,
+    )
     # prints results
     # first and last changes can be skip states
     if print_matrix_pos:

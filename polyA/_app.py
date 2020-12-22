@@ -143,13 +143,16 @@ def run():
     target = alignments[1]
     _validate_target(target)
     chrom_start: int = target.chrom_start  # for printing
-    prev_tr: TandemRepeat = None  # check for overlap case
 
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
-        chunk_start = chunk[1].start
-        chunk_stop = chunk[len(chunk) - 1].stop
+        chunk_start = chunk.alignments[1].start
+        chunk_stop = chunk.alignments[len(chunk.alignments) - 1].stop
+        print("chunk start, stop")
+        print(chunk.start, chunk.stop)
+        print("alignments in chunk:")
+        print(len(chunk.alignments))
         # get TRs fully in desert
         while tr_end < len(tandem_repeats):
             if (
@@ -198,7 +201,7 @@ def run():
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
         (last_fam, last_stop) = run_full(
-            chunk,
+            chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
             soda_viz_file,
@@ -208,9 +211,8 @@ def run():
             opts.sequence_position,
             sub_matrices,
             subfam_counts,
-            prev_tr,
         )
-        print(last_fam, last_stop)
+        # print(last_fam, last_stop)
 
         if soda_viz_file is not None:
             soda_viz_file.close()
