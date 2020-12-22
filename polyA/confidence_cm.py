@@ -32,7 +32,7 @@ def confidence_cm(
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> conf = confidence_cm([2, 1, 1], counts, subs, [0, 1, 2], 0)
+    >>> conf = confidence_cm([2, 1, 1], counts, subs, [0, 1, 2], 0, 0)
     >>> f"{conf[0]:.2f}"
     '0.50'
     >>> f"{conf[1]:.2f}"
@@ -40,9 +40,17 @@ def confidence_cm(
     >>> f"{conf[2]:.2f}"
     '0.25'
 
+    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, 0)
+    >>> f"{conf[0]:.2f}"
+    '0.01'
+
+    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, 1)
+    >>> f"{conf[0]:.2f}"
+    '0.00'
+
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
-    >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1)
+    >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1, 0)
     >>> f"{conf[0]:.2f}"
     '0.65'
     >>> f"{conf[1]:.2f}"
