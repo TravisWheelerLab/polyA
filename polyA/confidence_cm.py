@@ -8,6 +8,7 @@ def confidence_cm(
     subfams: List[str],
     subfam_rows: List[int],
     repeats: int,
+    node_confidence_bool: bool,
 ) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment and tandem
@@ -91,7 +92,7 @@ def confidence_cm(
         confidence_list[index] = confidence_list[index] / score_total
 
     # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
-    if confidence_list[0] < 0.01:
+    if confidence_list[0] < 0.01 and not node_confidence_bool:
         summ = 0
         for i in range(1, len(confidence_list)):
             summ += confidence_list[i]
