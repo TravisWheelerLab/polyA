@@ -148,6 +148,7 @@ def print_results_chrom(
     prints final results
     prints start and stop in terms of chromosome/target position
     """
+
     for i in range(len(changes_orig)):
         start = columns_orig[changespos_orig[i]]
         stop = columns_orig[changespos_orig[i + 1] - 1]
@@ -158,7 +159,7 @@ def print_results_chrom(
                     columns_orig[changespos_orig[i]]
                     + edgestart
                     + chrom_start
-                    - 1
+                    - 2  # -1 for padding at start of DP, -1 for overlap between edgestart and chrom_start
                 )
             )
             stdout.write("\t")
@@ -167,7 +168,7 @@ def print_results_chrom(
                     columns_orig[changespos_orig[i + 1] - 1]
                     + edgestart
                     + chrom_start
-                    - 1
+                    - 2  # -1 for padding at start of DP, -1 for overlap between edgestart and chrom_start
                 )
             )
             stdout.write("\t")

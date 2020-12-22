@@ -1,5 +1,7 @@
 from typing import Iterable, List, Optional, TextIO, Tuple
+
 from .alignment import Alignment, get_skip_state
+from .constants import INFINITE_SHARD_GAP
 
 
 def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
@@ -129,7 +131,7 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
+                    gap_init=float(meta["GI"]),
                     gap_ext=float(meta["GE"]),
                     kimura_divergence=float(meta["KD"]),
                 )
@@ -146,7 +148,7 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
+                    gap_init=float(meta["GI"]),
                     gap_ext=float(meta["GE"]),
                     kimura_divergence=float(meta["KD"]),
                 )
@@ -184,7 +186,14 @@ def shard_overlapping_alignments(
     next_chunk: List[Alignment] = [get_skip_state()] if add_skip_state else []
     window_stop: Optional[int] = None
     for alignment in alignments:
-        if window_stop is None or alignment.start <= (window_stop + shard_gap):
+        is_start = window_stop is None
+        is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
+
+        if (
+            is_start
+            or is_infinite_gap
+            or alignment.start <= (window_stop + shard_gap)
+        ):
             next_chunk.append(alignment)
         else:
             yield next_chunk
@@ -194,7 +203,7 @@ def shard_overlapping_alignments(
                 [get_skip_state(), alignment] if add_skip_state else [alignment]
             )
 
-        if window_stop is None or alignment.stop > window_stop:
+        if is_start or alignment.stop > window_stop:
             window_stop = alignment.stop
 
     yield next_chunk
