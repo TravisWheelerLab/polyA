@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 class TandemRepeat(NamedTuple):
     start: int
     length: int
+    stop: int
     position_scores: Tuple[float, ...]
 
     @staticmethod
@@ -15,6 +16,7 @@ class TandemRepeat(NamedTuple):
         return TandemRepeat(
             start=int(json_map["Start"]),
             length=int(json_map["Length"]),
+            stop=int(json_map["Start"]) + int(json_map["Length"]) - 1,
             position_scores=position_scores,
         )
 
