@@ -111,8 +111,10 @@ def run_full(
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
+    chunk_start: int,
+    chunk_stop: int,
 ) -> (str, int):
-    # name, start, stop
+    # chunk start and stop are positions in seq
     seq_count = len(alignments)
 
     target = alignments[1]
@@ -185,10 +187,16 @@ def run_full(
 
     if len(tandem_repeats) > 0:
         for tr in tandem_repeats:
-            # TR start index
-            starts_matrix.append(tr.start)
-            # TR stop index
-            stops_matrix.append(tr.start + tr.length - 1)
+            # add TR starts and stops
+            # check they do not exceed chunk boundary
+            if tr.start < chunk_start:
+                starts_matrix.append(chunk_start)
+            else:
+                starts_matrix.append(tr.start)
+            if tr.stop > chunk_stop:
+                stops_matrix.append(chunk_stop)
+            else:
+                stops_matrix.append(tr.stop)
 
     start_all, stop_all = pad_sequences(
         chunk_size,
@@ -259,6 +267,8 @@ def run_full(
             active_cells,
             align_matrix,
             consensus_matrix,
+            chunk_start,
+            chunk_stop,
         )
 
         # add skip states for TR cols
