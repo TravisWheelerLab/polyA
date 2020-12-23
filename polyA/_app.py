@@ -143,56 +143,26 @@ def run():
     target = alignments[1]
     _validate_target(target)
     chrom_start: int = target.chrom_start  # for printing
-
+    tr_start: int = 0
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
-        chunk_start = chunk.alignments[1].start
-        chunk_stop = chunk.alignments[len(chunk.alignments) - 1].stop
-        print("chunk start, stop")
-        print(chunk.start, chunk.stop)
-        print("alignments in chunk:")
-        print(len(chunk.alignments))
+        chunk_start = chunk.start
+        chunk_stop = chunk.stop
         # get TRs fully in desert
+        print(chunk_stop)
+        print(chunk_start)
+        # get TRs between chunk stop and start
+        tandem_repeats_chunk: List[TandemRepeat] = []
+        tr_end = tr_start
         while tr_end < len(tandem_repeats):
-            if (
-                tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1
-                < chunk_start
-            ):
-                # TR is fully before chunk, keep searching for more
-                print("desert TR")
-                tr_end += 1
-            else:
-                # no more TRs before cur chunk
-                break
-        tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
-        print_results_tandem_repeats(
-            tandem_repeats_desert,
-            opts.matrix_position,
-            opts.sequence_position,
-            chrom_start,
-        )
-
-        # get TRs loosely between chunk start and chunk stop
-        # use in run_full
-        tr_start = tr_end
-        # chunk w/ TR | desert w/ same TR | chunk w/ TR
-        if tr_start > 0 and tr_start <= len(tandem_repeats):
-            if (
-                tandem_repeats[tr_start - 1].start
-                + tandem_repeats[tr_start - 1].length
-                - 1
-                >= chunk_start
-            ):
-                # if prev TR in multiple chunks
-                # FIXME: how to only print out one of them
-                tr_start -= 1
-        while tr_end < len(tandem_repeats):
-            if tandem_repeats[tr_end].start < chunk_stop:
+            tr = tandem_repeats[tr_end]
+            if tr.start <= chunk_stop:
                 tr_end += 1
             else:
                 break
         tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
+        # FIXME: move tr_start back one if crossed chunk boundary
         tr_start = tr_end
 
         soda_viz_file, soda_conf_file = (
@@ -212,7 +182,8 @@ def run():
             sub_matrices,
             subfam_counts,
         )
-        # print(last_fam, last_stop)
+        print("prev")
+        print(last_fam, last_stop)
 
         if soda_viz_file is not None:
             soda_viz_file.close()
