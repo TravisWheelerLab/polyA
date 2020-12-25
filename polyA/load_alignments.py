@@ -198,27 +198,32 @@ def shard_overlapping_alignments(
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
-    shard_start = 0
+
+    shard_start = 1
     shard_stop = None
 
-    for alignment in alignments:
-        is_start = shard_stop is None
-        is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
+    is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
 
-        if is_start:
+    for alignment in alignments:
+        # If this is the first alignment we need to initialize
+        # the stop position
+        if shard_stop is None:
             shard_stop = alignment.stop
 
-        if (
-            is_start
-            or is_infinite_gap
-            or alignment.start <= (shard_stop + shard_gap)
-        ):
+        if is_infinite_gap or alignment.start <= (shard_stop + shard_gap):
+            # This alignment might extend past the previous
+            # alignments in the shard, capture that here
             if shard_stop < alignment.stop:
                 shard_stop = alignment.stop
 
             shard_alignments.append(alignment)
         else:
-            shard_stop += int(shard_gap / 2)
+            # The gap between shards might be bigger than the
+            # maximum shard gap, so we have to consume half of
+            # the actual gap for this shard
+            actual_gap = alignment.stop - shard_stop
+            shard_stop += int(actual_gap / 2)
+
             yield Shard(
                 start=shard_start,
                 stop=shard_stop,
@@ -226,7 +231,7 @@ def shard_overlapping_alignments(
             )
 
             shard_start = shard_stop + 1
-            shard_stop = shard_start
+            shard_stop = alignment.stop
 
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
@@ -236,57 +241,10 @@ def shard_overlapping_alignments(
 
     yield Shard(
         start=shard_start,
-        stop=shard_alignments[-1].stop,
-        alignments=shard_alignments,
-    )
-
-
-def shard_overlapping_alignments_update(
-    alignments: Iterable[Alignment],
-    shard_gap: int,
-    add_skip_state: bool = True,
-) -> Iterable[Shard]:
-    """
-    Shard alignments with bug fix
-
-    """
-    shard_alignments: List[Alignment] = (
-        [get_skip_state()] if add_skip_state else []
-    )
-    shard_start = 0
-    shard_stop = None  # None did not work here because of line 215
-
-    for alignment in alignments:
-        is_start = shard_stop is None
-        is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
-        if (
-            is_start
-            or is_infinite_gap
-            or alignment.start <= (shard_stop + shard_gap)
-        ):
-            if is_start or shard_stop < alignment.stop:
-                # print("change")
-                shard_stop = alignment.stop
-
-            shard_alignments.append(alignment)
-        else:
-            shard_stop += int(shard_gap / 2)
-            yield Shard(
-                start=shard_start,
-                stop=shard_stop,
-                alignments=shard_alignments,
-            )
-
-            shard_start = shard_stop + 1
-            shard_stop = None
-
-            # Note: important to create a new list here or we will
-            # mutate the one we just handed back to the caller.
-            shard_alignments = (
-                [get_skip_state(), alignment] if add_skip_state else [alignment]
-            )
-    yield Shard(
-        start=shard_start,
-        stop=shard_alignments[-1].stop,
+        # TODO(Audrey): Ask TW what assumptions (if any) we can make about the end of the sequence
+        # This might be wrong if we're skipping a bunch of meaningful sequence that comes after
+        # the last alignment in the file, do we need to capture additional positions?
+        # If so, how many additional positions do we need to capture?
+        stop=shard_stop,
         alignments=shard_alignments,
     )
