@@ -172,27 +172,41 @@ def shard_overlapping_alignments(
     where many regions will be empty.
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
+
+    The first shard tested below looks like this. The second is the same, but
+    shifted to the right by 50 positions.
+
+    ::
+           1   5    10   15   20
+        a0 |--------|
+        a1     |---------|
+        a2  |------|
+
+    TODO: This test is ugly, move it into the unit test file
+
     >>> skip = get_skip_state()
-    >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0, "", 0, 0)
-    >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0, "", 0, 0)
-    >>> a2 = Alignment("", "", 0, 12 + 50, 70, 0, 0, [], "", 0, "", 0, 0)
-    >>> a3 = Alignment("", "", 0, 70 + 51, 140, 0, 0, [], "", 0, "", 0, 0)
-    >>> a4 = Alignment("", "", 0, 70 + 51, 140, 0, 0, [], "", 0, "", 0, 0)
-    >>> a5 = Alignment("", "", 0, 70 + 52, 130, 0, 0, [], "", 0, "", 0, 0)
-    >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3, a4, a5], 50))
-    >>> len(chunks)
+    >>> shard_gap = 50
+    >>> offset = shard_gap + 15
+    >>> a0 = Alignment("", "", 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
+    >>> a1 = Alignment("", "", 0, 5, 15, 0, 0, [], "", 0, "", 0, 0)
+    >>> a2 = Alignment("", "", 0, 2, 8, 0, 0, [], "", 0, "", 0, 0)
+    >>> a3 = Alignment("", "", 0, a0.start + offset, a0.stop + offset, 0, 0, [], "", 0, "", 0, 0)
+    >>> a4 = Alignment("", "", 0, a1.start + offset, a1.stop + offset, 0, 0, [], "", 0, "", 0, 0)
+    >>> a5 = Alignment("", "", 0, a2.start + offset, a2.stop + offset, 0, 0, [], "", 0, "", 0, 0)
+    >>> shards = list(shard_overlapping_alignments([a0, a1, a2, a3, a4, a5], 50))
+    >>> len(shards)
     2
-    >>> chunks[0].start
-    0
-    >>> chunks[0].stop
-    95
-    >>> chunks[0].alignments == [skip, a0, a1, a2]
+    >>> shards[0].start
+    1
+    >>> shards[0].stop
+    40
+    >>> shards[0].alignments == [skip, a0, a1, a2]
     True
-    >>> chunks[1].start
-    96
-    >>> chunks[1].stop
-    140
-    >>> chunks[1].alignments == [skip, a3, a4, a5]
+    >>> shards[1].start
+    41
+    >>> shards[1].stop
+    80
+    >>> shards[1].alignments == [skip, a3, a4, a5]
     True
     """
     shard_alignments: List[Alignment] = (
@@ -221,7 +235,7 @@ def shard_overlapping_alignments(
             # The gap between shards might be bigger than the
             # maximum shard gap, so we have to consume half of
             # the actual gap for this shard
-            actual_gap = alignment.stop - shard_stop
+            actual_gap = alignment.start - shard_stop
             shard_stop += int(actual_gap / 2)
 
             yield Shard(
