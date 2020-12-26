@@ -170,33 +170,57 @@ def shard_overlapping_alignments(
     than `shard_gap` nucleotides. This allows for more efficient processing
     for alignments over large regions of sequence (such as an entire genome)
     where many regions will be empty.
-
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
 
-    # FIXME
+    >>> skip = get_skip_state()
+    >>> a0 = Alignment("", "", 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
+    >>> a1 = Alignment("", "", 0, 21, 30, 0, 0, [], "", 0, "", 0, 0)
+    >>> shards = list(shard_overlapping_alignments([a0, a1], 10))
+    >>> len(shards)
+    2
+    >>> shards[0].start
+    1
+    >>> shards[0].stop
+    15
+    >>> len(shards[0].alignments)
+    2
+    >>> shards[1].start
+    16
+    >>> shards[1].stop
+    30
+    >>> len(shards[1].alignments)
+    2
     """
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
-    shard_start = 0
+
+    shard_start = 1
     shard_stop = None
 
-    for alignment in alignments:
-        is_start = shard_stop is None
-        is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
+    is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
 
-        if (
-            is_start
-            or is_infinite_gap
-            or alignment.start <= (shard_stop + shard_gap)
-        ):
-            if is_start or shard_stop < alignment.stop:
+    for alignment in alignments:
+        # If this is the first alignment we need to initialize
+        # the stop position
+        if shard_stop is None:
+            shard_stop = alignment.stop
+
+        if is_infinite_gap or alignment.start <= (shard_stop + shard_gap):
+            # This alignment might extend past the previous
+            # alignments in the shard, capture that here
+            if shard_stop < alignment.stop:
                 shard_stop = alignment.stop
 
             shard_alignments.append(alignment)
         else:
-            shard_stop += int(shard_gap / 2)
+            # The gap between shards might be bigger than the
+            # maximum shard gap, so we have to consume half of
+            # the actual gap for this shard
+            actual_gap = alignment.start - shard_stop
+            shard_stop += int(actual_gap / 2)
+
             yield Shard(
                 start=shard_start,
                 stop=shard_stop,
@@ -204,13 +228,14 @@ def shard_overlapping_alignments(
             )
 
             shard_start = shard_stop + 1
-            shard_stop = None
+            shard_stop = alignment.stop
 
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
             shard_alignments = (
                 [get_skip_state(), alignment] if add_skip_state else [alignment]
             )
+
     yield Shard(
         start=shard_start,
         stop=shard_stop,

@@ -90,6 +90,16 @@ def confidence_cm(
     for index in range(len(region)):
         confidence_list[index] = confidence_list[index] / score_total
 
+    # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
+    if confidence_list[0] < 0.01:
+        summ = 0
+        for i in range(1, len(confidence_list)):
+            summ += confidence_list[i]
+
+        confidence_list[0] = 0.01
+        for i in range(1, len(confidence_list)):
+            confidence_list[i] = confidence_list[i] * 0.99 / summ
+
     return confidence_list
 
 

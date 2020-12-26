@@ -5,7 +5,10 @@ from typing import List
 from ._options import Options
 from ._runners import run_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
-from .load_alignments import load_alignments, shard_overlapping_alignments
+from .load_alignments import (
+    load_alignments,
+    shard_overlapping_alignments,
+)
 from .output import Output
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
@@ -131,16 +134,14 @@ def run():
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
-    # for tr in tandem_repeats:
-    #    print(tr.start, tr.start + tr.length - 1)
 
     # FIXME: if shard gap is infinite, use all TRs (skip breaking them up)
     stdout.write("start\tstop\tID\tname\n")
     stdout.write("----------------------------------------\n")
     tr_start: int = 0
     tr_end: int = 0
-    prev_subfam_start: int = -1
-    prev_subfam_stop: int = -1
+    _prev_start: int = -1
+    _prev_stop: int = -1
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
@@ -165,7 +166,7 @@ def run():
         )
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
-        last_subfam_start, last_subfam_stop = run_full(
+        (_last_start, _last_stop) = run_full(
             chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
@@ -178,12 +179,12 @@ def run():
             subfam_counts,
             chunk_start,
             chunk_stop,
-            prev_subfam_start,
-            prev_subfam_stop,
+            _prev_start,
+            _prev_stop,
         )
-        prev_subfam_start, prev_subfam_stop = (
-            last_subfam_start,
-            last_subfam_stop,
+        _prev_start, _prev_stop = (
+            _last_start,
+            _last_stop,
         )
 
         if soda_viz_file is not None:

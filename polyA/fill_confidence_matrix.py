@@ -56,9 +56,9 @@ def fill_confidence_matrix(
     >>> subs = ["s1", "s2"]
     >>> conf_mat = fill_confidence_matrix(non_cols, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
-    '0.0000'
+    '0.0100'
     >>> f"{conf_mat[1,0]:.4f}"
-    '1.0000'
+    '0.9900'
     >>> f"{conf_mat[0,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
