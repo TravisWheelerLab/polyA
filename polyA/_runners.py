@@ -61,17 +61,13 @@ def _handle_single_alignment(
     target: Alignment,
     print_seq_pos: bool,
     print_matrix_pos: bool,
-) -> (str, int):
+) -> Tuple[int, int]:
     """
     If there is only one subfam in the alignment file, no need
     to run anything because we know that subfam is the annotation.
     """
     from uuid import uuid4
-    print("single alignment")
-    last_print: (str, int) = (
-        target.subfamily,
-        target.stop + target.chrom_start,
-    )
+
     id = uuid4().hex
     if print_seq_pos:
         stdout.write(
@@ -85,7 +81,7 @@ def _handle_single_alignment(
         stdout.write(
             f"{target.start + target.chrom_start}\t{target.stop + target.chrom_start}\t{id}\t{target.subfamily}\n"
         )
-    return last_print
+    return target.start, target.stop
 
 
 def _change_probs(seq_count: int) -> Tuple[float, float, float]:
@@ -113,20 +109,22 @@ def run_full(
     subfam_counts: Dict[str, float],
     chunk_start: int,
     chunk_stop: int,
-) -> (str, int):
+    prev_start: int,
+    prev_stop: int,
+) -> Tuple[int, int]:
     # chunk start and stop are positions in seq
     seq_count = len(alignments)
 
     target = alignments[1]
     _validate_target(target)
 
-    last_print: (str, int)
+    # FIXME: does not include TRs
     if seq_count == 2:
         # Only one alignment other than the skip state
-        last_print = _handle_single_alignment(
+        last_subfam_start, last_subfam_stop = _handle_single_alignment(
             target, print_seq_pos, print_matrix_pos
         )
-        return last_print
+        return last_subfam_start, last_subfam_stop
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
@@ -522,19 +520,33 @@ def run_full(
                     subfam != "Tandem Repeat"
                 ), "can't add alternative edges to TRs"
 
+    # prints results
+    # check if first to print pos is one after prev stop in seq pos
+    i = 0
+    while changes_orig[i] == "skip":
+        i += 1
+    last_subfam_start = (
+        non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
+    )
+
+    if prev_stop + 1 == last_subfam_start:
+        # change start pos - back to back TRs
+        stdout.write("\033[2K\033[1G")  # remove last printed line
+        non_empty_columns_orig[changes_position_orig[i]] = (
+            prev_start - start_all + 1
+        )
+        last_subfam_start = (
+            non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
+        )
+
     i = len(changes_orig) - 1
     while changes_orig[i] == "skip":
         i -= 1
-    # subfam, end in chrom
-    last_print = (
-        changes_orig[i],
-        non_empty_columns_orig[changes_position_orig[i + 1] - 1]
-        + start_all
-        + target.chrom_start
-        - 1,
+    # end in seq
+    last_subfam_stop = (
+        non_empty_columns_orig[changes_position_orig[i + 1] - 1] + start_all - 1
     )
-    # prints results
-    # first and last changes can be skip states
+
     if print_matrix_pos:
         print_results(
             changes_orig,
@@ -578,4 +590,4 @@ def run_full(
             node_confidence_orig,
             node_ids,
         )
-    return last_print
+    return last_subfam_start, last_subfam_stop

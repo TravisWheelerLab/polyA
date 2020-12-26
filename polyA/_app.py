@@ -140,18 +140,13 @@ def run():
     stdout.write("----------------------------------------\n")
     tr_start: int = 0
     tr_end: int = 0
-    target = alignments[1]
-    _validate_target(target)
-    chrom_start: int = target.chrom_start  # for printing
-    tr_start: int = 0
+    prev_subfam_start: int = -1
+    prev_subfam_stop: int = -1
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
         chunk_start = chunk.start
         chunk_stop = chunk.stop
-        # get TRs fully in desert
-        print(chunk_stop)
-        print(chunk_start)
         # get TRs between chunk stop and start
         tandem_repeats_chunk: List[TandemRepeat] = []
         tr_end = tr_start
@@ -162,15 +157,16 @@ def run():
             else:
                 break
         tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
-        # FIXME: move tr_start back one if crossed chunk boundary
         tr_start = tr_end
+        if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
+            tr_start -= 1
 
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
-        (last_fam, last_stop) = run_full(
+        last_subfam_start, last_subfam_stop = run_full(
             chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
@@ -181,9 +177,15 @@ def run():
             opts.sequence_position,
             sub_matrices,
             subfam_counts,
+            chunk_start,
+            chunk_stop,
+            prev_subfam_start,
+            prev_subfam_stop,
         )
-        print("prev")
-        print(last_fam, last_stop)
+        prev_subfam_start, prev_subfam_stop = (
+            last_subfam_start,
+            last_subfam_stop,
+        )
 
         if soda_viz_file is not None:
             soda_viz_file.close()
@@ -191,10 +193,3 @@ def run():
             soda_conf_file.close()
         if heatmap_file is not None:
             heatmap_file.close()
-
-    print_results_tandem_repeats(
-        tandem_repeats[tr_end::],
-        opts.matrix_position,
-        opts.sequence_position,
-        chrom_start,
-    )
