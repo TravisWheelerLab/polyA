@@ -174,45 +174,24 @@ def shard_overlapping_alignments(
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
 
-    >>> skip = get_skip_state()
-    >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0, "", 0, 0)
-    >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0, "", 0, 0)
-    >>> a2 = Alignment("", "", 0, 12 + 50, 70, 0, 0, [], "", 0, "", 0, 0)
-    >>> a3 = Alignment("", "", 0, 70 + 51, 130, 0, 0, [], "", 0, "", 0, 0)
-    >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3], 50))
-    >>> len(chunks)
-    2
-    >>> chunks[0].start
-     0
-     >>> chunks[0].stop
-     95
-     >>> chunks[0].alignments == [skip, a0, a1, a2]
-    True
-    >>> chunks[1].start
-     96
-     >>> chunks[1].stop
-     130
-     >>> chunks[1].alignments == [skip, a3]
-    True
+    # FIXME
     """
-    # FIXME: alignments not being broken up correctly
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
     shard_start = 0
-    shard_stop = 0  # None did not work here because of line 215
+    shard_stop = None
 
     for alignment in alignments:
         is_start = shard_stop is None
         is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
 
         if (
-
             is_start
             or is_infinite_gap
             or alignment.start <= (shard_stop + shard_gap)
         ):
-            if shard_stop < alignment.stop:
+            if is_start or shard_stop < alignment.stop:
                 shard_stop = alignment.stop
 
             shard_alignments.append(alignment)
@@ -225,7 +204,7 @@ def shard_overlapping_alignments(
             )
 
             shard_start = shard_stop + 1
-            shard_stop = shard_start
+            shard_stop = None
 
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
@@ -234,6 +213,6 @@ def shard_overlapping_alignments(
             )
     yield Shard(
         start=shard_start,
-        stop=shard_alignments[-1].stop,
+        stop=shard_stop,
         alignments=shard_alignments,
     )

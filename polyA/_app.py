@@ -3,14 +3,13 @@ from sys import argv, stderr, stdout
 from typing import List
 
 from ._options import Options
-from ._runners import run_confidence, run_full, _validate_target
+from ._runners import run_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import load_alignments, shard_overlapping_alignments
 from .output import Output
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
 from .ultra_provider import ApplicationUltraProvider, TandemRepeat
-from .printers import print_results_tandem_repeats
 
 
 class AppError(RuntimeError):
