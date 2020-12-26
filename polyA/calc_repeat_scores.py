@@ -46,6 +46,8 @@ def calculate_repeat_scores(
     {(1, 2): 3.3333333333333335, (1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0, (2, 13): 3.125, (2, 14): 1.6666666666666667}
     >>> active_cols
     {2: [0, 1], 3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
+
+    FIXME: test with boundary that cuts TR off
     """
 
     repeat_scores: Dict[
@@ -59,7 +61,6 @@ def calculate_repeat_scores(
         col_index = start_rep - start_all + 1  # can't be less than 1
         length = rep.length
         pos_scores = rep.position_scores
-        print(pos_scores)
 
         # calc score for first chunk
         score: float = 0
