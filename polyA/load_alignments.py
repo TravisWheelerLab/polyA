@@ -195,7 +195,7 @@ def shard_overlapping_alignments(
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
-      
+
     shard_start = 1
     shard_stop = None
 

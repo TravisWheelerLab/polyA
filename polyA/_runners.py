@@ -67,6 +67,7 @@ def _handle_single_alignment(
     to run anything because we know that subfam is the annotation.
     """
     from uuid import uuid4
+
     id = uuid4().hex
     if print_seq_pos:
         stdout.write(
