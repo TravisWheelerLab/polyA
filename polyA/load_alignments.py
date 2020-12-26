@@ -195,7 +195,7 @@ def shard_overlapping_alignments(
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
-
+      
     shard_start = 1
     shard_stop = None
 
@@ -238,10 +238,6 @@ def shard_overlapping_alignments(
 
     yield Shard(
         start=shard_start,
-        # TODO(Audrey): Ask TW what assumptions (if any) we can make about the end of the sequence
-        # This might be wrong if we're skipping a bunch of meaningful sequence that comes after
-        # the last alignment in the file, do we need to capture additional positions?
-        # If so, how many additional positions do we need to capture?
         stop=shard_stop,
         alignments=shard_alignments,
     )
