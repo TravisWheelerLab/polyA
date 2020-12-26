@@ -3,13 +3,17 @@ from sys import argv, stderr, stdout
 from typing import List
 
 from ._options import Options
-from ._runners import run_confidence, run_full
+from ._runners import run_confidence, run_full, _validate_target
 from .lambda_provider import EaselLambdaProvider
-from .load_alignments import load_alignments, shard_overlapping_alignments
+from .load_alignments import (
+    load_alignments,
+    shard_overlapping_alignments,
+)
 from .output import Output
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
 from .ultra_provider import ApplicationUltraProvider, TandemRepeat
+from .printers import print_results_tandem_repeats
 
 
 class AppError(RuntimeError):
@@ -74,7 +78,9 @@ def run():
     # Tandem Repeat initialization
     # ----------------------------
 
-    tandem_repeats = _configure_tandem_repeats(opts)
+    tandem_repeats = _configure_tandem_repeats(
+        opts
+    )  # either has stuff or doesn't
 
     # -----------------
     # Sub-family counts
@@ -129,20 +135,73 @@ def run():
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
+    # for tr in tandem_repeats:
+    #    print(tr.start, tr.start + tr.length - 1)
 
+    # FIXME: if shard gap is infinite, use all TRs (skip breaking them up)
     stdout.write("start\tstop\tID\tname\n")
     stdout.write("----------------------------------------\n")
+    tr_start: int = 0
+    tr_end: int = 0
+    target = alignments[1]
+    _validate_target(target)
+    chrom_start: int = target.chrom_start  # for printing
+
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
+        chunk_start = chunk.alignments[1].start
+        chunk_stop = chunk.alignments[len(chunk.alignments) - 1].stop
+        # get TRs fully in desert
+        while tr_end < len(tandem_repeats):
+            if (
+                tandem_repeats[tr_end].start + tandem_repeats[tr_end].length - 1
+                < chunk_start
+            ):
+                # TR is fully before chunk, keep searching for more
+                print("desert TR")
+                tr_end += 1
+            else:
+                # no more TRs before cur chunk
+                break
+        tandem_repeats_desert = tandem_repeats[tr_start:tr_end]
+        print_results_tandem_repeats(
+            tandem_repeats_desert,
+            opts.matrix_position,
+            opts.sequence_position,
+            chrom_start,
+        )
+
+        # get TRs loosely between chunk start and chunk stop
+        # use in run_full
+        tr_start = tr_end
+        # chunk w/ TR | desert w/ same TR | chunk w/ TR
+        if tr_start > 0 and tr_start <= len(tandem_repeats):
+            if (
+                tandem_repeats[tr_start - 1].start
+                + tandem_repeats[tr_start - 1].length
+                - 1
+                >= chunk_start
+            ):
+                # if prev TR in multiple chunks
+                # FIXME: how to only print out one of them
+                tr_start -= 1
+        while tr_end < len(tandem_repeats):
+            if tandem_repeats[tr_end].start < chunk_stop:
+                tr_end += 1
+            else:
+                break
+        tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
+        tr_start = tr_end
+
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
-        run_full(
+        (_last_fam, _last_stop) = run_full(
             chunk.alignments,
-            tandem_repeats,
+            tandem_repeats_chunk,
             opts.chunk_size,
             soda_viz_file,
             soda_conf_file,
@@ -159,3 +218,10 @@ def run():
             soda_conf_file.close()
         if heatmap_file is not None:
             heatmap_file.close()
+
+    print_results_tandem_repeats(
+        tandem_repeats[tr_end::],
+        opts.matrix_position,
+        opts.sequence_position,
+        chrom_start,
+    )

@@ -131,8 +131,8 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=float(meta["GI"]),
-                    gap_ext=float(meta["GE"]),
+                    gap_init=int(meta["GI"]),
+                    gap_ext=int(meta["GE"]),
                 )
             else:
                 yield Alignment(
@@ -147,8 +147,8 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=float(meta["GI"]),
-                    gap_ext=float(meta["GE"]),
+                    gap_init=int(meta["GI"]),
+                    gap_ext=int(meta["GE"]),
                 )
             meta.clear()
             seqs.clear()
@@ -170,55 +170,57 @@ def shard_overlapping_alignments(
     than `shard_gap` nucleotides. This allows for more efficient processing
     for alignments over large regions of sequence (such as an entire genome)
     where many regions will be empty.
-
     Precondition: alignments are sorted by their start position and all
     alignments have start position <= stop position.
 
     >>> skip = get_skip_state()
-    >>> a0 = Alignment("", "", 0, 0, 10, 0, 0, [], "", 0, "", 0, 0)
-    >>> a1 = Alignment("", "", 0, 2, 12, 0, 0, [], "", 0, "", 0, 0)
-    >>> a2 = Alignment("", "", 0, 12 + 50, 70, 0, 0, [], "", 0, "", 0, 0)
-    >>> a3 = Alignment("", "", 0, 70 + 51, 130, 0, 0, [], "", 0, "", 0, 0)
-    >>> chunks = list(shard_overlapping_alignments([a0, a1, a2, a3], 50))
-    >>> len(chunks)
+    >>> a0 = Alignment("", "", 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
+    >>> a1 = Alignment("", "", 0, 21, 30, 0, 0, [], "", 0, "", 0, 0)
+    >>> shards = list(shard_overlapping_alignments([a0, a1], 10))
+    >>> len(shards)
     2
-    >>> chunks[0].start
-    0
-    >>> chunks[0].stop
-    95
-    >>> chunks[0].alignments == [skip, a0, a1, a2]
-    True
-    >>> chunks[1].start
-    96
-    >>> chunks[1].stop
-    130
-    >>> chunks[1].alignments == [skip, a3]
-    True
+    >>> shards[0].start
+    1
+    >>> shards[0].stop
+    15
+    >>> len(shards[0].alignments)
+    2
+    >>> shards[1].start
+    16
+    >>> shards[1].stop
+    30
+    >>> len(shards[1].alignments)
+    2
     """
     shard_alignments: List[Alignment] = (
         [get_skip_state()] if add_skip_state else []
     )
-    shard_start = 0
+
+    shard_start = 1
     shard_stop = None
 
-    for alignment in alignments:
-        is_start = shard_stop is None
-        is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
+    is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
 
-        if is_start:
+    for alignment in alignments:
+        # If this is the first alignment we need to initialize
+        # the stop position
+        if shard_stop is None:
             shard_stop = alignment.stop
 
-        if (
-            is_start
-            or is_infinite_gap
-            or alignment.start <= (shard_stop + shard_gap)
-        ):
+        if is_infinite_gap or alignment.start <= (shard_stop + shard_gap):
+            # This alignment might extend past the previous
+            # alignments in the shard, capture that here
             if shard_stop < alignment.stop:
                 shard_stop = alignment.stop
 
             shard_alignments.append(alignment)
         else:
-            shard_stop += int(shard_gap / 2)
+            # The gap between shards might be bigger than the
+            # maximum shard gap, so we have to consume half of
+            # the actual gap for this shard
+            actual_gap = alignment.start - shard_stop
+            shard_stop += int(actual_gap / 2)
+
             yield Shard(
                 start=shard_start,
                 stop=shard_stop,
@@ -226,7 +228,7 @@ def shard_overlapping_alignments(
             )
 
             shard_start = shard_stop + 1
-            shard_stop = shard_start
+            shard_stop = alignment.stop
 
             # Note: important to create a new list here or we will
             # mutate the one we just handed back to the caller.
@@ -236,6 +238,10 @@ def shard_overlapping_alignments(
 
     yield Shard(
         start=shard_start,
-        stop=shard_alignments[-1].stop,
+        # TODO(Audrey): Ask TW what assumptions (if any) we can make about the end of the sequence
+        # This might be wrong if we're skipping a bunch of meaningful sequence that comes after
+        # the last alignment in the file, do we need to capture additional positions?
+        # If so, how many additional positions do we need to capture?
+        stop=shard_stop,
         alignments=shard_alignments,
     )
