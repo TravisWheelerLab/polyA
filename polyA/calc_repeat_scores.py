@@ -66,14 +66,14 @@ def calculate_repeat_scores(
         score: float = 0
         j = 0
         k = int((chunk_size - 1) / 2)
-        # update repeat_scores for positions 0 to 15
+        # update repeat_scores for positions 0 to 15 if in boundary
         while j <= k and j < length:
             score += pos_scores[j]
-            repeat_scores[col_index + j] = pos_scores[j]
+            if start_rep + j >= chunk_start:
+                repeat_scores[col_index + j] = pos_scores[j]
             j += 1
         window_size = j
 
-        # start of TR <= chunk stop
         # check TR start >= chunk start
         # update AlignMatrix and ConsensusMatrix
         if start_rep >= chunk_start:
@@ -101,8 +101,9 @@ def calculate_repeat_scores(
             if j + k < len(pos_scores):
                 score += float(pos_scores[j + k])
                 window_size += 1
-                # add new score to repeat_scores
-                repeat_scores[col_index + j + k] = float(pos_scores[j + k])
+                if chunk_start <= start_rep + j + k <= chunk_stop:
+                    # add new score to repeat_scores
+                    repeat_scores[col_index + j + k] = float(pos_scores[j + k])
             # Update matrices if in chunk boundary
             if start_rep + j >= chunk_start:
                 align_matrix[i + row_num, col_index + j] = (
