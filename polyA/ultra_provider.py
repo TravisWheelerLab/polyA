@@ -60,7 +60,7 @@ class ApplicationUltraProvider:
     def __call__(self) -> UltraOutput:
         if self._sequence_path:
             ultra_stream = os.popen(
-                self._ultra_path + "-ss" + self._sequence_path
+                self._ultra_path + " -ss " + self._sequence_path
             )
             raw_output = json.load(ultra_stream)
         else:
