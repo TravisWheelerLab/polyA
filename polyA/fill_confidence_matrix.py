@@ -84,6 +84,7 @@ def fill_confidence_matrix(
             subfams,
             active_cells[col_index],
             0,
+            0,
         )
 
         for row_index2 in range(len(active_cells[col_index])):

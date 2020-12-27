@@ -49,6 +49,7 @@ def fill_confidence_matrix_tr(
             subfamss,
             active_cells_trailing[col_index],
             0,
+            0,
         )
 
         for row_index2 in range(len(active_cells_trailing[col_index])):
@@ -72,6 +73,7 @@ def fill_confidence_matrix_tr(
             subfamss,
             active_cells[col_index],
             1,
+            0,
         )
 
         # will replace cols that had both TR and alignment scores
