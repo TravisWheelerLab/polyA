@@ -37,17 +37,41 @@ def calculate_repeat_scores(
     repeat_scores: Hash implementation of sparse 1d array. Key is int that maps col
     index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
 
-    tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, {}]
+    tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, ...]
     >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
     >>> align_mat = {}
     >>> active_cols = {}
     >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 1, 30)
+    >>> rep_scores
+    {2: -0.5, 3: 1.0, 4: 1.5, 5: 1.0, 7: 0.0, 8: 0.5, 9: 0.5, 10: 1.5, 11: 1.5, 12: 1.0, 13: 0.5, 14: -0.5}
     >>> align_mat
     {(1, 2): 3.3333333333333335, (1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0, (2, 13): 3.125, (2, 14): 1.6666666666666667}
     >>> active_cols
     {2: [0, 1], 3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
 
-    FIXME: test with boundary that cuts TR off
+    Shard cuts off TR from left side
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
+    >>> align_mat = {}
+    >>> active_cols = {}
+    >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 6, 30)
+    >>> rep_scores
+    {3: 1.0, 4: 1.5, 5: 1.0, 7: 0.0, 8: 0.5, 9: 0.5, 10: 1.5, 11: 1.5, 12: 1.0, 13: 0.5, 14: -0.5}
+    >>> align_mat
+    {(1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0, (2, 13): 3.125, (2, 14): 1.6666666666666667}
+    >>> active_cols
+    {3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
+
+    Shard cuts off TR from right side
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
+    >>> align_mat = {}
+    >>> active_cols = {}
+    >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 1, 15)
+    >>> rep_scores
+    {2: -0.5, 3: 1.0, 4: 1.5, 5: 1.0, 7: 0.0, 8: 0.5, 9: 0.5, 10: 1.5, 11: 1.5, 12: 1.0}
+    >>> align_mat
+    {(1, 2): 3.3333333333333335, (1, 3): 3.75, (1, 4): 3.75, (1, 5): 5.833333333333333, (2, 7): 1.6666666666666667, (2, 8): 3.125, (2, 9): 4.0, (2, 10): 5.0, (2, 11): 5.0, (2, 12): 4.0}
+    >>> active_cols
+    {2: [0, 1], 3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2]}
     """
 
     repeat_scores: Dict[
