@@ -206,8 +206,8 @@ def shard_overlapping_alignments(
     alignments have start position <= stop position.
 
     >>> skip = get_skip_state()
-    >>> a0 = Alignment("", "a", 1, 100, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0.0)
-    >>> a1 = Alignment("", "a", 1, 100, 0, 21, 30, 0, 0, [], "", 0, "", 0, 0.0)
+    >>> a0 = Alignment("", "a", 1, 100, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0.0, 0.0)
+    >>> a1 = Alignment("", "a", 1, 100, 0, 21, 30, 0, 0, [], "", 0, "", 0, 0.0, 0.0)
     >>> shards = list(shard_overlapping_alignments([a0, a1], 10))
     >>> len(shards)
     2

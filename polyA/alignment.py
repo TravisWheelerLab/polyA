@@ -5,7 +5,7 @@ class Alignment(NamedTuple):
     """
     A container to hold data related to a single alignment.
 
-    >>> a = Alignment("", "ch", 25, 100, 0, 0, 0, 0, 0, [], "", 0, "", 0, 0)
+    >>> a = Alignment("", "ch", 25, 100, 0, 0, 0, 0, 0, [], "", 0, "", 0, 0, 0.0)
     >>> a.chrom_name
     'ch'
     >>> a.chrom_start

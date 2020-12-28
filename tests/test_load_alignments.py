@@ -65,9 +65,9 @@ def test_shard_alignments_simple():
     # 0 |--------|
     # 1     |---------|
     # 2  |------|
-    s00 = Alignment("", "a", 1, 1000, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
-    s01 = Alignment("", "a", 1, 1000, 0, 5, 15, 0, 0, [], "", 0, "", 0, 0)
-    s02 = Alignment("", "a", 1, 1000, 0, 2, 8, 0, 0, [], "", 0, "", 0, 0)
+    s00 = Alignment("", "a", 1, 1000, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0, 0.0)
+    s01 = Alignment("", "a", 1, 1000, 0, 5, 15, 0, 0, [], "", 0, "", 0, 0, 0.0)
+    s02 = Alignment("", "a", 1, 1000, 0, 2, 8, 0, 0, [], "", 0, "", 0, 0, 0.0)
 
     # The second shard looks the same, but it is shifted
     # to the right by 115 positions (100 positions beyond
@@ -89,6 +89,7 @@ def test_shard_alignments_simple():
         "",
         0,
         0,
+        0.0,
     )
     s11 = Alignment(
         "",
@@ -106,6 +107,7 @@ def test_shard_alignments_simple():
         "",
         0,
         0,
+        0.0,
     )
     s12 = Alignment(
         "",
@@ -123,6 +125,7 @@ def test_shard_alignments_simple():
         "",
         0,
         0,
+        0.0,
     )
 
     skip = get_skip_state()
