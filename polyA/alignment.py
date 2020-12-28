@@ -13,7 +13,7 @@ class Alignment(NamedTuple):
     >>> a.chrom_stop
     100
     >>> a.chrom_length
-    75
+    76
     """
 
     subfamily: str
@@ -34,7 +34,7 @@ class Alignment(NamedTuple):
 
     @property
     def chrom_length(self) -> int:
-        return self.chrom_stop - self.chrom_start
+        return self.chrom_stop - self.chrom_start + 1
 
     @property
     def sequence(self) -> str:
