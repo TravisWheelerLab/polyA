@@ -146,7 +146,7 @@ def run_full(
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
-        chromosome_matrix.append(alignment.chrom)
+        chromosome_matrix.append(alignment.chrom_name)
         scores_matrix.append(alignment.score)
         strands_matrix.append(alignment.strand)
         starts_matrix.append(alignment.start)

@@ -54,7 +54,7 @@ class Alignment(NamedTuple):
 
 
 _skip = Alignment(
-    subfamily="skip_subfam",
+    subfamily="skip",
     chrom_name="skip_chrom",
     chrom_start=0,
     chrom_stop=0,
