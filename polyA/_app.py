@@ -68,11 +68,6 @@ def run():
     opts = Options(argv[1:])
     _configure_logging(opts)
 
-    # help_flag = "--help" in opts
-    # if help_flag:
-    #     print(helpMessage)
-    #     exit(0)
-
     # ----------------------------
     # Tandem Repeat initialization
     # ----------------------------
