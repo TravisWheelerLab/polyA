@@ -32,3 +32,17 @@ do echo "$f";
   rm output.*.heatmap;
   printf -- "-------------------------------------------------------------\n";
 done
+
+
+for f in ../fixtures/ultra_test_files/*.fa ;
+do echo "$f";
+  ultra_output="${f}.ultra";
+  align_file="${f}.cm.sto";
+  m="${f}.cm.matrix";
+
+  set -x
+  python -m polyA --shard-gap 50 --sequence-position --ultra-data "$ultra_output" "$align_file" "$m";
+  set +x
+
+  printf -- "-------------------------------------------------------------\n";
+done

@@ -1,14 +1,25 @@
-import re
-from typing import Dict, List, NamedTuple
+from typing import List, NamedTuple
 
 
 class Alignment(NamedTuple):
     """
     A container to hold data related to a single alignment.
+
+    >>> a = Alignment("", "ch", 25, 100, 0, 0, 0, 0, 0, [], "", 0, "", 0, 0)
+    >>> a.chrom_name
+    'ch'
+    >>> a.chrom_start
+    25
+    >>> a.chrom_stop
+    100
+    >>> a.chrom_length
+    76
     """
 
     subfamily: str
-    chrom: str
+    chrom_name: str
+    chrom_start: int
+    chrom_stop: int
     score: int
     start: int
     stop: int
@@ -21,37 +32,9 @@ class Alignment(NamedTuple):
     gap_init: int
     gap_ext: int
 
-    chrom_meta: Dict[str, str] = {}
-
-    # TODO: George - Remove these mutators once we clean up the padding code
-
-    def _read_chrom_meta(self):
-        if len(self.chrom_meta) > 0:
-            return
-
-        match = re.search(r"(.+):(\d+)-(\d+)", self.chrom)
-        self.chrom_meta["name"] = match.groups()[0]
-        self.chrom_meta["start"] = match.groups()[1]
-        self.chrom_meta["end"] = match.groups()[2]
-
-    @property
-    def chrom_name(self) -> str:
-        self._read_chrom_meta()
-        return self.chrom_meta["name"]
-
-    @property
-    def chrom_start(self) -> int:
-        self._read_chrom_meta()
-        return int(self.chrom_meta["start"])
-
-    @property
-    def chrom_end(self) -> int:
-        self._read_chrom_meta()
-        return int(self.chrom_meta["end"])
-
     @property
     def chrom_length(self) -> int:
-        return self.chrom_end - self.chrom_start
+        return self.chrom_stop - self.chrom_start + 1
 
     @property
     def sequence(self) -> str:
@@ -72,7 +55,9 @@ class Alignment(NamedTuple):
 
 _skip = Alignment(
     subfamily="skip",
-    chrom="",
+    chrom_name="skip_chrom",
+    chrom_start=0,
+    chrom_stop=0,
     score=0,
     start=0,
     stop=0,
