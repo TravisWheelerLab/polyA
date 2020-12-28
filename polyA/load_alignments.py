@@ -1,3 +1,4 @@
+import re
 from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
 from .alignment import Alignment, get_skip_state
@@ -69,6 +70,18 @@ def _parse_terminator_line(line: str) -> bool:
     return line.strip() == "//"
 
 
+def _parse_chrom_meta(line: str) -> Optional[Tuple[str, int, int]]:
+    match = re.search(r"(.+):(\d+)-(\d+)", line.strip())
+    if match is None:
+        return None
+
+    chrom_name = match.groups()[0]
+    chrom_start = int(match.groups()[1])
+    chrom_stop = int(match.groups()[2])
+
+    return chrom_name, chrom_start, chrom_stop
+
+
 def load_alignments(
     file: TextIO, add_skip_state: bool = False
 ) -> Iterable[Alignment]:
@@ -97,6 +110,9 @@ def load_alignments(
 
     meta = {}
     seqs = []
+    chrom_name: str = ""
+    chrom_start: int = 0
+    chrom_stop: int = 0
 
     for line in file:
         if _parse_preamble_line(line):
@@ -118,10 +134,18 @@ def load_alignments(
             #   we have two sequences
             #   all required metadata was present
 
+            chrom_meta = _parse_chrom_meta(meta["TR"])
+            if chrom_meta is not None:
+                chrom_name, chrom_start, chrom_stop = chrom_meta
+            else:
+                raise ValueError("metadata incomplete, missing TR")
+
             if meta["TQ"] == "t":
                 yield Alignment(
                     subfamily=meta["ID"],
-                    chrom=meta["TR"],
+                    chrom_name=chrom_name,
+                    chrom_start=chrom_start,
+                    chrom_stop=chrom_stop,
                     score=int(meta["SC"]),
                     start=int(meta["ST"]),
                     stop=int(meta["SP"]),
@@ -131,13 +155,15 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=float(meta["GI"]),
-                    gap_ext=float(meta["GE"]),
+                    gap_init=int(meta["GI"]),
+                    gap_ext=int(meta["GE"]),
                 )
             else:
                 yield Alignment(
                     subfamily=meta["ID"],
-                    chrom=meta["TR"],
+                    chrom_name=chrom_name,
+                    chrom_start=chrom_start,
+                    chrom_stop=chrom_stop,
                     score=int(meta["SC"]),
                     start=int(meta["ST"]),
                     stop=int(meta["SP"]),
@@ -147,11 +173,15 @@ def load_alignments(
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
                     sub_matrix_name=meta["MX"],
-                    gap_init=float(meta["GI"]),
-                    gap_ext=float(meta["GE"]),
+                    gap_init=int(meta["GI"]),
+                    gap_ext=int(meta["GE"]),
                 )
+
             meta.clear()
             seqs.clear()
+            chrom_name = ""
+            chrom_start = 0
+            chrom_stop = 0
 
 
 class Shard(NamedTuple):
@@ -174,8 +204,8 @@ def shard_overlapping_alignments(
     alignments have start position <= stop position.
 
     >>> skip = get_skip_state()
-    >>> a0 = Alignment("", "", 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
-    >>> a1 = Alignment("", "", 0, 21, 30, 0, 0, [], "", 0, "", 0, 0)
+    >>> a0 = Alignment("", "a", 1, 100, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
+    >>> a1 = Alignment("", "a", 1, 100, 0, 21, 30, 0, 0, [], "", 0, "", 0, 0)
     >>> shards = list(shard_overlapping_alignments([a0, a1], 10))
     >>> len(shards)
     2
@@ -188,7 +218,7 @@ def shard_overlapping_alignments(
     >>> shards[1].start
     16
     >>> shards[1].stop
-    30
+    100
     >>> len(shards[1].alignments)
     2
     """
@@ -201,7 +231,11 @@ def shard_overlapping_alignments(
 
     is_infinite_gap = shard_gap == INFINITE_SHARD_GAP
 
+    last_alignment = None
+
     for alignment in alignments:
+        last_alignment = alignment
+
         # If this is the first alignment we need to initialize
         # the stop position
         if shard_stop is None:
@@ -236,8 +270,11 @@ def shard_overlapping_alignments(
                 [get_skip_state(), alignment] if add_skip_state else [alignment]
             )
 
+    if last_alignment is None:
+        raise ValueError("no alignments found")
+
     yield Shard(
         start=shard_start,
-        stop=shard_stop,
+        stop=last_alignment.chrom_stop - last_alignment.chrom_start + 1,
         alignments=shard_alignments,
     )

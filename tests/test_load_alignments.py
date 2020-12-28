@@ -65,9 +65,9 @@ def test_shard_alignments_simple():
     # 0 |--------|
     # 1     |---------|
     # 2  |------|
-    s00 = Alignment("", "", 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
-    s01 = Alignment("", "", 0, 5, 15, 0, 0, [], "", 0, "", 0, 0)
-    s02 = Alignment("", "", 0, 2, 8, 0, 0, [], "", 0, "", 0, 0)
+    s00 = Alignment("", "a", 1, 1000, 0, 1, 10, 0, 0, [], "", 0, "", 0, 0)
+    s01 = Alignment("", "a", 1, 1000, 0, 5, 15, 0, 0, [], "", 0, "", 0, 0)
+    s02 = Alignment("", "a", 1, 1000, 0, 2, 8, 0, 0, [], "", 0, "", 0, 0)
 
     # The second shard looks the same, but it is shifted
     # to the right by 115 positions (100 positions beyond
@@ -75,7 +75,9 @@ def test_shard_alignments_simple():
     offset = 100 + 15
     s10 = Alignment(
         "",
-        "",
+        "a",
+        1,
+        1000,
         0,
         s00.start + offset,
         s00.stop + offset,
@@ -90,7 +92,9 @@ def test_shard_alignments_simple():
     )
     s11 = Alignment(
         "",
-        "",
+        "a",
+        1,
+        1000,
         0,
         s01.start + offset,
         s01.stop + offset,
@@ -105,7 +109,9 @@ def test_shard_alignments_simple():
     )
     s12 = Alignment(
         "",
-        "",
+        "a",
+        1,
+        1000,
         0,
         s02.start + offset,
         s02.stop + offset,
@@ -132,7 +138,7 @@ def test_shard_alignments_simple():
     assert shards[0].alignments == [skip, s00, s01, s02]
 
     assert shards[1].start == 66
-    assert shards[1].stop == 130
+    assert shards[1].stop == 1000
     assert shards[1].alignments == [skip, s10, s11, s12]
 
 
@@ -146,3 +152,6 @@ def test_shard_alignments_fixture():
 
     shard1 = shards[1]
     assert len(shard1.alignments) == 27
+
+    shard_last = shards[-1]
+    assert shard_last.stop == 146336591 - 146331457 + 1
