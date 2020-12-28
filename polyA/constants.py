@@ -43,7 +43,7 @@ mathematically not exactly 0, but in python log(1-10e-45) = 0
 so set to 0 and avoid doing the math
 """
 
-SKIP_ALIGN_SCORE = 5.0
+SKIP_ALIGN_SCORE = 10.0
 """
 alignment score given to skip state, no lambda adjustment needed
 """

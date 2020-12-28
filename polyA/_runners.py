@@ -61,7 +61,7 @@ def _handle_single_alignment(
     target: Alignment,
     print_seq_pos: bool,
     print_matrix_pos: bool,
-) -> None:
+) -> Tuple[int, int]:
     """
     If there is only one subfam in the alignment file, no need
     to run anything because we know that subfam is the annotation.
@@ -81,6 +81,7 @@ def _handle_single_alignment(
         stdout.write(
             f"{target.start + target.chrom_start}\t{target.stop + target.chrom_start}\t{id}\t{target.subfamily}\n"
         )
+    return target.start, target.stop
 
 
 def _change_probs(seq_count: int) -> Tuple[float, float, float]:
@@ -106,16 +107,24 @@ def run_full(
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
-) -> None:
+    chunk_start: int,
+    chunk_stop: int,
+    prev_start: int,
+    prev_stop: int,
+) -> Tuple[int, int]:
+    # chunk start and stop are positions in seq
     seq_count = len(alignments)
 
     target = alignments[1]
     _validate_target(target)
 
+    # FIXME: does not include TRs
     if seq_count == 2:
         # Only one alignment other than the skip state
-        _handle_single_alignment(target, print_seq_pos, print_matrix_pos)
-        return
+        last_subfam_start, last_subfam_stop = _handle_single_alignment(
+            target, print_seq_pos, print_matrix_pos
+        )
+        return last_subfam_start, last_subfam_stop
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
@@ -138,7 +147,7 @@ def run_full(
 
     for alignment in alignments:
         subfamily_matrix.append(alignment.subfamily)
-        chromosome_matrix.append(alignment.chrom)
+        chromosome_matrix.append(alignment.chrom_name)
         scores_matrix.append(alignment.score)
         strands_matrix.append(alignment.strand)
         starts_matrix.append(alignment.start)
@@ -178,10 +187,16 @@ def run_full(
 
     if len(tandem_repeats) > 0:
         for tr in tandem_repeats:
-            # TR start index
-            starts_matrix.append(tr.start)
-            # TR stop index
-            stops_matrix.append(tr.start + tr.length - 1)
+            # add TR starts and stops
+            # check they do not exceed chunk boundary
+            if tr.start < chunk_start:
+                starts_matrix.append(chunk_start)
+            else:
+                starts_matrix.append(tr.start)
+            if tr.stop > chunk_stop:
+                stops_matrix.append(chunk_stop)
+            else:
+                stops_matrix.append(tr.stop)
 
     start_all, stop_all = pad_sequences(
         chunk_size,
@@ -252,6 +267,8 @@ def run_full(
             active_cells,
             align_matrix,
             consensus_matrix,
+            chunk_start,
+            chunk_stop,
         )
 
         # add skip states for TR cols
@@ -508,6 +525,32 @@ def run_full(
                 ), "can't add alternative edges to TRs"
 
     # prints results
+    # check if first to print pos is one after prev stop in seq pos
+    i = 0
+    while changes_orig[i] == "skip":
+        i += 1
+    last_subfam_start = (
+        non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
+    )
+
+    if prev_stop + 1 == last_subfam_start:
+        # change start pos - back to back TRs
+        stdout.write("\033[2K\033[1G")  # remove last printed line
+        non_empty_columns_orig[changes_position_orig[i]] = (
+            prev_start - start_all + 1
+        )
+        last_subfam_start = (
+            non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
+        )
+
+    i = len(changes_orig) - 1
+    while changes_orig[i] == "skip":
+        i -= 1
+    # end in seq
+    last_subfam_stop = (
+        non_empty_columns_orig[changes_position_orig[i + 1] - 1] + start_all - 1
+    )
+
     if print_matrix_pos:
         print_results(
             changes_orig,
@@ -541,7 +584,7 @@ def run_full(
             start_all,
             outfile_viz,
             outfile_conf,
-            target.chrom,
+            target.chrom_name,
             target.chrom_start,
             subfamily_matrix,
             changes_orig,
@@ -554,3 +597,4 @@ def run_full(
             node_confidence_orig,
             node_ids,
         )
+    return last_subfam_start, last_subfam_stop

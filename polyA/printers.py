@@ -2,8 +2,10 @@ import json
 from math import inf
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Union
+from uuid import uuid4
 
 from polyA.matrices import SupportMatrix
+from .ultra_provider import TandemRepeat
 
 
 def print_matrix_hash(
