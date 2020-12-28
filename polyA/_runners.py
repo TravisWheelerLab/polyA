@@ -279,6 +279,7 @@ def run_full(
         for _ in tandem_repeats:
             subfamily_matrix.append("Tandem Repeat")
             strands_matrix.append("+")
+            kimura_values.append(0.0)
             rows += 1
 
         confidence_matrix = fill_confidence_matrix_tr(
