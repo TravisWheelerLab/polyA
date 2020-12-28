@@ -577,7 +577,7 @@ def run_full(
             start_all,
             outfile_viz,
             outfile_conf,
-            target.chrom,
+            target.chrom_name,
             target.chrom_start,
             subfamily_matrix,
             changes_orig,
