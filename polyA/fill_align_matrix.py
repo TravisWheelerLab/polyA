@@ -76,10 +76,10 @@ def fill_align_matrix(
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        seq_index: int = (
-            starts[i] - edge_start
-        )  # place in subfam_seq and chrom_seq
-        col_index = seq_index + half_chunk + 1  # col in align_matrix
+        seq_index: int = 0  # place in subfam_seq and chrom_seq
+        col_index = (
+            starts[i] - edge_start + half_chunk + 1
+        )  # col in align_matrix
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
@@ -143,7 +143,6 @@ def fill_align_matrix(
 
         # scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
-
             if (
                 chroms[i][seq_index + offset] != "-"
             ):  # if no new gap introduced, move along seq and add next nucl into score

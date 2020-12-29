@@ -1,5 +1,4 @@
-from typing import List, Tuple
-
+from typing import Dict, List, Tuple
 from polyA.edges import edges
 
 
@@ -44,23 +43,10 @@ def pad_sequences(
     edge_start: int
     edge_stop: int
 
-    half_chunk: int = int((chunk_size - 1) / 2)
-
     edge_start, edge_stop = edges(start, stop)
 
     for i in range(1, len(subfam_seqs)):
-        left_pad: int = start[i] - edge_start
-        right_pad: int = edge_stop - stop[i]
-
-        chrom_seqs[i] = (
-            ("." * left_pad)
-            + f"{chrom_seqs[i]}"
-            + ("." * (right_pad + half_chunk))
-        )
-        subfam_seqs[i] = (
-            ("." * left_pad)
-            + f"{subfam_seqs[i]}"
-            + ("." * (right_pad + half_chunk))
-        )
+        chrom_seqs[i] = f"{chrom_seqs[i]}" + ("." * chunk_size)
+        subfam_seqs[i] = f"{subfam_seqs[i]}" + ("." * chunk_size)
 
     return edge_start, edge_stop
