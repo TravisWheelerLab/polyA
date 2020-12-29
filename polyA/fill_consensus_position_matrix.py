@@ -59,7 +59,7 @@ def fill_consensus_position_matrix(
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
             col_index: int = starts[row_index] - start_all + 1
-            seq_index: int = starts[row_index] - start_all
+            seq_index: int = 0
 
             while col_index < stops[row_index] + 1 - start_all + 1:
 
@@ -82,7 +82,7 @@ def fill_consensus_position_matrix(
         else:  # reverse strand
             consensus_pos2 = consensus_starts[row_index] + 1
             col_index2: int = starts[row_index] - start_all + 1
-            seq_index2: int = starts[row_index] - start_all
+            seq_index2: int = 0
 
             while col_index2 < stops[row_index] + 1 - start_all + 1:
 

@@ -48,8 +48,8 @@ def fill_align_matrix(
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
     are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
 
-    >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
-    >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
+    >>> chros = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
+    >>> subs = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
     >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
     >>> (c, m) = fill_align_matrix([0.0, 0.1, 0.1], 0, 31, [0, -25, -25], [0, -5, -5], 1.0, subs, chros, strts, sub_mat)
@@ -76,10 +76,10 @@ def fill_align_matrix(
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        seq_index: int = (
-            starts[i] - edge_start
-        )  # place in subfam_seq and chrom_seq
-        col_index = seq_index + half_chunk + 1  # col in align_matrix
+        seq_index: int = 0  # place in subfam_seq and chrom_seq
+        col_index = (
+            starts[i] - edge_start + half_chunk + 1
+        )  # col in align_matrix
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
@@ -143,7 +143,6 @@ def fill_align_matrix(
 
         # scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
-
             if (
                 chroms[i][seq_index + offset] != "-"
             ):  # if no new gap introduced, move along seq and add next nucl into score
