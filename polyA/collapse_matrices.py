@@ -38,7 +38,8 @@ def dp_for_collapse(
     change: float = log(0.000000001)
     stay: float = log(1 - change)
 
-    non_empty: List[int] = []
+    # non_empty: List[int] = []
+    non_empty = set()
 
     path: List[int] = []
 
@@ -47,22 +48,17 @@ def dp_for_collapse(
             col = columns[c]
             for row in dp_rows:
                 if (row, col) in support_matrix and col not in non_empty:
-                    non_empty.append(col)
+                    non_empty.add(col)
     else:
-        min_start = 1000000000
-        max_stop = 0
+
         for i in range(len(dp_rows)):
-            if starts[dp_rows[i]] < min_start:
-                min_start = starts[dp_rows[i]]
+            for j in range(
+                starts[dp_rows[i]] - start_all + 1,
+                stops[dp_rows[i]] - start_all + 1 + 1,
+            ):
+                non_empty.add(columns[j])
 
-            if stops[dp_rows[i]] > max_stop:
-                max_stop = stops[dp_rows[i]]
-
-        for c in range(min_start - start_all + 1, max_stop - start_all + 1 + 1):
-            col = columns[c]
-            for row in dp_rows:
-                if (row, col) in support_matrix and col not in non_empty:
-                    non_empty.append(col)
+    non_empty = list(non_empty)
 
     origin: Dict[Tuple[int, int], int] = {}
     col_list: List[float] = []
