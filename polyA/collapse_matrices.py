@@ -164,7 +164,7 @@ def collapse_matrices(
     >>> kims = [0.0, 0.0, 0.0]
     >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
     >>> con_mat = {(0, 0): 0, (0, 2): 1, (0, 3): 2, (1, 0): 0, (1, 2): 1, (1, 3): 2, (2, 0): 0, (2, 2): 3, (2, 3): 10}
-    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, 1, non_cols, subs, strandss, kims, [0,0,0], [2,2,2], active, sup_mat, con_mat)
+    >>> (r, con_mat_col, strand_mat_col, kim_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, 1, non_cols, subs, strandss, kims, [0,0,0], [2,2,2], active, sup_mat, con_mat)
     >>> r
     2
     >>> con_mat_col
