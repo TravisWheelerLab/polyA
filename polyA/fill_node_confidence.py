@@ -57,6 +57,11 @@ def fill_node_confidence(
     >>> node_conf = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf
     {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.19999999999999998, ('n2', 1): 0.7999999999999999, ('skip', 2): 0.0, ('n1', 2): 0.19999999999999998, ('n2', 2): 0.7999999999999999}
+    >>> s_seqs = ['', 'AAA-T--TT-', 'TTTTTTTTTT']
+    >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
+    >>> node_conf2 = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
+    >>> node_conf2
+    {('skip', 0): 0.0, ('n1', 0): 0.5, ('n2', 0): 0.5, ('skip', 1): 0.0, ('n1', 1): 0.015384615384615385, ('n2', 1): 0.9846153846153847, ('skip', 2): 0.0, ('n1', 2): 0.1111111111111111, ('n2', 2): 0.8888888888888888}
     """
 
     node_confidence_temp: List[float] = [
@@ -105,16 +110,16 @@ def fill_node_confidence(
                 alignment_index_start = begin_node - subfam_start
                 alignment_index_end = stops[subfam_index] - starts[subfam_index]
 
-                # fixme - this isnt right
                 if (
                     alignment_index_start - 1 >= 0
-                    and alignment_index_start - 1 <= alignment_index_end
+                    and alignment_index_start - 1 <= len(gap_offset[subfam_index])
                 ):
+                    chrom_offset = gap_offset[subfam_index][alignment_index_start-1]
                     last_prev_subfam = subfam_seqs[subfam_index][
-                        alignment_index_start - 1
+                        alignment_index_start - 1 + chrom_offset
                     ]
                     last_prev_chrom = chrom_seqs[subfam_index][
-                        alignment_index_start - 1
+                        alignment_index_start - 1 + chrom_offset
                     ]
 
                 for i in range(end_node - begin_node + 1):
