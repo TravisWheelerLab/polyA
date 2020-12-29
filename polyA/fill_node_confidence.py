@@ -112,9 +112,12 @@ def fill_node_confidence(
 
                 if (
                     alignment_index_start - 1 >= 0
-                    and alignment_index_start - 1 <= len(gap_offset[subfam_index])
+                    and alignment_index_start - 1
+                    <= len(gap_offset[subfam_index])
                 ):
-                    chrom_offset = gap_offset[subfam_index][alignment_index_start-1]
+                    chrom_offset = gap_offset[subfam_index][
+                        alignment_index_start - 1
+                    ]
                     last_prev_subfam = subfam_seqs[subfam_index][
                         alignment_index_start - 1 + chrom_offset
                     ]
