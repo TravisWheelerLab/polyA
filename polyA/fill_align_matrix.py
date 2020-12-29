@@ -92,7 +92,7 @@ def fill_align_matrix(
         offset: int = temp_index - seq_index
         trailing_offset: int = 0
 
-        # add trailing cells
+        # add preceding cells
         for trailing in range(1, half_chunk + 1):
             if col_index - k - trailing >= 1:
 

@@ -35,6 +35,7 @@ def dp_for_collapse(
     non_empty: List[int] = []
 
     path: List[int] = []
+    #fixme - change so this isn't the full columns, just columns needed
     for c in range(len(columns)):
         col = columns[c]
         for row in dp_rows:
