@@ -128,7 +128,7 @@ def run_full(
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
-    #fixme - rename, don't call 'matrix'
+    # fixme - rename, don't call 'matrix'
     subfamily_matrix: List[str] = []
     chromosome_matrix: List[str] = []
     scores_matrix: List[int] = []
@@ -160,8 +160,8 @@ def run_full(
         gap_inits.append(alignment.gap_init)
         gap_exts.append(alignment.gap_ext)
 
-        #fixme (george): is this a list of dicts?
-        #fixme (george): change it to a dict of dicts?
+        # fixme (george): is this a list of dicts?
+        # fixme (george): change it to a dict of dicts?
         if alignment.sub_matrix_name in sub_matrix_scores:
             substitution_matrices.append(
                 sub_matrix_scores[alignment.sub_matrix_name]
@@ -223,7 +223,7 @@ def run_full(
         [sm.scores for sm in substitution_matrices],
     )
 
-    #fixme - do this in fill_align_matrix to avoid extra looping
+    # fixme - do this in fill_align_matrix to avoid extra looping
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
     non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
@@ -248,7 +248,7 @@ def run_full(
         strands_matrix,
     )
 
-    #skip state has no active rows
+    # skip state has no active rows
     active_cells[0] = [0]
 
     # add skip state pad at end
@@ -335,9 +335,12 @@ def run_full(
 
     collapsed_matrices = collapse_matrices(
         rows,
+        start_all,
         non_empty_columns,
         subfamily_matrix,
         strands_matrix,
+        starts_matrix,
+        stops_matrix,
         active_cells,
         support_matrix,
         consensus_matrix,
