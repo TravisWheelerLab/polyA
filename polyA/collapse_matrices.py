@@ -20,11 +20,11 @@ def dp_for_collapse(
     path: list with labels for which row to collapse to for each column
     non_empty: list of non empty cols for this particular subfam (in the mini dp matrix)
 
-    # >>> dp_r = [0, 2]
-    # >>> non_cols = [0, 2, 3]
-    # >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
-    # >>> p = dp_for_collapse(dp_r, sup_mat, non_cols)
-    # >>> p
+    >>> dp_r = [0, 2]
+    >>> non_cols = [0, 2, 3]
+    >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
+    >>> p = dp_for_collapse(dp_r, sup_mat, non_cols)
+    >>> p
     [1, 1, 1]
     """
     change: float = log(0.000000001)
@@ -146,6 +146,8 @@ def collapse_matrices(
     >>> sub_col_ind
     {'s1': 0, 's2': 1, 's3': 2}
     """
+    #fixme - write another test for when there is overlap and mini dp is done
+
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
     support_matrix_collapse: Dict[Tuple[int, int], float] = {}
