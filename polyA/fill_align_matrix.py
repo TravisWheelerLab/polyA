@@ -411,7 +411,6 @@ def fill_hmm_align_matrix(
                 hmm_offset += 1
             temp_index += 1
 
-        offset: int = temp_index - seq_index  # gaps in chrom seq
         if subfam_seq[seq_index + 1] == "-":
             hmm_end = hmm_start + hmm_offset
         else:
@@ -420,37 +419,45 @@ def fill_hmm_align_matrix(
 
         start_insertion_score: float = 0
         start_gap_index: int = -1
-        # FIXME: will alignment ever start with an insert? NO (or deletion)
 
-        # add trailing cells and doesn't normalize
+        offset: int = temp_index - seq_index  # gaps in chrom seq
+
+        trailing_offset: int = 0
+        # add preceding cells
         for trailing in range(1, half_chunk + 1):
             if col_index - k - trailing >= 1:
+
+                temp_index = seq_index + offset + trailing_offset - trailing - 1
+                while chrom_seq[temp_index] == "-":
+                    trailing_offset -= 1
+                    temp_index -= 1
+
                 chrom_slice: str = chrom_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
                 subfam_slice: str = subfam_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
 
                 # calculates score for first chunk and puts in align_matrix
                 align_score: float = calculate_hmm_score(
                     hmm_start,
-                    "",
                     chrom_slice,
                     subfam_slice,
-                    chrom_seq[seq_index::],
                     subfam_seq[seq_index::],
                     start_insertion_score,
                     start_gap_index,
                     subfam_hmm,
                 )
 
-                num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
-
+                num_nucls0 = (
+                    (seq_index + offset + trailing_offset - trailing)
+                    - seq_index
+                    + 1
+                )
                 align_matrix[i, col_index - k - trailing] = (
                     align_score * num_nucls0 / chunk_size
                 )
-                # already to scale so don't need to * chunk_size and / chunk_size
 
         # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
@@ -460,10 +467,8 @@ def fill_hmm_align_matrix(
         # calculates score for first chunk and puts in align_matrix
         align_score: float = calculate_hmm_score(
             hmm_start,
-            "",
             chrom_slice,
             subfam_slice,
-            chrom_seq[seq_index::],
             subfam_seq[seq_index::],
             start_insertion_score,
             start_gap_index,
@@ -489,8 +494,7 @@ def fill_hmm_align_matrix(
                     if end_gap_index + 1 != seq_index + offset:  # new gap
                         end_insertion_score = calculate_insertion_score(
                             hmm_end,
-                            chroms[i][seq_index + offset :],
-                            subfams[i][seq_index + offset],
+                            subfams[i][seq_index + offset::],
                             subfam_hmm,
                         )
                     end_gap_index = seq_index + offset  # new gap index
@@ -547,10 +551,8 @@ def fill_hmm_align_matrix(
 
                 align_score = calculate_hmm_score(
                     hmm_start,
-                    chrom_seq[seq_index - 1],
                     chrom_slice,
                     subfam_slice,
-                    chrom_seq[seq_index::],
                     subfam_seq[seq_index::],
                     start_insertion_score,
                     start_gap_index,
@@ -590,8 +592,7 @@ def fill_hmm_align_matrix(
                 if start_gap_index != seq_index:
                     start_insertion_score = calculate_insertion_score(
                         hmm_start,
-                        chrom_seq[seq_index:],
-                        subfam_seq[seq_index:],
+                        subfam_seq[seq_index::],
                         subfam_hmm,
                     )
                 start_gap_index = seq_index + 1
@@ -627,8 +628,7 @@ def fill_hmm_align_matrix(
                         if end_gap_index + 1 != seq_index + offset:
                             end_insertion_score = calculate_insertion_score(
                                 hmm_end,
-                                chroms[i][seq_index + offset :],
-                                subfams[i][seq_index + offset],
+                                subfams[i][seq_index + offset::],
                                 subfam_hmm,
                             )
                         end_gap_index = seq_index + offset  # new gap index
@@ -645,11 +645,9 @@ def fill_hmm_align_matrix(
 
                     align_score = calculate_hmm_score(
                         hmm_start,
-                        chrom_seq[seq_index],
                         chrom_slice,
                         subfam_slice,
-                        chrom_seq[seq_index + 1 : :],
-                        subfam_seq[seq_index + 1 : :],
+                        subfam_seq[seq_index + 1::],
                         start_insertion_score,
                         start_gap_index,
                         subfam_hmm,
@@ -711,8 +709,7 @@ def fill_hmm_align_matrix(
                         if end_gap_index + 1 != seq_index + offset:  # new gap
                             end_insertion_score = calculate_insertion_score(
                                 hmm_end,
-                                chroms[i][seq_index + offset :],
-                                subfams[i][seq_index + offset],
+                                subfams[i][seq_index + offset::],
                                 subfam_hmm,
                             )
                         end_gap_index = seq_index + offset  # new gap index
@@ -755,20 +752,29 @@ def fill_hmm_align_matrix(
             hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
         )
 
-        # add trailing cells and normalizes
-        hmm_trailing = 0
+        # add trailing cells
+        hmm_trailing = 0  # used to get start position
+        trailing_offset = 0
         for trailing in range(1, half_chunk + 1):
             # if col_index - k - trailing >= 0:
-            # 15 -> 1 nucleotide before padding
+            # 15 -> 1 nucs before padding
             # trailing is amount to remove
+
             if subfam_seq[seq_index + trailing] != "-":
                 hmm_trailing += 1
 
+            temp_index = seq_index + trailing + trailing_offset
+            while chrom_seq[temp_index] == "-":
+                trailing_offset += 1
+                temp_index += 1
+                hmm_trailing += 1
+
             chrom_slice: str = chrom_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
+
             subfam_slice: str = subfam_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
 
             num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
@@ -776,16 +782,13 @@ def fill_hmm_align_matrix(
             # calculates score for first chunk and puts in align_matrix
             align_score: float = calculate_hmm_score(
                 hmm_start + hmm_trailing,
-                chrom_seq[seq_index + trailing - 1],
                 chrom_slice,
                 subfam_slice,
-                chrom_seq[seq_index + trailing : :],
-                subfam_seq[seq_index + trailing : :],
+                subfam_seq[seq_index + trailing::],
                 start_insertion_score,
                 start_gap_index,
                 subfam_hmm,
             )
-
             align_matrix[i, col_index - 1 + trailing] = (
                 align_score / num_nucls2 * chunk_size
             )
@@ -805,10 +808,8 @@ def fill_hmm_align_matrix(
             check_hmm_position(hmm_start, hmm_end, subfam_slice)
             align_score = calculate_hmm_score(
                 hmm_start,
-                chrom_seq[seq_index - 1],
                 chrom_slice,
                 subfam_slice,
-                chrom_seq[seq_index::],
                 subfam_seq[seq_index::],
                 start_insertion_score,
                 start_gap_index,
