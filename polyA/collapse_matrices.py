@@ -38,12 +38,12 @@ def dp_for_collapse(
     change: float = log(0.000000001)
     stay: float = log(1 - change)
 
-    # non_empty: List[int] = []
     non_empty = set()
 
     path: List[int] = []
 
     if subfam == "Tandem Repeat":
+        #fixme - audrey, can we avoid this? Where are the TR start and stops info?
         for c in range(len(columns)):
             col = columns[c]
             for row in dp_rows:
@@ -111,6 +111,8 @@ def dp_for_collapse(
 
     prev_row_index: int = origin[max_row_index, non_empty[-1]]
     path.append(max_row_index)
+
+    print(subfam, len(origin))
 
     # already added the last col, but this adds the one before cols so still start at last col
     for columns_index in range(len(non_empty) - 1, 1, -1):
