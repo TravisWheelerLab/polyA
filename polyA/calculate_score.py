@@ -1,5 +1,4 @@
 from typing import Dict
-from math import log
 
 
 def calculate_score(
@@ -77,47 +76,56 @@ def calculate_score(
 
 def calculate_hmm_score(
     hmm_start: int,
-    prev_char_chrom: str,
     chrom_slice: str,
     subfam_slice: str,
-    chrom: str,
     subfam: str,
     insertion_score: float,
     insertion_index: int,
     subfam_hmm,
 ) -> float:
     """
-    Function description here
-    hmm start - hmm pos of first char
+    Calculate the score for an HMM alignment between a subfamily/model
+    and a target/chromosome sequence.
+
+    input:
+    hmm_start: hmm start pos of first char in model
+    chrom_slice:
+    subfam_slice:
+    subfam: ful subfam seq
+    insertion_score:
+    insertion_index:
+    subfam_hmm: dictionary of hmm family info
+
+    output:
+    HMM alignment score
     """
-    # need prev insertion score and index
     chunk_score: float = 0
     hmm_pos = hmm_start
     for i in range(len(chrom_slice)):
         if chrom_slice[i] == ".":
             break
         elif chrom_slice[i] == "-":
-            print(chrom_slice[i::])
-            if prev_char_chrom != "-":
-                # match to deletion
+            # deletion score
+            if chrom_slice[i - 1] != "-":
+                # match to deletion from prev hmm pos
                 chunk_score += float(
                     subfam_hmm[hmm_pos - 1]["transition"]["m->d"]
                 )
             else:
-                # deletion to deletion
+                # deletion to deletion from prev hmm pos
                 chunk_score += float(
                     subfam_hmm[hmm_pos - 1]["transition"]["d->d"]
                 )
             if chrom_slice[i + 1] != "-":
-                # FIXME: if slice is just a deletion for trailing
-                # deletion to match
+                # deletion to match from cur hmm pos
                 chunk_score += float(subfam_hmm[hmm_pos]["transition"]["d->m"])
             hmm_pos += 1
         elif subfam_slice[i] == "-":
-            # check if new insertion
+            # insertion score
             if insertion_index + 1 != i:
+                # new insertion
                 insertion_score = calculate_insertion_score(
-                    hmm_pos, chrom[i::], subfam[i::], subfam_hmm
+                    hmm_pos, subfam[i::], subfam_hmm
                 )
             insertion_index = i
             chunk_score += insertion_score
@@ -127,23 +135,28 @@ def calculate_hmm_score(
                 subfam_hmm[hmm_pos]["emission"][chrom_slice[i]]
             )
             hmm_pos += 1
-        prev_char_chrom = chrom_slice[i]
     return chunk_score
 
 
 def calculate_insertion_score(
     hmm_pos: int,
-    chrom: str,
-    subfam: str,
+    model: str,
     subfam_hmm,
 ) -> float:
     """
-    Function description here
+    Calculates the full insertion score in the model sequence
 
+    input:
+    hmm pos: hmm start pos of first nuc in model
+    model: sequence - starts with the first gap
+    subfam_hmm: dictionary of hmm family info
+
+    output:
+    per gap insertion score
     """
-    i: int = 0
+    i: int = 0  # num of gaps in model
     insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
-    while i + 1 < len(subfam) and subfam[i + 1] == "-":
+    while model[i + 1] == "-":
         insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
         i += 1
     i += 1
