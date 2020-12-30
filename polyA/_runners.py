@@ -277,6 +277,8 @@ def run_full(
             chunk_stop,
         )
 
+        # print(repeat_scores)
+
         # add skip states for TR cols
         for tr_col in repeat_scores:
             align_matrix[0, tr_col] = SKIP_ALIGN_SCORE
