@@ -5,14 +5,8 @@ from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
 
 
 def dp_for_collapse(
-    subfam: str,
-    dp_rows: List[int],
-    support_matrix: SupportMatrix,
-    columns: List[int],
-    starts: List[int],
-    stops: List[int],
-    start_all: int,
-) -> (List[int], List[int]):
+    dp_rows: List[int], support_matrix: SupportMatrix, non_empty: List[int]
+) -> List[int]:
     """
     When there is more than one row with the same subfam label, do a mini DP trace
     to choose which row to use in collapsed matrices
@@ -29,36 +23,14 @@ def dp_for_collapse(
     >>> dp_r = [0, 2]
     >>> non_cols = [0, 2, 3]
     >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
-    >>> (p, non) = dp_for_collapse('s', dp_r, sup_mat, non_cols, [0,0,0], [2,2,2], 1)
+    >>> p = dp_for_collapse(dp_r, sup_mat, non_cols)
     >>> p
     [1, 1, 1]
-    >>> non
-    [0, 2, 3]
     """
     change: float = log(0.000000001)
     stay: float = log(1 - change)
 
-    non_empty = set()
-
     path: List[int] = []
-
-    if subfam == "Tandem Repeat":
-        #fixme - audrey, can we avoid this? Where are the TR start and stops info?
-        for c in range(len(columns)):
-            col = columns[c]
-            for row in dp_rows:
-                if (row, col) in support_matrix and col not in non_empty:
-                    non_empty.add(col)
-    else:
-
-        for i in range(len(dp_rows)):
-            for j in range(
-                starts[dp_rows[i]] - start_all + 1,
-                stops[dp_rows[i]] - start_all + 1 + 1,
-            ):
-                non_empty.add(columns[j])
-
-    non_empty = list(non_empty)
 
     origin: Dict[Tuple[int, int], int] = {}
     col_list: List[float] = []
@@ -112,8 +84,6 @@ def dp_for_collapse(
     prev_row_index: int = origin[max_row_index, non_empty[-1]]
     path.append(max_row_index)
 
-    print(subfam, len(origin))
-
     # already added the last col, but this adds the one before cols so still start at last col
     for columns_index in range(len(non_empty) - 1, 1, -1):
         prev_column: int = non_empty[columns_index - 1]
@@ -124,7 +94,7 @@ def dp_for_collapse(
 
     path.reverse()
 
-    return path, non_empty
+    return path
 
 
 def collapse_matrices(
@@ -155,32 +125,31 @@ def collapse_matrices(
     output:
     CollapsedMatrices container
 
-    >>> non_cols = [0, 2, 3]
-    >>> active = {0: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
-    >>> subs = ["s1", "s2", "s1"]
+    >>> non_cols = [1, 2, 3]
+    >>> active = {1: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
+    >>> subs = ["s1", "s2", "s3"]
     >>> strandss = ["+", "-", "-"]
     >>> kims = [0.0, 0.0, 0.0]
-    >>> sup_mat = {(0, 0): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 0): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 0): 0.1, (2, 2): 0.1, (2, 3): 0.9}
-    >>> con_mat = {(0, 0): 0, (0, 2): 1, (0, 3): 2, (1, 0): 0, (1, 2): 1, (1, 3): 2, (2, 0): 0, (2, 2): 3, (2, 3): 10}
+    >>> sup_mat = {(0, 1): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 1): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 1): 0.1, (2, 2): 0.1, (2, 3): 0.9}
+    >>> con_mat = {(0, 1): 0, (0, 2): 1, (0, 3): 2, (1, 1): 0, (1, 2): 1, (1, 3): 2, (2, 1): 0, (2, 2): 3, (2, 3): 10}
     >>> (r, con_mat_col, strand_mat_col, kim_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, 1, non_cols, subs, strandss, kims, [0,0,0], [2,2,2], active, sup_mat, con_mat)
     >>> r
-    2
+    3
     >>> con_mat_col
-    {(1, 0): 0, (1, 2): 1, (1, 3): 2, (0, 0): 0, (0, 2): 3, (0, 3): 10}
+    {(0, 1): 0, (1, 1): 0, (2, 1): 0, (0, 2): 1, (1, 2): 1, (2, 2): 3, (0, 3): 2, (1, 3): 2, (2, 3): 10}
     >>> strand_mat_col
-    {(1, 0): '-', (1, 2): '-', (1, 3): '-', (0, 0): '-', (0, 2): '-', (0, 3): '-'}
-    >>> kim_mat_col
-    {('s2', 0): 0.0, ('s2', 2): 0.0, ('s2', 3): 0.0, ('s1', 0): 0.0, ('s1', 2): 0.0, ('s1', 3): 0.0}
+    {(0, 1): '+', (1, 1): '-', (2, 1): '-', (0, 2): '+', (1, 2): '-', (2, 2): '-', (0, 3): '+', (1, 3): '-', (2, 3): '-'}
     >>> sup_mat_col
-    {(1, 0): 0.2, (1, 2): 0.2, (1, 3): 0.2, (0, 0): 0.1, (0, 2): 0.1, (0, 3): 0.9}
+    {(0, 1): 0.5, (1, 1): 0.2, (2, 1): 0.1, (0, 2): 0.5, (1, 2): 0.2, (2, 2): 0.1, (0, 3): 0.1, (1, 3): 0.2, (2, 3): 0.9}
     >>> sub_col
-    ['s1', 's2']
+    ['s1', 's2', 's3']
     >>> active_col
-    {0: [0, 1], 2: [0, 1], 3: [0, 1]}
+    {1: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
     >>> sub_col_ind
-    {'s1': 0, 's2': 1}
-
+    {'s1': 0, 's2': 1, 's3': 2}
     """
+    # fixme - write another test for when there is overlap and mini dp is done
+
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
     kimura_matrix_collapse: Dict[Tuple[str, int], float] = {}
@@ -203,7 +172,12 @@ def collapse_matrices(
             subfams_count[subfams[i]] = [i]
         else:
             subfams_count[subfams[i]].append(i)
-            subfams_dp.add(subfams[i])
+            if (
+                subfams[i] != "Tandem Repeat"
+            ):  # don't do the DP with TRs, they won't overlap
+                subfams_dp.add(subfams[i])
+            else:
+                subfams_count[subfams[i]] = [i]
 
     for col in range(len(columns)):
         col_index: int = columns[col]
@@ -216,6 +190,7 @@ def collapse_matrices(
             subfam: str = subfams[row_index]
 
             # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrix
+            # always do this for TRs
             if len(subfams_count[subfam]) == 1:
                 consensus_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index
@@ -235,32 +210,92 @@ def collapse_matrices(
         active_cells_collapse[key] = list(active_cells_collapse[key])
 
     for subfam in subfams_dp:
-        collapse_path, dp_non_empty = dp_for_collapse(
-            subfam,
-            subfams_count[subfam],
-            support_matrix,
-            columns,
-            starts,
-            stops,
-            start_all,
-        )
+        dp_rows = subfams_count[subfam]
+        dp_non_empty = set()
+        dp_active: Dict[int, List[int]] = {}
 
-        for i in range(len(dp_non_empty)):
-            collapse_col = dp_non_empty[i]
-            collapse_row = subfams_count[subfam][
-                collapse_path[i]
-            ]  # original row
+        for i in range(len(dp_rows)):
+            for j in range(
+                starts[dp_rows[i]] - start_all + 1,
+                stops[dp_rows[i]] - start_all + 1 + 1,
+            ):
+                dp_non_empty.add(j)
+                if j in dp_active:
+                    dp_active[j].append(dp_rows[i])
+                else:
+                    dp_active[j] = [dp_rows[i]]
 
-            consensus_matrix_collapse[
-                subfams_collapse_temp[subfam], collapse_col
-            ] = consensus_matrix[collapse_row, collapse_col]
-            support_matrix_collapse[
-                subfams_collapse_temp[subfam], collapse_col
-            ] = support_matrix[collapse_row, collapse_col]
-            strand_matrix_collapse[
-                subfams_collapse_temp[subfam], collapse_col
-            ] = strands[collapse_row]
-            kimura_matrix_collapse[subfam, collapse_col] = kimuras[collapse_row]
+        dp_non_empty = list(dp_non_empty)
+        dp_non_empty.sort()
+
+        dp_region_starts = []
+        dp_region_stops = []
+        prev_start = 0
+        count = 0
+        dp_region_rows = set()
+        dp_active_rows: List[List[int]] = []
+        for i in range(1, len(dp_non_empty)):
+            dp_region_rows.update(dp_active[dp_non_empty[i]])
+            if dp_non_empty[i] != dp_non_empty[i - 1] + 1:
+                dp_region_starts.append(prev_start)
+                dp_region_stops.append(i - 1)
+                prev_start = i
+                dp_active_rows.append(list(dp_region_rows))
+                dp_region_rows = set()
+                count += 1
+        dp_region_starts.append(prev_start)
+        dp_region_stops.append(len(dp_non_empty) - 1)
+        dp_active_rows.append(list(dp_region_rows))
+
+        for region in range(len(dp_region_starts)):
+            curr_range = dp_non_empty[
+                dp_region_starts[region] : dp_region_stops[region] + 1
+            ]
+            if len(dp_active_rows[region]) > 1:
+                # do dp
+                x = 0
+                collapse_path = dp_for_collapse(
+                    dp_active_rows[region],
+                    support_matrix,
+                    curr_range,
+                )
+
+                for i in range(len(curr_range)):
+                    collapse_col = curr_range[i]
+                    collapse_row = dp_active_rows[region][
+                        collapse_path[i]
+                    ]  # original row
+
+                    consensus_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = consensus_matrix[collapse_row, collapse_col]
+                    support_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = support_matrix[collapse_row, collapse_col]
+                    strand_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = strands[collapse_row]
+                    kimura_matrix_collapse[subfam, collapse_col] = kimuras[
+                        collapse_row
+                    ]
+            else:
+                # dont do dp
+                for i in range(len(curr_range)):
+                    collapse_col = curr_range[i]
+                    row_index = dp_active_rows[region][0]
+
+                    consensus_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = consensus_matrix[row_index, collapse_col]
+                    strand_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = strands[row_index]
+                    kimura_matrix_collapse[subfam, collapse_col] = kimuras[
+                        row_index
+                    ]
+                    support_matrix_collapse[
+                        subfams_collapse_temp[subfam], collapse_col
+                    ] = support_matrix[row_index, collapse_col]
 
     row_num_update: int = len(subfams_collapse)
 
