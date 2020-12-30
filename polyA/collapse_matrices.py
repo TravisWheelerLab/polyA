@@ -146,7 +146,7 @@ def collapse_matrices(
     >>> sub_col_ind
     {'s1': 0, 's2': 1, 's3': 2}
     """
-    #fixme - write another test for when there is overlap and mini dp is done
+    # fixme - write another test for when there is overlap and mini dp is done
 
     consensus_matrix_collapse: Dict[Tuple[int, int], int] = {}
     strand_matrix_collapse: Dict[Tuple[int, int], str] = {}
