@@ -71,12 +71,16 @@ def fill_path_graph(
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
                 if source_subfam != "Tandem Repeat":
-                    sourceConf: float = node_confidence[
-                        sink_subfam, source_node_index
-                    ]  # sink subfam confidence in source node
-                    sinkConf: float = node_confidence[
-                        source_subfam, sink_node_index
-                    ]  # source subfam confidence in sink node
+                    sourceConf: float = 0.0
+                    sinkConf: float = 0.0
+                    if (sink_subfam, source_node_index) in node_confidence:
+                        sourceConf = node_confidence[
+                            sink_subfam, source_node_index
+                        ]  # sink subfam confidence in source node
+                    if (source_subfam, sink_node_index) in node_confidence:
+                        sinkConf = node_confidence[
+                            source_subfam, sink_node_index
+                        ]  # source subfam confidence in sink node
                     source_subfam_index = subfams_collapse_index[source_subfam]
                     source_col: int = columns[
                         changes_position[source_node_index + 1] - 1

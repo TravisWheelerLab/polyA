@@ -285,7 +285,12 @@ def print_results_soda(
 
             for subfam_i in range(1, len(subfams)):
                 subfamm = subfams[subfam_i]
-                if node_confidence_orig[subfamm, i] > 0.001:
+                if (
+                    subfamm,
+                    i,
+                ) in node_confidence_orig and node_confidence_orig[
+                    subfamm, i
+                ] > 0.001:
                     json_dict_subfam_i[subfamm] = node_confidence_orig[
                         subfamm, i
                     ]
@@ -378,7 +383,10 @@ def print_results_soda(
 
                         for subfam_i in range(1, len(subfams)):
                             subfamm = subfams[subfam_i]
-                            if node_confidence_orig[subfamm, j] > 0.001:
+                            if (
+                                (subfamm, j) in node_confidence_orig
+                                and node_confidence_orig[subfamm, j] > 0.001
+                            ):
                                 json_dict_subfam_j[
                                     subfamm
                                 ] = node_confidence_orig[subfamm, j]
