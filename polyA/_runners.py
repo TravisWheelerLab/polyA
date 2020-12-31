@@ -363,6 +363,11 @@ def run_full(
     subfams_collapse_index = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
 
+    align_matrix.clear()
+    confidence_matrix.clear()
+    support_matrix.clear()
+    consensus_matrix.clear()
+
     if repeat_scores is not None:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
