@@ -7,16 +7,16 @@ from polyA.calculate_score import calculate_insertion_score
 
 
 def fill_align_matrix(
-    lambdaa: float,
+    lambda_values: List[float],
     edge_start: int,
     chunk_size: int,
-    gap_ext: int,
-    gap_init: int,
+    gap_inits: List[int],
+    gap_exts: List[int],
     skip_align_score: float,
     subfams: List[str],
     chroms: List[str],
     starts: List[int],
-    sub_matrix: Dict[str, int],
+    sub_matrices: List[Dict[str, int]],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
@@ -50,11 +50,11 @@ def fill_align_matrix(
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
     are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
 
-    >>> chros = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
-    >>> subs = ["", "..AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
+    >>> chros = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
+    >>> subs = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
-    >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}
-    >>> (c, m) = fill_align_matrix(0.1, 0, 31, -5, -25, 1, subs, chros, strts, sub_mat)
+    >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
+    >>> (c, m) = fill_align_matrix([0.0, 0.1, 0.1], 0, 31, [0, -25, -25], [0, -5, -5], 1.0, subs, chros, strts, sub_mat)
     >>> c
     41
     >>> m
@@ -69,15 +69,19 @@ def fill_align_matrix(
     for i in range(1, len(chroms)):
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
+        sub_matrix = sub_matrices[i]
+        lamb = lambda_values[i]
+        gap_init = gap_inits[i]
+        gap_ext = gap_exts[i]
 
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        seq_index: int = (
-            starts[i] - edge_start
-        )  # place in subfam_seq and chrom_seq
-        col_index = seq_index + half_chunk + 1  # col in align_matrix
+        seq_index: int = 0  # place in subfam_seq and chrom_seq
+        col_index = (
+            starts[i] - edge_start + half_chunk + 1
+        )  # col in align_matrix
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
@@ -88,15 +92,22 @@ def fill_align_matrix(
             temp_index += 1
 
         offset: int = temp_index - seq_index
+        trailing_offset: int = 0
 
-        # add trailing cells and doesn't normalize
+        # add preceding cells
         for trailing in range(1, half_chunk + 1):
             if col_index - k - trailing >= 1:
+
+                temp_index = seq_index + offset + trailing_offset - trailing - 1
+                while chrom_seq[temp_index] == "-":
+                    trailing_offset -= 1
+                    temp_index -= 1
+
                 chrom_slice: str = chrom_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
                 subfam_slice: str = subfam_seq[
-                    seq_index : seq_index + offset - trailing
+                    seq_index : seq_index + offset + trailing_offset - trailing
                 ]
 
                 # calculates score for first chunk and puts in align_matrix
@@ -110,11 +121,15 @@ def fill_align_matrix(
                     sub_matrix,
                 )
 
-                num_nucls0 = (seq_index + offset - trailing) - seq_index + 1
+                num_nucls0 = (
+                    (seq_index + offset + trailing_offset - trailing)
+                    - seq_index
+                    + 1
+                )
 
-                align_matrix[i, col_index - k - trailing] = lambdaa * (
+                align_matrix[i, col_index - k - trailing] = lamb * (
                     align_score * num_nucls0 / chunk_size
-                )  # already to scale so don't need to * chunk_size and / chunk_size
+                )
 
         # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
@@ -124,13 +139,12 @@ def fill_align_matrix(
         align_score: float = calculate_score(
             gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
         )
-        align_matrix[i, col_index - k] = lambdaa * (
+        align_matrix[i, col_index - k] = lamb * (
             align_score * chunk_size / (chunk_size - k)
         )
 
         # scores for first part, until we get to full sized chunks
         for k in range(half_chunk - 1, -1, -1):
-
             if (
                 chroms[i][seq_index + offset] != "-"
             ):  # if no new gap introduced, move along seq and add next nucl into score
@@ -148,7 +162,7 @@ def fill_align_matrix(
                         ]
                     )
 
-                align_matrix[i, col_index - k] = lambdaa * (
+                align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -177,7 +191,7 @@ def fill_align_matrix(
                     chroms[i][seq_index - 1],
                     sub_matrix,
                 )
-                align_matrix[i, col_index - k] = lambdaa * (
+                align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
 
@@ -279,7 +293,7 @@ def fill_align_matrix(
                         )
                         num_nucls += 1
 
-                align_matrix[i, col_index] = lambdaa * (
+                align_matrix[i, col_index] = lamb * (
                     align_score / num_nucls * chunk_size
                 )
 
@@ -290,14 +304,20 @@ def fill_align_matrix(
                 col_index += 1
             seq_index += 1
 
-        # add trailing cells and normalizes
+        # add trailing cells
+        trailing_offset = 0
         for trailing in range(1, half_chunk + 1):
             # if col_index - k - trailing >= 0:
+            temp_index = seq_index + trailing + trailing_offset
+            while chrom_seq[temp_index] == "-":
+                trailing_offset += 1
+                temp_index += 1
+
             chrom_slice: str = chrom_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
             subfam_slice: str = subfam_seq[
-                seq_index + trailing : seq_index + offset - 1
+                seq_index + trailing + trailing_offset : seq_index + offset - 1
             ]
 
             num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
@@ -313,7 +333,7 @@ def fill_align_matrix(
                 sub_matrix,
             )
 
-            align_matrix[i, col_index - 1 + trailing] = lambdaa * (
+            align_matrix[i, col_index - 1 + trailing] = lamb * (
                 align_score / num_nucls2 * chunk_size
             )
 
@@ -335,7 +355,7 @@ def fill_align_matrix(
                 chrom_seq[seq_index - 1],
                 sub_matrix,
             )
-            align_matrix[i, col_index] = lambdaa * (
+            align_matrix[i, col_index] = lamb * (
                 align_score / (half_chunk + 1) * chunk_size
             )
             col_index += 1
@@ -347,7 +367,7 @@ def fill_align_matrix(
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
     for j in range(num_cols):
-        align_matrix[0, j] = float(skip_align_score)
+        align_matrix[0, j] = skip_align_score
 
     # remove trailing edges that fall off end of matrix
     # can't do this during matrix construction because we don't know how many

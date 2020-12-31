@@ -3,8 +3,7 @@ from typing import Dict, List, Tuple
 from polyA import confidence_cm
 
 
-def FillConfidenceMatrixTR(
-    infilee: str,
+def fill_confidence_matrix_tr(
     columns: List[int],
     subfam_countss: Dict[str, float],
     subfamss: List[str],
@@ -45,11 +44,11 @@ def FillConfidenceMatrixTR(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            infilee,
             temp_region,
             subfam_countss,
             subfamss,
             active_cells_trailing[col_index],
+            0,
             0,
         )
 
@@ -69,12 +68,12 @@ def FillConfidenceMatrixTR(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            infilee,
             temp_region,
             subfam_countss,
             subfamss,
             active_cells[col_index],
             1,
+            0,
         )
 
         # will replace cols that had both TR and alignment scores

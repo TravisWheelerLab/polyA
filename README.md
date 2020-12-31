@@ -1,4 +1,6 @@
 ![PolyA CI](https://github.com/TravisWheelerLab/polyA/workflows/PolyA%20CI/badge.svg)
+![GitHub](https://img.shields.io/github/license/TravisWheelerLab/polyA)
+![PyPI](https://img.shields.io/pypi/v/polyA)
 
 # AAAAAAAAAAAAAAAA (PolyA):
 #### a tool for adjudicating between competing annotations of biological sequences 
@@ -32,8 +34,8 @@ Our algorithm has 3 parts:
 
 1. Confidence calculations. This gives us the probablilites each competing query is the true 
 source of the target. 
-2. Position specific confidence creates a less computationally expensive version of a jpHMM, 
-allowing for transitions between queries. This identifies gene conversion, homologous recombination,
+2. Position specific confidence creates a computationally efficient mechanism for 
+allowing for transitions between query annotations. This identifies gene conversion, homologous recombination,
 nested elements, and boundaries between adjacent elements.  
 3. Graph Algorithm finds nested sequences. 
 	
@@ -61,6 +63,7 @@ Special information fields required are:
 #=GF CST 135                                alignment start position on query
 #=GF CSP 628                                alignment stop position on query
 #=GF FL  128                                *** see below
+#=GF MX  matrix_name                        name of substritution matrix file used to create alignment
 
 * query sequence names must be in the format 'name#family/class'
 
@@ -80,20 +83,35 @@ alignments.
 
 ```
 usage: python parser/cm_to_stockholm.py align_file.cm
-output: align_file.cm.sto (can be input directly into polyA)
+output (can be input directly into polyA): 
+    align_file.cm.sto
+    align_file.cm.matrix
 ```
 
 #### Substitution Matrix Files
 
-Substitution matrix files example format (can include ambiguity codes):
+Substitution matrix file example format (can include ambiguity codes):
+* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with correspoding and matching matrix names
+* if lambda is not included polyA will use esl_scorematrix to calculate it for all matrices
 
 ```
+matrix_name lambda(optional)
   A   G   C    T    N
   8  -6  -13  -15  -1
  -2  10  -13  -13  -1
 -13  -13  10  -2   -1
 -15  -13  -6   8   -1
  -1  -1   -1  -1   -1
+//
+matrix_name2 lambda2(optional)
+  A   G   C    T    N
+  8  -6  -13  -15  -1
+ -2  10  -13  -13  -1
+-13  -13  10  -2   -1
+-15  -13  -6   8   -1
+ -1  -1   -1  -1   -1
+//
+...
 ```
 
 #### Sequence File
@@ -157,12 +175,12 @@ ran on seq.fasta prior.
 
 ### Additional software
 
-esl_scorematrix as a part of the esl package in the hammer software suite
+esl_scorematrix is a part of the esl package in the [hmmer software suite](https://github.com/EddyRivasLab/hmmer/)
 
   - will compute lambda for the input score matrix
   - not needed if including lambda as a command line argument
 
-ULTRA
+[ULTRA](https://github.com/TravisWheelerLab/ultra)
 
   - will detect tandem repeat regions in a sequence FASTA file
 
@@ -272,4 +290,5 @@ BSD license. See `LICENSE`.
   - Kaitlin Carey
   - Audrey Shingleton
   - George Lesica
+  - Jack Roddy
   - Travis Wheeler

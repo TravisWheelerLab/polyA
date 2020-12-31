@@ -71,28 +71,58 @@ def get_info(info_array):
     return subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank
 
 
-def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, f_out):
+def get_score_matrix(file_contents):
+    """
+    grabs score matrix info from alignment file, puts it in correct format, returns string
+    """
+    score_matrix = ''
+    m_string = re.search(r'Score matrix.+?\n([\s\S]+?)\n\n', file_contents)
+    m_array = m_string[1].split("\n")
+
+    score_matrix += m_array[0].lstrip() + "\n"
+    for i in range(1, len(m_array)):
+        m_array[i] = m_array[i][1::]
+        score_matrix += m_array[i].lstrip() + "\n"
+
+    return score_matrix
+
+
+def get_gap_penalties(file_contents):
+    """
+    returns gap_init and gap_ext
+    """
+    m_string = re.search(r'Gap penalties: gap_init: (.+?), gap_ext: (.+?),', file_contents)
+    gap_init = m_string[1]
+    gap_ext = m_string[2]
+
+    return gap_init, gap_ext
+
+
+def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto):
     """
     prints all info in correct format for stockholm
     """
-    f_out.write(f'#=GF ID  {subfam}\n')
-    f_out.write(f'#=GF TR  {chrom}\n')
-    f_out.write(f'#=GF SC  {score}\n')
-    f_out.write(f'#=GF SD  {strand}\n')
+    f_out_sto.write(f'#=GF ID  {subfam}\n')
+    f_out_sto.write(f'#=GF TR  {chrom}\n')
+    f_out_sto.write(f'#=GF SC  {score}\n')
+    f_out_sto.write(f'#=GF SD  {strand}\n')
 
     if strand == '-':
         if C:
-            f_out.write(f'#=GF TQ  t\n')
+            f_out_sto.write(f'#=GF TQ  t\n')
         else:
-            f_out.write(f'#=GF TQ  q\n')
+            f_out_sto.write(f'#=GF TQ  q\n')
     else:
-        f_out.write(f'#=GF TQ  -1\n')
+        f_out_sto.write(f'#=GF TQ  -1\n')
 
-    f_out.write(f'#=GF ST  {start}\n')
-    f_out.write(f'#=GF SP  {stop}\n')
-    f_out.write(f'#=GF CST {consensus_start}\n')
-    f_out.write(f'#=GF CSP {consensus_stop}\n')
-    f_out.write(f'#=GF FL  {flank}\n')
+    f_out_sto.write(f'#=GF ST  {start}\n')
+    f_out_sto.write(f'#=GF SP  {stop}\n')
+    f_out_sto.write(f'#=GF CST {consensus_start}\n')
+    f_out_sto.write(f'#=GF CSP {consensus_stop}\n')
+    f_out_sto.write(f'#=GF FL  {flank}\n')
+    f_out_sto.write(f'#=GF MX  {matrix_name}\n')
+    f_out_sto.write(f'#=GF GI  {gap_init}\n')
+    f_out_sto.write(f'#=GF GE  {gap_ext}\n')
 
 
 def get_alignment(alignment_array):
@@ -115,25 +145,45 @@ def get_alignment(alignment_array):
     return chrom_seq, subfam_seq
 
 
-def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out):
+def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto):
     """
     takes chrom and subfam names and chrom and subfam seqs and prints in
     stockholm format
     """
-    f_out.write(f"{chrom}   {chrom_seq}\n")
-    f_out.write(f"{subfam}   {subfam_seq}\n")
+    f_out_sto.write(f"{chrom}   {chrom_seq}\n")
+    f_out_sto.write(f"{subfam}   {subfam_seq}\n")
 
-    f_out.write("//\n")
+    f_out_sto.write("//\n")
+
+
+def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
+    """
+    print score matrix to its own output file with extension ".matrix"
+    """
+    f_out_matrix = open(filename_out_matrix, 'w')
+    f_out_matrix.write(matrix_name)
+    f_out_matrix.write("\n")
+    f_out_matrix.write(score_matrix)
+    f_out_matrix.write("//\n")
+
 
 
 if __name__ == "__main__":
     filename_cm = sys.argv[1]
     file_contents = read_file(filename_cm)
 
-    filename_out = filename_cm + ".sto"
-    f_out = open(filename_out, 'w')
+    filename_out_sto = filename_cm + ".sto"
+    f_out_sto = open(filename_out_sto, 'w')
 
-    f_out.write("# STOCKHOLM 1.0\n")
+    filename_out_matrix = filename_cm + ".matrix"
+    matrix_name = 'matrix1'
+
+    f_out_sto.write("# STOCKHOLM 1.0\n")
+
+    score_matrix = get_score_matrix(file_contents)
+    print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
+
+    gap_init, gap_ext = get_gap_penalties(file_contents)
 
     alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
 
@@ -161,7 +211,7 @@ if __name__ == "__main__":
 
         chrom_seq, subfam_seq = get_alignment(alignment_array)
 
-        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, f_out)
-        print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out)
+        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, gap_init, gap_ext, f_out_sto)
+        print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
-    f_out.close()
+    f_out_sto.close()

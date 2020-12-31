@@ -24,7 +24,6 @@ def trailing_edges_info(row_num, col_num, align_matrix):
 
 
 def fill_confidence_matrix(
-    infile: str,
     columns: List[int],
     subfam_counts: Dict[str, float],
     subfams: List[str],
@@ -55,11 +54,11 @@ def fill_confidence_matrix(
     >>> non_cols = [0, 1, 2]
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = fill_confidence_matrix("infile", non_cols, counts, subs, active, align_mat)
+    >>> conf_mat = fill_confidence_matrix(non_cols, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
-    '0.0000'
+    '0.0100'
     >>> f"{conf_mat[1,0]:.4f}"
-    '1.0000'
+    '0.9900'
     >>> f"{conf_mat[0,1]:.4f}"
     '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
@@ -80,11 +79,11 @@ def fill_confidence_matrix(
             temp_region.append(align_matrix[row_index, col_index])
 
         temp_confidence: List[float] = confidence_cm(
-            infile,
             temp_region,
             subfam_counts,
             subfams,
             active_cells[col_index],
+            0,
             0,
         )
 
