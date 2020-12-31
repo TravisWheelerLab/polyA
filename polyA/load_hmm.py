@@ -1,11 +1,13 @@
 from typing import TextIO, List, Dict
 
 
-def load_hmm(file: TextIO, subfams: List[str]):
+# TODO(george, audrey): Figure out the true return type
+def load_hmm(file: List[str], subfams: List[str]) -> Dict[str, dict]:
     hmm_dict = {}
     char_pos: List[str] = []
-    line = file.readline()
-    while line:
+    i = 0
+    line = file[i]
+    while i < len(file):
         # new subfam HMM
         if line.strip().startswith("NAME"):
             parts = line.strip().split()
@@ -15,10 +17,12 @@ def load_hmm(file: TextIO, subfams: List[str]):
                 while line and not line.strip().startswith("//"):
                     if line.strip().startswith("HMM"):
                         chars = line.strip().split()[1:]
-                        line = file.readline()
+                        i += 1
+                        line = file[i]
                         transitions = line.strip().split()
                     if line.strip().startswith("COMPO"):
-                        line = file.readline()
+                        i += 1
+                        line = file[i]
                         unrelated_vals = line.strip().split()
                         unrelated_dict = {}
                         for i in range(len(chars)):
@@ -34,14 +38,17 @@ def load_hmm(file: TextIO, subfams: List[str]):
                         emmission = line.strip().split()[1:]
                         for i in range(len(chars)):
                             emmission_dict[chars[i]] = emmission[i]
-                        file.readline()
+                        i += 1
+                        line = file[i]
                         transition = file.readline().strip().split()
                         for i in range(len(transition)):
                             transition_dict[transitions[i]] = transition[i]
                         pos_dict["emission"] = emmission_dict
                         pos_dict["transition"] = transition_dict
                         hmm_sub_dict[int(pos)] = pos_dict
-                    line = file.readline()
+                    i += 1
+                    line = file[i]
                 hmm_dict[name] = hmm_sub_dict
-        line = file.readline()
+        i += 1
+        line = file[i]
     return hmm_dict

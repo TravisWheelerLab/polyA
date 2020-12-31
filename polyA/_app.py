@@ -68,38 +68,6 @@ def run():
     opts = Options(argv[1:])
     _configure_logging(opts)
 
-    # TODO: This should move to _runners.py
-    # if hmm_file:
-    #     # parse
-    #     with open(hmm_file) as _hmm:
-    #         SubfamHmms = load_hmm(_hmm, Subfams)
-    #
-    #     (cols, AlignMatrix) = fill_hmm_align_matrix(
-    #         SubfamHmms,
-    #         StartAll,
-    #         ChunkSize,
-    #         SkipAlignScore,
-    #         SubfamSeqs,
-    #         ChromSeqs,
-    #         Starts,
-    #         ConsensusStarts,
-    #         Subfams,
-    #     )
-    #     exit()
-    # else:
-    #     (cols, AlignMatrix) = fill_align_matrix(
-    #         Lamb,
-    #         StartAll,
-    #         ChunkSize,
-    #         GapExt,
-    #         GapInit,
-    #         SkipAlignScore,
-    #         SubfamSeqs,
-    #         ChromSeqs,
-    #         Starts,
-    #         SubMatrix,
-    #     )
-
     # ----------------------------
     # Tandem Repeat initialization
     # ----------------------------
@@ -125,11 +93,14 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
-    _lambda_provider = EaselLambdaProvider(opts.easel_path)
-    with open(opts.sub_matrices_path) as _sub_matrices_file:
-        sub_matrices = load_substitution_matrices(
-            _sub_matrices_file, _lambda_provider
-        )
+    if opts.hmm_file_path:
+        sub_matrices = {}
+    else:
+        _lambda_provider = EaselLambdaProvider(opts.easel_path)
+        with open(opts.sub_matrices_path) as _sub_matrices_file:
+            sub_matrices = load_substitution_matrices(
+                _sub_matrices_file, _lambda_provider
+            )
 
     # -------------------------------------------------
     # Flags and parameters related to secondary outputs
@@ -143,6 +114,15 @@ def run():
 
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
+
+    # -----------------------------
+    # Load alignments to operate on
+    # -----------------------------
+
+    hmm_file_lines = []
+    if opts.hmm_file_path:
+        with open(opts.hmm_file_path, "r") as _hmm:
+            hmm_file_lines = _hmm.readlines()
 
     # --------------------------
     # Run confidence calculation
@@ -196,6 +176,7 @@ def run():
             chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
+            hmm_file_lines,
             soda_viz_file,
             soda_conf_file,
             heatmap_file,

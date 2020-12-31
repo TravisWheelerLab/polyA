@@ -4,6 +4,8 @@ from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
 from polyA import *
+from polyA.fill_align_matrix import fill_hmm_align_matrix
+from polyA.load_hmm import load_hmm
 
 
 def run_confidence(
@@ -100,6 +102,7 @@ def run_full(
     alignments: List[Alignment],
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
+    hmm_file_lines: List[str],
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
     outfile_heatmap: Optional[TextIO],
@@ -160,8 +163,8 @@ def run_full(
         gap_inits.append(alignment.gap_init)
         gap_exts.append(alignment.gap_ext)
 
-        # fixme (george): is this a list of dicts?
-        # fixme (george): change it to a dict of dicts?
+        # FIXME(george): is this a list of dicts?
+        # FIXME(george): change it to a dict of dicts?
         if alignment.sub_matrix_name in sub_matrix_scores:
             substitution_matrices.append(
                 sub_matrix_scores[alignment.sub_matrix_name]
@@ -210,18 +213,34 @@ def run_full(
     # number of rows in matrices
     rows: int = seq_count
 
-    cols, align_matrix = fill_align_matrix(
-        lambda_values,
-        start_all,
-        chunk_size,
-        gap_inits,
-        gap_exts,
-        SKIP_ALIGN_SCORE,
-        subfamily_sequences_matrix,
-        chromosome_sequences_matrix,
-        starts_matrix,
-        [sm.scores for sm in substitution_matrices],
-    )
+    if hmm_file_lines:
+        subfam_hmms = load_hmm(hmm_file_lines, subfamily_matrix)
+
+        cols, align_matrix = fill_hmm_align_matrix(
+            subfam_hmms,
+            start_all,
+            chunk_size,
+            SKIP_ALIGN_SCORE,
+            subfamily_sequences_matrix,
+            chromosome_sequences_matrix,
+            starts_matrix,
+            consensus_starts_matrix,
+            subfamily_matrix,
+        )
+        exit()
+    else:
+        cols, align_matrix = fill_align_matrix(
+            lambda_values,
+            start_all,
+            chunk_size,
+            gap_inits,
+            gap_exts,
+            SKIP_ALIGN_SCORE,
+            subfamily_sequences_matrix,
+            chromosome_sequences_matrix,
+            starts_matrix,
+            [sm.scores for sm in substitution_matrices],
+        )
 
     # fixme - do this in fill_align_matrix to avoid extra looping
     # originally NonEmptyColumns and ActiveCells have trailing edge included

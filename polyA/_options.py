@@ -29,6 +29,7 @@ class Options:
 
     chunk_size: int
     confidence: bool
+    hmm_file_path: str
     prior_counts_path: str
     shard_gap: int
     sequence_file_path: str
@@ -64,6 +65,7 @@ class Options:
             metavar="ALIGNMENTS",
             help="alignments file in Stockholm format",
         )
+        # TODO(george): Make this optional when hmm-path is provided
         parser.add_argument(
             "sub_matrices_path",
             metavar="MATRICES",
@@ -89,6 +91,12 @@ class Options:
             action="store_true",
             default=False,
             help="run the confidence calculation and then exit",
+        )
+        parser.add_argument(
+            "--hmm-path",
+            metavar="FILE",
+            default="",
+            help="TODO(Audrey)",
         )
         parser.add_argument(
             "--prior-counts",
@@ -182,6 +190,7 @@ class Options:
 
         self.chunk_size = namespace.chunk_size
         self.confidence = namespace.confidence
+        self.hmm_file_path = namespace.hmm_path
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
