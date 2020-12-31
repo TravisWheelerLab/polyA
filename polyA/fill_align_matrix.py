@@ -494,7 +494,7 @@ def fill_hmm_align_matrix(
                     if end_gap_index + 1 != seq_index + offset:  # new gap
                         end_insertion_score = calculate_insertion_score(
                             hmm_end,
-                            subfams[i][seq_index + offset::],
+                            subfams[i][seq_index + offset : :],
                             subfam_hmm,
                         )
                     end_gap_index = seq_index + offset  # new gap index
@@ -628,7 +628,7 @@ def fill_hmm_align_matrix(
                         if end_gap_index + 1 != seq_index + offset:
                             end_insertion_score = calculate_insertion_score(
                                 hmm_end,
-                                subfams[i][seq_index + offset::],
+                                subfams[i][seq_index + offset : :],
                                 subfam_hmm,
                             )
                         end_gap_index = seq_index + offset  # new gap index
@@ -647,7 +647,7 @@ def fill_hmm_align_matrix(
                         hmm_start,
                         chrom_slice,
                         subfam_slice,
-                        subfam_seq[seq_index + 1::],
+                        subfam_seq[seq_index + 1 : :],
                         start_insertion_score,
                         start_gap_index,
                         subfam_hmm,
@@ -709,7 +709,7 @@ def fill_hmm_align_matrix(
                         if end_gap_index + 1 != seq_index + offset:  # new gap
                             end_insertion_score = calculate_insertion_score(
                                 hmm_end,
-                                subfams[i][seq_index + offset::],
+                                subfams[i][seq_index + offset : :],
                                 subfam_hmm,
                             )
                         end_gap_index = seq_index + offset  # new gap index
@@ -784,7 +784,7 @@ def fill_hmm_align_matrix(
                 hmm_start + hmm_trailing,
                 chrom_slice,
                 subfam_slice,
-                subfam_seq[seq_index + trailing::],
+                subfam_seq[seq_index + trailing : :],
                 start_insertion_score,
                 start_gap_index,
                 subfam_hmm,
