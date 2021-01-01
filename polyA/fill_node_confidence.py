@@ -61,7 +61,7 @@ def fill_node_confidence(
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> node_conf2 = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf2
-    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.001949317738791423, ('n2', 1): 0.9980506822612085, ('n1', 2): 0.030303030303030304, ('n2', 2): 0.9696969696969697}
+    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.058823529411764705, ('n2', 1): 0.9411764705882353, ('n1', 2): 0.058823529411764705, ('n2', 2): 0.9411764705882353}
     """
     node_confidence: Dict[Tuple[str, int], float] = {}
     node_confidence_temp: Dict[Tuple[int, int], float] = {}
