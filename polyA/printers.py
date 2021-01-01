@@ -102,7 +102,13 @@ def print_results(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
+            stdout.write(
+                str(
+                    kimura_matrix_collapse[
+                        changes_orig[i], columns_orig[changespos_orig[i]]
+                    ]
+                )
+            )
             stdout.write("\n")
 
 
@@ -130,7 +136,13 @@ def print_results_sequence(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
+            stdout.write(
+                str(
+                    kimura_matrix_collapse[
+                        changes_orig[i], columns_orig[changespos_orig[i]]
+                    ]
+                )
+            )
             stdout.write("\n")
 
 
@@ -172,7 +184,13 @@ def print_results_chrom(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
+            stdout.write(
+                str(
+                    kimura_matrix_collapse[
+                        changes_orig[i], columns_orig[changespos_orig[i]]
+                    ]
+                )
+            )
             stdout.write("\n")
 
 
