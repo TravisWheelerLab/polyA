@@ -102,7 +102,7 @@ def print_results(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
             stdout.write("\n")
 
 
@@ -119,9 +119,6 @@ def print_results_sequence(
     prints start and stop in terms of input target sequence
     """
     for i in range(len(changes_orig)):
-        start = columns_orig[changespos_orig[i]]
-        stop = columns_orig[changespos_orig[i + 1] - 1]
-        middle = int((stop - start) / 2) + start
         if str(changes_orig[i]) != "skip":
             stdout.write(str(columns_orig[changespos_orig[i]] + edgestart - 1))
             stdout.write("\t")
@@ -133,7 +130,7 @@ def print_results_sequence(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
             stdout.write("\n")
 
 
@@ -152,9 +149,6 @@ def print_results_chrom(
     """
 
     for i in range(len(changes_orig)):
-        start = columns_orig[changespos_orig[i]]
-        stop = columns_orig[changespos_orig[i + 1] - 1]
-        middle = int((stop - start) / 2) + start
         if str(changes_orig[i]) != "skip":
             stdout.write(
                 str(
@@ -178,7 +172,7 @@ def print_results_chrom(
             stdout.write("\t")
             stdout.write(str(changes_orig[i]))
             stdout.write("\t")
-            stdout.write(str(kimura_matrix_collapse[changes_orig[i], middle]))
+            stdout.write(str(kimura_matrix_collapse[changes_orig[i], columns_orig[changespos_orig[i]]]))
             stdout.write("\n")
 
 

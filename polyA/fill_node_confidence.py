@@ -155,6 +155,9 @@ def fill_node_confidence(
                     last_prev_chrom,
                     sub_matrix.scores,
                 )
+                
+                if align_score < 0:
+                	align_score = 0
 
                 node_confidence_temp[subfam_index, node_index] = align_score
 
@@ -174,6 +177,9 @@ def fill_node_confidence(
                 rep_sum_score = SumRepeatScores(
                     begin_node, end_node, repeat_scores
                 )
+                
+            if rep_sum_score < 0:
+            	rep_sum_score = 0
 
             node_confidence_temp[subfam_index, node_index] = rep_sum_score
 
