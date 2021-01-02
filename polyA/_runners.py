@@ -107,8 +107,8 @@ def run_full(
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
-    chunk_start: int,
-    chunk_stop: int,
+    shard_start: int,
+    shard_stop: int,
     prev_start: int,
     prev_stop: int,
 ) -> Tuple[int, int]:
@@ -192,12 +192,12 @@ def run_full(
         for tr in tandem_repeats:
             # add TR starts and stops
             # check they do not exceed chunk boundary
-            if tr.start < chunk_start:
-                starts_matrix.append(chunk_start)
+            if tr.start < shard_start:
+                starts_matrix.append(shard_start)
             else:
                 starts_matrix.append(tr.start)
-            if tr.stop > chunk_stop:
-                stops_matrix.append(chunk_stop)
+            if tr.stop > shard_stop:
+                stops_matrix.append(shard_stop)
             else:
                 stops_matrix.append(tr.stop)
 
@@ -275,8 +275,8 @@ def run_full(
             active_cells,
             align_matrix,
             consensus_matrix,
-            chunk_start,
-            chunk_stop,
+            shard_start,
+            shard_stop,
         )
 
         # print(repeat_scores)
