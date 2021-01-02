@@ -81,7 +81,7 @@ def calculate_repeat_scores(
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start_rep = rep.start  # just for consensus matrix
+        start_rep = rep.start
         col_index = start_rep - start_all + 1  # can't be less than 1
         length = rep.length
         pos_scores = rep.position_scores
@@ -93,7 +93,7 @@ def calculate_repeat_scores(
         # update repeat_scores for positions 0 to 15 if in boundary
         while j <= k and j < length:
             score += pos_scores[j]
-            if start_rep + j >= chunk_start:
+            if chunk_start <= start_rep + j <= chunk_stop:
                 repeat_scores[col_index + j] = pos_scores[j]
             j += 1
         window_size = j
@@ -113,8 +113,9 @@ def calculate_repeat_scores(
 
         # calc score for the rest of the chunks
         tr_chunk_length = length
-        if start_rep + length - 1 >= chunk_stop:
+        if rep.stop >= chunk_stop:
             # TR ends outside of chunk boundary
+            # get length of TR before end of boundary
             tr_chunk_length = chunk_stop - start_rep + 1
         for j in range(1, tr_chunk_length):
             # check to remove last score in window
