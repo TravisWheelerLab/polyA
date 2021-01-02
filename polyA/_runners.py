@@ -547,33 +547,44 @@ def run_full(
                     subfam != "Tandem Repeat"
                 ), "can't add alternative edges to TRs"
 
-    # prints results
-    # check if first to print pos is one after prev stop in seq pos
+    # handles TRs overlapping shards
     i = 0
-    while changes_orig[i] == "skip":
+    # get first subfam in shard
+    while i < len(changes_orig) and changes_orig[i] == "skip":
         i += 1
-    last_subfam_start = (
-        non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
-    )
 
-    if prev_stop + 1 == last_subfam_start:
-        # change start pos - back to back TRs
-        stdout.write("\033[2K\033[1G")  # remove last printed line
-        non_empty_columns_orig[changes_position_orig[i]] = (
-            prev_start - start_all + 1
+    if i == len(changes_orig):
+        # whole shard is skip state
+        last_subfam_start: int = -1
+        last_subfam_stop: int = -1
+    else:
+        # FIXME: could a TR overlap multiple shards?
+        first_subfam_start = (
+            non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
+        # check if first print pos is one after prev stop in seq pos
+        if prev_stop + 1 == first_subfam_start:
+            stdout.write("\033[2K\033[1G")  # remove last printed line
+            # change start pos of first subfam to be prev start seq pos
+            non_empty_columns_orig[changes_position_orig[i]] = (
+                prev_start - start_all + 1
+            )
+
+        # get last subfam in shard
+        # will find something since whole shard is not a skip state
+        i = len(changes_orig) - 1
+        while changes_orig[i] == "skip":
+            i -= 1
         last_subfam_start = (
             non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
+        last_subfam_stop = (
+            non_empty_columns_orig[changes_position_orig[i + 1] - 1]
+            + start_all
+            - 1
+        )
 
-    i = len(changes_orig) - 1
-    while changes_orig[i] == "skip":
-        i -= 1
-    # end in seq
-    last_subfam_stop = (
-        non_empty_columns_orig[changes_position_orig[i + 1] - 1] + start_all - 1
-    )
-
+    # prints results
     if print_matrix_pos:
         print_results(
             changes_orig,
