@@ -380,9 +380,8 @@ def fill_align_matrix(
     return num_cols, align_matrix
 
 
-# make own method
 def fill_hmm_align_matrix(
-    hmms,
+    hmms: Dict[str, dict],
     edge_start: int,
     chunk_size: int,
     skip_align_score: float,
@@ -393,8 +392,40 @@ def fill_hmm_align_matrix(
     subfam_names: List[str],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
-    Function description
-    Fills AlignMatrix using HMMs for each subfam
+    fills AlignScoreMatrix by calculating alignment score (according to HMM scoring)
+    for every segment of size chunksize for all seqs in alignments
+
+    Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
+    matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
+
+    Starting and trailing cells are different - column 0 in matrix holds alignment score for
+    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Scores are weighted based on number
+    of nucleotides that contribute to the score
+
+    ignores all padded indices in subfams and chroms array (padded with '.')
+
+    Speed up by computing base score for the first segment, moves to next column but adding next
+    chars score to base score and subtracting previous chars score from base score. Restarts and
+    recomputes new base score when necessary
+
+    input:
+    hmms: dictionary of per position HMM information for each subfam
+    edge_start: where alignment starts on the target/chrom sequence
+    chunk_size: size of nucletide chunks that are scored
+    skip_align_score: alignment score to give the skip state (default = 0)
+    subfams: model alignments to calculate HMM scores from
+    chroms: chrom alignments to calculate HMM scores from
+    starts: where in the target sequence the competing alignments start
+    consensus_starts: where in the subfam HMM model the competing alignments start
+    subfam_names: subfam name for each model alignment
+
+    output:
+    num_cols: number of columns in the matrix
+    align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
+    Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
+    are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
+
+    FIXME: add test
     """
 
     num_cols: int = 1
@@ -407,18 +438,16 @@ def fill_hmm_align_matrix(
         subfam_hmm = hmms[subfam_names[i]]
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
-        subfam_start = consensus_starts[i]
 
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
 
-        seq_index: int = (
-            starts[i] - edge_start
-        )  # place in subfam_seq and chrom_seq
-
-        hmm_start = subfam_start  # start hmm pos of chunk
-        col_index = seq_index + half_chunk + 1  # col in align_matrix
+        seq_index: int = 0
+        hmm_start: int = consensus_starts[i]  # start hmm pos of subfam seq
+        col_index = (
+            starts[i] - edge_start + half_chunk + 1
+        )  # col in align_matrix
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
