@@ -83,7 +83,7 @@ def _parse_chrom_meta(line: str) -> Optional[Tuple[str, int, int]]:
 
 
 def load_alignments(
-    file: TextIO, add_skip_state: bool = False
+    file: TextIO, add_skip_state: bool = False, hmm: str = "",
 ) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
@@ -93,7 +93,7 @@ def load_alignments(
 
         #=GF ID  MERX#DNA/TcMar-Tigger
         #=GF TR  chr0:0000-0000
-        #=GF SC  1153
+        #=GF SC  1153 - float with HMMs
         #=GF ST  +
         #=GF TQ  -1
         #=GF ST  127
@@ -101,7 +101,7 @@ def load_alignments(
         #=GF CST 135
         #=GF CSP 628
         #=GF FL  128
-        #=GF MX  20p41g.matrix
+        #=GF MX  20p41g.matrix  - not used for HMMs
         #=GF GI -25
         #=GF GE -5
     """
@@ -139,7 +139,15 @@ def load_alignments(
                 chrom_name, chrom_start, chrom_stop = chrom_meta
             else:
                 raise ValueError("metadata incomplete, missing TR")
-
+            if hmm:
+                # not used for HMMs
+                matrix_name = ""
+                gap_init = 0
+                gap_ext = 0
+            else:
+                matrix_name = meta["MX"]
+                gap_init = int(meta["GI"])
+                gap_ext = int(meta["GE"])
             if meta["TQ"] == "t":
                 yield Alignment(
                     subfamily=meta["ID"],
@@ -154,9 +162,9 @@ def load_alignments(
                     sequences=[seqs[0][::-1], seqs[1][::-1]],
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
-                    sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+                    sub_matrix_name=matrix_name,
+                    gap_init=gap_init,
+                    gap_ext=gap_ext,
                 )
             else:
                 yield Alignment(
@@ -164,7 +172,7 @@ def load_alignments(
                     chrom_name=chrom_name,
                     chrom_start=chrom_start,
                     chrom_stop=chrom_stop,
-                    score=int(meta["SC"]),
+                    score=float(meta["SC"]),
                     start=int(meta["ST"]),
                     stop=int(meta["SP"]),
                     consensus_start=int(meta["CST"]),
@@ -172,9 +180,9 @@ def load_alignments(
                     sequences=[seqs[0], seqs[1]],
                     strand=meta["SD"],
                     flank=int(meta["FL"]),
-                    sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+                    sub_matrix_name=matrix_name,
+                    gap_init=gap_init,
+                    gap_ext=gap_ext,
                 )
 
             meta.clear()

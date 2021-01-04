@@ -111,9 +111,8 @@ def run():
     # -----------------------------
     # Load alignments to operate on
     # -----------------------------
-
     with open(opts.alignments_file_path) as _infile:
-        alignments = list(load_alignments(_infile))
+        alignments = list(load_alignments(_infile, hmm=opts.hmm_file_path))
 
     # -----------------------------
     # Load alignments to operate on
@@ -127,15 +126,15 @@ def run():
     # --------------------------
     # Run confidence calculation
     # --------------------------
-
-    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
-
-    if opts.confidence:
-        run_confidence(
-            alignments,
-            lambs=lambda_values,
-        )
-        exit()
+    # FIXME: not needed for hmms - no sub matrices
+    if not opts.hmm_file_path:
+        lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+        if opts.confidence:
+            run_confidence(
+                alignments,
+                lambs=lambda_values,
+            )
+            exit()
 
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
