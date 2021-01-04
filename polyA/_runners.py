@@ -536,12 +536,6 @@ def run_full(
         )
         prev_num_nodes = node_count
 
-        if len(tandem_repeats) > 0:
-            for subfam in changes:
-                assert (
-                    subfam != "Tandem Repeat"
-                ), "can't add alternative edges to TRs"
-
     # prints results
     # check if first to print pos is one after prev stop in seq pos
     i = 0
