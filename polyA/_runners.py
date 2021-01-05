@@ -541,12 +541,6 @@ def run_full(
         )
         prev_num_nodes = node_count
 
-        if len(tandem_repeats) > 0:
-            for subfam in changes:
-                assert (
-                    subfam != "Tandem Repeat"
-                ), "can't add alternative edges to TRs"
-
     # handles TRs overlapping shards
     i = 0
     # get first subfam in shard
