@@ -83,7 +83,9 @@ def _parse_chrom_meta(line: str) -> Optional[Tuple[str, int, int]]:
 
 
 def load_alignments(
-    file: TextIO, add_skip_state: bool = False, hmm: str = "",
+    file: TextIO,
+    add_skip_state: bool = False,
+    hmm: str = "",
 ) -> Iterable[Alignment]:
     """
     Load a set of alignments in Stockholm format.
@@ -154,7 +156,7 @@ def load_alignments(
                     chrom_name=chrom_name,
                     chrom_start=chrom_start,
                     chrom_stop=chrom_stop,
-                    score=int(meta["SC"]),
+                    score=float(meta["SC"]),
                     start=int(meta["ST"]),
                     stop=int(meta["SP"]),
                     consensus_start=int(meta["CST"]),
