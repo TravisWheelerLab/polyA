@@ -107,8 +107,8 @@ def run_full(
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
-    chunk_start: int,
-    chunk_stop: int,
+    shard_start: int,
+    shard_stop: int,
     prev_start: int,
     prev_stop: int,
 ) -> Tuple[int, int]:
@@ -118,8 +118,7 @@ def run_full(
     target = alignments[1]
     _validate_target(target)
 
-    # FIXME: does not include TRs
-    if seq_count == 2:
+    if len(tandem_repeats) == 0 and seq_count == 2:
         # Only one alignment other than the skip state
         last_subfam_start, last_subfam_stop = _handle_single_alignment(
             target, print_seq_pos, print_matrix_pos
@@ -190,12 +189,12 @@ def run_full(
         for tr in tandem_repeats:
             # add TR starts and stops
             # check they do not exceed chunk boundary
-            if tr.start < chunk_start:
-                starts_matrix.append(chunk_start)
+            if tr.start < shard_start:
+                starts_matrix.append(shard_start)
             else:
                 starts_matrix.append(tr.start)
-            if tr.stop > chunk_stop:
-                stops_matrix.append(chunk_stop)
+            if tr.stop > shard_stop:
+                stops_matrix.append(shard_stop)
             else:
                 stops_matrix.append(tr.stop)
 
@@ -273,8 +272,8 @@ def run_full(
             active_cells,
             align_matrix,
             consensus_matrix,
-            chunk_start,
-            chunk_stop,
+            shard_start,
+            shard_stop,
         )
 
         # print(repeat_scores)
@@ -536,33 +535,44 @@ def run_full(
         )
         prev_num_nodes = node_count
 
-    # prints results
-    # check if first to print pos is one after prev stop in seq pos
+    # handles TRs overlapping shards
     i = 0
-    while changes_orig[i] == "skip":
+    # get first subfam in shard
+    while i < len(changes_orig) and changes_orig[i] == "skip":
         i += 1
-    last_subfam_start = (
-        non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
-    )
 
-    if prev_stop + 1 == last_subfam_start:
-        # change start pos - back to back TRs
-        stdout.write("\033[2K\033[1G")  # remove last printed line
-        non_empty_columns_orig[changes_position_orig[i]] = (
-            prev_start - start_all + 1
+    if i == len(changes_orig):
+        # whole shard is skip state
+        last_subfam_start: int = -1
+        last_subfam_stop: int = -1
+    else:
+        # FIXME: could a TR overlap multiple shards?
+        first_subfam_start = (
+            non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
+        # check if first print pos is one after prev stop in seq pos
+        if prev_stop + 1 == first_subfam_start:
+            stdout.write("\033[2K\033[1G")  # remove last printed line
+            # change start pos of first subfam to be prev start seq pos
+            non_empty_columns_orig[changes_position_orig[i]] = (
+                prev_start - start_all + 1
+            )
+
+        # get last subfam in shard
+        # will find something since whole shard is not a skip state
+        i = len(changes_orig) - 1
+        while changes_orig[i] == "skip":
+            i -= 1
         last_subfam_start = (
             non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
+        last_subfam_stop = (
+            non_empty_columns_orig[changes_position_orig[i + 1] - 1]
+            + start_all
+            - 1
+        )
 
-    i = len(changes_orig) - 1
-    while changes_orig[i] == "skip":
-        i -= 1
-    # end in seq
-    last_subfam_stop = (
-        non_empty_columns_orig[changes_position_orig[i + 1] - 1] + start_all - 1
-    )
-
+    # prints results
     if print_matrix_pos:
         print_results(
             changes_orig,
