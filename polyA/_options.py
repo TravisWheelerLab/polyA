@@ -114,13 +114,13 @@ class Options:
             "--sequences",
             metavar="SEQS",
             default="",
-            help="TODO(Audrey)",
+            help="fasta file for running ULTRA",
         )
         parser.add_argument(
             "--ultra-data",
             metavar="FILE",
             default="",
-            help="TODO(Audrey)",
+            help="file of the output from ULTRA",
         )
 
         parser.add_argument(
