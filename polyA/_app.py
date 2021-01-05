@@ -128,7 +128,9 @@ def run():
     # --------------------------
     # FIXME: not needed for hmms - no sub matrices
     if not opts.hmm_file_path:
-        lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+        lambda_values = [
+            sub_matrices[a.sub_matrix_name].lamb for a in alignments
+        ]
         if opts.confidence:
             run_confidence(
                 alignments,

@@ -112,7 +112,6 @@ def dp_for_collapse(
         if maxx < prev_col_list[i]:
             maxx = prev_col_list[i]
             max_row_index = i
-
     prev_row_index: int = origin[max_row_index, non_empty[-1]]
     path.append(max_row_index)
 

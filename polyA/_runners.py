@@ -227,7 +227,6 @@ def run_full(
             consensus_starts_matrix,
             subfamily_matrix,
         )
-        exit()
     else:
         cols, align_matrix = fill_align_matrix(
             lambda_values,
@@ -241,7 +240,6 @@ def run_full(
             starts_matrix,
             [sm.scores for sm in substitution_matrices],
         )
-
     # fixme - do this in fill_align_matrix to avoid extra looping
     # originally NonEmptyColumns and ActiveCells have trailing edge included
     # redo these later to not include trailing edges
@@ -250,7 +248,12 @@ def run_full(
         cols,
         align_matrix,
     )
-
+    # FIXME - not getting filled for row 3?
+    print(rows)
+    print(cols)
+    print(subfamily_sequences_matrix[3])
+    print(starts_matrix[3])
+    print(consensus_starts_matrix[3])
     (
         non_empty_columns,
         active_cells,
@@ -266,7 +269,10 @@ def run_full(
         consensus_starts_matrix,
         strands_matrix,
     )
-
+    for row,col in consensus_matrix:
+        if row == 3:
+            print(col)
+    exit()
     # skip state has no active rows
     active_cells[0] = [0]
 
@@ -327,6 +333,7 @@ def run_full(
         non_empty_columns.sort()
 
     else:
+
         confidence_matrix = fill_confidence_matrix(
             non_empty_columns_trailing,
             subfam_counts,
@@ -351,7 +358,8 @@ def run_full(
         confidence_matrix,
         consensus_matrix,
     )
-
+    exit()
+    # FIXME here
     collapsed_matrices = collapse_matrices(
         rows,
         start_all,
