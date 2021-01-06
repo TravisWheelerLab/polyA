@@ -85,7 +85,9 @@ def fill_node_confidence(
     for node_index in range(nodes):
         begin_node = columns[changes_position[node_index]]
         end_node = columns[changes_position[node_index + 1] - 1]
-        range_in_columns = changes_position[node_index + 1] - changes_position[node_index]
+        range_in_columns = (
+            changes_position[node_index + 1] - changes_position[node_index]
+        )
         if node_index == nodes - 1:
             # for the last node, include the end column
             end_node += 1
@@ -127,7 +129,10 @@ def fill_node_confidence(
                     ]
 
                 # for i in range(end_node - begin_node + 1):
-                for j in range(changes_position[node_index], changes_position[node_index] + range_in_columns):
+                for j in range(
+                    changes_position[node_index],
+                    changes_position[node_index] + range_in_columns,
+                ):
                     i = columns[j] - begin_node
                     chrom_offset = 0
                     if (
