@@ -625,4 +625,3 @@ def run_full(
             node_ids,
         )
     return last_subfam_start, last_subfam_stop
-    
