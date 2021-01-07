@@ -83,8 +83,7 @@ def calculate_repeat_scores(
     for i in range(len(tandem_repeats)):
         # get repeat info
         rep = tandem_repeats[i]
-        start_rep = rep.start
-        col_index = start_rep - start_all + 1  # can't be less than 1
+        col_index = rep.start - start_all + 1  # can't be less than 1
         length = rep.length
         pos_scores = rep.position_scores
 
@@ -95,17 +94,18 @@ def calculate_repeat_scores(
         # update repeat_scores for positions 0 to k if in shard boundary
         while j <= k and j < length:
             score += pos_scores[j]
-            if shard_start <= start_rep + j <= shard_stop:
+            if shard_start <= rep.start + j <= shard_stop:
                 repeat_scores[col_index + j] = pos_scores[j]
             j += 1
         window_size = j
 
         # update AlignMatrix and ConsensusMatrix
-        if start_rep >= shard_start:
+
+        if rep.start >= shard_start:
             align_matrix[i + row_num, col_index] = (
                 score * chunk_size / window_size
             )
-            consensus_matrix[i + row_num, col_index] = start_rep
+            consensus_matrix[i + row_num, col_index] = rep.start
             # update active_cells
             if col_index in active_cells:
                 active_cells[col_index].append(i + row_num)
@@ -115,9 +115,9 @@ def calculate_repeat_scores(
         # calc score for the rest of the chunks
         tr_chunk_length = length
         if rep.stop >= shard_stop:
-            # TR ends outside of shard boundary
-            # get length of TR before end of boundary
-            tr_chunk_length = shard_stop - start_rep + 1
+            # TR ends outside of chunk boundary
+            tr_chunk_length = shard_stop - rep.start + 1
+
         for j in range(1, tr_chunk_length):
             # check to remove last score in window
             if j - k - 1 >= 0:
@@ -127,15 +127,16 @@ def calculate_repeat_scores(
             if j + k < len(pos_scores):
                 score += float(pos_scores[j + k])
                 window_size += 1
-                if shard_start <= start_rep + j + k <= shard_stop:
+
+                if shard_start <= rep.start + j + k <= shard_stop:
                     # add new score to repeat_scores
                     repeat_scores[col_index + j + k] = float(pos_scores[j + k])
-            # Update matrices if in shard boundary
-            if start_rep + j >= shard_start:
+            # Update matrices if in chunk boundary
+            if rep.start + j >= shard_start:
                 align_matrix[i + row_num, col_index + j] = (
                     score * chunk_size / window_size
                 )
-                consensus_matrix[i + row_num, col_index + j] = start_rep + j
+                consensus_matrix[i + row_num, col_index + j] = rep.start + j
                 # add active cells
                 if col_index + j in active_cells:
                     active_cells[col_index + j].append(i + row_num)

@@ -47,7 +47,7 @@ def fill_node_confidence(
     >>> stps = [10, 10, 10]
     >>> change_pos = [1, 3, 7, 10]
     >>> names = ["skip", "n1", "n2"]
-    >>> s_seqs = ['', 'AAA-TTTTT-', 'TTTTTTTTTT']
+    >>> s_seqs = ['', 'AAA-TTTT-T', 'TTTTTTTTTT']
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = SubMatrix("", 0.1227)
@@ -56,12 +56,12 @@ def fill_node_confidence(
     >>> rep_scores = {}
     >>> node_conf = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf
-    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.058823529411764705, ('n2', 1): 0.9411764705882353, ('n1', 2): 0.058823529411764705, ('n2', 2): 0.9411764705882353}
+    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.058823529411764705, ('n2', 1): 0.9411764705882353, ('n1', 2): 0.1111111111111111, ('n2', 2): 0.8888888888888888}
     >>> s_seqs = ['', 'AAA-T--TT-', 'TTTTTTTTTT']
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> node_conf2 = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf2
-    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.058823529411764705, ('n2', 1): 0.9411764705882353, ('n1', 2): 0.058823529411764705, ('n2', 2): 0.9411764705882353}
+    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.058823529411764705, ('n2', 1): 0.9411764705882353, ('n1', 2): 0.1111111111111111, ('n2', 2): 0.8888888888888888}
     """
     node_confidence: Dict[Tuple[str, int], float] = {}
     node_confidence_temp: Dict[Tuple[int, int], float] = {}
@@ -85,6 +85,9 @@ def fill_node_confidence(
     for node_index in range(nodes):
         begin_node = columns[changes_position[node_index]]
         end_node = columns[changes_position[node_index + 1] - 1]
+        range_in_columns = (
+            changes_position[node_index + 1] - changes_position[node_index]
+        )
         if node_index == nodes - 1:
             # for the last node, include the end column
             end_node += 1
@@ -104,8 +107,8 @@ def fill_node_confidence(
                 align_score = 0.0
             else:
                 # subfam in node, calculate alignment score
-                subfam_seq = ""
-                chrom_seq = ""
+                subfam_seq = "."
+                chrom_seq = "."
                 last_prev_subfam = ""
                 last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
@@ -125,7 +128,11 @@ def fill_node_confidence(
                         alignment_index_start - 1 + chrom_offset
                     ]
 
-                for i in range(end_node - begin_node + 1):
+                for j in range(
+                    changes_position[node_index],
+                    changes_position[node_index] + range_in_columns,
+                ):
+                    i = columns[j] - begin_node
                     chrom_offset = 0
                     if (
                         alignment_index_start + i >= 0
@@ -142,9 +149,6 @@ def fill_node_confidence(
                         chrom_seq += chrom_seqs[subfam_index][
                             alignment_index_start + i + chrom_offset
                         ]
-                    else:
-                        subfam_seq += "."
-                        chrom_seq += "."
 
                 align_score = lamb * calculate_score(
                     gap_ext,

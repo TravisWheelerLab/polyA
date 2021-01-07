@@ -118,8 +118,7 @@ def run_full(
     target = alignments[1]
     _validate_target(target)
 
-    # FIXME: does not include TRs
-    if seq_count == 2:
+    if len(tandem_repeats) == 0 and seq_count == 2:
         # Only one alignment other than the skip state
         last_subfam_start, last_subfam_stop = _handle_single_alignment(
             target, print_seq_pos, print_matrix_pos
@@ -540,12 +539,6 @@ def run_full(
             SameSubfamChangeMatrix,
         )
         prev_num_nodes = node_count
-
-        if len(tandem_repeats) > 0:
-            for subfam in changes:
-                assert (
-                    subfam != "Tandem Repeat"
-                ), "can't add alternative edges to TRs"
 
     # handles TRs overlapping shards
     i = 0
