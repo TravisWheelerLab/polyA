@@ -273,6 +273,7 @@ def run_full(
     align_matrix[0, cols] = SKIP_ALIGN_SCORE
     non_empty_columns.append(cols)
     # non_empty_columns_trailing.append(cols)
+    # FIXME: this is done twice??
     non_empty_columns.append(cols)
     active_cells[cols] = [0]
     # active_cells_trailing[cols] = [0]

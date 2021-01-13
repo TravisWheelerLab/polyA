@@ -720,7 +720,6 @@ def fill_hmm_align_matrix(
                     if subfam_seq[seq_index] == "-":
                         # remove insertion score
                         num_nucls -= 1  # nucs in chrom
-                        # remove -log(score)
                         align_score -= start_insertion_score
 
                     else:
@@ -884,7 +883,6 @@ def fill_hmm_align_matrix(
         for col in range(num_cols, num_cols + chunk_size + 1):
             if (row, col) in align_matrix:
                 del align_matrix[row, col]
-
     return num_cols, align_matrix
 
 
@@ -893,8 +891,7 @@ def check_hmm_position(start, end, subfam_slice):
     # Checks that hmm positions match with subfam slice
     # start 1, end 4
     # A--ATT, --ATT
-    # 122234, 22234
-
+    # 111234, 11234
     if subfam_slice[0] == "-":
         start += 1
     nuc_count = len([n for n in subfam_slice if n != "-" and n != "."])
