@@ -434,7 +434,6 @@ def fill_hmm_align_matrix(
 
     # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
-        print(subfam_names[i])
         subfam_hmm = hmms[subfam_names[i]]
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]

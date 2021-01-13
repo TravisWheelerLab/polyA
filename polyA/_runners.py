@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, TextIO, Tuple
 from polyA import *
 from polyA.fill_align_matrix import fill_hmm_align_matrix
 from polyA.load_hmm import load_hmm
+from polyA.fill_node_confidence import fill_node_confidence_hmm
 
 
 def run_confidence(
@@ -248,12 +249,7 @@ def run_full(
         cols,
         align_matrix,
     )
-    # FIXME - not getting filled for row 3?
-    print(rows)
-    print(cols)
-    print(subfamily_sequences_matrix[3])
-    print(starts_matrix[3])
-    print(consensus_starts_matrix[3])
+
     (
         non_empty_columns,
         active_cells,
@@ -269,10 +265,7 @@ def run_full(
         consensus_starts_matrix,
         strands_matrix,
     )
-    for row,col in consensus_matrix:
-        if row == 3:
-            print(col)
-    exit()
+
     # skip state has no active rows
     active_cells[0] = [0]
 
@@ -358,8 +351,7 @@ def run_full(
         confidence_matrix,
         consensus_matrix,
     )
-    exit()
-    # FIXME here
+
     collapsed_matrices = collapse_matrices(
         rows,
         start_all,
@@ -456,26 +448,45 @@ def run_full(
     while True:
         count += 1
         node_count = len(changes)
-
+        # FIXME: don't want to use substitution matrices
         node_confidence.clear()  # reuse old node_confidence matrix
-        node_confidence = fill_node_confidence(
-            node_count,
-            start_all,
-            gap_inits,
-            gap_exts,
-            non_empty_columns,
-            starts_matrix,
-            stops_matrix,
-            changes_position,
-            subfamily_matrix,
-            subfamily_sequences_matrix,
-            chromosome_sequences_matrix,
-            subfam_counts,
-            substitution_matrices,
-            repeat_scores,
-            len(tandem_repeats),
-        )
 
+        if hmm_file_lines:
+            node_confidence = fill_node_confidence_hmm(
+                node_count,
+                start_all,
+                non_empty_columns,
+                starts_matrix,
+                stops_matrix,
+                consensus_starts_matrix,
+                changes_position,
+                subfamily_matrix,
+                subfamily_sequences_matrix,
+                chromosome_sequences_matrix,
+                subfam_counts,
+                subfam_hmms,
+                repeat_scores,
+                len(tandem_repeats),
+            )
+        else:
+            node_confidence = fill_node_confidence(
+                node_count,
+                start_all,
+                gap_inits,
+                gap_exts,
+                non_empty_columns,
+                starts_matrix,
+                stops_matrix,
+                changes_position,
+                subfamily_matrix,
+                subfamily_sequences_matrix,
+                chromosome_sequences_matrix,
+                subfam_counts,
+                substitution_matrices,
+                repeat_scores,
+                len(tandem_repeats),
+            )
+        exit()
         # store original node confidence for reporting results
         if count == 1:
             node_confidence_orig = node_confidence.copy()

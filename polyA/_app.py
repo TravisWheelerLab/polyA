@@ -115,7 +115,7 @@ def run():
         alignments = list(load_alignments(_infile, hmm=opts.hmm_file_path))
 
     # -----------------------------
-    # Load alignments to operate on
+    # Load HMM file
     # -----------------------------
 
     hmm_file_lines = []
