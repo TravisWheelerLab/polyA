@@ -23,7 +23,9 @@ from .constants import (
 from .edges import edges
 from .extract_nodes import extract_nodes
 from .fill_align_matrix import fill_align_matrix
-from .fill_confidence_matrix import fill_confidence_matrix, trailing_edges_info
+from .fill_confidence_matrix import (
+    fill_confidence_matrix,
+)  # , trailing_edges_info
 from .fill_confidence_matrix_tr import fill_confidence_matrix_tr
 from .fill_consensus_position_matrix import fill_consensus_position_matrix
 from .fill_node_confidence import fill_node_confidence
