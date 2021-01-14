@@ -47,6 +47,10 @@ publish-conda-package:
 .PHONY: check
 check: check-fast check-slow check-format
 
+.PHONY: check-benchmark
+check-benchmark:
+	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunBenchmarks.sh
+
 .PHONY: check-fast
 check-fast:
 	PYTHONPATH=./ ${TEST_CMD} ${TEST_TARGETS}

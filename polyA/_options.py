@@ -45,6 +45,7 @@ class Options:
     # Output configuration
     # --------------------
 
+    benchmark: str
     heatmap: bool
     log_file_path: str
     log_level: Literal["debug", "verbose", "normal", "quiet"]
@@ -129,6 +130,12 @@ class Options:
         )
 
         parser.add_argument(
+            "--benchmark",
+            metavar="REPORT",
+            default="",
+            help="track and output performance benchmark to the given file",
+        )
+        parser.add_argument(
             "--heatmap",
             action="store_true",
             default=False,
@@ -190,6 +197,7 @@ class Options:
         self.easel_path = namespace.easel_path
         self.ultra_path = namespace.ultra_path
 
+        self.benchmark = namespace.benchmark
         self.heatmap = namespace.heatmap
         self.log_file_path = namespace.log_file
         self.log_level = namespace.log_level

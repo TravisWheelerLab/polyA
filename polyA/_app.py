@@ -1,6 +1,7 @@
+from datetime import datetime
 import logging
 from sys import argv, stderr, stdout
-from typing import List
+from typing import List, Tuple
 
 from ._options import Options
 from ._runners import run_confidence, run_full
@@ -113,6 +114,12 @@ def run():
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
 
+    # ----------------------
+    # Configure benchmarking
+    # ----------------------
+
+    shard_times: List[Tuple[int, int, float]] = []
+
     # --------------------------
     # Run confidence calculation
     # --------------------------
@@ -140,26 +147,30 @@ def run():
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
-        chunk_start = chunk.start
-        chunk_stop = chunk.stop
+        shard_start = chunk.start
+        shard_stop = chunk.stop
         # get TRs between chunk stop and start
         tandem_repeats_chunk: List[TandemRepeat] = []
         tr_end = tr_start
         while tr_end < len(tandem_repeats):
             tr = tandem_repeats[tr_end]
-            if tr.start <= chunk_stop:
+            if tr.start <= shard_stop:
                 tr_end += 1
             else:
                 break
         tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
         tr_start = tr_end
-        if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
+        if tr_start > 0 and tandem_repeats[tr_start - 1].stop > shard_stop:
             tr_start -= 1
 
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
         heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
+
+        start_time = None
+        if opts.benchmark:
+            start_time = datetime.now()
 
         (_last_start, _last_stop) = run_full(
             chunk.alignments,
@@ -172,11 +183,23 @@ def run():
             opts.sequence_position,
             sub_matrices,
             subfam_counts,
-            chunk_start,
-            chunk_stop,
+            shard_start,
+            shard_stop,
             _prev_start,
             _prev_stop,
         )
+
+        if start_time:
+            end_time = datetime.now()
+            delta_time = end_time - start_time
+            shard_times.append(
+                (
+                    shard_start,
+                    shard_stop,
+                    int(delta_time.total_seconds() * 1000),
+                )
+            )
+
         _prev_start, _prev_stop = (
             _last_start,
             _last_stop,
@@ -188,3 +211,9 @@ def run():
             soda_conf_file.close()
         if heatmap_file is not None:
             heatmap_file.close()
+
+    if shard_times:
+        with open(opts.benchmark, "w") as _benchmark:
+            _benchmark.write("start_index,stop_index,ms\n")
+            for start, stop, ms in shard_times:
+                _benchmark.write(f"{start},{stop},{ms}\n")
