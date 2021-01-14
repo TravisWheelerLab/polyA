@@ -107,8 +107,6 @@ def fill_node_confidence(
                 align_score = 0.0
             else:
                 # subfam in node, calculate alignment score
-                subfam_seq = "."
-                chrom_seq = "."
                 last_prev_subfam = ""
                 last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
@@ -162,6 +160,7 @@ def fill_node_confidence(
                         last_index = alignment_index_start + i + chrom_offset
                         break
 
+                # add padding first in case no part of seq is used
                 chrom_seq = (
                     "." + chrom_seqs[subfam_index][first_index : last_index + 1]
                 )
