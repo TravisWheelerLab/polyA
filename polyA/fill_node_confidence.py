@@ -61,7 +61,7 @@ def fill_node_confidence(
     >>> c_seqs = ['', 'TTTTTTTTTT', 'TTTTTTTTTT']
     >>> node_conf2 = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
     >>> node_conf2
-    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.001949317738791423, ('n2', 1): 0.9980506822612085, ('n1', 2): 0.1111111111111111, ('n2', 2): 0.8888888888888888}
+    {('n1', 0): 0.19999999999999998, ('n2', 0): 0.7999999999999999, ('n1', 1): 0.001949317738791423, ('n2', 1): 0.9980506822612085, ('n1', 2): 0.19999999999999998, ('n2', 2): 0.7999999999999999}
     """
     node_confidence: Dict[Tuple[str, int], float] = {}
     node_confidence_temp: Dict[Tuple[int, int], float] = {}
@@ -128,13 +128,11 @@ def fill_node_confidence(
                         alignment_index_start - 1 + chrom_offset
                     ]
 
-                # for i in range(end_node - begin_node + 1):
                 for j in range(
                     changes_position[node_index],
                     changes_position[node_index] + range_in_columns,
                 ):
                     i = columns[j] - begin_node
-                    chrom_offset = 0
                     if (
                         alignment_index_start + i >= 0
                         and alignment_index_start + i
@@ -143,13 +141,34 @@ def fill_node_confidence(
                         chrom_offset = gap_offset[subfam_index][
                             alignment_index_start + i
                         ]
-                        # if alignment_index_start + i + chrom_offset >= 0 and alignment_index_start + i + chrom_offset <= alignment_index_end:
-                        subfam_seq += subfam_seqs[subfam_index][
-                            alignment_index_start + i + chrom_offset
+
+                        first_index = alignment_index_start + i + chrom_offset
+                        break
+
+                for j in range(
+                    changes_position[node_index] + range_in_columns - 1,
+                    changes_position[node_index],
+                    -1,
+                ):
+                    i = columns[j] - begin_node
+                    if (
+                        alignment_index_start + i >= 0
+                        and alignment_index_start + i
+                        < len(gap_offset[subfam_index])
+                    ):
+                        chrom_offset = gap_offset[subfam_index][
+                            alignment_index_start + i
                         ]
-                        chrom_seq += chrom_seqs[subfam_index][
-                            alignment_index_start + i + chrom_offset
-                        ]
+                        last_index = alignment_index_start + i + chrom_offset
+                        break
+
+                chrom_seq = (
+                    "." + chrom_seqs[subfam_index][first_index : last_index + 1]
+                )
+                subfam_seq = (
+                    "."
+                    + subfam_seqs[subfam_index][first_index : last_index + 1]
+                )
 
                 align_score = lamb * calculate_score(
                     gap_ext,
