@@ -205,8 +205,10 @@ def calculate_full_insertion_score(
         else:
             break
     # search forward in model from start_index
+    prev_gap: int = -2
     for i in range(start_index - 1, -1):
         if model[i] == "-":
+            prev_gap = start_index - 1
             gap_count += 1
         else:
             break
@@ -214,4 +216,4 @@ def calculate_full_insertion_score(
         gap_count - 1
     )
     insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
-    return insertion_score / float(gap_count)
+    return prev_gap, insertion_score / float(gap_count)
