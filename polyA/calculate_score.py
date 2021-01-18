@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 
 def calculate_score(
@@ -146,7 +146,7 @@ def calculate_hmm_score(
 
 def calculate_new_insertion_score(
     hmm_pos: int,
-    model: str,
+    model_slice: str,
     subfam_hmm,
 ) -> float:
     """
@@ -154,7 +154,7 @@ def calculate_new_insertion_score(
 
     input:
     hmm pos: hmm start pos of first char in model
-    model: sequence - starts with the first gap
+    model_slice: sequence - starts with the first gap, ex: GA[---AT....]
     subfam_hmm: dictionary of hmm family info
 
     output:
@@ -166,7 +166,7 @@ def calculate_new_insertion_score(
     """
     i: int = 0  # num of gaps in model
     insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
-    while model[i + 1] == "-":
+    while model_slice[i + 1] == "-":  # will eventually end: --A
         insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
         i += 1
     i += 1
@@ -175,28 +175,43 @@ def calculate_new_insertion_score(
 
 
 def calculate_full_insertion_score(
+    start_index: int,
     hmm_pos: int,
-    model_slice: str,
-    full_model: str,
+    model: str,
     subfam_hmm,
-) -> float:
+) -> Tuple[int, float]:
     """
-    Calculates the full insertion score in the model sequence
+    Calculates a full insertion score in the model
+    starting at an index of a gap
 
     input:
-    hmm pos: hmm start pos of first nuc in model
-    model: sequence - starts with the first gap
-    subfam_hmm: dictionary of hmm family info
+    start_index: index in model of start of model slice
+    hmm pos: hmm pos of first char in model_slice
+    model: full subfam model sequence
+    subfam_hmm: dictionary of hmm subfam info
 
     output:
-    per gap insertion score
+    index of prev gap, per gap insertion score
     """
-    # from current position - look forwards and backwards
-    i: int = 0  # num of gaps in model
+    # from current position (start_index) - look forwards and backwards
+    # if gap at model_slice[first_index - 1] -> return first_index - 1
+    # must be m->i and i->m
     insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
-    while full_model[i + 1] == "-":
-        insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
-        i += 1
-    i += 1
+    gap_count: int = 1
+    # search forward in model from start_index
+    for i in range(start_index + 1, len(model)):
+        if model[i] == "-":
+            gap_count += 1
+        else:
+            break
+    # search forward in model from start_index
+    for i in range(start_index - 1, -1):
+        if model[i] == "-":
+            gap_count += 1
+        else:
+            break
+    insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"]) * (
+        gap_count - 1
+    )
     insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
-    return insertion_score / float(i)
+    return insertion_score / float(gap_count)
