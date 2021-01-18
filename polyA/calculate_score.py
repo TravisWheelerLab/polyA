@@ -91,13 +91,18 @@ def calculate_hmm_score(
     hmm_start: hmm start pos of first char in model
     chrom_slice:
     subfam_slice:
-    subfam: ful subfam seq
-    insertion_score:
-    insertion_index:
+    subfam: full subfam seq starting at the same pos of subfam slice
+    insertion_score: per gap score of full insertion
+    insertion_index: index of last gap char relative to subfam slice
     subfam_hmm: dictionary of hmm family info
 
     output:
     HMM alignment score
+    1112
+    A--T
+
+    1123
+    --TT
     """
     chunk_score: float = 0
     hmm_pos = hmm_start
@@ -106,6 +111,7 @@ def calculate_hmm_score(
             break
         elif chrom_slice[i] == "-":
             # deletion score
+            # must have a gap or nuc in prev index
             if chrom_slice[i - 1] != "-":
                 # match to deletion from prev hmm pos
                 chunk_score += float(
@@ -124,7 +130,7 @@ def calculate_hmm_score(
             # insertion score
             if insertion_index + 1 != i:
                 # new insertion
-                insertion_score = calculate_insertion_score(
+                insertion_score = calculate_new_insertion_score(
                     hmm_pos, subfam[i::], subfam_hmm
                 )
             insertion_index = i
@@ -138,9 +144,40 @@ def calculate_hmm_score(
     return chunk_score
 
 
-def calculate_insertion_score(
+def calculate_new_insertion_score(
     hmm_pos: int,
     model: str,
+    subfam_hmm,
+) -> float:
+    """
+    Calculates a new insertion score in the model sequence
+
+    input:
+    hmm pos: hmm start pos of first char in model
+    model: sequence - starts with the first gap
+    subfam_hmm: dictionary of hmm family info
+
+    output:
+    per gap insertion score
+
+    hmm pos: 223
+    subfam:  --A
+    m->i from 2, i->i from 2, i->i from 2, i->m from 2
+    """
+    i: int = 0  # num of gaps in model
+    insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
+    while model[i + 1] == "-":
+        insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
+        i += 1
+    i += 1
+    insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
+    return insertion_score / float(i)
+
+
+def calculate_full_insertion_score(
+    hmm_pos: int,
+    model_slice: str,
+    full_model: str,
     subfam_hmm,
 ) -> float:
     """
@@ -154,9 +191,10 @@ def calculate_insertion_score(
     output:
     per gap insertion score
     """
+    # from current position - look forwards and backwards
     i: int = 0  # num of gaps in model
     insertion_score: float = float(subfam_hmm[hmm_pos]["transition"]["m->i"])
-    while model[i + 1] == "-":
+    while full_model[i + 1] == "-":
         insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->i"])
         i += 1
     i += 1
