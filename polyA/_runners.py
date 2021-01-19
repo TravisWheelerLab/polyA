@@ -273,7 +273,6 @@ def run_full(
     align_matrix[0, cols] = SKIP_ALIGN_SCORE
     non_empty_columns.append(cols)
     # non_empty_columns_trailing.append(cols)
-    # FIXME: this is done twice??
     non_empty_columns.append(cols)
     active_cells[cols] = [0]
     # active_cells_trailing[cols] = [0]
@@ -294,8 +293,6 @@ def run_full(
             shard_start,
             shard_stop,
         )
-
-        # print(repeat_scores)
 
         # add skip states for TR cols
         for tr_col in repeat_scores:
@@ -462,7 +459,6 @@ def run_full(
     while True:
         count += 1
         node_count = len(changes)
-        # FIXME: don't want to use substitution matrices
         node_confidence.clear()  # reuse old node_confidence matrix
 
         if hmm_file_lines:
@@ -500,7 +496,6 @@ def run_full(
                 repeat_scores,
                 len(tandem_repeats),
             )
-        exit()
         # store original node confidence for reporting results
         if count == 1:
             node_confidence_orig = node_confidence.copy()

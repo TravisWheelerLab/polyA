@@ -4,6 +4,7 @@ from .confidence_cm import confidence_cm
 from .substitution_matrix import SubMatrix
 from .calculate_score import calculate_score
 from .calculate_score import calculate_hmm_score
+from .calculate_score import calculate_full_insertion_score
 from .sum_repeat_scores import SumRepeatScores
 
 
@@ -29,7 +30,7 @@ def fill_node_confidence(
     the confidence for that node
 
     first fills matrix with node alignment scores, then reuses matrix for confidence scores
-    Using changes_position indentifies boundaries for all nodes, and computes confidence
+    Using changes_position identifies boundaries for all nodes, and computes confidence
     values for each node.
 
     input:
@@ -115,8 +116,8 @@ def fill_node_confidence(
                 alignment_index_start = begin_node - subfam_start
 
                 if (
-                    alignment_index_start - 1 >= 0
-                    and alignment_index_start - 1
+                    0
+                    <= alignment_index_start - 1
                     <= len(gap_offset[subfam_index])
                 ):
                     chrom_offset = gap_offset[subfam_index][
@@ -137,8 +138,8 @@ def fill_node_confidence(
                     i = columns[j] - begin_node
                     chrom_offset = 0
                     if (
-                        alignment_index_start + i >= 0
-                        and alignment_index_start + i
+                        0
+                        <= alignment_index_start + i
                         < len(gap_offset[subfam_index])
                     ):
                         chrom_offset = gap_offset[subfam_index][
@@ -237,7 +238,34 @@ def fill_node_confidence_hmm(
     tr_count: int,
 ) -> Dict[Tuple[str, int], float]:
     """
-    Description
+    for a particular annotated node, takes all competing alignments and calculates
+    the confidence for that node
+
+    first fills matrix with node pHMM alignment scores, then reuses matrix for confidence scores
+    Using changes_position identifies boundaries for all nodes, and computes confidence
+    values for each node.
+
+    input:
+    nodes: number of nodes
+    start_all: min start position on chromosome/target sequences for whole alignment
+    columns: all non empty columns in matrices
+    starts: where in the target sequence the competing alignments start
+    stops: where in the target sequence the competing alignments stop
+    consensus_starts: where in the subfam HMM model the competing alignments start
+    changes_position: node boundaries
+    subfams: list of subfam names
+    subfam_seqs: subfamily/model sequences from pHMM alignment
+    chrom_seqs: chromosome/target sequences from pHMM alignment
+    subfam_countss: dict that maps subfam name to it's count info
+    subfam_hmms: dictionary of per position HMM information for each subfam
+    repeat_scores: hash implementation of sparse 1d array that maps column index
+    to tandem repeat score
+    tr_count: number of tandem repeats at end of subfams list
+
+    output:
+    node_confidence: hash implementation of sparse 2D matrix that holds confidence values
+    for whole nodes. Used during stitching process. Tuple[str, int] is key that maps a subfamily
+    and node number to a confidence score.
     """
     node_confidence: Dict[Tuple[str, int], float] = {}
     node_confidence_temp: Dict[Tuple[int, int], float] = {}
@@ -275,6 +303,7 @@ def fill_node_confidence_hmm(
             ]  # start hmm pos of subfam seq
             subfam = subfams[subfam_index]
             subfam_hmm = subfam_hmms[subfam]
+            subfam_seq = subfam_seqs[subfam_index]
 
             align_score: float
             if subfam_start > end_node or subfam_stop < begin_node:
@@ -282,35 +311,33 @@ def fill_node_confidence_hmm(
                 align_score = 0.0
             else:
                 # subfam in node, calculate alignment score
-                subfam_seq = ""
+                subfam_slice = ""
                 chrom_seq = ""
-                last_prev_subfam = ""
-                last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
 
                 if (
-                    alignment_index_start - 1 >= 0
-                    and alignment_index_start - 1
+                    0
+                    <= alignment_index_start - 1
                     <= len(gap_offset[subfam_index])
                 ):
                     chrom_offset = gap_offset[subfam_index][
                         alignment_index_start - 1
                     ]
-                    last_prev_subfam = subfam_seqs[subfam_index][
+                    last_prev_subfam = subfam_seq[
                         alignment_index_start - 1 + chrom_offset
                     ]
                     last_prev_chrom = chrom_seqs[subfam_index][
                         alignment_index_start - 1 + chrom_offset
                     ]
-
+                first_index: int = -1
                 for j in range(
                     changes_position[node_index],
                     changes_position[node_index] + range_in_columns,
                 ):
                     i = columns[j] - begin_node
                     if (
-                        alignment_index_start + i >= 0
-                        and alignment_index_start + i
+                        0
+                        <= alignment_index_start + i
                         < len(gap_offset[subfam_index])
                     ):
                         chrom_offset = gap_offset[subfam_index][
@@ -319,7 +346,7 @@ def fill_node_confidence_hmm(
 
                         first_index = alignment_index_start + i + chrom_offset
                         break
-
+                last_index: int = -1
                 for j in range(
                     changes_position[node_index] + range_in_columns - 1,
                     changes_position[node_index],
@@ -327,8 +354,8 @@ def fill_node_confidence_hmm(
                 ):
                     i = columns[j] - begin_node
                     if (
-                        alignment_index_start + i >= 0
-                        and alignment_index_start + i
+                        0
+                        <= alignment_index_start + i
                         < len(gap_offset[subfam_index])
                     ):
                         chrom_offset = gap_offset[subfam_index][
@@ -340,30 +367,40 @@ def fill_node_confidence_hmm(
                 chrom_seq = chrom_seqs[subfam_index][
                     first_index : last_index + 1
                 ]
-                subfam_seq = subfam_seqs[subfam_index][
-                    first_index : last_index + 1
-                ]
+                subfam_slice = subfam_seq[first_index : last_index + 1]
 
-                # get hmm start of first pos in subfam_seq
-                for j in range(first_index):
-                    if subfam_seqs[subfam_index][j] != "-" and subfam_seqs[subfam_index][j] != ".":
+                # get hmm start of first char in subfam_slice
+                # start at 1 - don't move forward with subfam_seq[0]
+                for j in range(1, first_index + 1):
+                    if subfam_seq[j] != "-" and subfam_seq[j] != ".":
                         hmm_start += 1
-                # FIXME: need to get gap score for start
-                insertion_score = -1
-                insertion_index = -1
-                # if subfam_seq[0] == "-"
-                """
+                if len(subfam_slice) > 0 and subfam_slice[0] == "-":
+                    (
+                        insertion_index,
+                        insertion_score,
+                    ) = calculate_full_insertion_score(
+                        first_index, hmm_start, subfam_seq, subfam_hmm
+                    )
+                    # get full insertion score
+                    # need to see if there are more gaps before first index
+                    # make get full insertion score
+                    # look backward and forward from first index position in full subfam
+                    # need to return if first index - 1 is a gap == insertion_index
+                else:
+                    insertion_index: int = (
+                        -2
+                    )  # will not match a prev gap index in calc hmm score
+                    insertion_score: float = 0
+
                 align_score = calculate_hmm_score(
                     hmm_start,
                     chrom_seq,
+                    subfam_slice,
                     subfam_seq,
-                    subfam_seqs[subfam_index],
                     insertion_score,
-                    insertion_index,
+                    insertion_index - first_index,
                     subfam_hmm,
                 )
-                """
-                align_score = 0
 
                 node_confidence_temp[subfam_index, node_index] = align_score
 
@@ -391,7 +428,7 @@ def fill_node_confidence_hmm(
             else:
                 active[node_index] = [subfam_index]
                 node_non_empty.append(node_index)
-    exit()
+
     # reuse same matrix and compute confidence scores for the nodes
     for node_index in node_non_empty:
         temp: List[float] = []
