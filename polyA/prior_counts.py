@@ -24,7 +24,7 @@ def read_prior_counts(
     for line in prior_counts_file:
         subfam, count = line.strip().split()
         subfam_counts[subfam] = float(count)
-        total_count += float(count)
+        total_count += int(count)
 
     for key in subfam_counts:
         subfam_counts[key] = (1 - prob_skip) * subfam_counts[key] / total_count

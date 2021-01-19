@@ -18,8 +18,6 @@ ScoresDict = Dict[str, int]
 class SubMatrix:
     """
     A single substitution matrix, including its name and lambda value.
-    The lambda value may be `None`, in which case it must be computed
-    before the matrix can be used.
 
     A single matrix maps '<char1><char2>' (a pair of characters from
     the input alphabet) to the score from the input substitution
@@ -28,7 +26,7 @@ class SubMatrix:
     For example: 'AA' => 8
     """
 
-    lamb: Optional[float] = None
+    lamb: float
     name: str
     scores: ScoresDict
 
@@ -58,6 +56,8 @@ def _parse_matrix_header(line: str) -> Tuple[str, Optional[float]]:
         return tokens[0], None
     if len(tokens) == 2:
         return tokens[0], float(tokens[1])
+
+    assert False
 
 
 def _parse_chars(line: str) -> List[str]:

@@ -32,3 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - run: make setup-dev check-format
+
+  check-types:
+    runs-on: ubuntu-20.04
+    container:
+      image: traviswheelerlab/polya-build
+      volumes:
+        - ${{ github.workspace }}:/code
+    steps:
+      - uses: actions/checkout@v1
+      - run: make setup-dev check-types

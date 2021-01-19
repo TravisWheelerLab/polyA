@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Dict, List
 import re
 
@@ -65,24 +66,18 @@ def confidence_cm(
 
     # if command line option to include subfam_counts
     if subfam_counts:
+        indices = range(len(region) - repeats)
+        tr_indices = range(len(region) - repeats, len(region))
+
         # alignment scores
-        for index in range(len(region) - repeats):
+        for index in chain(indices, tr_indices):
             subfam: str = subfams[subfam_rows[index]]
-            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
+            m = re.search(r"(.+?)#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
             converted_score = (2 ** int(region[index])) * subfam_counts[subfam]
             confidence_list.append(converted_score)
             score_total += converted_score
-        # TR scores
-        for index in range(len(region) - repeats, len(region)):
-            subfam: str = subfams[subfam_rows[index]]
-            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
-            if m:
-                subfam = m.group(1)
-            tr_score = (2 ** int(region[index])) * subfam_counts[subfam]
-            confidence_list.append(tr_score)
-            score_total += tr_score
 
     # don't include subfam counts (default)
     else:
@@ -103,7 +98,7 @@ def confidence_cm(
     # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
     # do not do this when conputing node confidence (skip state is not used)
     if confidence_list[0] < 0.01 and not node_confidence_bool:
-        summ = 0
+        summ = 0.0
         for i in range(1, len(confidence_list)):
             summ += confidence_list[i]
 
@@ -115,7 +110,7 @@ def confidence_cm(
 
 
 def confidence_only(
-    region: List[float],
+    region: List[int],
     lambs: List[float],
 ) -> List[float]:
     """
@@ -132,7 +127,7 @@ def confidence_only(
     output:
     confidence_list: list of confidence values for competing annotations
 
-    >>> reg = [100., 55., 1.]
+    >>> reg = [100, 55, 1]
     >>> lambs = [.1227] * 3
     >>> conf = confidence_only(reg, lambs)
     >>> conf

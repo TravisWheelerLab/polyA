@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, Tuple
+from typing import Dict, List, NamedTuple, Optional, Set, Tuple
 from math import inf, log
 
 from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
@@ -57,8 +57,8 @@ def dp_for_collapse(
         for row0 in active[curr_col]:
             row = map_rows[row0]
 
-            max: float = -inf
-            max_index: int = -inf
+            max_score: float = -inf
+            max_index: Optional[int] = None
             support_log: float = log(support_matrix[row0, curr_col])
 
             for row1 in active[prev_col]:
@@ -71,12 +71,15 @@ def dp_for_collapse(
                 else:
                     score += change
 
-                if score > max:
-                    max = score
+                if score > max_score:
+                    max_score = score
                     max_index = row1
 
+            if max_index is None:
+                raise Exception("no max_index found")
+
             origin[row0, curr_col] = max_index
-            dp[row0, curr_col] = max
+            dp[row0, curr_col] = max_score
 
     # get path from origin matrix
     # which row to start backtrace
@@ -182,12 +185,11 @@ def collapse_matrices(
             else:
                 subfams_count[subfams[i]] = [i]
 
+    # FIXME: Might be wasting space here by holding all columns
     for col in range(len(columns)):
         col_index: int = columns[col]
-        active_cols = (
-            set()
-        )  # use set so don't add duplicates of subfams with mulitple alignments
-        active_cells_collapse[col_index] = active_cols
+        # use set so don't add duplicates of subfams with mulitple alignments
+        active_cols: Set[int] = set()
 
         for row_index in active_cells[col_index]:
             subfam: str = subfams[row_index]
@@ -205,15 +207,13 @@ def collapse_matrices(
                     subfams_collapse_temp[subfam], col_index
                 ] = support_matrix[row_index, col_index]
 
-            active_cells_collapse[col_index].add(subfams_collapse_temp[subfam])
+            active_cols.add(subfams_collapse_temp[subfam])
 
-    # convert all sets into lists for easier use later
-    for key in active_cells_collapse:
-        active_cells_collapse[key] = list(active_cells_collapse[key])
+        active_cells_collapse[col_index] = list(active_cols)
 
     for subfam in subfams_dp:
         dp_rows = subfams_count[subfam]
-        dp_non_empty = set()
+        dp_non_empty: List[int] = []
         dp_active: Dict[int, List[int]] = {}
 
         for i in range(len(dp_rows)):
@@ -221,7 +221,7 @@ def collapse_matrices(
                 starts[dp_rows[i]] - start_all + 1,
                 stops[dp_rows[i]] - start_all + 1 + 1,
             ):
-                dp_non_empty.add(j)
+                dp_non_empty.append(j)
                 if j in dp_active:
                     dp_active[j].append(dp_rows[i])
                 else:

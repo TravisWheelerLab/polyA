@@ -45,7 +45,7 @@ publish-conda-package:
 	@echo "NOT IMPLEMENTED"
 
 .PHONY: check
-check: check-fast check-slow check-format
+check: check-fast check-slow check-format check-types
 
 .PHONY: check-benchmark
 check-benchmark:
@@ -63,6 +63,10 @@ check-format:
 check-slow:
 	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunTests.sh
 	cd tests && PYTHONPATH=../ ${RUN_CMD} ./RunUltraTests.sh
+
+.PHONY: check-types
+check-types:
+	${PYTHON_CMD} -m mypy -m polyA
 
 .PHONY: clean
 clean:

@@ -110,9 +110,6 @@ def load_alignments(
 
     meta = {}
     seqs = []
-    chrom_name: str = ""
-    chrom_start: int = 0
-    chrom_stop: int = 0
 
     for line in file:
         if _parse_preamble_line(line):
@@ -179,9 +176,6 @@ def load_alignments(
 
             meta.clear()
             seqs.clear()
-            chrom_name = ""
-            chrom_start = 0
-            chrom_stop = 0
 
 
 class Shard(NamedTuple):

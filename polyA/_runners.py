@@ -34,12 +34,15 @@ def run_confidence(
         scores.append(a.score)
 
     confidence_list = confidence_only(scores, lambs)
-    confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
+
+    conf_subfams = list(zip(confidence_list, subfams))
+    conf_subfams.sort()
+    conf_subfams.reverse()
 
     stdout.write(f"query_label\tconfidence\n")
-    for i in range(len(subfams_copy) - 1, 0, -1):
-        if confidence_list[i]:
-            stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+    for conf, subfam in conf_subfams:
+        if conf:
+            stdout.write(f"{subfam}\t{conf}\n")
 
 
 def _validate_target(target: Alignment) -> None:
@@ -159,8 +162,6 @@ def run_full(
         gap_inits.append(alignment.gap_init)
         gap_exts.append(alignment.gap_ext)
 
-        # fixme (george): is this a list of dicts?
-        # fixme (george): change it to a dict of dicts?
         if alignment.sub_matrix_name in sub_matrix_scores:
             substitution_matrices.append(
                 sub_matrix_scores[alignment.sub_matrix_name]
@@ -458,7 +459,7 @@ def run_full(
             chromosome_sequences_matrix,
             subfam_counts,
             substitution_matrices,
-            repeat_scores,
+            {} if repeat_scores is None else repeat_scores,
             len(tandem_repeats),
         )
 
@@ -487,9 +488,9 @@ def run_full(
         # if so - keep looping, if not - break out of the loop
         # if they are all 0, break out of the loop
         test: bool = False
-        j: int = 0
+        j = 0
         while j < node_count:
-            i: int = 0
+            i = 0
             while i < j - 1:
                 if path_graph[i * node_count + j] == 1:
                     test = True
@@ -543,8 +544,8 @@ def run_full(
 
     if i == len(changes_orig):
         # whole shard is skip state
-        last_subfam_start: int = -1
-        last_subfam_stop: int = -1
+        last_subfam_start = -1
+        last_subfam_stop = -1
     else:
         # FIXME: could a TR overlap multiple shards?
         first_subfam_start = (

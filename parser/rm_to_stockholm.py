@@ -163,12 +163,14 @@ if __name__ == "__main__":
     alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
 
     for region in alignments:
-        info_line: str = ''
-        alignment: str = ''
-        matrix_name: str = ''
+        info_line: str = ""
+        alignment: str = ""
+        matrix_name: str = ""
         region = region.strip()
 
-        m_matrix = re.search(r'Matrix = (.+?)\n', region)
+        m_matrix = re.search(r"Matrix = (.+?)\n", region)
+        if m_matrix is None:
+            raise Exception("Matrix name not found")
         matrix_name = m_matrix[1]
 
         if matrix_name not in matrices: #do not put duplicate of matrices in output file

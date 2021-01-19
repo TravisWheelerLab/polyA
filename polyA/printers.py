@@ -2,10 +2,8 @@ import json
 from math import inf
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Union
-from uuid import uuid4
 
 from polyA.matrices import SupportMatrix
-from .ultra_provider import TandemRepeat
 
 
 def print_matrix_hash(
@@ -29,7 +27,7 @@ def print_matrix_hash(
     i: int = 0
     while i < num_row:
         file.write(f"{subfams[i]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (i, j) in matrix:
                 file.write(f"{matrix[i, j]}")
@@ -65,7 +63,7 @@ def print_matrix_support(
 
     for k in range(len(subfams_collapse)):
         outfile.write(f"{subfams_collapse[k]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (k, j) in matrix:
                 outfile.write(str(matrix[k, j]))
@@ -196,12 +194,12 @@ def print_results_soda(
         1
     ] * length  # wont print out the results of the same thing twice
 
-    json_dict_id: Dict[str, Dict[str, List[str]]] = {}
+    json_dict_id: Dict[str, Dict[str, List[Tuple[str, float]]]] = {}
 
     i = 0
     while i < length:
         sub_id: int = 0
-        json_dict_subid: Dict[str, List[str]] = {}
+        json_dict_subid: Dict[str, List[Tuple[str, float]]] = {}
 
         if changes_orig[i] != "skip" and used[i]:
             subfam: str = changes_orig[i]
@@ -331,11 +329,11 @@ def print_results_soda(
                         del block_size[-1]
                         block_size.append("0")
 
-                        align_stop: int = chrom_start + (
+                        align_stop = chrom_start + (
                             columns_orig[changes_position_orig[j + 1] - 1]
                             + start_all
                         )
-                        feature_stop: int = align_stop + right_flank
+                        feature_stop = align_stop + right_flank
 
                         block_start.append(
                             str(
@@ -384,7 +382,7 @@ def print_results_soda(
 
             json_dict_id[str(id)] = json_dict_subid
 
-            outfile.write(
+            (stdout if outfile is None else outfile).write(
                 "000 "
                 + chrom
                 + " "
@@ -408,10 +406,12 @@ def print_results_soda(
                 + " "
                 + str(id)
             )
-            outfile.write("\n")
+            (stdout if outfile is None else outfile).write("\n")
 
         used[i] = 0
         i += 1
 
     # prints json file with confidence values for each annotation
-    outfile_json.write(json.dumps(json_dict_id))
+    (stdout if outfile_json is None else outfile_json).write(
+        json.dumps(json_dict_id)
+    )

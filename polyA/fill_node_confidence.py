@@ -194,7 +194,7 @@ def fill_node_confidence(
         for row_index in active[node_index]:
             temp.append(node_confidence_temp[row_index, node_index])
         confidence_temp: List[float] = confidence_cm(
-            temp, subfam_countss, subfams, active[node_index], tr_count, 1
+            temp, subfam_countss, subfams, active[node_index], tr_count, True
         )
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[
