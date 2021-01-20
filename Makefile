@@ -66,7 +66,7 @@ check-slow:
 
 .PHONY: check-types
 check-types:
-	${PYTHON_CMD} -m mypy -m polyA
+	${PYTHON_CMD} -m mypy -p polyA
 
 .PHONY: clean
 clean:
