@@ -186,8 +186,7 @@ def collapse_matrices(
                 subfams_count[subfams[i]] = [i]
 
     # FIXME: Might be wasting space here by holding all columns
-    for col in range(len(columns)):
-        col_index: int = columns[col]
+    for col_index in columns:
         # use set so don't add duplicates of subfams with mulitple alignments
         active_cols: Set[int] = set()
 
@@ -213,7 +212,9 @@ def collapse_matrices(
 
     for subfam in subfams_dp:
         dp_rows = subfams_count[subfam]
-        dp_non_empty: List[int] = []
+        # Build this as a set but then sort and dump
+        dp_non_empty_set: Set[int] = set()
+        dp_non_empty: List[int]
         dp_active: Dict[int, List[int]] = {}
 
         for i in range(len(dp_rows)):
@@ -221,13 +222,13 @@ def collapse_matrices(
                 starts[dp_rows[i]] - start_all + 1,
                 stops[dp_rows[i]] - start_all + 1 + 1,
             ):
-                dp_non_empty.append(j)
+                dp_non_empty_set.add(j)
                 if j in dp_active:
                     dp_active[j].append(dp_rows[i])
                 else:
                     dp_active[j] = [dp_rows[i]]
 
-        dp_non_empty = list(dp_non_empty)
+        dp_non_empty = list(dp_non_empty_set)
         dp_non_empty.sort()
 
         dp_region_starts = []
