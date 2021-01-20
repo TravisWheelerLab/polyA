@@ -107,8 +107,6 @@ def fill_node_confidence(
                 align_score = 0.0
             else:
                 # subfam in node, calculate alignment score
-                subfam_seq = "."
-                chrom_seq = "."
                 last_prev_subfam = ""
                 last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
@@ -128,13 +126,11 @@ def fill_node_confidence(
                         alignment_index_start - 1 + chrom_offset
                     ]
 
-                # for i in range(end_node - begin_node + 1):
                 for j in range(
                     changes_position[node_index],
                     changes_position[node_index] + range_in_columns,
                 ):
                     i = columns[j] - begin_node
-                    chrom_offset = 0
                     if (
                         alignment_index_start + i >= 0
                         and alignment_index_start + i
@@ -143,13 +139,35 @@ def fill_node_confidence(
                         chrom_offset = gap_offset[subfam_index][
                             alignment_index_start + i
                         ]
-                        # if alignment_index_start + i + chrom_offset >= 0 and alignment_index_start + i + chrom_offset <= alignment_index_end:
-                        subfam_seq += subfam_seqs[subfam_index][
-                            alignment_index_start + i + chrom_offset
+
+                        first_index = alignment_index_start + i + chrom_offset
+                        break
+
+                for j in range(
+                    changes_position[node_index] + range_in_columns - 1,
+                    changes_position[node_index],
+                    -1,
+                ):
+                    i = columns[j] - begin_node
+                    if (
+                        alignment_index_start + i >= 0
+                        and alignment_index_start + i
+                        < len(gap_offset[subfam_index])
+                    ):
+                        chrom_offset = gap_offset[subfam_index][
+                            alignment_index_start + i
                         ]
-                        chrom_seq += chrom_seqs[subfam_index][
-                            alignment_index_start + i + chrom_offset
-                        ]
+                        last_index = alignment_index_start + i + chrom_offset
+                        break
+
+                # add padding first in case no part of seq is used
+                chrom_seq = (
+                    "." + chrom_seqs[subfam_index][first_index : last_index + 1]
+                )
+                subfam_seq = (
+                    "."
+                    + subfam_seqs[subfam_index][first_index : last_index + 1]
+                )
 
                 align_score = lamb * calculate_score(
                     gap_ext,
