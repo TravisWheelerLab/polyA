@@ -3,7 +3,7 @@
 set -e
 
 for f in ../fixtures/ex*.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x

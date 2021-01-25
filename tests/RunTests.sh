@@ -3,7 +3,7 @@
 set -e
 
 for f in ../fixtures/ex*.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x
@@ -14,7 +14,7 @@ do echo "$f";
 done
 
 for f in ../fixtures/ex*.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x
@@ -25,7 +25,7 @@ do echo "$f";
 done
 
 for f in ../fixtures/ex*.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x
@@ -40,7 +40,7 @@ do echo "$f";
 done
 
 for f in ../fixtures/ex*cm.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x
@@ -51,7 +51,7 @@ do echo "$f";
 done
 
 for f in ../fixtures/ex*.sto;
-do echo "$f";
+do
   m=${f%sto}matrix
 
   set -x

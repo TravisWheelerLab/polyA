@@ -3,7 +3,7 @@
 set -e
 
 for f in ../fixtures/ultra_test_files/*.fa ;
-do echo "$f";
+do
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
   m="${f}.cm.matrix";
@@ -17,7 +17,7 @@ done
 
 
 for f in ../fixtures/ultra_test_files/*.fa ;
-do echo "$f";
+do
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
   m="${f}.cm.matrix";
@@ -35,7 +35,7 @@ done
 
 
 for f in ../fixtures/ultra_test_files/*.fa ;
-do echo "$f";
+do
   ultra_output="${f}.ultra";
   align_file="${f}.cm.sto";
   m="${f}.cm.matrix";
