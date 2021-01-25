@@ -223,16 +223,6 @@ def run_full(
         [sm.scores for sm in substitution_matrices],
     )
 
-    # NOTE: remove trailing edge stuff, but might want to add it back in ...
-    # fixme - do this in fill_align_matrix to avoid extra looping
-    # originally NonEmptyColumns and ActiveCells have trailing edge included
-    # redo these later to not include trailing edges
-    # non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
-    #     rows,
-    #     cols,
-    #     align_matrix,
-    # )
-
     (
         non_empty_columns,
         active_cells,
@@ -255,10 +245,6 @@ def run_full(
     # add skip state pad at end
     align_matrix[0, cols] = SKIP_ALIGN_SCORE
     non_empty_columns.append(cols)
-    # non_empty_columns_trailing.append(cols)
-    non_empty_columns.append(cols)
-    active_cells[cols] = [0]
-    # active_cells_trailing[cols] = [0]
     active_cells[cols] = [0]
     cols += 1
 
@@ -291,11 +277,9 @@ def run_full(
 
         confidence_matrix = fill_confidence_matrix_tr(
             non_empty_columns,
-            # non_empty_columns_trailing,
             subfam_counts,
             subfamily_matrix,
             active_cells,
-            # active_cells_trailing,
             active_cells,
             repeat_scores,
             align_matrix,

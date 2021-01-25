@@ -97,7 +97,7 @@ def run():
 
     _lambda_provider = EaselLambdaProvider(opts.easel_path)
     with open(opts.sub_matrices_path) as _sub_matrices_file:
-        sub_matrices = load_substitution_matrices(
+        sub_matrix_scores = load_substitution_matrices(
             _sub_matrices_file, _lambda_provider
         )
 
@@ -124,7 +124,9 @@ def run():
     # Run confidence calculation
     # --------------------------
 
-    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+    lambda_values = [
+        sub_matrix_scores[a.sub_matrix_name].lamb for a in alignments
+    ]
 
     if opts.confidence:
         run_confidence(
@@ -150,7 +152,6 @@ def run():
         shard_start = chunk.start
         shard_stop = chunk.stop
         # get TRs between chunk stop and start
-        tandem_repeats_chunk: List[TandemRepeat] = []
         tr_end = tr_start
         while tr_end < len(tandem_repeats):
             tr = tandem_repeats[tr_end]
@@ -181,7 +182,7 @@ def run():
             heatmap_file,
             opts.matrix_position,
             opts.sequence_position,
-            sub_matrices,
+            sub_matrix_scores,
             subfam_counts,
             shard_start,
             shard_stop,
