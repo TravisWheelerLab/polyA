@@ -36,10 +36,10 @@ def test_load_alignments_1():
     assert first.sub_matrix_name == "matrix1"
     assert second.sub_matrix_name == "matrix2"
 
-    assert first.gap_init == 1
+    assert first.gap_init == 1.5
     assert second.gap_init == 2
 
-    assert first.gap_ext == 11
+    assert first.gap_ext == 11.5
     assert second.gap_ext == 22
 
 
