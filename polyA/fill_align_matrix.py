@@ -388,8 +388,10 @@ def fill_hmm_align_matrix(
     subfams: List[str],
     chroms: List[str],
     starts: List[int],
+    stops: List[int],
     consensus_starts: List[int],
     subfam_names: List[str],
+    strands: List[str],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to HMM scoring)
@@ -431,7 +433,6 @@ def fill_hmm_align_matrix(
     num_cols: int = 1
     half_chunk: int = int((chunk_size - 1) / 2)
     align_matrix: Dict[Tuple[int, int], float] = {}
-
     # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
         subfam_hmm = hmms[subfam_names[i]]
@@ -441,36 +442,42 @@ def fill_hmm_align_matrix(
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
-
         seq_index: int = 0
+        if strands[i] == "-":
+            # subfam moves low to high pos, chrom moves high to low pos
+            strand: int = -1
+            subfam_seq = subfam_seq[::-1]
+            subfam_seq = subfam_seq[chunk_size::] + subfam_seq[0:chunk_size]
+            chrom_seq = chrom_seq[::-1]
+            chrom_seq = chrom_seq[chunk_size::] + chrom_seq[0:chunk_size]
+            col_index = (
+                    stops[i] - edge_start - half_chunk + 1
+            )  # k before last col in align_matrix
+        else:
+            strand: int = 1
+            col_index = (
+                    starts[i] - edge_start + half_chunk + 1
+            )  # k after first col in align_matrix
         hmm_start: int = consensus_starts[i]  # start hmm pos of subfam seq
-        col_index = (
-            starts[i] - edge_start + half_chunk + 1
-        )  # col in align_matrix
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
 
-        hmm_offset: int = 0  # num of moves forward in subfam seq
+        hmm_offset: int = -1  # num of moves forward in subfam seq
         while temp_count < chunk_size - k:
             if chrom_seq[temp_index] != "-":
                 temp_count += 1
             if subfam_seq[temp_index] != "-":
                 hmm_offset += 1
             temp_index += 1
-
-        if subfam_seq[seq_index + 1] == "-":
-            hmm_end = hmm_start + hmm_offset
-        else:
-            # hmm_offset double counts start char -> -1
-            hmm_end = hmm_start + hmm_offset - 1
+        print(hmm_offset)
+        hmm_end = hmm_start + hmm_offset
 
         start_insertion_score: float = 0
-        # FIXME: change this?
         start_gap_index: int = -2
 
         offset: int = temp_index - seq_index  # gaps in chrom seq
-
+        """
         trailing_offset: int = 0
         # add preceding cells
         for trailing in range(1, half_chunk + 1):
@@ -507,11 +514,10 @@ def fill_hmm_align_matrix(
                 align_matrix[i, col_index - k - trailing] = (
                     align_score * num_nucls0 / chunk_size
                 )
+        """
 
-        # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
         subfam_slice: str = subfam_seq[seq_index : seq_index + offset]
-
         check_hmm_position(hmm_start, hmm_end, subfam_slice)
         # calculates score for first chunk and puts in align_matrix
         align_score: float = calculate_hmm_score(
@@ -524,16 +530,20 @@ def fill_hmm_align_matrix(
             subfam_hmm,
         )
 
-        align_matrix[i, col_index - k] = (
+        # + strand: col_index - k = first col in matrix
+        # - strand: col_index + k = last col in matrix
+        align_matrix[i, col_index - (k * strand)] = (
             align_score * chunk_size / (chunk_size - k)
         )
-
         # scores for first part, until we get to full sized chunks
         # hmm start position doesn't change
         end_gap_index: int = -2  # index of gap at end of chunk
         end_insertion_score: float = (
             0  # score per position for end insertion chunk
         )
+        # k gets smaller, col_index - k gets larger
+
+        # col_index - k (k before last col index), col_index + k = last one, want k to get smaller
         for k in range(half_chunk - 1, -1, -1):
             if (
                 chroms[i][seq_index + offset] != "-"  # next in chrom
@@ -563,7 +573,7 @@ def fill_hmm_align_matrix(
                     hmm_end,
                     subfam_seq[seq_index : seq_index + offset + 1],
                 )
-                align_matrix[i, col_index - k] = (
+                align_matrix[i, col_index - (k * strand)] = (
                     align_score * chunk_size / (chunk_size - k)
                 )
                 offset += 1
@@ -606,16 +616,14 @@ def fill_hmm_align_matrix(
                     start_gap_index - seq_index,
                     subfam_hmm,
                 )
-
-                align_matrix[i, col_index - k] = (
+                align_matrix[i, col_index - (k * strand)] = (
                     align_score * chunk_size / (chunk_size - k)
                 )
-
         check_hmm_position(
             hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
         )
-
-        col_index += 1
+        exit()
+        col_index += strand
         num_nucls: int = chunk_size  # how many nucls contributed to align score
         # move to next chunk by adding next chars score and subtracting prev chars score
         while seq_index + offset < len(chrom_seq):
@@ -779,7 +787,6 @@ def fill_hmm_align_matrix(
                         hmm_end,
                         subfam_seq[seq_index + 1 : seq_index + offset + 1],
                     )
-
                 align_matrix[i, col_index] = (
                     align_score / num_nucls * chunk_size
                 )
@@ -790,7 +797,7 @@ def fill_hmm_align_matrix(
                         hmm_start -= 1
                     break
 
-                col_index += 1
+                col_index += strand
             seq_index += 1
 
         # cur chunk seq_index: seq_index + offset
@@ -798,6 +805,7 @@ def fill_hmm_align_matrix(
             hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
         )
 
+        """
         # add trailing cells
         hmm_trailing = 0  # used to get start position
         trailing_offset = 0
@@ -806,13 +814,13 @@ def fill_hmm_align_matrix(
             # 15 -> 1 nucs before padding
             # trailing is amount to remove
 
-            if subfam_seq[seq_index + trailing] != "-":
-                hmm_trailing += 1
-
             temp_index = seq_index + trailing + trailing_offset
             while chrom_seq[temp_index] == "-":
                 trailing_offset += 1
                 temp_index += 1
+                hmm_trailing += 1
+
+            if subfam_seq[seq_index + trailing + trailing_offset] != "-":
                 hmm_trailing += 1
 
             chrom_slice: str = chrom_seq[
@@ -824,6 +832,7 @@ def fill_hmm_align_matrix(
             ]
 
             num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
+
             check_hmm_position(hmm_start + hmm_trailing, hmm_end, subfam_slice)
             # calculates score for first chunk and puts in align_matrix
             align_score: float = calculate_hmm_score(
@@ -838,8 +847,11 @@ def fill_hmm_align_matrix(
             align_matrix[i, col_index - 1 + trailing] = (
                 align_score / num_nucls2 * chunk_size
             )
+        """
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
+        if i == 13:
+            print(seq_index)
         prev_seq_index: int = seq_index  # start of last chunk
         while chrom_seq[seq_index] == "-":  # if start of last chunk is a gap
             if subfam_seq[seq_index] != "-" and subfam_seq[seq_index] != ".":
@@ -864,12 +876,12 @@ def fill_hmm_align_matrix(
             align_matrix[i, col_index] = (
                 align_score / (half_chunk + 1) * chunk_size
             )
-            col_index += 1
+            col_index += strand
 
         # max col_index is assigned to cols
         if num_cols < col_index:
             num_cols = col_index
-
+    exit()
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
     for j in range(num_cols):
