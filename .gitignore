@@ -19,4 +19,5 @@ conda-dist/
 
 # Test artifacts
 foo.txt
+fixtures/whole_genome
 
