@@ -9,8 +9,8 @@ from .sum_repeat_scores import SumRepeatScores
 def fill_node_confidence(
     nodes: int,
     start_all: int,
-    gap_inits: List[int],
-    gap_exts: List[int],
+    gap_inits: List[float],
+    gap_exts: List[float],
     columns: List[int],
     starts: List[int],
     stops: List[int],

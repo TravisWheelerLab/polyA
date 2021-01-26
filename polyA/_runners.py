@@ -143,8 +143,8 @@ def run_full(
     chromosome_sequences_matrix: List[str] = []
     flanks_matrix: List[int] = []
     substitution_matrices: List[SubMatrix] = []
-    gap_inits: List[int] = []
-    gap_exts: List[int] = []
+    gap_inits: List[float] = []
+    gap_exts: List[float] = []
     lambda_values: List[float] = []
 
     for alignment in alignments:

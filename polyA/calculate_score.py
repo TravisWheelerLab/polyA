@@ -2,8 +2,8 @@ from typing import Dict
 
 
 def calculate_score(
-    gap_ext: int,
-    gap_init: int,
+    gap_ext: float,
+    gap_init: float,
     seq1: str,
     seq2: str,
     prev_char_seq1: str,
@@ -37,7 +37,7 @@ def calculate_score(
     >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat)
     -4.0
     """
-    chunk_score: int = 0
+    chunk_score: float = 0
 
     # deals with the first character of a segment being a gap character - have to look at last
     # segment to see if this is a gap init or ext
