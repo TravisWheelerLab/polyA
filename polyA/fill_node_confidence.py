@@ -361,12 +361,12 @@ def fill_node_confidence_hmm(
                         ]
                         last_index = alignment_index_start + i + chrom_offset
                         break
-                end_index = len(subfam_seq) - chunk_size - 1  # end index of subfam seq
+                end_index = (
+                    len(subfam_seq) - chunk_size - 1
+                )  # end index of subfam seq
                 if last_index > end_index:
                     last_index = end_index
-                chrom_slice = chrom_seq[
-                    first_index : last_index + 1
-                ]
+                chrom_slice = chrom_seq[first_index : last_index + 1]
 
                 subfam_slice = subfam_seq[first_index : last_index + 1]
                 if strand == "-" and subfam_slice != "":

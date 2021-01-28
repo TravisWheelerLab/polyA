@@ -224,8 +224,10 @@ def run_full(
             subfamily_sequences_matrix,
             chromosome_sequences_matrix,
             starts_matrix,
+            stops_matrix,
             consensus_starts_matrix,
             subfamily_matrix,
+            strands_matrix,
         )
     else:
         cols, align_matrix = fill_align_matrix(
@@ -473,10 +475,12 @@ def run_full(
                 subfamily_matrix,
                 subfamily_sequences_matrix,
                 chromosome_sequences_matrix,
+                strands_matrix,
                 subfam_counts,
                 subfam_hmms,
                 repeat_scores,
                 len(tandem_repeats),
+                chunk_size,
             )
         else:
             node_confidence = fill_node_confidence(

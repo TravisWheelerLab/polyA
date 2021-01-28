@@ -456,12 +456,12 @@ def fill_hmm_align_matrix(
             chrom_seq = chrom_seq[::-1]
             chrom_seq = chrom_seq[chunk_size::] + chrom_seq[0:chunk_size]
             col_index = (
-                    stops[i] - edge_start - half_chunk + 1
+                stops[i] - edge_start - half_chunk + 1
             )  # k before last col in align_matrix
         else:
             strand: int = 1
             col_index = (
-                    starts[i] - edge_start + half_chunk + 1
+                starts[i] - edge_start + half_chunk + 1
             )  # k after first col in align_matrix
         hmm_start: int = consensus_starts[i]  # start hmm pos of subfam seq
         k = half_chunk
@@ -849,31 +849,31 @@ def fill_hmm_align_matrix(
         #     )
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
-        prev_seq_index: int = seq_index  # start of last chunk
-        while chrom_seq[seq_index] == "-":  # if start of last chunk is a gap
-            if subfam_seq[seq_index] != "-" and subfam_seq[seq_index] != ".":
-                # move forward in hmm
-                hmm_start += 1
-            seq_index += 1
-
-        # if gaps at weird place
-        if prev_seq_index != seq_index:
-            chrom_slice = chrom_seq[seq_index::]
-            subfam_slice = subfam_seq[seq_index::]
-            check_hmm_position(hmm_start, hmm_end, subfam_slice)
-            align_score = calculate_hmm_score(
-                hmm_start,
-                chrom_slice,
-                subfam_slice,
-                subfam_seq[seq_index::],
-                start_insertion_score,
-                start_gap_index - seq_index,
-                subfam_hmm,
-            )
-            align_matrix[i, col_index] = (
-                align_score / (half_chunk + 1) * chunk_size
-            )
-            col_index += strand
+        # prev_seq_index: int = seq_index  # start of last chunk
+        # while chrom_seq[seq_index] == "-":  # if start of last chunk is a gap
+        #     if subfam_seq[seq_index] != "-" and subfam_seq[seq_index] != ".":
+        #         # move forward in hmm
+        #         hmm_start += 1
+        #     seq_index += 1
+        #
+        # # if gaps at weird place
+        # if prev_seq_index != seq_index:
+        #     chrom_slice = chrom_seq[seq_index::]
+        #     subfam_slice = subfam_seq[seq_index::]
+        #     check_hmm_position(hmm_start, hmm_end, subfam_slice)
+        #     align_score = calculate_hmm_score(
+        #         hmm_start,
+        #         chrom_slice,
+        #         subfam_slice,
+        #         subfam_seq[seq_index::],
+        #         start_insertion_score,
+        #         start_gap_index - seq_index,
+        #         subfam_hmm,
+        #     )
+        #     align_matrix[i, col_index] = (
+        #         align_score / (half_chunk + 1) * chunk_size
+        #     )
+        #     col_index += strand
 
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
