@@ -232,10 +232,12 @@ def fill_node_confidence_hmm(
     subfams: List[str],
     subfam_seqs: List[str],
     chrom_seqs: List[str],
+    strands: List[str],
     subfam_countss: Dict[str, float],
     subfam_hmms,
     repeat_scores: Dict[int, float],
     tr_count: int,
+    chunk_size: int,
 ) -> Dict[Tuple[str, int], float]:
     """
     for a particular annotated node, takes all competing alignments and calculates
@@ -298,12 +300,14 @@ def fill_node_confidence_hmm(
         for subfam_index in range(1, len(subfams) - tr_count):
             subfam_start = starts[subfam_index] - start_all + 1
             subfam_stop = stops[subfam_index] - start_all + 1
+            strand = strands[subfam_index]
             hmm_start: int = consensus_starts[
                 subfam_index
             ]  # start hmm pos of subfam seq
             subfam = subfams[subfam_index]
             subfam_hmm = subfam_hmms[subfam]
             subfam_seq = subfam_seqs[subfam_index]
+            chrom_seq = chrom_seqs[subfam_index]
 
             align_score: float
             if subfam_start > end_node or subfam_stop < begin_node:
@@ -312,7 +316,7 @@ def fill_node_confidence_hmm(
             else:
                 # subfam in node, calculate alignment score
                 subfam_slice = ""
-                chrom_seq = ""
+                chrom_slice = ""
                 alignment_index_start = begin_node - subfam_start
 
                 if (
@@ -322,12 +326,6 @@ def fill_node_confidence_hmm(
                 ):
                     chrom_offset = gap_offset[subfam_index][
                         alignment_index_start - 1
-                    ]
-                    last_prev_subfam = subfam_seq[
-                        alignment_index_start - 1 + chrom_offset
-                    ]
-                    last_prev_chrom = chrom_seqs[subfam_index][
-                        alignment_index_start - 1 + chrom_offset
                     ]
                 first_index: int = -1
                 for j in range(
@@ -363,16 +361,26 @@ def fill_node_confidence_hmm(
                         ]
                         last_index = alignment_index_start + i + chrom_offset
                         break
-
-                chrom_seq = chrom_seqs[subfam_index][
+                end_index = len(subfam_seq) - chunk_size - 1  # end index of subfam seq
+                if last_index > end_index:
+                    last_index = end_index
+                chrom_slice = chrom_seq[
                     first_index : last_index + 1
                 ]
+
                 subfam_slice = subfam_seq[first_index : last_index + 1]
+                if strand == "-" and subfam_slice != "":
+                    # reverse seqs and get rid of padding in subfam_seq
+                    subfam_seq = subfam_seq[::-1][chunk_size::]
+                    subfam_slice = subfam_slice[::-1]
+                    chrom_slice = chrom_slice[::-1]
+                    # find new start and end indices in reversed subfam_seq
+                    first_index = end_index - last_index
 
                 # get hmm start of first char in subfam_slice
                 # start at 1 - don't move forward with subfam_seq[0]
                 for j in range(1, first_index + 1):
-                    if subfam_seq[j] != "-" and subfam_seq[j] != ".":
+                    if subfam_seq[j] != "-":
                         hmm_start += 1
                 if len(subfam_slice) > 0 and subfam_slice[0] == "-":
                     (
@@ -394,7 +402,7 @@ def fill_node_confidence_hmm(
 
                 align_score = calculate_hmm_score(
                     hmm_start,
-                    chrom_seq,
+                    chrom_slice,
                     subfam_slice,
                     subfam_seq,
                     insertion_score,
