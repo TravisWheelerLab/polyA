@@ -338,27 +338,28 @@ def fill_align_matrix(
         #     )
 
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
-        prev_seq_index: int = seq_index
-        while chrom_seq[seq_index] == "-":
-            seq_index += 1
-
-        if prev_seq_index != seq_index:
-            chrom_slice = chrom_seq[seq_index::]
-            subfam_slice = subfam_seq[seq_index::]
-
-            align_score = calculate_score(
-                gap_ext,
-                gap_init,
-                subfam_slice,
-                chrom_slice,
-                subfam_seq[seq_index - 1],
-                chrom_seq[seq_index - 1],
-                sub_matrix,
-            )
-            align_matrix[i, col_index] = lamb * (
-                align_score / (half_chunk + 1) * chunk_size
-            )
-            col_index += 1
+        # FIXME: remove this
+        # prev_seq_index: int = seq_index
+        # while chrom_seq[seq_index] == "-":
+        #     seq_index += 1
+        #
+        # if prev_seq_index != seq_index:
+        #     chrom_slice = chrom_seq[seq_index::]
+        #     subfam_slice = subfam_seq[seq_index::]
+        #
+        #     align_score = calculate_score(
+        #         gap_ext,
+        #         gap_init,
+        #         subfam_slice,
+        #         chrom_slice,
+        #         subfam_seq[seq_index - 1],
+        #         chrom_seq[seq_index - 1],
+        #         sub_matrix,
+        #     )
+        #     align_matrix[i, col_index] = lamb * (
+        #         align_score / (half_chunk + 1) * chunk_size
+        #     )
+        #     col_index += 1
 
         # max col_index is assigned to cols
         if num_cols < col_index:
@@ -376,7 +377,6 @@ def fill_align_matrix(
     #     for col in range(num_cols, num_cols + chunk_size + 1):
     #         if (row, col) in align_matrix:
     #             del align_matrix[row, col]
-
     return num_cols, align_matrix
 
 
