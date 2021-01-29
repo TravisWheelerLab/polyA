@@ -52,12 +52,7 @@ def get_info(align_parts):
     if 'chr' not in chrom:
         chrom = 'chr0:0000-0000'
 
-    if int(consensus_stop) < int(consensus_start):
-        strand = '-'
-        strand_seq = 'q'
-        flank = str(int(model_len) - int(consensus_start))
-    else:
-        flank = str(int(model_len) - int(consensus_stop))
+    flank = str(int(model_len) - int(consensus_stop))
     if int(stop) < int(start):
         strand = '-'
         strand_seq = 't'
