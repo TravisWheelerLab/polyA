@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+from math import log, log2, exp
 
 
 def calculate_score(
@@ -114,17 +115,19 @@ def calculate_hmm_score(
             # must have a gap or nuc in prev index
             if chrom_slice[i - 1] != "-":
                 # match to deletion from prev hmm pos
-                chunk_score += float(
+                chunk_score -= float(
                     subfam_hmm[hmm_pos - 1]["transition"]["m->d"]
-                )
+                ) / log(2)
             else:
                 # deletion to deletion from prev hmm pos
-                chunk_score += float(
+                chunk_score -= float(
                     subfam_hmm[hmm_pos - 1]["transition"]["d->d"]
-                )
+                ) / log(2)
             if chrom_slice[i + 1] != "-":
                 # deletion to match from cur hmm pos
-                chunk_score += float(subfam_hmm[hmm_pos]["transition"]["d->m"])
+                chunk_score -= float(
+                    subfam_hmm[hmm_pos]["transition"]["d->m"]
+                ) / log(2)
             hmm_pos += 1
         elif subfam_slice[i] == "-":
             # insertion score
@@ -137,11 +140,25 @@ def calculate_hmm_score(
             chunk_score += insertion_score
         else:
             # match
-            chunk_score += float(
-                subfam_hmm[hmm_pos]["emission"][chrom_slice[i]]
+            chunk_score += calculate_match_score(
+                hmm_pos, chrom_slice[i], subfam_hmm
             )
             hmm_pos += 1
     return chunk_score
+
+
+def calculate_match_score(
+    hmm_pos: int,
+    match_char: str,
+    subfam_hmm,
+) -> float:
+    related = float(subfam_hmm[hmm_pos]["emission"][match_char])
+    random = float(subfam_hmm["random"][match_char])
+    # P(c|related) = e^(-related), P(c|random) = e^(-random)
+    p_related = exp(-1 * related)
+    p_random = exp(-1 * random)
+    r = p_related / p_random
+    return log2(r)
 
 
 def calculate_new_insertion_score(
@@ -171,7 +188,8 @@ def calculate_new_insertion_score(
         i += 1
     i += 1
     insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
-    return insertion_score / float(i)
+    # a / ln(2) + b / ln(2) = a+B / ln(2)
+    return -1 * (insertion_score / log(2)) / float(i)
 
 
 def calculate_full_insertion_score(
@@ -204,9 +222,9 @@ def calculate_full_insertion_score(
             gap_count += 1
         else:
             break
-    # search forward in model from start_index
+    # search backward in model from start_index
     prev_gap: int = -2
-    for i in range(start_index - 1, -1):
+    for i in range(start_index - 1, -1, -1):
         if model[i] == "-":
             prev_gap = start_index - 1
             gap_count += 1
@@ -216,4 +234,4 @@ def calculate_full_insertion_score(
         gap_count - 1
     )
     insertion_score += float(subfam_hmm[hmm_pos]["transition"]["i->m"])
-    return prev_gap, insertion_score / float(gap_count)
+    return prev_gap, -1 * (insertion_score / log(2)) / float(gap_count)

@@ -4,6 +4,8 @@ from typing import Dict, List, Tuple
 from polyA.calculate_score import calculate_score
 from polyA.calculate_score import calculate_hmm_score
 from polyA.calculate_score import calculate_new_insertion_score
+from polyA.calculate_score import calculate_match_score
+import matplotlib.pyplot as plt
 
 
 def fill_align_matrix(
@@ -17,6 +19,7 @@ def fill_align_matrix(
     chroms: List[str],
     starts: List[int],
     sub_matrices: List[Dict[str, int]],
+    subfam_names,
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
     fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
@@ -67,6 +70,7 @@ def fill_align_matrix(
 
     # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
+        scores = []
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
         sub_matrix = sub_matrices[i]
@@ -292,7 +296,11 @@ def fill_align_matrix(
                             ]
                         )
                         num_nucls += 1
-
+                # PLOT THIS
+                # if 1500 < col_index + edge_start < 1950 and subfam_names[i][0:2] == "LT":
+                #     scores.append(lamb * (
+                #     align_score / num_nucls * chunk_size
+                # ))
                 align_matrix[i, col_index] = lamb * (
                     align_score / num_nucls * chunk_size
                 )
@@ -304,6 +312,7 @@ def fill_align_matrix(
                 col_index += 1
             seq_index += 1
 
+        # plt.plot(scores)
         # add trailing cells
         # trailing_offset = 0
         # for trailing in range(1, half_chunk + 1):
@@ -364,6 +373,8 @@ def fill_align_matrix(
         # max col_index is assigned to cols
         if num_cols < col_index:
             num_cols = col_index
+
+    # plt.show()
 
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
@@ -429,12 +440,12 @@ def fill_hmm_align_matrix(
 
     FIXME: add test
     """
-
     num_cols: int = 1
     half_chunk: int = int((chunk_size - 1) / 2)
     align_matrix: Dict[Tuple[int, int], float] = {}
     # chunks can't start on gaps and gaps don't count when getting to the chunk_size nucls
     for i in range(1, len(chroms)):
+        scores = []
         subfam_hmm = hmms[subfam_names[i]]
         subfam_seq: str = subfams[i]
         chrom_seq: str = chroms[i]
@@ -532,6 +543,9 @@ def fill_hmm_align_matrix(
             start_gap_index - seq_index,
             subfam_hmm,
         )
+        if subfam_names[i] == "HAL1":
+            print("NEW")
+            print(align_score * chunk_size / (chunk_size - k))
 
         # + strand: col_index - k = first col in matrix
         # - strand: col_index + k = last col in matrix
@@ -547,7 +561,7 @@ def fill_hmm_align_matrix(
 
         for k in range(half_chunk - 1, -1, -1):
             if (
-                chroms[i][seq_index + offset] != "-"  # next in chrom
+                chrom_seq[seq_index + offset] != "-"  # next in chrom
             ):  # if no new gap introduced, move along seq and add next nucl into score
                 if subfam_seq[seq_index + offset] == "-":  # next in subfam
                     # not a gap in chrom, gap in subfam -> insertion
@@ -561,29 +575,25 @@ def fill_hmm_align_matrix(
                     align_score += end_insertion_score
                 else:  # match
                     hmm_end += 1
-                    emission_score = float(
-                        subfam_hmm[hmm_end]["emission"][
-                            chroms[i][seq_index + offset]
-                        ]
+                    align_score += calculate_match_score(
+                        hmm_end, chrom_seq[seq_index + offset], subfam_hmm
                     )
-
-                    align_score += emission_score
 
                 check_hmm_position(
                     hmm_start,
                     hmm_end,
                     subfam_seq[seq_index : seq_index + offset + 1],
                 )
+                if subfam_names[i] == "HAL1":
+                    print(align_score * chunk_size / (chunk_size - k))
                 align_matrix[i, col_index - (k * strand)] = (
                     align_score * chunk_size / (chunk_size - k)
                 )
                 offset += 1
-
             else:  # if new gap introduced, recalculate offset and call CalcScore again
                 # new char chroms[i][seq_index + offset] == "-" is a deletion
                 temp_index = seq_index
                 temp_count = 0
-
                 hmm_offset = (
                     0  # how many times you move forward in subfam chunk
                 )
@@ -735,21 +745,16 @@ def fill_hmm_align_matrix(
                         if subfam_seq[seq_index + 1] == "-":
                             # start of next seq chunk is a gap
                             # nuc -> gap - hmm pos didn't move forward
-                            emission_score = float(
-                                subfam_hmm[hmm_start]["emission"][
-                                    chrom_seq[seq_index]
-                                ]
+                            match_score = calculate_match_score(
+                                hmm_start, chrom_seq[seq_index], subfam_hmm
                             )
                         else:
                             # start of next seq chunk is a nuc
                             # nuc -> nuc - hmm pos moved forward
-                            emission_score = float(
-                                subfam_hmm[hmm_start - 1]["emission"][
-                                    chrom_seq[seq_index]
-                                ]
+                            match_score = calculate_match_score(
+                                hmm_start - 1, chrom_seq[seq_index], subfam_hmm
                             )
-
-                        align_score -= emission_score
+                        align_score -= match_score
                         num_nucls -= 1
 
                     # adding next chars score
@@ -776,18 +781,18 @@ def fill_hmm_align_matrix(
                         # chrom and seq at seq_index + offset (new chunk end) are chars - no??
                         if subfam_seq[seq_index + offset] != ".":  # not - or .
                             hmm_end += 1
-                        emission_score = float(
-                            subfam_hmm[hmm_end]["emission"][
-                                chrom_seq[seq_index + offset]
-                            ]
+                        align_score += calculate_match_score(
+                            hmm_end, chrom_seq[seq_index + offset], subfam_hmm
                         )
-                        align_score += emission_score
                         num_nucls += 1
                     check_hmm_position(
                         hmm_start,
                         hmm_end,
                         subfam_seq[seq_index + 1 : seq_index + offset + 1],
                     )
+                # PLOT ME
+                if subfam_names[i] == "HAL1":
+                    scores.append(align_score / num_nucls * chunk_size)
                 align_matrix[i, col_index] = (
                     align_score / num_nucls * chunk_size
                 )
@@ -800,7 +805,7 @@ def fill_hmm_align_matrix(
 
                 col_index += strand
             seq_index += 1
-
+        plt.plot(scores)
         # cur chunk seq_index: seq_index + offset
         check_hmm_position(
             hmm_start, hmm_end, subfam_seq[seq_index : seq_index + offset]
@@ -887,6 +892,8 @@ def fill_hmm_align_matrix(
     #     for col in range(num_cols, num_cols + chunk_size + 1):
     #         if (row, col) in align_matrix:
     #             del align_matrix[row, col]
+    plt.show()
+
     return num_cols, align_matrix
 
 
