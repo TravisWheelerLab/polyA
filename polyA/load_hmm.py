@@ -21,13 +21,13 @@ def load_hmm(file: List[str], subfams: List[str]) -> Dict[str, dict]:
                         line = file[i]
                         transitions = line.strip().split()
                     if line.strip().startswith("COMPO"):
-                        i += 1
+                        # first row of COMPO
                         line = file[i]
-                        unrelated_vals = line.strip().split()
+                        unrelated_vals = line.strip().split()[1::]
                         unrelated_dict = {}
                         for j in range(len(chars)):
                             unrelated_dict[chars[j]] = unrelated_vals[j]
-                        hmm_sub_dict["unrelated"] = unrelated_dict
+                        hmm_sub_dict["random"] = unrelated_dict
                     if line.strip().split()[0].isdigit():
                         # get per position scores
                         # read in next 3 lines
