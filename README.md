@@ -378,7 +378,6 @@ BSD license. See `LICENSE`.
 
   - Kaitlin Carey
   - Audrey Shingleton
-  - Audrey Shingleton
   - George Lesica
   - Jack Roddy
   - Travis Wheeler
