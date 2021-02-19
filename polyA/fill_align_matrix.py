@@ -90,44 +90,6 @@ def fill_align_matrix(
             temp_index += 1
 
         offset: int = temp_index - seq_index
-        # trailing_offset: int = 0
-
-        # add preceding cells
-        # for trailing in range(1, half_chunk + 1):
-        #     if col_index - k - trailing >= 1:
-        #
-        #         temp_index = seq_index + offset + trailing_offset - trailing - 1
-        #         while chrom_seq[temp_index] == "-":
-        #             trailing_offset -= 1
-        #             temp_index -= 1
-        #
-        #         chrom_slice: str = chrom_seq[
-        #             seq_index : seq_index + offset + trailing_offset - trailing
-        #         ]
-        #         subfam_slice: str = subfam_seq[
-        #             seq_index : seq_index + offset + trailing_offset - trailing
-        #         ]
-        #
-        #         # calculates score for first chunk and puts in align_matrix
-        #         align_score: float = calculate_score(
-        #             gap_ext,
-        #             gap_init,
-        #             subfam_slice,
-        #             chrom_slice,
-        #             "",
-        #             "",
-        #             sub_matrix,
-        #         )
-        #
-        #         num_nucls0 = (
-        #             (seq_index + offset + trailing_offset - trailing)
-        #             - seq_index
-        #             + 1
-        #         )
-        #
-        #         align_matrix[i, col_index - k - trailing] = lamb * (
-        #             align_score * num_nucls0 / chunk_size
-        #         )
 
         # normalizes for first non trailing cell
         chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
@@ -303,39 +265,6 @@ def fill_align_matrix(
 
             seq_index += 1
 
-        # add trailing cells
-        # trailing_offset = 0
-        # for trailing in range(1, half_chunk + 1):
-        #     # if col_index - k - trailing >= 0:
-        #     temp_index = seq_index + trailing + trailing_offset
-        #     while chrom_seq[temp_index] == "-":
-        #         trailing_offset += 1
-        #         temp_index += 1
-        #
-        #     chrom_slice: str = chrom_seq[
-        #         seq_index + trailing + trailing_offset : seq_index + offset - 1
-        #     ]
-        #     subfam_slice: str = subfam_seq[
-        #         seq_index + trailing + trailing_offset : seq_index + offset - 1
-        #     ]
-        #
-        #     num_nucls2 = (seq_index + offset - 1) - (seq_index + trailing) + 1
-        #
-        #     # calculates score for first chunk and puts in align_matrix
-        #     align_score: float = calculate_score(
-        #         gap_ext,
-        #         gap_init,
-        #         subfam_slice,
-        #         chrom_slice,
-        #         subfam_seq[seq_index + trailing - 1],
-        #         chrom_seq[seq_index + trailing - 1],
-        #         sub_matrix,
-        #     )
-        #
-        #     align_matrix[i, col_index - 1 + trailing] = lamb * (
-        #         align_score / num_nucls2 * chunk_size
-        #     )
-
         # fixes weird instance if there is a gap perfectly in the wrong place for the while loop at end
         prev_seq_index: int = seq_index
         while chrom_seq[seq_index] == "-":
@@ -367,13 +296,5 @@ def fill_align_matrix(
     # do not lambda adjust skip state score
     for j in range(num_cols):
         align_matrix[0, j] = skip_align_score
-
-    # remove trailing edges that fall off end of matrix
-    # can't do this during matrix construction because we don't know how many
-    # cols the matrix has until the end
-    # for row in range(1, len(chroms)):
-    #     for col in range(num_cols, num_cols + chunk_size + 1):
-    #         if (row, col) in align_matrix:
-    #             del align_matrix[row, col]
 
     return num_cols, align_matrix
