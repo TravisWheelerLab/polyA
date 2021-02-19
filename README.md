@@ -12,6 +12,9 @@ A tool for adjudicating between competing annotations of biological sequences.
 
 ## About
 
+[Preprint on
+bioRxiv](https://www.biorxiv.org/content/10.1101/2021.02.13.430877v1)
+
 Annotation of a biological sequence is usually performed by aligning that
 sequence to a database of known sequence elements. When that database contains
 elements that are highly similar to each other, the proper annotation may
