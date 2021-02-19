@@ -26,6 +26,10 @@ FMT_OPTS := -t py38 -l 80
 TEST_CMD := ${PYTHON_CMD} -m pytest
 TEST_TARGETS := tests/ polyA/
 
+.PHONY: containerized
+containerized:
+	docker run --mount src="${PWD}",target=/code,type=bind traviswheelerlab/polya-build ${TASK}
+
 .PHONY: build-package
 build-package:
 	pipenv run flit build
@@ -89,6 +93,17 @@ container-conda-build:
 .PHONY: container-conda-push
 container-conda-push:
 	docker push traviswheelerlab/polya-conda:${CONTAINER_VERSION}
+
+.PHONY: container-esl_scorematrix
+container-esl_scorematrix: container-esl_scorematrix-build container-esl_scorematrix-push
+
+.PHONY: container-esl_scorematrix-build
+container-esl_scorematrix-build:
+	docker build -t traviswheelerlab/polya-esl_scorematrix:${CONTAINER_VERSION} -f Dockerfile_esl_scorematrix .
+
+.PHONY: container-esl_scorematrix-push
+container-esl_scorematrix-push:
+	docker push traviswheelerlab/polya-esl_scorematrix:${CONTAINER_VERSION}
 
 .PHONY: format
 format:
