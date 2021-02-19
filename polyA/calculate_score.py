@@ -2,8 +2,8 @@ from typing import Dict
 
 
 def calculate_score(
-    gap_ext: int,
-    gap_init: int,
+    gap_ext: float,
+    gap_init: float,
     seq1: str,
     seq2: str,
     prev_char_seq1: str,
