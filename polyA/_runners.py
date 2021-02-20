@@ -34,12 +34,13 @@ def run_confidence(
         scores.append(a.score)
 
     confidence_list = confidence_only(scores, lambs)
-    confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
+    conf_subfams = list(zip(confidence_list, subfams))
+    conf_subfams.sort(reverse=True)
 
     stdout.write(f"query_label\tconfidence\n")
-    for i in range(len(subfams_copy) - 1, 0, -1):
-        if confidence_list[i]:
-            stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+    for conf, subfam in conf_subfams:
+        if conf:
+            stdout.write(f"{subfam}\t{conf}\n")
 
 
 def _validate_target(target: Alignment) -> None:
