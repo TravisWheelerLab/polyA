@@ -58,9 +58,7 @@ def fill_support_matrix(
     half_chunk: int = int((chunk_size - 1) / 2)
 
     # skip state
-    for col in range(len(columns)):
-        col_index: int = columns[col]
-
+    for col_index in columns:
         summ: float = 0
         num_segments: int = 0
 
@@ -75,7 +73,6 @@ def fill_support_matrix(
 
     # rest of rows
     for row_index in range(1, row_num):
-
         start: int = starts[row_index] - start_all + 1
         stop: int = stops[row_index] - start_all + 1
 
@@ -83,21 +80,21 @@ def fill_support_matrix(
         if (stop - start + 1 < chunk_size) or subfams[
             row_index
         ] == "Tandem Repeat":
-            for col in range(len(columns)):
-                j = columns[col]
-
-                if (row_index, j) in consensus_matrix:
-                    num: int = j
+            for col_index in columns:
+                if (row_index, col_index) in consensus_matrix:
+                    num: int = col_index
                     summ: float = 0.0
-                    numsegments: int = 0
-                    while num >= 0 and num >= j:
+                    num_segments: int = 0
+                    while num >= 0 and num >= col_index:
                         if (row_index, num) in consensus_matrix:
                             summ = summ + confidence_matrix[row_index, num]
-                            numsegments += 1
+                            num_segments += 1
                         num -= 1
 
-                    if numsegments > 0:
-                        support_matrix[row_index, j] = summ / numsegments
+                    if num_segments > 0:
+                        support_matrix[row_index, col_index] = (
+                            summ / num_segments
+                        )
 
         # if the alignment is large, do it the fast way
         else:
