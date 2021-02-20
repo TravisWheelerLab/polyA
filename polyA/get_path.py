@@ -2,7 +2,10 @@ from math import inf
 from uuid import uuid4
 from typing import Dict, List, Tuple
 
+from polyA.performance import timeit
 
+
+@timeit
 def get_path(
     columns: List[int],
     ids: List[str],

@@ -2,8 +2,10 @@ from math import inf, log
 from typing import Dict, List, Tuple
 
 from polyA.matrices import CollapsedMatrices
+from polyA.performance import timeit
 
 
+@timeit
 def fill_probability_matrix(
     same_prob_skip: float,
     same_prob: float,

@@ -1,6 +1,9 @@
 from typing import List
 
+from polyA.performance import timeit
 
+
+@timeit
 def extract_nodes(
     num_col: int,
     nodes: int,

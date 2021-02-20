@@ -1,11 +1,13 @@
 from typing import Dict, List, Tuple
 
 from .confidence_cm import confidence_cm
+from .performance import timeit
 from .substitution_matrix import SubMatrix
 from .calculate_score import calculate_score
 from .sum_repeat_scores import SumRepeatScores
 
 
+@timeit
 def fill_node_confidence(
     nodes: int,
     start_all: int,
