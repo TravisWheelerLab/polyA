@@ -199,10 +199,10 @@ def run_full(
             else:
                 stops_matrix.append(tr.stop)
 
-    start_all, stop_all = pad_sequences(
+    start_all, stop_all = edges(starts, stops)
+
+    pad_sequences(
         chunk_size,
-        starts_matrix,
-        stops_matrix,
         subfamily_sequences_matrix,
         chromosome_sequences_matrix,
     )
