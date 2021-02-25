@@ -198,6 +198,22 @@ def run_full(
             else:
                 stops_matrix.append(tr.stop)
 
+
+    # Save original alignments for SODA viz
+    SubfamAlignments = list(subfamily_sequences_matrix)
+    ChromAlignments = list(chromosome_sequences_matrix)
+    SubfamAlignMatrix: Dict[str, int] = {}
+    for i in range(1, len(subfamily_matrix)):
+        subfam = subfamily_matrix[i]
+        start = starts_matrix[i]
+        stop = stops_matrix[i]
+        # account for overlaps
+        for col in range(start, stop + 1):
+            if (subfam, col) not in SubfamAlignMatrix:
+                SubfamAlignMatrix[subfam, col] = [i]
+            else:
+                SubfamAlignMatrix[subfam, col].append(i)
+
     start_all, stop_all = pad_sequences(
         chunk_size,
         starts_matrix,
