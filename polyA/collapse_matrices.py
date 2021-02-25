@@ -165,6 +165,9 @@ def collapse_matrices(
     active_cells_collapse: Dict[int, List[int]] = {}
     subfams_dp = set()
 
+    # (subfam, pos in seq) = original row
+    subfam_alignments_collapse: Dict[Tuple[str, int], Tuple[int, int]] = {}
+
     # assigns row num to subfams strings
     count_i: int = 0
     for i in range(row_num):
@@ -195,6 +198,7 @@ def collapse_matrices(
             # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrix
             # always do this for TRs
             if len(subfams_count[subfam]) == 1:
+                consensus_pos = consensus_matrix[row_index, col_index]
                 consensus_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index
                 ] = consensus_matrix[row_index, col_index]
@@ -204,6 +208,10 @@ def collapse_matrices(
                 support_matrix_collapse[
                     subfams_collapse_temp[subfam], col_index
                 ] = support_matrix[row_index, col_index]
+
+                subfam_alignments_collapse[
+                    subfam, col_index + start_all - 1
+                ] = [row_index, consensus_pos]
 
             active_cells_collapse[col_index].add(subfams_collapse_temp[subfam])
 
@@ -267,10 +275,14 @@ def collapse_matrices(
                     collapse_col = curr_range[i]
                     # collapse_row = dp_active_rows[region][collapse_path[i]]  # original row
                     collapse_row = collapse_path[i]
+                    consensus_pos = consensus_matrix[collapse_row, collapse_col]
+                    subfam_alignments_collapse[
+                        subfam, collapse_col + start_all - 1
+                    ] = [collapse_row, consensus_pos]
 
                     consensus_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
-                    ] = consensus_matrix[collapse_row, collapse_col]
+                    ] = consensus_pos
                     support_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
                     ] = support_matrix[collapse_row, collapse_col]
@@ -283,9 +295,14 @@ def collapse_matrices(
                     collapse_col = curr_range[i]
                     row_index = dp_active_rows[region][0]
 
+                    consensus_pos = consensus_matrix[row_index, collapse_col]
+                    subfam_alignments_collapse[
+                        subfam, collapse_col + start_all - 1
+                    ] = [collapse_row, consensus_pos]
+
                     consensus_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
-                    ] = consensus_matrix[row_index, collapse_col]
+                    ] = consensus_pos
                     strand_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
                     ] = strands[row_index]
@@ -303,4 +320,5 @@ def collapse_matrices(
         subfams_collapse,
         active_cells_collapse,
         subfams_collapse_temp,
+        subfam_alignments_collapse,
     )
