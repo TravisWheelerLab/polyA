@@ -200,19 +200,19 @@ def run_full(
 
 
     # Save original alignments for SODA viz
-    SubfamAlignments = list(subfamily_sequences_matrix)
-    ChromAlignments = list(chromosome_sequences_matrix)
-    SubfamAlignMatrix: Dict[str, int] = {}
+    subfam_alignments = list(subfamily_sequences_matrix)
+    chrom_alignments = list(chromosome_sequences_matrix)
+    subfam_align_matrix: Dict[str, int] = {}
     for i in range(1, len(subfamily_matrix)):
         subfam = subfamily_matrix[i]
         start = starts_matrix[i]
         stop = stops_matrix[i]
         # account for overlaps
         for col in range(start, stop + 1):
-            if (subfam, col) not in SubfamAlignMatrix:
-                SubfamAlignMatrix[subfam, col] = [i]
+            if (subfam, col) not in subfam_align_matrix:
+                subfam_align_matrix[subfam, col] = [i]
             else:
-                SubfamAlignMatrix[subfam, col].append(i)
+                subfam_align_matrix[subfam, col].append(i)
 
     start_all, stop_all = pad_sequences(
         chunk_size,
@@ -377,6 +377,7 @@ def run_full(
     strand_matrix_collapse = collapsed_matrices.strand_matrix
     subfams_collapse_index = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
+    subfam_alignments_collapse = collapsed_matrices.subfam_alignments
 
     align_matrix.clear()
     confidence_matrix.clear()
@@ -621,6 +622,7 @@ def run_full(
             outfile_conf,
             target.chrom_name,
             target.chrom_start,
+            target.chrom_stop,
             subfamily_matrix,
             changes_orig,
             changes_position_orig,
@@ -631,5 +633,11 @@ def run_full(
             subfams_collapse_index,
             node_confidence_orig,
             node_ids,
+            subfam_alignments,
+            chrom_alignments,
+            subfam_alignments_collapse,
+            support_matrix,
+            subfams_collapse,
+            cols,
         )
     return last_subfam_start, last_subfam_stop
