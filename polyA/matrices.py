@@ -74,3 +74,7 @@ class CollapsedMatrices(NamedTuple):
 
     subfamily_indices: Dict[str, int]
     #     subfams_collapse_temp: maps subfam names to it's new row number
+
+    subfam_alignments: Dict[Tuple[str, int], Tuple[int, int]]
+    # subfam_alignments_collapse: Collapsed version of subfam_alignments
+    # Key is [subfam, pos_in_sequence] to value [original_subfam_row, consensus_pos]

@@ -198,7 +198,6 @@ def run_full(
             else:
                 stops_matrix.append(tr.stop)
 
-
     # Save original alignments for SODA viz
     subfam_alignments = list(subfamily_sequences_matrix)
     chrom_alignments = list(chromosome_sequences_matrix)
