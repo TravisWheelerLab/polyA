@@ -492,7 +492,6 @@ def print_results_soda(
                 heatmap_vals.append("-inf")
             j += 1
         heatmap_dict[subfams_collapse[k]] = heatmap_vals
-
     json_dict["heatmap"] = heatmap_dict
     # prints  outfile for SODA viz
     outfile.write(json.dumps(json_dict))

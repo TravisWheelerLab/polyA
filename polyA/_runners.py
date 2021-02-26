@@ -393,6 +393,8 @@ def run_full(
             consensus_matrix_collapse[rows - 1, tr_col + 1] = tr_consensus_pos
             prev_tr_col = tr_col
 
+    # save original cols for printing heatmap
+    cols_orig = cols
     (
         ProbMatrixLastColumn,
         OriginMatrix,
@@ -626,7 +628,7 @@ def run_full(
             subfam_alignments_collapse,
             support_matrix_collapse,
             subfams_collapse,
-            cols,
+            cols_orig,
         )
 
     return last_subfam_start, last_subfam_stop
