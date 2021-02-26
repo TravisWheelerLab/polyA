@@ -166,8 +166,8 @@ def print_results_chrom(
 
 def print_results_soda(
     start_all: int,
-    outfile: str,
-    outfile_json: str,
+    outfile: Optional[TextIO],
+    outfile_json: Optional[TextIO],
     chrom: str,
     chrom_start: int,
     chrom_end: int,
@@ -193,7 +193,6 @@ def print_results_soda(
 
     format described here:
     https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
-
     """
     id: int = 0
 
@@ -495,11 +494,8 @@ def print_results_soda(
         heatmap_dict[subfams_collapse[k]] = heatmap_vals
 
     json_dict["heatmap"] = heatmap_dict
-
     # prints  outfile for SODA viz
-    print(outfile)
-    with open(outfile, "w") as out_soda:
-        out_soda.write(json.dumps(json_dict))
+    outfile.write(json.dumps(json_dict))
+
     # prints json file with confidence values for each annotation
-    with open(outfile_json, "w") as out_json:
-        out_json.write(json.dumps(json_dict_id))
+    outfile_json.write(json.dumps(json_dict_id))

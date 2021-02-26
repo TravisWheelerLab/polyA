@@ -393,17 +393,6 @@ def run_full(
             consensus_matrix_collapse[rows - 1, tr_col + 1] = tr_consensus_pos
             prev_tr_col = tr_col
 
-    # if command line option included to output support matrix for heatmap
-    if outfile_heatmap:
-        print_matrix_support(
-            cols,
-            start_all,
-            target.chrom_start,
-            support_matrix_collapse,
-            subfams_collapse,
-            outfile=outfile_heatmap,
-        )
-
     (
         ProbMatrixLastColumn,
         OriginMatrix,
@@ -635,8 +624,9 @@ def run_full(
             subfam_alignments,
             chrom_alignments,
             subfam_alignments_collapse,
-            support_matrix,
+            support_matrix_collapse,
             subfams_collapse,
             cols,
         )
+
     return last_subfam_start, last_subfam_stop
