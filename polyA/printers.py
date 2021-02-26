@@ -164,259 +164,6 @@ def print_results_chrom(
             stdout.write("\n")
 
 
-def print_results_soda_old(
-    start_all: int,
-    outfile: Optional[TextIO],
-    outfile_json: Optional[TextIO],
-    chrom: str,
-    chrom_start: int,
-    subfams: List[str],
-    changes_orig: List[str],
-    changes_position_orig: List[int],
-    columns_orig: List[int],
-    consensus_lengths: Dict[str, int],
-    strand_matrix_collapse: Dict[Tuple[int, int], str],
-    consensus_matrix_collapse: Dict[Tuple[int, int], int],
-    subfams_collapse_index: Dict[str, int],
-    node_confidence_orig: Dict[Tuple[str, int], float],
-    ids: List[str],
-) -> None:
-    """
-    prints the results in the proper format to input into the SODA visualization tool
-
-    format described here:
-    https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
-
-    """
-    id: int = 0
-
-    length = len(changes_position_orig) - 1
-
-    used: List[int] = [
-        1
-    ] * length  # wont print out the results of the same thing twice
-
-    json_dict_id: Dict[str, Dict[str, List[str]]] = {}
-
-    i = 0
-    while i < length:
-        sub_id: int = 0
-        json_dict_subid: Dict[str, List[str]] = {}
-
-        if changes_orig[i] != "skip" and used[i]:
-            subfam: str = changes_orig[i]
-            strand: str = strand_matrix_collapse[
-                subfams_collapse_index[subfam],
-                columns_orig[changes_position_orig[i]],
-            ]
-
-            left_flank: int
-            right_flank: int
-
-            if subfam == "Tandem Repeat":
-                subfam = "Tandem#Repeat/TR"
-                left_flank = 0
-                right_flank = 0
-            else:
-                if strand == "-":
-                    left_flank = (
-                        consensus_lengths[subfam]
-                        - consensus_matrix_collapse[
-                            subfams_collapse_index[subfam],
-                            columns_orig[changes_position_orig[i]],
-                        ]
-                    )
-                    right_flank = (
-                        consensus_matrix_collapse[
-                            subfams_collapse_index[subfam],
-                            columns_orig[changes_position_orig[i + 1] - 1],
-                        ]
-                        - 1
-                    )
-                else:
-                    left_flank = (
-                        consensus_matrix_collapse[
-                            subfams_collapse_index[subfam],
-                            columns_orig[changes_position_orig[i]],
-                        ]
-                        - 1
-                    )
-                    right_flank = (
-                        consensus_lengths[subfam]
-                        - consensus_matrix_collapse[
-                            subfams_collapse_index[subfam],
-                            columns_orig[changes_position_orig[i + 1] - 1],
-                        ]
-                    )
-
-            align_start: int = chrom_start + (
-                columns_orig[changes_position_orig[i]] + start_all
-            )
-            feature_start: int = align_start - left_flank
-            align_stop: int = chrom_start + (
-                columns_orig[changes_position_orig[i + 1] - 1] + start_all
-            )
-            feature_stop: int = align_stop + right_flank
-
-            block_start_matrix: int = columns_orig[changes_position_orig[i]]
-
-            block_count: int = 3
-            id += 1
-
-            json_dict_subfam_i: Dict[str, float] = {}
-
-            for subfam_i in range(1, len(subfams)):
-                subfamm = subfams[subfam_i]
-                if (
-                    subfamm,
-                    i,
-                ) in node_confidence_orig and node_confidence_orig[
-                    subfamm, i
-                ] > 0.001:
-                    json_dict_subfam_i[subfamm] = node_confidence_orig[
-                        subfamm, i
-                    ]
-
-            json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(
-                json_dict_subfam_i.items(), key=lambda x: x[1], reverse=True
-            )
-            sub_id += 1
-
-            block_start: List[str] = []
-            block_size: List[str] = []
-
-            block_start.append("-1")
-            block_start.append(str(left_flank + 1))
-            block_start.append("-1")
-
-            block_size.append(str(left_flank))
-            block_size.append(
-                str(
-                    columns_orig[changes_position_orig[i + 1] - 1]
-                    - columns_orig[changes_position_orig[i]]
-                    + 1
-                )
-            )
-            block_size.append(str(right_flank))
-
-            j: int = i + 1
-            while j < length:
-                if changes_orig[j] != "skip" and subfam != "Tandem#Repeat/TR":
-
-                    if (
-                        ids[columns_orig[changes_position_orig[i]]]
-                        == ids[columns_orig[changes_position_orig[j]]]
-                    ):
-                        if strand == "-":
-                            right_flank = (
-                                consensus_matrix_collapse[
-                                    subfams_collapse_index[changes_orig[j]],
-                                    columns_orig[
-                                        changes_position_orig[j + 1] - 1
-                                    ],
-                                ]
-                                - 1
-                            )
-                        else:
-                            right_flank = (
-                                consensus_lengths[subfam]
-                                - consensus_matrix_collapse[
-                                    subfams_collapse_index[changes_orig[j]],
-                                    columns_orig[
-                                        changes_position_orig[j + 1] - 1
-                                    ],
-                                ]
-                            )
-
-                        del block_size[-1]
-                        block_size.append("0")
-
-                        align_stop: int = chrom_start + (
-                            columns_orig[changes_position_orig[j + 1] - 1]
-                            + start_all
-                        )
-                        feature_stop: int = align_stop + right_flank
-
-                        block_start.append(
-                            str(
-                                columns_orig[changes_position_orig[j]]
-                                + 1
-                                - block_start_matrix
-                                + left_flank
-                            )
-                        )
-                        block_start.append("-1")
-
-                        block_size.append(
-                            str(
-                                columns_orig[changes_position_orig[j + 1] - 1]
-                                - columns_orig[changes_position_orig[j]]
-                                + 1
-                            )
-                        )
-
-                        block_size.append(str(right_flank))
-
-                        block_count += 2
-
-                        used[j] = 0
-
-                        json_dict_subfam_j: Dict[str, float] = {}
-
-                        for subfam_i in range(1, len(subfams)):
-                            subfamm = subfams[subfam_i]
-                            if (
-                                (subfamm, j) in node_confidence_orig
-                                and node_confidence_orig[subfamm, j] > 0.001
-                            ):
-                                json_dict_subfam_j[
-                                    subfamm
-                                ] = node_confidence_orig[subfamm, j]
-
-                        json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(
-                            json_dict_subfam_j.items(),
-                            key=lambda x: x[1],
-                            reverse=True,
-                        )
-                        sub_id += 1
-
-                j += 1
-
-            json_dict_id[str(id)] = json_dict_subid
-
-            outfile.write(
-                "000 "
-                + chrom
-                + " "
-                + str(feature_start - 1)
-                + " "
-                + str(feature_stop - 1)
-                + " "
-                + subfam
-                + " 0 "
-                + strand
-                + " "
-                + str(align_start - 1)
-                + " "
-                + str(align_stop - 1)
-                + " 0 "
-                + str(block_count)
-                + " "
-                + (",".join(block_size))
-                + " "
-                + (",".join(block_start))
-                + " "
-                + str(id)
-            )
-            outfile.write("\n")
-
-        used[i] = 0
-        i += 1
-
-    # prints json file with confidence values for each annotation
-    outfile_json.write(json.dumps(json_dict_id))
-
-
 def print_results_soda(
     start_all: int,
     outfile: str,
@@ -535,7 +282,13 @@ def print_results_soda(
 
             for subfam_i in range(1, len(subfams)):
                 subfamm = subfams[subfam_i]
-                if node_confidence_orig[subfamm, i] > 0.001:
+                # FIXME here
+                if (
+                    subfamm,
+                    i,
+                ) in node_confidence_orig and node_confidence_orig[
+                    subfamm, i
+                ] > 0.001:
                     json_dict_subfam_i[subfamm] = node_confidence_orig[
                         subfamm, i
                     ]
@@ -564,10 +317,7 @@ def print_results_soda(
 
             j: int = i + 1
             while j < length:
-                if (
-                    changes_orig[j] != "skip"
-                    and subfam != "Tandem#Repeat/TR"
-                ):
+                if changes_orig[j] != "skip" and subfam != "Tandem#Repeat/TR":
 
                     if (
                         ids[columns_orig[changes_position_orig[i]]]
@@ -615,9 +365,7 @@ def print_results_soda(
 
                         block_size.append(
                             str(
-                                columns_orig[
-                                    changes_position_orig[j + 1] - 1
-                                ]
+                                columns_orig[changes_position_orig[j + 1] - 1]
                                 - columns_orig[changes_position_orig[j]]
                                 + 1
                             )
@@ -633,14 +381,15 @@ def print_results_soda(
 
                         for subfam_i in range(1, len(subfams)):
                             subfamm = subfams[subfam_i]
-                            if node_confidence_orig[subfamm, j] > 0.001:
+                            if (
+                                (subfamm, j) in node_confidence_orig
+                                and node_confidence_orig[subfamm, j] > 0.001
+                            ):
                                 json_dict_subfam_j[
                                     subfamm
                                 ] = node_confidence_orig[subfamm, j]
 
-                        json_dict_subid[
-                            str(id) + "-" + str(sub_id)
-                        ] = sorted(
+                        json_dict_subid[str(id) + "-" + str(sub_id)] = sorted(
                             json_dict_subfam_j.items(),
                             key=lambda x: x[1],
                             reverse=True,
@@ -651,10 +400,30 @@ def print_results_soda(
 
             json_dict_id[str(id)] = json_dict_subid
 
-            ucscString = "000 " + chrom + " " + str(feature_start) + " " + str(feature_stop) + " " \
-                         + subfam + " 0 " + strand + " " + str(align_start) + " " + str(align_stop) + " 0 " \
-                         + str(block_count) + " " + (",".join(block_size)) + " " + (",".join(block_start)) \
-                         + " " + str(id)
+            ucscString = (
+                "000 "
+                + chrom
+                + " "
+                + str(feature_start)
+                + " "
+                + str(feature_stop)
+                + " "
+                + subfam
+                + " 0 "
+                + strand
+                + " "
+                + str(align_start)
+                + " "
+                + str(align_stop)
+                + " 0 "
+                + str(block_count)
+                + " "
+                + (",".join(block_size))
+                + " "
+                + (",".join(block_start))
+                + " "
+                + str(id)
+            )
 
             json_annotation = {}
             json_annotation["id"] = id
@@ -669,15 +438,20 @@ def print_results_soda(
                 # col in seq
                 subfam_start_col = align_start - chrom_start
                 subfam_stop_col = align_stop - chrom_start
-                subfam_rows = [subfam_alignments_collapse[subfam, col]
-                               for col in range(subfam_start_col, subfam_stop_col)
-                               if (subfam, col) in subfam_alignments_collapse]
+                subfam_rows = [
+                    subfam_alignments_collapse[subfam, col]
+                    for col in range(subfam_start_col, subfam_stop_col)
+                    if (subfam, col) in subfam_alignments_collapse
+                ]
 
                 align_changes = [subfam_rows[0]]
                 # get changes
                 align_length = len(subfam_rows)
                 for align_num in range(1, align_length):
-                    if subfam_rows[align_num][0] != subfam_rows[align_num - 1][0]:
+                    if (
+                        subfam_rows[align_num][0]
+                        != subfam_rows[align_num - 1][0]
+                    ):
                         align_changes.append(subfam_rows[align_num - 1])
                         align_changes.append(subfam_rows[align_num])
                 align_changes.append(subfam_rows[align_length - 1])
@@ -685,10 +459,18 @@ def print_results_soda(
                 for align_num in range(0, len(align_changes) - 1, 2):
                     block_subfam = align_changes[align_num][0]
                     block_sub_alignment = {}
-                    block_sub_alignment["chrSeq"] = chrom_alignments[block_subfam]
-                    block_sub_alignment["famSeq"] = subfam_alignments[block_subfam]
-                    block_sub_alignment["alignStart"] = align_changes[align_num][1]
-                    block_sub_alignment["alignEnd"] = align_changes[align_num + 1][1]
+                    block_sub_alignment["chrSeq"] = chrom_alignments[
+                        block_subfam
+                    ]
+                    block_sub_alignment["famSeq"] = subfam_alignments[
+                        block_subfam
+                    ]
+                    block_sub_alignment["alignStart"] = align_changes[
+                        align_num
+                    ][1]
+                    block_sub_alignment["alignEnd"] = align_changes[
+                        align_num + 1
+                    ][1]
                     # FIXME: can be greater than len of block?
                     # consensus positions skip ahead, ex: [167, 407], [167, 416], ...
                     block_alignments.append(block_sub_alignment)
@@ -699,7 +481,7 @@ def print_results_soda(
 
     # Get heatmap values
     heatmap_dict = {}
-    #FIXME: do I need start values in dictionary?
+    # FIXME: do I need start values in dictionary?
     for k in range(len(subfams_collapse)):
         heatmap_vals = []
         j: int = 0
@@ -715,6 +497,7 @@ def print_results_soda(
     json_dict["heatmap"] = heatmap_dict
 
     # prints  outfile for SODA viz
+    print(outfile)
     with open(outfile, "w") as out_soda:
         out_soda.write(json.dumps(json_dict))
     # prints json file with confidence values for each annotation
