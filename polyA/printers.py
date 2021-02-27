@@ -205,12 +205,12 @@ def print_results_soda(
     json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
 
     json_dict = {}
-    json_dict["chrStart"] = chrom_start
-    json_dict["chrEnd"] = chrom_end
     json_dict["chr"] = chrom
     json_dict["annotations"] = []
     json_dict["heatmap"] = {}
 
+    min_align_start: int = chrom_end
+    max_align_end: int = 0
     i = 0
     while i < length:
 
@@ -431,6 +431,10 @@ def print_results_soda(
             json_annotation["chrStart"] = align_start
             json_annotation["chrEnd"] = align_stop
             block_alignments = []
+            if align_start < min_align_start:
+                min_align_start = align_start
+            if align_stop > max_align_end:
+                max_align_end = align_stop
 
             # get alignments for each block
             if subfam != "Tandem#Repeat/TR":
@@ -478,6 +482,8 @@ def print_results_soda(
         used[i] = 0
         i += 1
 
+    json_dict["chrStart"] = min_align_start
+    json_dict["chrEnd"] = max_align_end
     # Get heatmap values
     heatmap_dict = {}
     # FIXME: do I need start values in dictionary?
