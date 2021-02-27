@@ -43,12 +43,9 @@ def fill_support_matrix(
 
     Outputs:
 
-    support_matrix: Hash implementation of sparse 2D matrix used in pre-DP
-    calculations. Key is tuple[row, col] to value in that cell of the matrix.
-    Rows are subfamilies in the input alignment file, cols are nucleotide
-    positions in the alignment. Each cell in matrix is the support score (or
-    average confidence value) for the surrounding chunk_size cells in the
-    confidence matrix.
+    support_matrix - support values represent average confidence values over a
+    window chunk_size wide at each position in the confidence matrix. This is
+    the "support score".
 
     >>> conf_mat = {
     ...     (0, 0): 0.9, (0, 1): 0.5, (0, 2): 0.5,
@@ -59,17 +56,17 @@ def fill_support_matrix(
     ...     starts=[0, 1],
     ...     stops=[2, 2],
     ...     confidence_matrix=conf_mat)
-    >>> supp_mat[0, 0]
+    >>> round(supp_mat[0, 0], 4)
     0.7
-    >>> supp_mat[0, 1]
-    0.6333333333333333
-    >>> supp_mat[0, 2]
+    >>> round(supp_mat[0, 1], 4)
+    0.6333
+    >>> round(supp_mat[0, 2], 4)
     0.5
     >>> (1, 0) in supp_mat
     False
-    >>> supp_mat[1, 1]
+    >>> round(supp_mat[1, 1], 4)
     0.2
-    >>> supp_mat[1, 2]
+    >>> round(supp_mat[1, 2], 4)
     0.2
     >>>
     >>> conf_mat = {
@@ -83,23 +80,23 @@ def fill_support_matrix(
     ...     confidence_matrix=conf_mat)
     >>> supp_mat[0, 0]
     0.9
-    >>> supp_mat[0, 1]
-    0.7666666666666666
-    >>> supp_mat[0, 2]
-    0.6333333333333333
-    >>> supp_mat[0, 3]
-    0.3666666666666667
-    >>> supp_mat[0, 4]
+    >>> round(supp_mat[0, 1], 4)
+    0.7667
+    >>> round(supp_mat[0, 2], 4)
+    0.6333
+    >>> round(supp_mat[0, 3], 4)
+    0.3667
+    >>> round(supp_mat[0, 4], 4)
     0.3
     >>> (1, 0) in supp_mat
     False
-    >>> supp_mat[1, 1]
+    >>> round(supp_mat[1, 1], 4)
     0.6
-    >>> supp_mat[1, 2]
-    0.6333333333333333
-    >>> supp_mat[1, 3]
-    0.7666666666666666
-    >>> supp_mat[1, 4]
+    >>> round(supp_mat[1, 2], 4)
+    0.6333
+    >>> round(supp_mat[1, 3], 4)
+    0.7667
+    >>> round(supp_mat[1, 4], 4)
     0.8
     """
 
@@ -119,21 +116,40 @@ def fill_support_matrix(
     # incremented by 1. For example, range(start, stop + 1). This convention is
     # consistent through the algorithm below.
 
-    # TODO: Optimize summations in the middle region of a row
-
     for row_index in range(0, row_count):
         start: int = starts[row_index] - position_offset
         stop: int = stops[row_index] - position_offset
 
+        prev_chunk_start = start
+        prev_chunk_stop = stop
+
+        sum_of_scores = 0.0
+
         for col_index in range(start, stop + 1):
             chunk_start = max(col_index - half_chunk, start)
             chunk_stop = min(col_index + half_chunk, stop)
+
             column_count = chunk_stop - chunk_start + 1
 
-            sum_of_scores = 0.0
-            for sum_index in range(chunk_start, chunk_stop + 1):
-                sum_of_scores += confidence_matrix[row_index, sum_index]
+            if col_index == start:
+                # Compute the entire chunk if we're working on the first column
+                # in the row. This bootstraps our more efficient summation
+                # later.
+                sum_of_scores = 0.0
+                for sum_index in range(chunk_start, chunk_stop + 1):
+                    sum_of_scores += confidence_matrix[row_index, sum_index]
+            else:
+                # Subtract the value from the left-most column, but only if it
+                # has slipped out of our window. Add the value from the
+                # right-most column, but only if it is newly part of our window.
+                if chunk_start > prev_chunk_start:
+                    sum_of_scores -= confidence_matrix[row_index, prev_chunk_start]
+                if chunk_stop > prev_chunk_stop:
+                    sum_of_scores += confidence_matrix[row_index, chunk_stop]
 
             support_matrix[row_index, col_index] = sum_of_scores / column_count
+
+            prev_chunk_start = chunk_start
+            prev_chunk_stop = chunk_stop
 
     return support_matrix
