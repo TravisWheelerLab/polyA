@@ -6,10 +6,10 @@ from polyA.performance import timeit
 
 @timeit
 def fill_support_matrix(
-        chunk_size: int,
-        starts: List[int],
-        stops: List[int],
-        confidence_matrix: ConfidenceMatrix,
+    chunk_size: int,
+    starts: List[int],
+    stops: List[int],
+    confidence_matrix: ConfidenceMatrix,
 ) -> SupportMatrix:
     """
     Fill the support_matrix using values in confidence_matrix. Average
@@ -150,7 +150,9 @@ def fill_support_matrix(
                 # has slipped out of our window. Add the value from the
                 # right-most column, but only if it is newly part of our window.
                 if chunk_start > prev_chunk_start:
-                    sum_of_scores -= confidence_matrix[row_index, prev_chunk_start]
+                    sum_of_scores -= confidence_matrix[
+                        row_index, prev_chunk_start
+                    ]
                 if chunk_stop > prev_chunk_stop:
                     sum_of_scores += confidence_matrix[row_index, chunk_stop]
 
