@@ -1,34 +1,42 @@
-from typing import Dict, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
-from polyA.confidence_cm import confidence_cm
-from polyA.matrices import ConfidenceMatrix
+from .confidence_cm import confidence_cm
+from .matrices import ConfidenceMatrix
 
 
 def fill_confidence_matrix(
-    columns: List[int],
+    columns: Iterable[int],
     subfam_counts: Dict[str, float],
     subfams: List[str],
     active_cells: Dict[int, List[int]],
     align_matrix: Dict[Tuple[int, int], float],
 ) -> ConfidenceMatrix:
     """
-    Fills confidence matrix from alignment matrix. Each column in the alignment matrix is a group of competing
-    annotations that are input into confidence_cm, the output confidence values are used to populate confidence_matrix.
+    Fills confidence matrix from alignment matrix. Each column in the alignment
+    matrix is a group of competing annotations that are input into
+    confidence_cm, the output confidence values are used to populate
+    confidence_matrix.
 
-    input:
-    everything needed for confidence_cm()
-    columns: array that holds all non empty columns in align matrix
-    subfam_counts: dictionary that maps subfam names to prior counts
-    subfams: array of subfam names from original input alignment
-    active_cells: maps col numbers to all active rows in that col
-    align_matrix: matrix with alignment scores - used to calculate confidence
+    Inputs:
 
-    output:
-    confidence_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[int, int] that maps row, col with the value held in that cell of matrix. Rows are
-    subfamilies in the input alignment file, cols are nucleotide positions in the alignment.
-    Each cell in matrix is the confidence score calculated from all the alignment scores in a
-    column of the AlignHash
+    columns - array containing the indices of non-empty columns in the alignment
+    matrix.
+    subfam_counts - mapping of subfamily names to their prior counts.
+    subfams - list of subfamily names taken from the original alignments.
+    active_cells - map of column indices (from columns) into list of non-empty
+    rows for the given column.
+    align_matrix - the alignment matrix from fill_align_matrix.
+
+    Outputs:
+
+    confidence_matrix - hash implementation of sparse 2D matrix used in pre-DP
+    calculations. Key is tuple[int, int] that maps row, col with the value held
+    in that cell of matrix. Rows are subfamilies in the input alignment file,
+    cols are nucleotide positions in the alignment. Each cell in matrix is the
+    confidence score calculated from all the alignment scores in a column of the
+    alignment matrix.
+
+    TODO: Update test to reflect that real matrices have only skip state in first and last columns
 
     >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
     >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
@@ -51,9 +59,7 @@ def fill_confidence_matrix(
     """
     confidence_matrix: ConfidenceMatrix = {}
 
-    for i in range(len(columns)):
-
-        col_index: int = columns[i]
+    for col_index in columns:
         temp_region: List[float] = []
 
         for row_index in active_cells[col_index]:
