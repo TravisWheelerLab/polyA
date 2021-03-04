@@ -281,7 +281,6 @@ def print_results_soda(
 
             for subfam_i in range(1, len(subfams)):
                 subfamm = subfams[subfam_i]
-                # FIXME here
                 if (
                     subfamm,
                     i,
@@ -336,7 +335,7 @@ def print_results_soda(
                             right_flank = (
                                 consensus_lengths[subfam]
                                 - consensus_matrix_collapse[
-                                    subfams_collapse_index[subfam],
+                                    subfams_collapse_index[changes_orig[j]],
                                     columns_orig[
                                         changes_position_orig[j + 1] - 1
                                     ],
