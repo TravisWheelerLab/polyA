@@ -102,7 +102,6 @@ def run_full(
     chunk_size: int,
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
-    outfile_heatmap: Optional[TextIO],
     print_matrix_pos: bool,
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
