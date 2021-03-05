@@ -1,7 +1,12 @@
 from typing import Dict, List, NamedTuple, Tuple
 from math import inf, log
 
-from polyA.matrices import CollapsedMatrices, ConsensusMatrix, SupportMatrix
+from polyA.matrices import (
+    CollapsedMatrices,
+    ConsensusMatrix,
+    SupportMatrix,
+    SubfamAlignmentsMatrix,
+)
 
 
 def dp_for_collapse(
@@ -167,8 +172,7 @@ def collapse_matrices(
     active_cells_collapse: Dict[int, List[int]] = {}
     subfams_dp = set()
 
-    # (subfam, pos in seq) = original row, subfam_consensus_pos
-    subfam_alignments_collapse: Dict[Tuple[str, int], Tuple[int, int]] = {}
+    subfam_alignments_collapse: SubfamAlignmentsMatrix = {}
 
     # assigns row num to subfams strings
     count_i: int = 0

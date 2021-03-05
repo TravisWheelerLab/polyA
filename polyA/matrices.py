@@ -10,6 +10,12 @@ StrandMatrix = Dict[RowColumn, str]
 
 SupportMatrix = Dict[RowColumn, float]
 
+SubfamCol = Tuple[str, int]
+
+RowConsensus = Tuple[int, int]
+
+SubfamAlignmentsMatrix = Dict[SubfamCol, RowConsensus]
+
 
 class ConsensusMatrixContainer(NamedTuple):
     """
@@ -75,6 +81,9 @@ class CollapsedMatrices(NamedTuple):
     subfamily_indices: Dict[str, int]
     #     subfams_collapse_temp: maps subfam names to it's new row number
 
-    subfam_alignments: Dict[Tuple[str, int], Tuple[int, int]]
-    # subfam_alignments_collapse: Collapsed version of subfam_alignments
-    # Key is [subfam, pos_in_sequence] to value [original_subfam_row, consensus_pos]
+    subfam_alignments_matrix: SubfamAlignmentsMatrix
+    # subfam_alignment_matrix: Hash implementation of sparse 2D matrix.
+    # Tuple[str, int] as key. String is the subfamily name of the row, int is the column.
+    # This is a collapsed matrix with no redundant subfamilies as rows. Each cell in the matrix is
+    # the original subfam/chrom alignment row and the consensus sequence pos that aligned at the
+    # corresponding column position of the sequence.

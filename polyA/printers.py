@@ -4,7 +4,7 @@ from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Union
 from uuid import uuid4
 
-from polyA.matrices import SupportMatrix
+from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
 from .ultra_provider import TandemRepeat
 
 
@@ -183,7 +183,7 @@ def print_results_soda(
     ids: List[int],
     subfam_alignments: List[str],
     chrom_alignments: List[str],
-    subfam_alignments_collapse: Dict[Tuple[str, int], Tuple[int, int]],
+    alignments_matrix: SubfamAlignmentsMatrix,
     matrix: SupportMatrix,
     subfams_collapse: List[str],
     num_col: int,
@@ -441,9 +441,9 @@ def print_results_soda(
                 subfam_start_col = align_start - chrom_start - 1
                 subfam_stop_col = align_stop - chrom_start - 1
                 subfam_rows = [
-                    subfam_alignments_collapse[subfam, col]
+                    alignments_matrix[subfam, col]
                     for col in range(subfam_start_col, subfam_stop_col)
-                    if (subfam, col) in subfam_alignments_collapse
+                    if (subfam, col) in alignments_matrix
                 ]
                 align_changes = [subfam_rows[0]]
                 # get changes
