@@ -438,14 +438,13 @@ def print_results_soda(
             # get alignments for each block
             if subfam != "Tandem#Repeat/TR":
                 # col in seq
-                subfam_start_col = align_start - chrom_start
-                subfam_stop_col = align_stop - chrom_start
+                subfam_start_col = align_start - chrom_start - 1
+                subfam_stop_col = align_stop - chrom_start - 1
                 subfam_rows = [
                     subfam_alignments_collapse[subfam, col]
                     for col in range(subfam_start_col, subfam_stop_col)
                     if (subfam, col) in subfam_alignments_collapse
                 ]
-
                 align_changes = [subfam_rows[0]]
                 # get changes
                 align_length = len(subfam_rows)
@@ -457,9 +456,10 @@ def print_results_soda(
                         align_changes.append(subfam_rows[align_num - 1])
                         align_changes.append(subfam_rows[align_num])
                 align_changes.append(subfam_rows[align_length - 1])
-
                 for align_num in range(0, len(align_changes) - 1, 2):
-                    block_subfam = align_changes[align_num][0]
+                    block_subfam = align_changes[align_num][
+                        0
+                    ]  # collapsed subfam row
                     block_sub_alignment = {}
                     block_sub_alignment["chrSeq"] = chrom_alignments[
                         block_subfam
@@ -473,7 +473,6 @@ def print_results_soda(
                     block_sub_alignment["alignEnd"] = align_changes[
                         align_num + 1
                     ][1]
-                    # FIXME: can be greater than len of block?
                     # consensus positions skip ahead, ex: [167, 407], [167, 416], ...
                     block_alignments.append(block_sub_alignment)
             json_annotation["alignments"] = block_alignments
@@ -485,7 +484,6 @@ def print_results_soda(
     json_dict["chrEnd"] = max_align_end
     # Get heatmap values
     heatmap_dict = {}
-    # FIXME: do I need start values in dictionary?
     for k in range(len(subfams_collapse)):
         heatmap_vals = []
         j: int = 0
