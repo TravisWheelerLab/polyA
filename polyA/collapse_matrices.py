@@ -136,7 +136,7 @@ def collapse_matrices(
     >>> strandss = ["+", "-", "-"]
     >>> sup_mat = {(0, 1): 0.5, (0, 2): 0.5, (0, 3): .1, (1, 1): 0.2, (1, 2): 0.2, (1, 3): .2, (2, 1): 0.1, (2, 2): 0.1, (2, 3): 0.9}
     >>> con_mat = {(0, 1): 0, (0, 2): 1, (0, 3): 2, (1, 1): 0, (1, 2): 1, (1, 3): 2, (2, 1): 0, (2, 2): 3, (2, 3): 10}
-    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind) = collapse_matrices(3, 1, non_cols, subs, strandss, [0,0,0], [2,2,2], active, sup_mat, con_mat)
+    >>> (r, con_mat_col, strand_mat_col, sup_mat_col, sub_col, active_col, sub_col_ind, sub_aligns) = collapse_matrices(3, 1, non_cols, subs, strandss, [0,0,0], [2,2,2], active, sup_mat, con_mat)
     >>> r
     3
     >>> con_mat_col
@@ -151,6 +151,8 @@ def collapse_matrices(
     {1: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2]}
     >>> sub_col_ind
     {'s1': 0, 's2': 1, 's3': 2}
+    >>> sub_aligns
+    {('s1', 1): [0, 0], ('s2', 1): [1, 0], ('s3', 1): [2, 0], ('s1', 2): [0, 1], ('s2', 2): [1, 1], ('s3', 2): [2, 3], ('s1', 3): [0, 2], ('s2', 3): [1, 2], ('s3', 3): [2, 10]}
     """
     # fixme - write another test for when there is overlap and mini dp is done
 
@@ -165,7 +167,7 @@ def collapse_matrices(
     active_cells_collapse: Dict[int, List[int]] = {}
     subfams_dp = set()
 
-    # (subfam, pos in seq) = original row
+    # (subfam, pos in seq) = original row, subfam_consensus_pos
     subfam_alignments_collapse: Dict[Tuple[str, int], Tuple[int, int]] = {}
 
     # assigns row num to subfams strings
@@ -279,7 +281,6 @@ def collapse_matrices(
                     subfam_alignments_collapse[
                         subfam, collapse_col + start_all - 1
                     ] = [collapse_row, consensus_pos]
-
                     consensus_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
                     ] = consensus_pos
