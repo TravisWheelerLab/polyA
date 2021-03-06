@@ -23,13 +23,12 @@ do echo "$f";
   m="${f}.cm.matrix";
 
   set -x
-  python -m polyA --sequence-position --soda --heatmap --ultra-data "$ultra_output" "$align_file" "$m";
+  python -m polyA --sequence-position --soda --ultra-data "$ultra_output" "$align_file" "$m";
   set +x
 
   ls output.*
   rm output.*.viz;
   rm output.*.viz.json;
-  rm output.*.heatmap;
   printf -- "-------------------------------------------------------------\n";
 done
 
