@@ -207,8 +207,28 @@ def print_results_soda(
     json_dict = {}
     json_dict["chr"] = chrom
     json_dict["annotations"] = []
-    json_dict["heatmap"] = {}
+    json_dict["heatmap"] = []
 
+    # heatmap
+    subfam_ids: Dict[str, str] = {}
+    for k in range(len(subfams_collapse)):
+        subfam_ids[subfams_collapse[k]] = str(k)
+        heatmap_dict = {"name": subfams_collapse[k], "id": k, "confidence": []}
+        heatmap_vals = []
+        j: int = 0
+        # values in list
+        # break up into sections - removes -inf values
+        while j < num_col:
+            if (k, j) in matrix:
+                heatmap_vals.append(str(matrix[k, j]))
+            else:
+                heatmap_vals.append("-inf")
+            j += 1
+        heatmap_dict["confidence"].append(heatmap_vals)
+        heatmap_dict["alignments"] = []  # FIXME
+    json_dict["heatmap"].append(heatmap_dict)
+
+    # annotations
     min_align_start: int = chrom_end
     max_align_end: int = 0
     i = 0
@@ -397,39 +417,23 @@ def print_results_soda(
                 j += 1
 
             json_dict_id[str(id)] = json_dict_subid
-
-            ucscString = (
-                "000 "
-                + chrom
-                + " "
-                + str(feature_start)
-                + " "
-                + str(feature_stop)
-                + " "
-                + subfam
-                + " 0 "
-                + strand
-                + " "
-                + str(align_start)
-                + " "
-                + str(align_stop)
-                + " 0 "
-                + str(block_count)
-                + " "
-                + (",".join(block_size))
-                + " "
-                + (",".join(block_start))
-                + " "
-                + str(id)
-            )
-
             json_annotation = {}
-            json_annotation["id"] = id
-            json_annotation["blockCount"] = block_count
-            json_annotation["ucscString"] = ucscString
-            json_annotation["chrStart"] = align_start
-            json_annotation["chrEnd"] = align_stop
-            block_alignments = []
+            json_annotation["bin"] = "0"
+            json_annotation["chrom"] = chrom
+            json_annotation["chromStart"] = str(feature_start)
+            json_annotation["chromEnd"] = str(feature_stop)
+            json_annotation["name"] = subfam
+            json_annotation["score"] = "0"
+            json_annotation["strand"] = strand
+            json_annotation["alignStart"] = str(align_start)
+            json_annotation["alignEnd"] = str(align_stop)
+            json_annotation["reserved"] = "0"
+            json_annotation["blockCount"] = str(block_count)
+            json_annotation["blockSizes"] = block_size
+            json_annotation["blockStarts"] = block_start
+            json_annotation["id"] = subfam_ids[subfam]
+            # map subfam to id
+            block_alignments = []  # will go in heatmap instead
             if align_start < min_align_start:
                 min_align_start = align_start
             if align_stop > max_align_end:
@@ -482,21 +486,8 @@ def print_results_soda(
 
     json_dict["chrStart"] = min_align_start
     json_dict["chrEnd"] = max_align_end
-    # Get heatmap values
-    heatmap_dict = {}
-    for k in range(len(subfams_collapse)):
-        heatmap_vals = []
-        j: int = 0
-        # values in list
-        while j < num_col:
-            if (k, j) in matrix:
-                heatmap_vals.append(str(matrix[k, j]))
-            else:
-                heatmap_vals.append("-inf")
-            j += 1
-        heatmap_dict[subfams_collapse[k]] = heatmap_vals
-    json_dict["heatmap"] = heatmap_dict
     # prints  outfile for SODA viz
+    exit()
     outfile.write(json.dumps(json_dict))
 
     # prints json file with confidence values for each annotation
