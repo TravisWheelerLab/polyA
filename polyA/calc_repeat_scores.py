@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
+from .performance import timeit
 from .ultra_provider import TandemRepeat
 
 
+@timeit
 def calculate_repeat_scores(
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,

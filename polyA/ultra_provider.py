@@ -3,6 +3,8 @@ import os
 from logging import Logger
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 
+from .performance import timeit
+
 
 class TandemRepeat(NamedTuple):
     start: int
@@ -74,6 +76,7 @@ class ApplicationUltraProvider:
         self._ultra_output_path = ultra_output_path
         self._ultra_path = ultra_path
 
+    @timeit
     def __call__(self) -> UltraOutput:
         if self._sequence_path:
             ultra_stream = os.popen(

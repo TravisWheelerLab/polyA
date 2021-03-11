@@ -1,4 +1,5 @@
 from os import environ
+from sys import stderr
 from time import time
 
 
@@ -11,7 +12,7 @@ def timeit(method):
         result = method(*args, **kw)
         te = time()
 
-        print(f"[BENCHMARK] {method.__name__} {int(te - ts)}s")
+        stderr.write(f"[PERFORMANCE] {method.__name__} {int(te - ts)}s\n")
 
         return result
 
