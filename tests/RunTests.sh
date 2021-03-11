@@ -29,13 +29,12 @@ do echo "$f";
   m=${f%sto}matrix
 
   set -x
-  python -m polyA --sequence-position --soda --heatmap "$f" "$m";
+  python -m polyA --sequence-position --soda "$f" "$m";
   set +x
 
   ls output.*
   rm output.*.viz;
   rm output.*.viz.json;
-  rm output.*.heatmap;
   printf -- "-------------------------------------------------------------\n";
 done
 

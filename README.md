@@ -61,9 +61,8 @@ convenience.
 usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
              [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences SEQS]
              [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
-             [--heatmap] [--log-file LOG] [--log-level LEVEL]
-             [--matrix-position] [--output-path PATH] [--sequence-position]
-             [--soda]
+             [--log-file LOG] [--log-level LEVEL] [--matrix-position]
+             [--output-path PATH] [--sequence-position] [--soda]
              ALIGNMENTS MATRICES
 
 PolyA sequence adjudication tool
@@ -81,13 +80,13 @@ optional arguments:
   --prior-counts FILE   file containing query genomic counts
   --shard-gap SHARD_GAP
                         maximum alignment gap before sharding occurs
-  --sequences SEQS      TODO(Audrey)
-  --ultra-data FILE     TODO(Audrey)
+  --sequences SEQS      FASTA file of the target sequence for using ULTRA
+  --ultra-data FILE     text file of the output from ULTRA ran on the FASTA file
+                        of the target sequence
   --easel-path BIN      path to the esl_scorematrix program, if necessary
                         (assumed to be in PATH)
   --ultra-path BIN      path to the ULTRA binary to use, if necessary (assumed
                         to be in PATH)
-  --heatmap             write a heatmap file to the output directory
   --log-file LOG        file to store log output in, defaults to stderr
   --log-level LEVEL     logging level to use, 'debug' is the most noisy
   --matrix-position     produce output in terms of the matrix position

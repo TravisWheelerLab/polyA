@@ -4,7 +4,7 @@ from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Union
 from uuid import uuid4
 
-from polyA.matrices import SupportMatrix
+from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
 from .ultra_provider import TandemRepeat
 
 
@@ -170,6 +170,7 @@ def print_results_soda(
     outfile_json: Optional[TextIO],
     chrom: str,
     chrom_start: int,
+    chrom_end: int,
     subfams: List[str],
     changes_orig: List[str],
     changes_position_orig: List[int],
@@ -179,14 +180,19 @@ def print_results_soda(
     consensus_matrix_collapse: Dict[Tuple[int, int], int],
     subfams_collapse_index: Dict[str, int],
     node_confidence_orig: Dict[Tuple[str, int], float],
-    ids: List[str],
+    ids: List[int],
+    subfam_alignments: List[str],
+    chrom_alignments: List[str],
+    alignments_matrix: SubfamAlignmentsMatrix,
+    matrix: SupportMatrix,
+    subfams_collapse: List[str],
+    num_col: int,
 ) -> None:
     """
     prints the results in the proper format to input into the SODA visualization tool
 
     format described here:
     https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
-
     """
     id: int = 0
 
@@ -196,12 +202,20 @@ def print_results_soda(
         1
     ] * length  # wont print out the results of the same thing twice
 
-    json_dict_id: Dict[str, Dict[str, List[str]]] = {}
+    json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
 
+    json_dict = {}
+    json_dict["chr"] = chrom
+    json_dict["annotations"] = []
+    json_dict["heatmap"] = {}
+
+    min_align_start: int = chrom_end
+    max_align_end: int = 0
     i = 0
     while i < length:
+
         sub_id: int = 0
-        json_dict_subid: Dict[str, List[str]] = {}
+        json_dict_subid: Dict[str, Dict[str, float]] = {}
 
         if changes_orig[i] != "skip" and used[i]:
             subfam: str = changes_orig[i]
@@ -384,21 +398,21 @@ def print_results_soda(
 
             json_dict_id[str(id)] = json_dict_subid
 
-            outfile.write(
+            ucscString = (
                 "000 "
                 + chrom
                 + " "
-                + str(feature_start - 1)
+                + str(feature_start)
                 + " "
-                + str(feature_stop - 1)
+                + str(feature_stop)
                 + " "
                 + subfam
                 + " 0 "
                 + strand
                 + " "
-                + str(align_start - 1)
+                + str(align_start)
                 + " "
-                + str(align_stop - 1)
+                + str(align_stop)
                 + " 0 "
                 + str(block_count)
                 + " "
@@ -408,10 +422,82 @@ def print_results_soda(
                 + " "
                 + str(id)
             )
-            outfile.write("\n")
 
+            json_annotation = {}
+            json_annotation["id"] = id
+            json_annotation["blockCount"] = block_count
+            json_annotation["ucscString"] = ucscString
+            json_annotation["chrStart"] = align_start
+            json_annotation["chrEnd"] = align_stop
+            block_alignments = []
+            if align_start < min_align_start:
+                min_align_start = align_start
+            if align_stop > max_align_end:
+                max_align_end = align_stop
+
+            # get alignments for each block
+            if subfam != "Tandem#Repeat/TR":
+                # col in seq
+                subfam_start_col = align_start - chrom_start - 1
+                subfam_stop_col = align_stop - chrom_start - 1
+                subfam_rows = [
+                    alignments_matrix[subfam, col]
+                    for col in range(subfam_start_col, subfam_stop_col)
+                    if (subfam, col) in alignments_matrix
+                ]
+                align_changes = [subfam_rows[0]]
+                # get changes
+                align_length = len(subfam_rows)
+                for align_num in range(1, align_length):
+                    if (
+                        subfam_rows[align_num][0]
+                        != subfam_rows[align_num - 1][0]
+                    ):
+                        align_changes.append(subfam_rows[align_num - 1])
+                        align_changes.append(subfam_rows[align_num])
+                align_changes.append(subfam_rows[align_length - 1])
+                for align_num in range(0, len(align_changes) - 1, 2):
+                    block_subfam = align_changes[align_num][
+                        0
+                    ]  # collapsed subfam row
+                    block_sub_alignment = {}
+                    block_sub_alignment["chrSeq"] = chrom_alignments[
+                        block_subfam
+                    ]
+                    block_sub_alignment["famSeq"] = subfam_alignments[
+                        block_subfam
+                    ]
+                    block_sub_alignment["alignStart"] = align_changes[
+                        align_num
+                    ][1]
+                    block_sub_alignment["alignEnd"] = align_changes[
+                        align_num + 1
+                    ][1]
+                    # consensus positions skip ahead, ex: [167, 407], [167, 416], ...
+                    block_alignments.append(block_sub_alignment)
+            json_annotation["alignments"] = block_alignments
+            json_dict["annotations"].append(json_annotation)
         used[i] = 0
         i += 1
+
+    json_dict["chrStart"] = min_align_start
+    json_dict["chrEnd"] = max_align_end
+    # Get heatmap values
+    heatmap_dict = {}
+    for k in range(len(subfams_collapse)):
+        heatmap_vals = []
+        j: int = 0
+        # values in list
+        while j < num_col:
+            if (k, j) in matrix:
+                heatmap_vals.append(str(matrix[k, j]))
+            else:
+                heatmap_vals.append("-inf")
+            j += 1
+        heatmap_dict[subfams_collapse[k]] = heatmap_vals
+    json_dict["heatmap"] = heatmap_dict
+    # prints  outfile for SODA viz
+    outfile.write(json.dumps(json_dict))
 
     # prints json file with confidence values for each annotation
     outfile_json.write(json.dumps(json_dict_id))

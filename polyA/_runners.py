@@ -103,7 +103,6 @@ def run_full(
     chunk_size: int,
     outfile_viz: Optional[TextIO],
     outfile_conf: Optional[TextIO],
-    outfile_heatmap: Optional[TextIO],
     print_matrix_pos: bool,
     print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
@@ -199,7 +198,11 @@ def run_full(
             else:
                 stops_matrix.append(tr.stop)
 
-    start_all, stop_all = edges(starts, stops)
+    start_all, stop_all = edges(starts_matrix, stops_matrix)
+
+    # Save original alignments before padding for SODA viz
+    subfam_alignments = list(subfamily_sequences_matrix)
+    chrom_alignments = list(chromosome_sequences_matrix)
 
     pad_sequences(
         chunk_size,
@@ -362,6 +365,7 @@ def run_full(
     strand_matrix_collapse = collapsed_matrices.strand_matrix
     subfams_collapse_index = collapsed_matrices.subfamily_indices
     rows = collapsed_matrices.row_num_update
+    subfam_alignments_collapse = collapsed_matrices.subfam_alignments_matrix
 
     align_matrix.clear()
     confidence_matrix.clear()
@@ -378,17 +382,8 @@ def run_full(
             consensus_matrix_collapse[rows - 1, tr_col + 1] = tr_consensus_pos
             prev_tr_col = tr_col
 
-    # if command line option included to output support matrix for heatmap
-    if outfile_heatmap:
-        print_matrix_support(
-            cols,
-            start_all,
-            target.chrom_start,
-            support_matrix_collapse,
-            subfams_collapse,
-            outfile=outfile_heatmap,
-        )
-
+    # save original cols for printing heatmap
+    cols_orig = cols
     (
         ProbMatrixLastColumn,
         OriginMatrix,
@@ -606,6 +601,7 @@ def run_full(
             outfile_conf,
             target.chrom_name,
             target.chrom_start,
+            target.chrom_stop,
             subfamily_matrix,
             changes_orig,
             changes_position_orig,
@@ -616,5 +612,12 @@ def run_full(
             subfams_collapse_index,
             node_confidence_orig,
             node_ids,
+            subfam_alignments,
+            chrom_alignments,
+            subfam_alignments_collapse,
+            support_matrix_collapse,
+            subfams_collapse,
+            cols_orig,
         )
+
     return last_subfam_start, last_subfam_stop

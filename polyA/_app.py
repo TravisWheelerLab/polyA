@@ -159,7 +159,6 @@ def run():
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
-        heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
 
         (_last_start, _last_stop) = run_full(
             chunk.alignments,
@@ -167,7 +166,6 @@ def run():
             opts.chunk_size,
             soda_viz_file,
             soda_conf_file,
-            heatmap_file,
             opts.matrix_position,
             opts.sequence_position,
             sub_matrices,
@@ -186,5 +184,3 @@ def run():
             soda_viz_file.close()
         if soda_conf_file is not None:
             soda_conf_file.close()
-        if heatmap_file is not None:
-            heatmap_file.close()

@@ -45,7 +45,6 @@ class Options:
     # Output configuration
     # --------------------
 
-    heatmap: bool
     log_file_path: str
     log_level: Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
@@ -129,12 +128,6 @@ class Options:
         )
 
         parser.add_argument(
-            "--heatmap",
-            action="store_true",
-            default=False,
-            help="write a heatmap file to the output directory",
-        )
-        parser.add_argument(
             "--log-file",
             metavar="LOG",
             default="",
@@ -190,7 +183,6 @@ class Options:
         self.easel_path = namespace.easel_path
         self.ultra_path = namespace.ultra_path
 
-        self.heatmap = namespace.heatmap
         self.log_file_path = namespace.log_file
         self.log_level = namespace.log_level
         self.matrix_position = namespace.matrix_position
