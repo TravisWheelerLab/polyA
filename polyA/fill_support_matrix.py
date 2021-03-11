@@ -55,19 +55,23 @@ def fill_support_matrix(
     the "support score".
 
     >>> conf_mat = {
-    ...     (0, 0): 0.9, (0, 1): 0.5, (0, 2): 0.5,
+    ...     (0, 0): 0.9, (0, 1): 0.5, (0, 2): 0.5, (0, 3): 0.5,
     ...                  (1, 1): 0.3, (1, 2): 0.1,
     ... }
     >>> supp_mat = fill_support_matrix(
     ...     chunk_size=3,
     ...     starts=[0, 1],
-    ...     stops=[2, 2],
+    ...     stops=[3, 2],
     ...     confidence_matrix=conf_mat)
+    >>> len(supp_mat) == len(conf_mat)
+    True
     >>> round(supp_mat[0, 0], 4)
     0.7
     >>> round(supp_mat[0, 1], 4)
     0.6333
     >>> round(supp_mat[0, 2], 4)
+    0.5
+    >>> round(supp_mat[0, 3], 4)
     0.5
     >>> (1, 0) in supp_mat
     False
@@ -75,16 +79,20 @@ def fill_support_matrix(
     0.2
     >>> round(supp_mat[1, 2], 4)
     0.2
+    >>> (1, 3) in supp_mat
+    False
     >>>
     >>> conf_mat = {
-    ...     (0, 0): 0.9, (0, 1): 0.9, (0, 2): 0.5, (0, 3): 0.5, (0, 4): 0.1,
+    ...     (0, 0): 0.9, (0, 1): 0.9, (0, 2): 0.5, (0, 3): 0.5, (0, 4): 0.1, (0, 5): 0.1,
     ...                  (1, 1): 0.5, (1, 2): 0.7, (1, 3): 0.7, (1, 4): 0.9,
     ... }
     >>> supp_mat = fill_support_matrix(
     ...     chunk_size=3,
     ...     starts=[0, 1],
-    ...     stops=[4, 4],
+    ...     stops=[5, 4],
     ...     confidence_matrix=conf_mat)
+    >>> len(supp_mat) == len(conf_mat)
+    True
     >>> supp_mat[0, 0]
     0.9
     >>> round(supp_mat[0, 1], 4)
@@ -94,7 +102,9 @@ def fill_support_matrix(
     >>> round(supp_mat[0, 3], 4)
     0.3667
     >>> round(supp_mat[0, 4], 4)
-    0.3
+    0.2333
+    >>> round(supp_mat[0, 5], 4)
+    0.1
     >>> (1, 0) in supp_mat
     False
     >>> round(supp_mat[1, 1], 4)
@@ -105,6 +115,8 @@ def fill_support_matrix(
     0.7667
     >>> round(supp_mat[1, 4], 4)
     0.8
+    >>> (1, 5) in supp_mat
+    False
     """
 
     support_matrix: Dict[Tuple[int, int], float] = {}
