@@ -211,32 +211,19 @@ def print_results_soda(
 
     # heatmap
     subfam_ids: Dict[str, str] = {}
-    # skip state
     subfam_ids[subfams_collapse[0]] = str(0)
     heatmap_dict = {"name": subfams_collapse[0], "id": 0}
     heatmap_vals = []
     confidence = []
+    start_offset: int = chrom_start + start_all - 2
     j: int = 0
-    # break up heatmap values into sections to remove -inf values
     cur_col: int = 0
-    chrom_start: int = 1
+    align_start: int = start_offset
+    # skip state values
     while j < num_col:
-        if (0, j) in matrix:
-            if j == cur_col:  # add to heatmap values
-                heatmap_vals.append(str(matrix[0, j]))
-                cur_col += 1
-            else:
-                if len(heatmap_vals) > 0:
-                    confidence.append(
-                        {"chromStart": chrom_start, "values": heatmap_vals}
-                    )
-                heatmap_vals = [str(matrix[0, j])]
-                cur_col = j + 1
-                chrom_start = cur_col
+        heatmap_vals.append(str(matrix[0, j]))
         j += 1
-    # check if values
-    if len(heatmap_vals) > 0:
-        confidence.append({"chromStart": chrom_start, "values": heatmap_vals})
+    confidence.append({"chromStart": align_start, "values": heatmap_vals})
     heatmap_dict["confidence"] = confidence
     heatmap_dict["alignments"] = []
     json_dict["heatmap"].append(heatmap_dict)
@@ -252,88 +239,57 @@ def print_results_soda(
         # values in list
         # break up into sections - removes -inf values
         cur_col: int = 0
-        chrom_start: int = 1
+        cur_subfam_row: int = 0
+        align_start: int = start_offset
         while j < num_col:
             if (k, j) in matrix:
-                if j == cur_col:  # add to heatmap values
+                subfam_row = alignments_matrix[
+                    subfams_collapse[k], j + start_all - 1
+                ]
+                if j == cur_col and subfam_row[0] == cur_subfam_row:
+                    # continue to add values
                     heatmap_vals.append(str(matrix[k, j]))
-                    subfam_rows.append(
-                        alignments_matrix[
-                            subfams_collapse[k], j + start_all - 1
-                        ]
-                    )
+                    subfam_rows.append(subfam_row)
                     cur_col += 1
                 else:
                     if len(heatmap_vals) > 0:
-                        align_changes = [subfam_rows[0]]
-                        # get changes
-                        align_length = len(subfam_rows)
-                        for align_num in range(1, align_length):
-                            if (
-                                subfam_rows[align_num][0]
-                                != subfam_rows[align_num - 1][0]
-                            ):
-                                align_changes.append(subfam_rows[align_num - 1])
-                                align_changes.append(subfam_rows[align_num])
-                        align_changes.append(subfam_rows[align_length - 1])
-                        for align_num in range(0, len(align_changes) - 1, 2):
-                            block_subfam = align_changes[align_num][
-                                0
-                            ]  # collapsed subfam row
-                            block_sub_alignment = {}
-                            block_sub_alignment["chrSeq"] = chrom_alignments[
-                                block_subfam
-                            ]
-                            block_sub_alignment["famSeq"] = subfam_alignments[
-                                block_subfam
-                            ]
-                            block_sub_alignment["alignStart"] = align_changes[
-                                align_num
-                            ][1]
-                            block_sub_alignment["alignEnd"] = align_changes[
-                                align_num + 1
-                            ][1]
-                            block_sub_alignment["start"] = 1
-                            block_sub_alignment["end"] = 1
+                        block_subfam = subfam_row[0]  # collapsed subfam row
+                        block_sub_alignment = {}
+                        block_sub_alignment["chrSeq"] = chrom_alignments[
+                            block_subfam
+                        ]
+                        block_sub_alignment["famSeq"] = subfam_alignments[
+                            block_subfam
+                        ]
+                        block_sub_alignment["alignStart"] = subfam_rows[0][1]
+                        block_sub_alignment["alignEnd"] = subfam_rows[-1][1]
+                        block_sub_alignment["start"] = align_start
+                        block_sub_alignment["end"] = 1
                         alignments.append(block_sub_alignment)
                         confidence.append(
-                            {"chromStart": chrom_start, "values": heatmap_vals}
+                            {"chromStart": align_start, "values": heatmap_vals}
                         )
                     heatmap_vals = [str(matrix[k, j])]
-                    subfam_rows = [
-                        alignments_matrix[
-                            subfams_collapse[k], j + start_all - 1
-                        ]
-                    ]
+                    subfam_rows = [subfam_row]
                     cur_col = j + 1
-                    chrom_start = j
+                    align_start = j + start_offset
+                    cur_subfam_row = subfam_row[0]
             j += 1
         if len(heatmap_vals) > 0:
-            align_changes = [subfam_rows[0]]
-            # get changes
-            align_length = len(subfam_rows)
-            for align_num in range(1, align_length):
-                if subfam_rows[align_num][0] != subfam_rows[align_num - 1][0]:
-                    align_changes.append(subfam_rows[align_num - 1])
-                    align_changes.append(subfam_rows[align_num])
-            align_changes.append(subfam_rows[align_length - 1])
-            for align_num in range(0, len(align_changes) - 1, 2):
-                block_subfam = align_changes[align_num][
-                    0
-                ]  # collapsed subfam row
-                block_sub_alignment = {}
-                block_sub_alignment["chrSeq"] = chrom_alignments[block_subfam]
-                block_sub_alignment["famSeq"] = subfam_alignments[block_subfam]
-                block_sub_alignment["alignStart"] = align_changes[align_num][1]
-                block_sub_alignment["alignEnd"] = align_changes[align_num + 1][
-                    1
-                ]
-                block_sub_alignment["start"] = 1
-                block_sub_alignment["end"] = 1
+            block_subfam = subfam_rows[0][0]
+            block_sub_alignment = {}
+            block_sub_alignment["chrSeq"] = chrom_alignments[block_subfam]
+            block_sub_alignment["famSeq"] = subfam_alignments[block_subfam]
+            block_sub_alignment["alignStart"] = subfam_rows[0][1]
+            block_sub_alignment["alignEnd"] = subfam_rows[-1][1]
+            block_sub_alignment["start"] = align_start
+            block_sub_alignment["end"] = 1
             alignments.append(block_sub_alignment)
             confidence.append(
                 {"chromStart": chrom_start, "values": heatmap_vals}
             )
+        if len(confidence) != len(alignments):
+            print("DIFF")
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = alignments
         json_dict["heatmap"].append(heatmap_dict)
