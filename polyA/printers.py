@@ -183,6 +183,8 @@ def print_results_soda(
     ids: List[int],
     subfam_alignments: List[str],
     chrom_alignments: List[str],
+    consensus_starts: List[int],
+    consensus_stops: List[int],
     alignments_matrix: SubfamAlignmentsMatrix,
     matrix: SupportMatrix,
     subfams_collapse: List[str],
@@ -215,9 +217,10 @@ def print_results_soda(
     heatmap_dict = {"name": subfams_collapse[0], "id": 0}
     heatmap_vals = []
     confidence = []
-    start_offset: int = chrom_start + start_all - 2
     j: int = 0
     cur_col: int = 0
+    cur_subfam_row: int = 0
+    start_offset: int = chrom_start + start_all - 2
     align_start: int = start_offset
     # skip state values
     while j < num_col:
@@ -229,18 +232,19 @@ def print_results_soda(
     json_dict["heatmap"].append(heatmap_dict)
 
     for k in range(1, len(subfams_collapse)):
-        subfam_ids[subfams_collapse[k]] = str(k)
+        if subfams_collapse[k] == "Tandem Repeat":
+            subfam_ids["Tandem#Repeat/TR"] = str(k)
+        else:
+            subfam_ids[subfams_collapse[k]] = str(k)
         heatmap_dict = {"name": subfams_collapse[k], "id": k}
         heatmap_vals = []
         subfam_rows = []
         confidence = []
         alignments = []
-        j: int = 0
-        # values in list
-        # break up into sections - removes -inf values
-        cur_col: int = 0
-        cur_subfam_row: int = 0
-        align_start: int = start_offset
+        j = 0
+        cur_col = 0
+        cur_subfam_row = 0
+        align_start = start_offset
         while j < num_col:
             if (k, j) in matrix:
                 subfam_row = alignments_matrix[
@@ -253,18 +257,28 @@ def print_results_soda(
                     cur_col += 1
                 else:
                     if len(heatmap_vals) > 0:
-                        block_subfam = subfam_row[0]  # collapsed subfam row
                         block_sub_alignment = {}
-                        block_sub_alignment["chrSeq"] = chrom_alignments[
-                            block_subfam
-                        ]
-                        block_sub_alignment["famSeq"] = subfam_alignments[
-                            block_subfam
-                        ]
-                        block_sub_alignment["alignStart"] = subfam_rows[0][1]
-                        block_sub_alignment["alignEnd"] = subfam_rows[-1][1]
-                        block_sub_alignment["start"] = align_start
-                        block_sub_alignment["end"] = 1
+                        if subfams_collapse[k] != "Tandem Repeat":
+                            block_sub_alignment["chrSeq"] = chrom_alignments[
+                                cur_subfam_row
+                            ]
+                            block_sub_alignment["famSeq"] = subfam_alignments[
+                                cur_subfam_row
+                            ]
+                            block_sub_alignment["startOffset"] = abs(
+                                consensus_starts[cur_subfam_row]
+                                - subfam_rows[0][1]
+                            )
+                            block_sub_alignment["endOffset"] = abs(
+                                consensus_stops[cur_subfam_row]
+                                - subfam_rows[-1][1]
+                            )
+                            block_sub_alignment["start"] = consensus_starts[
+                                cur_subfam_row
+                            ]
+                            block_sub_alignment["end"] = consensus_stops[
+                                cur_subfam_row
+                            ]
                         alignments.append(block_sub_alignment)
                         confidence.append(
                             {"chromStart": align_start, "values": heatmap_vals}
@@ -276,20 +290,24 @@ def print_results_soda(
                     cur_subfam_row = subfam_row[0]
             j += 1
         if len(heatmap_vals) > 0:
-            block_subfam = subfam_rows[0][0]
             block_sub_alignment = {}
-            block_sub_alignment["chrSeq"] = chrom_alignments[block_subfam]
-            block_sub_alignment["famSeq"] = subfam_alignments[block_subfam]
-            block_sub_alignment["alignStart"] = subfam_rows[0][1]
-            block_sub_alignment["alignEnd"] = subfam_rows[-1][1]
-            block_sub_alignment["start"] = align_start
-            block_sub_alignment["end"] = 1
+            if subfams_collapse[k] != "Tandem Repeat":
+                block_sub_alignment["chrSeq"] = chrom_alignments[cur_subfam_row]
+                block_sub_alignment["famSeq"] = subfam_alignments[
+                    cur_subfam_row
+                ]
+                block_sub_alignment["startOffset"] = abs(
+                    consensus_starts[cur_subfam_row] - subfam_rows[0][1]
+                )
+                block_sub_alignment["endOffset"] = abs(
+                    consensus_stops[cur_subfam_row] - subfam_rows[-1][1]
+                )
+                block_sub_alignment["start"] = consensus_starts[cur_subfam_row]
+                block_sub_alignment["end"] = consensus_stops[cur_subfam_row]
             alignments.append(block_sub_alignment)
             confidence.append(
                 {"chromStart": chrom_start, "values": heatmap_vals}
             )
-        if len(confidence) != len(alignments):
-            print("DIFF")
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = alignments
         json_dict["heatmap"].append(heatmap_dict)
