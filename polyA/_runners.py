@@ -613,6 +613,8 @@ def run_full(
             node_ids,
             subfam_alignments,
             chrom_alignments,
+            consensus_starts_matrix,
+            consensus_stops_matrix,
             subfam_alignments_collapse,
             support_matrix_collapse,
             subfams_collapse,
