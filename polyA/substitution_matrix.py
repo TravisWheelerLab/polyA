@@ -56,8 +56,8 @@ def _parse_matrix_header(line: str) -> Tuple[str, Optional[float]]:
 
     if len(tokens) == 1:
         return tokens[0], None
-    if len(tokens) == 2:
-        return tokens[0], float(tokens[1])
+    # len(tokens) == 2
+    return tokens[0], float(tokens[1])
 
 
 def _parse_chars(line: str) -> List[str]:

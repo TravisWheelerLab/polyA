@@ -8,7 +8,7 @@ def confidence_cm(
     subfams: List[str],
     subfam_rows: List[int],
     repeats: int,
-    node_confidence_bool: bool,
+    node_confidence_bool: int,
 ) -> List[float]:
     """
     Computes confidence values for competing annotations using alignment and tandem
@@ -76,7 +76,7 @@ def confidence_cm(
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            subfam: str = subfams[subfam_rows[index]]
+            subfam = subfams[subfam_rows[index]]
             m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
@@ -103,7 +103,7 @@ def confidence_cm(
     # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
     # do not do this when conputing node confidence (skip state is not used)
     if confidence_list[0] < 0.01 and not node_confidence_bool:
-        summ = 0
+        summ = 0.0
         for i in range(1, len(confidence_list)):
             summ += confidence_list[i]
 

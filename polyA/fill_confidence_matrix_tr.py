@@ -59,15 +59,15 @@ def fill_confidence_matrix_tr(
 
     # go through non empty TR columns
     for tr_col in repeat_scores:
-        col_index: int = tr_col
-        temp_region: List[float] = []
+        col_index = tr_col
+        temp_region = []
 
         # last row in col is TR
         # assumes TRs do not overlap in a column
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = confidence_cm(
+        temp_confidence = confidence_cm(
             temp_region,
             subfam_countss,
             subfamss,
