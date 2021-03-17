@@ -40,7 +40,7 @@ def calculate_repeat_scores(
     index in the target sequence to it's tandem repeat score. Used in FillNodeConfidence.
 
     tr_info - list of dictionaries - [{'Start': num, 'Length': num, 'PositionScoreDelta': '-0.014500:1.27896'}, ...]
-    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1', 'Consensus': 'AT'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5', 'Consensus': 'GTT'}]]
     >>> align_mat = {}
     >>> active_cols = {}
     >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 1, 30)
@@ -52,7 +52,7 @@ def calculate_repeat_scores(
     {2: [0, 1], 3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
 
     Shard cuts off TR from left side
-    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1', 'Consensus': 'AT'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5', 'Consensus': 'GTT'}]]
     >>> align_mat = {}
     >>> active_cols = {}
     >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 6, 30)
@@ -64,7 +64,7 @@ def calculate_repeat_scores(
     {3: [0, 1], 4: [0, 1], 5: [0, 1], 7: [0, 2], 8: [0, 2], 9: [0, 2], 10: [0, 2], 11: [0, 2], 12: [0, 2], 13: [0, 2], 14: [0, 2]}
 
     Shard cuts off TR from right side in first half of chunk
-    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5'}]]
+    >>> repeats = [TandemRepeat.from_json(m) for m in [{'Start': 5, 'Length': 4, 'PositionScoreDelta': '-0.5:1:1.5:1', 'Consensus': 'AT'}, {'Start': 10, 'Length': 8, 'PositionScoreDelta': '0:0.5:0.5:1.5:1.5:1:0.5:-0.5', 'Consensus': 'GTT'}]]
     >>> align_mat = {}
     >>> active_cols = {}
     >>> rep_scores = calculate_repeat_scores(repeats, 5, 4, 1, active_cols, align_mat, {}, 1, 11)
