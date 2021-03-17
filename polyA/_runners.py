@@ -569,6 +569,7 @@ def run_full(
             - 1
         )
 
+    tr_consensus_changes: Dict[int, str] = {}
     if len(tandem_repeats) > 0:
         # label TRs with consensus
         for changes_index in range(len(changes_orig)):
@@ -586,18 +587,27 @@ def run_full(
                     + start_all
                     - 1
                 )
+                # FIXME: check if diff TR rows between start and stop seq positions
                 subfam_row = subfam_alignments_collapse[subfam, start_seq_pos][
                     0
                 ]
+                # print("NEW TR")
+                # for seq_pos in range(start_seq_pos, stop_seq_pos + 1):
+                #     print(subfam_alignments_collapse[subfam, start_seq_pos][
+                #         0
+                #     ])
                 tr_row = subfam_row - (
                     len(subfamily_matrix) - len(tandem_repeats)
                 )
-                changes_orig[changes_index] = tr_consensus_matrix[tr_row]
+                tr_consensus_changes[changes_index] = (
+                    "(" + tr_consensus_matrix[tr_row] + ")n#Simple_repeat"
+                )
 
     # prints results
     if print_matrix_pos:
         print_results(
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -606,6 +616,7 @@ def run_full(
         print_results_sequence(
             start_all,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -615,6 +626,7 @@ def run_full(
             start_all,
             target.chrom_start,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -630,6 +642,7 @@ def run_full(
             target.chrom_stop,
             subfamily_matrix,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             consensus_lengths_matrix,
