@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 
 
 class TandemRepeat(NamedTuple):
+    consensus: str
     start: int
     length: int
     stop: int
@@ -31,6 +32,7 @@ class TandemRepeat(NamedTuple):
                 position_scores.append(float(score))
 
         return TandemRepeat(
+            consensus=json_map["Consensus"],
             start=int(json_map["Start"]),
             length=int(json_map["Length"]),
             stop=int(json_map["Start"]) + int(json_map["Length"]) - 1,

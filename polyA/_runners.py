@@ -184,8 +184,10 @@ def run_full(
                     consensus_starts_matrix[i] + flanks_matrix[i]
                 )
 
+    tr_consensus_matrix: List[str] = []
     if len(tandem_repeats) > 0:
         for tr in tandem_repeats:
+            tr_consensus_matrix.append(tr.consensus)
             # add TR starts and stops
             # check they do not exceed chunk boundary
             if tr.start < shard_start:
@@ -466,7 +468,7 @@ def run_full(
             break
 
         path_graph.clear()  # reuse old path_graph
-        # Update for TR's - no alternative edges
+
         path_graph = fill_path_graph(
             node_count,
             non_empty_columns,
@@ -566,6 +568,18 @@ def run_full(
             + start_all
             - 1
         )
+
+    for changes_index in range(len(changes_orig)):
+        subfam = changes_orig[changes_index]
+        col = changes_position_orig[changes_index]
+        if subfam == "Tandem Repeat":
+            subfam_row = subfam_alignments_collapse[
+                subfam, col + start_all - 1
+            ][0]
+            tr_row = (
+                subfam_row - (len(subfamily_matrix) - len(tandem_repeats)) - 1
+            )
+            changes_orig[changes_index] = tr_consensus_matrix[tr_row]
 
     # prints results
     if print_matrix_pos:
