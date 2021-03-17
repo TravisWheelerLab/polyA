@@ -569,17 +569,30 @@ def run_full(
             - 1
         )
 
-    for changes_index in range(len(changes_orig)):
-        subfam = changes_orig[changes_index]
-        col = changes_position_orig[changes_index]
-        if subfam == "Tandem Repeat":
-            subfam_row = subfam_alignments_collapse[
-                subfam, col + start_all - 1
-            ][0]
-            tr_row = (
-                subfam_row - (len(subfamily_matrix) - len(tandem_repeats)) - 1
-            )
-            changes_orig[changes_index] = tr_consensus_matrix[tr_row]
+    if len(tandem_repeats) > 0:
+        # label TRs with consensus
+        for changes_index in range(len(changes_orig)):
+            subfam = changes_orig[changes_index]
+            if subfam == "Tandem Repeat":
+                start_seq_pos = (
+                    non_empty_columns_orig[changes_position_orig[changes_index]]
+                    + start_all
+                    - 1
+                )
+                stop_seq_pos = (
+                    non_empty_columns_orig[
+                        changes_position_orig[changes_index + 1] - 1
+                    ]
+                    + start_all
+                    - 1
+                )
+                subfam_row = subfam_alignments_collapse[subfam, start_seq_pos][
+                    0
+                ]
+                tr_row = subfam_row - (
+                    len(subfamily_matrix) - len(tandem_repeats)
+                )
+                changes_orig[changes_index] = tr_consensus_matrix[tr_row]
 
     # prints results
     if print_matrix_pos:

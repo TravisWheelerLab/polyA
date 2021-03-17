@@ -83,7 +83,7 @@ class CollapsedMatrices(NamedTuple):
 
     subfam_alignments_matrix: SubfamAlignmentsMatrix
     # subfam_alignment_matrix: Hash implementation of sparse 2D matrix.
-    # Tuple[str, int] as key. String is the subfamily name of the row, int is the column.
+    # Tuple[str, int] as key. String is the subfamily name of the row, int is the sequence position.
     # This is a collapsed matrix with no redundant subfamilies as rows. Each cell in the matrix is
     # the original subfam/chrom alignment row and the consensus sequence pos that aligned at the
     # corresponding column position of the sequence.
