@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from polyA import confidence_cm
+from .confidence_cm import confidence_cm
 
 
 def fill_confidence_matrix_tr(
