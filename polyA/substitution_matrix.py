@@ -28,7 +28,7 @@ class SubMatrix:
     For example: 'AA' => 8
     """
 
-    lamb: Optional[float] = None
+    lamb: float
     name: str
     scores: ScoresDict
 
