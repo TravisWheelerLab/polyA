@@ -1,7 +1,7 @@
 import json
 from math import inf
 from sys import stdout
-from typing import Dict, List, Optional, TextIO, Tuple, Union
+from typing import Dict, List, Optional, TextIO, Tuple, Union, Any
 from uuid import uuid4
 
 from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
@@ -202,10 +202,10 @@ def print_results_soda(
         1
     ] * length  # wont print out the results of the same thing twice
 
-    json_dict_id = {}
-    json_dict = {}
+    json_dict_id: Dict[str, Any] = {}
+    json_dict: Dict[str, Any] = {}
     json_dict["chr"] = chrom
-    json_dict["annotations"]: List[Dict[str, int]] = []
+    json_dict["annotations"] = []
     json_dict["heatmap"] = {}
 
     min_align_start: int = chrom_end
@@ -422,7 +422,7 @@ def print_results_soda(
                 + str(id)
             )
 
-            json_annotation = {}
+            json_annotation: Dict[str, Any] = {}
             json_annotation["id"] = id
             json_annotation["blockCount"] = block_count
             json_annotation["ucscString"] = ucscString
@@ -455,6 +455,7 @@ def print_results_soda(
                         align_changes.append(subfam_rows[align_num - 1])
                         align_changes.append(subfam_rows[align_num])
                 align_changes.append(subfam_rows[align_length - 1])
+                block_sub_alignment: Dict[str, Any]
                 for align_num in range(0, len(align_changes) - 1, 2):
                     block_subfam = align_changes[align_num][
                         0
