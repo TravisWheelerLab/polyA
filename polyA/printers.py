@@ -448,7 +448,7 @@ def print_results_soda(
                 max_align_end = align_stop
 
             # get alignments for each block
-            if subfam != "Tandem Repeat":
+            if orig_subfam != "Tandem Repeat":
                 # col in seq
                 subfam_start_col = align_start - chrom_start - 1
                 subfam_stop_col = align_stop - chrom_start - 1
