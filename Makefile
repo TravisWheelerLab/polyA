@@ -4,7 +4,7 @@ help:
 	@echo "check            run all tests and validations"
 	@echo "check-fast       run tests and validations that finish quickly"
 	@echo "check-format     verify that the code formatter has been run"
-	@echo "check-types      run mypy to check type annotations
+	@echo "check-types      run mypy to check type annotations"
 	@echo "check-slow       run tests and validations that take awhile"
 	@echo "container        build and push a new container image"
 	@echo "container-build  build the testing container"
