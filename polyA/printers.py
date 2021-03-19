@@ -224,7 +224,7 @@ def print_results_soda(
     align_start: int = start_offset
     # skip state values
     while j < num_col:
-        heatmap_vals.append(str(matrix[0, j]))
+        heatmap_vals.append(str(round(matrix[0, j], 3)))
         j += 1
     confidence.append({"chromStart": align_start, "values": heatmap_vals})
     heatmap_dict["confidence"] = confidence
@@ -252,7 +252,7 @@ def print_results_soda(
                 ]
                 if j == cur_col and subfam_row[0] == cur_subfam_row:
                     # continue to add values
-                    heatmap_vals.append(str(matrix[k, j]))
+                    heatmap_vals.append(str(round(matrix[k, j], 3)))
                     subfam_rows.append(subfam_row)
                     cur_col += 1
                 else:
@@ -283,7 +283,7 @@ def print_results_soda(
                         confidence.append(
                             {"chromStart": align_start, "values": heatmap_vals}
                         )
-                    heatmap_vals = [str(matrix[k, j])]
+                    heatmap_vals = [str(round(matrix[k, j], 3))]
                     subfam_rows = [subfam_row]
                     cur_col = j + 1
                     align_start = j + start_offset
@@ -515,6 +515,8 @@ def print_results_soda(
             json_annotation["blockSizes"] = block_size
             json_annotation["blockStarts"] = block_start
             json_annotation["id"] = subfam_ids[subfam]
+            json_dict["annotations"].append(json_annotation)
+
             if align_start < min_align_start:
                 min_align_start = align_start
             if align_stop > max_align_end:
