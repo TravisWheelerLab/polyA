@@ -265,18 +265,16 @@ def print_results_soda(
                             block_sub_alignment["famSeq"] = subfam_alignments[
                                 cur_subfam_row
                             ]
-                            block_sub_alignment["startOffset"] = abs(
-                                consensus_starts[cur_subfam_row]
-                                - subfam_rows[0][1]
-                            )
-                            block_sub_alignment["endOffset"] = abs(
-                                consensus_stops[cur_subfam_row]
-                                - subfam_rows[-1][1]
-                            )
-                            block_sub_alignment["start"] = consensus_starts[
-                                cur_subfam_row
-                            ]
-                            block_sub_alignment["end"] = consensus_stops[
+                            block_sub_alignment["relativeStart"] = subfam_rows[
+                                0
+                            ][1]
+                            block_sub_alignment["relativeEnd"] = subfam_rows[
+                                -1
+                            ][1]
+                            block_sub_alignment[
+                                "alignStart"
+                            ] = consensus_starts[cur_subfam_row]
+                            block_sub_alignment["alignEnd"] = consensus_stops[
                                 cur_subfam_row
                             ]
                         alignments.append(block_sub_alignment)
