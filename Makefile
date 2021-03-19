@@ -4,6 +4,7 @@ help:
 	@echo "check            run all tests and validations"
 	@echo "check-fast       run tests and validations that finish quickly"
 	@echo "check-format     verify that the code formatter has been run"
+	@echo "check-types      run mypy to check type annotations
 	@echo "check-slow       run tests and validations that take awhile"
 	@echo "container        build and push a new container image"
 	@echo "container-build  build the testing container"
@@ -49,7 +50,7 @@ publish-conda-package:
 	@echo "NOT IMPLEMENTED"
 
 .PHONY: check
-check: check-fast check-slow check-format
+check: check-fast check-slow check-format check-types
 
 .PHONY: check-fast
 check-fast:
@@ -58,6 +59,10 @@ check-fast:
 .PHONY: check-format
 check-format:
 	${FMT_CMD} --check ${FMT_OPTS} ${FMT_TARGETS}
+
+.PHONY: check-types
+check-types:
+	${RUN_CMD} mypy -m polyA
 
 .PHONY: check-slow
 check-slow:
