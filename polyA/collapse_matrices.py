@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, Tuple
+from typing import Dict, List, NamedTuple, Tuple, Set
 from math import inf, log
 
 from polyA.matrices import (
@@ -63,7 +63,7 @@ def dp_for_collapse(
             row = map_rows[row0]
 
             max: float = -inf
-            max_index: int = 0  # -inf is a float - can this be zero?
+            max_index: int = -1
             support_log: float = log(support_matrix[row0, curr_col])
 
             for row1 in active[prev_col]:
@@ -169,7 +169,7 @@ def collapse_matrices(
         str, int
     ] = {}  # maps subfam name to new row index
     subfams_count: Dict[str, List[int]] = {}  # original row in matrix
-    active_cells_collapsed_set: Dict[int, set] = {}
+    active_cells_collapsed_set: Dict[int, Set[int]] = {}
     subfams_dp = set()
 
     subfam_alignments_collapse: SubfamAlignmentsMatrix = {}
