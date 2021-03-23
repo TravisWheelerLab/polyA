@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from polyA import confidence_cm
+from .confidence_cm import confidence_cm
 
 
 def fill_confidence_matrix_tr(
@@ -49,7 +49,7 @@ def fill_confidence_matrix_tr(
             subfamss,
             active_cells_trailing[col_index],
             0,
-            0,
+            False,
         )
 
         for row_index2 in range(len(active_cells_trailing[col_index])):
@@ -59,21 +59,21 @@ def fill_confidence_matrix_tr(
 
     # go through non empty TR columns
     for tr_col in repeat_scores:
-        col_index: int = tr_col
-        temp_region: List[float] = []
+        col_index = tr_col
+        temp_region = []
 
         # last row in col is TR
         # assumes TRs do not overlap in a column
         for row_index in active_cells[col_index]:
             temp_region.append(align_matrix[row_index, col_index])
 
-        temp_confidence: List[float] = confidence_cm(
+        temp_confidence = confidence_cm(
             temp_region,
             subfam_countss,
             subfamss,
             active_cells[col_index],
             1,
-            0,
+            False,
         )
 
         # will replace cols that had both TR and alignment scores

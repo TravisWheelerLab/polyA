@@ -1,7 +1,7 @@
 import json
 from math import inf
 from sys import stdout
-from typing import Dict, List, Optional, TextIO, Tuple, Union
+from typing import Dict, List, Optional, TextIO, Tuple, Union, Any
 from uuid import uuid4
 
 from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
@@ -29,7 +29,7 @@ def print_matrix_hash(
     i: int = 0
     while i < num_row:
         file.write(f"{subfams[i]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (i, j) in matrix:
                 file.write(f"{matrix[i, j]}")
@@ -65,7 +65,7 @@ def print_matrix_support(
 
     for k in range(len(subfams_collapse)):
         outfile.write(f"{subfams_collapse[k]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (k, j) in matrix:
                 outfile.write(str(matrix[k, j]))
@@ -166,8 +166,8 @@ def print_results_chrom(
 
 def print_results_soda(
     start_all: int,
-    outfile: Optional[TextIO],
-    outfile_json: Optional[TextIO],
+    outfile: TextIO,
+    outfile_json: TextIO,
     chrom: str,
     chrom_start: int,
     chrom_end: int,
@@ -202,9 +202,8 @@ def print_results_soda(
         1
     ] * length  # wont print out the results of the same thing twice
 
-    json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
-
-    json_dict = {}
+    json_dict_id: Dict[str, Any] = {}
+    json_dict: Dict[str, Any] = {}
     json_dict["chr"] = chrom
     json_dict["annotations"] = []
     json_dict["heatmap"] = {}
@@ -215,7 +214,7 @@ def print_results_soda(
     while i < length:
 
         sub_id: int = 0
-        json_dict_subid: Dict[str, Dict[str, float]] = {}
+        json_dict_subid: Dict[str, List[Tuple[str, float]]] = {}
 
         if changes_orig[i] != "skip" and used[i]:
             subfam: str = changes_orig[i]
@@ -345,11 +344,11 @@ def print_results_soda(
                         del block_size[-1]
                         block_size.append("0")
 
-                        align_stop: int = chrom_start + (
+                        align_stop = chrom_start + (
                             columns_orig[changes_position_orig[j + 1] - 1]
                             + start_all
                         )
-                        feature_stop: int = align_stop + right_flank
+                        feature_stop = align_stop + right_flank
 
                         block_start.append(
                             str(
@@ -423,7 +422,7 @@ def print_results_soda(
                 + str(id)
             )
 
-            json_annotation = {}
+            json_annotation: Dict[str, Any] = {}
             json_annotation["id"] = id
             json_annotation["blockCount"] = block_count
             json_annotation["ucscString"] = ucscString
@@ -456,6 +455,7 @@ def print_results_soda(
                         align_changes.append(subfam_rows[align_num - 1])
                         align_changes.append(subfam_rows[align_num])
                 align_changes.append(subfam_rows[align_length - 1])
+                block_sub_alignment: Dict[str, Any]
                 for align_num in range(0, len(align_changes) - 1, 2):
                     block_subfam = align_changes[align_num][
                         0
@@ -486,7 +486,7 @@ def print_results_soda(
     heatmap_dict = {}
     for k in range(len(subfams_collapse)):
         heatmap_vals = []
-        j: int = 0
+        j = 0
         # values in list
         while j < num_col:
             if (k, j) in matrix:
