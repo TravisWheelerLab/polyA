@@ -86,7 +86,7 @@ def fill_support_matrix(
 
                 if (row_index, j) in consensus_matrix:
                     num: int = j
-                    summ: float = 0.0
+                    summ = 0.0
                     numsegments: int = 0
                     while num >= 0 and num >= j:
                         if (row_index, num) in consensus_matrix:
@@ -104,9 +104,9 @@ def fill_support_matrix(
             for col_index in range(
                 start, starts[row_index] + 1 - start_all + half_chunk
             ):
-                summ: float = 0.0
-                sum_index: int = col_index - left_index
-                num_segments: int = 0
+                summ = 0.0
+                sum_index = col_index - left_index
+                num_segments = 0
 
                 while (
                     sum_index <= col_index + half_chunk
@@ -120,9 +120,9 @@ def fill_support_matrix(
                 left_index += 1
 
             # middle part where num segments is chunk_size
-            col_index: int = start + half_chunk
-            summ: float = 0.0
-            sum_index: int = col_index - half_chunk
+            col_index = start + half_chunk
+            summ = 0.0
+            sum_index = col_index - half_chunk
             while sum_index <= col_index + half_chunk:
                 summ += confidence_matrix[row_index, sum_index]
                 sum_index += 1
@@ -159,9 +159,9 @@ def fill_support_matrix(
                 (stop + 1) - half_chunk, stops[row_index] + 1 - start_all + 1
             ):
 
-                summ: float = 0.0
-                sum_index: int = col_index - half_chunk
-                num_segments: int = 0
+                summ = 0.0
+                sum_index = col_index - half_chunk
+                num_segments = 0
 
                 while sum_index < col_index + right_index:
                     summ += confidence_matrix[row_index, sum_index]

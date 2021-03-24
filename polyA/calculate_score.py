@@ -37,7 +37,7 @@ def calculate_score(
     >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat)
     -4.0
     """
-    chunk_score: int = 0
+    chunk_score: float = 0.0
 
     # deals with the first character of a segment being a gap character - have to look at last
     # segment to see if this is a gap init or ext
@@ -71,4 +71,4 @@ def calculate_score(
         else:
             chunk_score += sub_matrix[seq1_char + seq2_char]
 
-    return float(chunk_score)
+    return chunk_score

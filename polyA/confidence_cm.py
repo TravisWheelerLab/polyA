@@ -25,7 +25,7 @@ def confidence_cm(
     subfams: list of subfam names
     subfam_rows: list of subfamily rows that correspond to the the subfams of the region scores
     repeats: number of tandem repeat scores found at the end of the region
-    node_confidence_bool: if 0 - confidence for filling DP matrices, if 1 - confidence for nodes
+    node_confidence_bool: if False (0) - confidence for filling DP matrices, if True - confidence for nodes
 
     output:
     confidence_list: list of confidence values for competing annotations, each input alignment
@@ -33,7 +33,7 @@ def confidence_cm(
 
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2", "s3"]
-    >>> conf = confidence_cm([2, 1, 1], counts, subs, [0, 1, 2], 0, 0)
+    >>> conf = confidence_cm([2, 1, 1], counts, subs, [0, 1, 2], 0, False)
     >>> f"{conf[0]:.2f}"
     '0.50'
     >>> f"{conf[1]:.2f}"
@@ -41,17 +41,17 @@ def confidence_cm(
     >>> f"{conf[2]:.2f}"
     '0.25'
 
-    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, 0)
+    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, False)
     >>> f"{conf[0]:.2f}"
     '0.01'
 
-    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, 1)
+    >>> conf = confidence_cm([0, 100, 100], 0, subs, [0, 1, 2], 0, True)
     >>> f"{conf[0]:.2f}"
     '0.00'
 
     >>> counts = {"s1": .31, "s2": .31, "s3": .31, "Tandem Repeat": .06}
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
-    >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1, 0)
+    >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1, False)
     >>> f"{conf[0]:.2f}"
     '0.65'
     >>> f"{conf[1]:.2f}"
@@ -76,7 +76,7 @@ def confidence_cm(
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            subfam: str = subfams[subfam_rows[index]]
+            subfam = subfams[subfam_rows[index]]
             m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
@@ -103,7 +103,7 @@ def confidence_cm(
     # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
     # do not do this when conputing node confidence (skip state is not used)
     if confidence_list[0] < 0.01 and not node_confidence_bool:
-        summ = 0
+        summ = 0.0
         for i in range(1, len(confidence_list)):
             summ += confidence_list[i]
 
