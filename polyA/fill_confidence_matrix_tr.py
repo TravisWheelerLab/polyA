@@ -29,7 +29,6 @@ def fill_confidence_matrix_tr(
 
     Same as fill_confidence_matrix.
     """
-
     confidence_matrix = fill_confidence_matrix(
         columns,
         subfam_counts,

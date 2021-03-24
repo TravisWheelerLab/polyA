@@ -143,8 +143,8 @@ def fill_align_matrix(
 
                 offset = temp_index - seq_index
 
-                chrom_slice: str = chrom_seq[seq_index : seq_index + offset]
-                subfam_slice: str = subfam_seq[seq_index : seq_index + offset]
+                chrom_slice = chrom_seq[seq_index : seq_index + offset]
+                subfam_slice = subfam_seq[seq_index : seq_index + offset]
 
                 align_score = calculate_score(
                     gap_ext,
