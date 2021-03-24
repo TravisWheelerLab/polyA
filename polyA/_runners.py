@@ -34,10 +34,6 @@ def run_confidence(
         scores.append(a.score)
 
     confidence_list = confidence_only(scores, lambs)
-    # FIXME: This creates nasty type confusion!
-    # Either zip and/or sorted fails to pass type information
-    # back through, or the type checker just can't "see" through
-    # that many layers of generics?
 
     # ignore this because the types work, but mypy doesn't know that
     confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
