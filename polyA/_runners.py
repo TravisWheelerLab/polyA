@@ -572,9 +572,12 @@ def run_full(
     tr_consensus_changes: Dict[int, str] = {}
     if len(tandem_repeats) > 0:
         # label TRs with consensus
-        for changes_index in range(len(changes_orig)):
+        # while instead of for to change len of changes_orig
+        changes_index: int = 0
+        while changes_index < len(changes_orig):
             subfam = changes_orig[changes_index]
             if subfam == "Tandem Repeat":
+                cur_changes_pos = changes_position_orig[changes_index]
                 start_seq_pos = (
                     non_empty_columns_orig[changes_position_orig[changes_index]]
                     + start_all
@@ -587,21 +590,42 @@ def run_full(
                     + start_all
                     - 1
                 )
-                # FIXME: check if diff TR rows between start and stop seq positions
-                subfam_row = subfam_alignments_collapse[subfam, start_seq_pos][
-                    0
-                ]
-                # print("NEW TR")
-                # for seq_pos in range(start_seq_pos, stop_seq_pos + 1):
-                #     print(subfam_alignments_collapse[subfam, start_seq_pos][
-                #         0
-                #     ])
-                tr_row = subfam_row - (
+
+                prev_subfam_row = subfam_alignments_collapse[
+                    subfam, start_seq_pos
+                ][0]
+                tr_row = prev_subfam_row - (
                     len(subfamily_matrix) - len(tandem_repeats)
                 )
                 tr_consensus_changes[changes_index] = (
                     "(" + tr_consensus_matrix[tr_row] + ")n#Simple_repeat"
                 )
+
+                for seq_pos in range(start_seq_pos, stop_seq_pos + 1):
+                    cur_subfam_row = subfam_alignments_collapse[
+                        subfam, seq_pos
+                    ][0]
+                    if prev_subfam_row != cur_subfam_row:
+                        changes_index += 1
+                        tr_row = cur_subfam_row - (
+                            len(subfamily_matrix) - len(tandem_repeats)
+                        )
+                        tr_consensus_changes[changes_index] = (
+                            "("
+                            + tr_consensus_matrix[tr_row]
+                            + ")n#Simple_repeat"
+                        )
+                        changes_orig.insert(changes_index, "Tandem Repeat")
+                        node_ids.insert(
+                            changes_index,
+                            node_ids[non_empty_columns_orig[cur_changes_pos]],
+                        )
+                        changes_position_orig.insert(
+                            changes_index, cur_changes_pos
+                        )
+                    cur_changes_pos += 1
+                    prev_subfam_row = cur_subfam_row
+            changes_index += 1
 
     # prints results
     if print_matrix_pos:
