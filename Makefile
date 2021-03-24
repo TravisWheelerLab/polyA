@@ -62,7 +62,7 @@ check-format:
 
 .PHONY: check-types
 check-types:
-	${RUN_CMD} mypy -m polyA
+	${RUN_CMD} mypy polyA/
 
 .PHONY: check-slow
 check-slow:

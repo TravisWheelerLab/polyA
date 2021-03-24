@@ -34,7 +34,13 @@ def run_confidence(
         scores.append(a.score)
 
     confidence_list = confidence_only(scores, lambs)
-    confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))
+    # FIXME: This creates nasty type confusion!
+    # Either zip and/or sorted fails to pass type information
+    # back through, or the type checker just can't "see" through
+    # that many layers of generics?
+
+    # ignore this because the types work, but mypy doesn't know that
+    confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
 
     stdout.write(f"query_label\tconfidence\n")
     for i in range(len(subfams_copy) - 1, 0, -1):
@@ -68,18 +74,18 @@ def _handle_single_alignment(
     """
     from uuid import uuid4
 
-    id = uuid4().hex
+    node_id = uuid4().hex
     if print_seq_pos:
         stdout.write(
-            f"{target.start}\t{target.stop}\t{id}\t{target.subfamily}\n"
+            f"{target.start}\t{target.stop}\t{node_id}\t{target.subfamily}\n"
         )
     elif print_matrix_pos:
         stdout.write(
-            f"{1}\t{target.stop - target.start + 1}\t{id}\t{target.subfamily}\n"
+            f"{1}\t{target.stop - target.start + 1}\t{node_id}\t{target.subfamily}\n"
         )
     else:
         stdout.write(
-            f"{target.start + target.chrom_start}\t{target.stop + target.chrom_start}\t{id}\t{target.subfamily}\n"
+            f"{target.start + target.chrom_start}\t{target.stop + target.chrom_start}\t{node_id}\t{target.subfamily}\n"
         )
     return target.start, target.stop
 
@@ -173,7 +179,7 @@ def run_full(
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}
-    if outfile_viz:
+    if outfile_viz and outfile_conf:
         for i in range(1, len(flanks_matrix)):
             if strands_matrix[i] == "+":
                 consensus_lengths_matrix[subfamily_matrix[i]] = (
@@ -264,7 +270,7 @@ def run_full(
     active_cells[cols] = [0]
     cols += 1
 
-    repeat_scores: Optional[Dict[int, float]] = None
+    repeat_scores: Dict[int, float] = {}
 
     if len(tandem_repeats) > 0:
         repeat_scores = calculate_repeat_scores(
@@ -371,7 +377,7 @@ def run_full(
     support_matrix.clear()
     consensus_matrix.clear()
 
-    if repeat_scores is not None:
+    if not repeat_scores:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
         prev_tr_col = 0
@@ -482,14 +488,10 @@ def run_full(
         # if so - keep looping, if not - break out of the loop
         # if they are all 0, break out of the loop
         test: bool = False
-        j: int = 0
-        while j < node_count:
-            i: int = 0
-            while i < j - 1:
+        for j in range(node_count):
+            for i in range(j - 1):
                 if path_graph[i * node_count + j] == 1:
                     test = True
-                i += 1
-            j += 1
 
         if not test:
             break
@@ -538,8 +540,8 @@ def run_full(
 
     if i == len(changes_orig):
         # whole shard is skip state
-        last_subfam_start: int = -1
-        last_subfam_stop: int = -1
+        last_subfam_start = -1
+        last_subfam_stop = -1
     else:
         # FIXME: could a TR overlap multiple shards?
         first_subfam_start = (
@@ -593,7 +595,7 @@ def run_full(
             node_ids,
         )
 
-    if outfile_viz:
+    if outfile_viz and outfile_conf:
         print_results_soda(
             start_all,
             outfile_viz,
