@@ -118,7 +118,7 @@ def run_full(
     _validate_target(target)
 
     if len(tandem_repeats) == 0 and seq_count == 2:
-        # Only one alignment other than the skip state
+        # only one alignment other than the skip state
         last_subfam_start, last_subfam_stop = _handle_single_alignment(
             target, print_seq_pos, print_matrix_pos
         )
@@ -227,16 +227,6 @@ def run_full(
         [sm.scores for sm in substitution_matrices],
     )
 
-    # NOTE: remove trailing edge stuff, but might want to add it back in ...
-    # fixme - do this in fill_align_matrix to avoid extra looping
-    # originally NonEmptyColumns and ActiveCells have trailing edge included
-    # redo these later to not include trailing edges
-    # non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
-    #     rows,
-    #     cols,
-    #     align_matrix,
-    # )
-
     (
         non_empty_columns,
         active_cells,
@@ -259,10 +249,8 @@ def run_full(
     # add skip state pad at end
     align_matrix[0, cols] = SKIP_ALIGN_SCORE
     non_empty_columns.append(cols)
-    # non_empty_columns_trailing.append(cols)
     non_empty_columns.append(cols)
     active_cells[cols] = [0]
-    # active_cells_trailing[cols] = [0]
     active_cells[cols] = [0]
     cols += 1
 
@@ -293,11 +281,9 @@ def run_full(
 
         confidence_matrix = fill_confidence_matrix_tr(
             non_empty_columns,
-            # non_empty_columns_trailing,
             subfam_counts,
             subfamily_matrix,
             active_cells,
-            # active_cells_trailing,
             active_cells,
             repeat_scores,
             align_matrix,
@@ -318,11 +304,9 @@ def run_full(
 
     else:
         confidence_matrix = fill_confidence_matrix(
-            # non_empty_columns_trailing,
             non_empty_columns,
             subfam_counts,
             subfamily_matrix,
-            # active_cells_trailing,
             active_cells,
             align_matrix,
         )
@@ -541,7 +525,6 @@ def run_full(
         last_subfam_start: int = -1
         last_subfam_stop: int = -1
     else:
-        # FIXME: could a TR overlap multiple shards?
         first_subfam_start = (
             non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
