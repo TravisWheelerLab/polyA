@@ -180,7 +180,7 @@ def print_results_soda(
     consensus_matrix_collapse: Dict[Tuple[int, int], int],
     subfams_collapse_index: Dict[str, int],
     node_confidence_orig: Dict[Tuple[str, int], float],
-    ids: List[int],
+    ids: List[str],
     subfam_alignments: List[str],
     chrom_alignments: List[str],
     alignments_matrix: SubfamAlignmentsMatrix,
