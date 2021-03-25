@@ -115,7 +115,7 @@ def confidence_cm(
 
 
 def confidence_only(
-    region: List[float],
+    region: List[int],
     lambs: List[float],
 ) -> List[float]:
     """
@@ -132,7 +132,7 @@ def confidence_only(
     output:
     confidence_list: list of confidence values for competing annotations
 
-    >>> reg = [100., 55., 1.]
+    >>> reg = [100, 55, 1]
     >>> lambs = [.1227] * 3
     >>> conf = confidence_only(reg, lambs)
     >>> conf
