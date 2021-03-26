@@ -6,9 +6,6 @@ from typing import Dict, List, Tuple
 def get_path(
     columns: List[int],
     ids: List[str],
-    changes_orig: List[str],
-    changes_position_orig: List[int],
-    columns_orig: List[int],
     subfams_collapse: List[str],
     last_column: List[float],
     active_cells_collapse: Dict[int, List[int]],
@@ -51,7 +48,7 @@ def get_path(
     >>> last_col = [-100, -10]
     >>> orig_mat = {(0, 0): 0, (1, 0): 1, (0, 1): 0, (1, 1): 0, (0, 2): 0, (1, 2): 0, (0, 3): 0, (1, 3): 1}
     >>> same_sub_mat = {}
-    >>> (changes_pos, changess) = get_path(non_cols, idss, [], [], [], subs, last_col, active_col, orig_mat, same_sub_mat)
+    >>> (changes_pos, changess) = get_path(non_cols, idss, subs, last_col, active_col, orig_mat, same_sub_mat)
     >>> changes_pos
     [0, 2, 3]
     >>> changess
@@ -92,13 +89,6 @@ def get_path(
         curr_column: int = columns[columns_index]
 
         ids[columns[columns_index - 1]] = current_id
-
-        # updates the original node labels if they change when being stitched
-        for i in range(len(changes_position_orig) - 1):
-            if columns_orig[changes_position_orig[i]] == prev_column:
-                changes_orig[i] = subfams_collapse[
-                    origin_matrix[prev_row_index, curr_column]
-                ]
 
         if prev_row_index != origin_matrix[prev_row_index, prev_column]:
             current_id = uuid4().hex
