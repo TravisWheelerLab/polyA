@@ -517,6 +517,7 @@ def run_full(
     # handles TRs overlapping shards
     i = 0
     # get first subfam in shard
+    TR_overlap_index: int = -1
     while i < len(changes_orig) and changes_orig[i] == "skip":
         i += 1
 
@@ -530,11 +531,9 @@ def run_full(
         )
         # check if first print pos is one after prev stop in seq pos
         if prev_stop + 1 == first_subfam_start:
+            TR_overlap_index = i
+            TR_start_seq_pos: int = prev_start - start_all + 1
             stdout.write("\033[2K\033[1G")  # remove last printed line
-            # change start pos of first subfam to be prev start seq pos
-            non_empty_columns_orig[changes_position_orig[i]] = (
-                prev_start - start_all + 1
-            )
 
         # get last subfam in shard
         # will find something since whole shard is not a skip state
@@ -562,6 +561,11 @@ def run_full(
                 start_seq_pos: int = (
                     non_empty_columns_orig[cur_changes_pos] + start_all - 1
                 )
+
+                if changes_index == TR_overlap_index:
+                    # change start pos of first subfam to be prev start seq pos
+                    non_empty_columns_orig[cur_changes_pos] = TR_start_seq_pos
+                    TR_overlap_index == -1
                 stop_seq_pos: int = (
                     non_empty_columns_orig[
                         changes_position_orig[changes_index + 1] - 1
