@@ -357,7 +357,7 @@ def run_full(
     support_matrix.clear()
     consensus_matrix.clear()
 
-    if not repeat_scores:
+    if len(tandem_repeats) > 0:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
         prev_tr_col = 0
