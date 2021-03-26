@@ -120,7 +120,7 @@ def run_full(
     _validate_target(target)
 
     if len(tandem_repeats) == 0 and seq_count == 2:
-        # Only one alignment other than the skip state
+        # only one alignment other than the skip state
         last_subfam_start, last_subfam_stop = _handle_single_alignment(
             target, print_seq_pos, print_matrix_pos
         )
@@ -186,8 +186,10 @@ def run_full(
                     consensus_starts_matrix[i] + flanks_matrix[i]
                 )
 
+    tr_consensus_matrix: List[str] = []
     if len(tandem_repeats) > 0:
         for tr in tandem_repeats:
+            tr_consensus_matrix.append(tr.consensus)
             # add TR starts and stops
             # check they do not exceed chunk boundary
             if tr.start < shard_start:
@@ -199,7 +201,7 @@ def run_full(
             else:
                 stops_matrix.append(tr.stop)
 
-    # Save original alignments before padding for SODA viz
+    # save original alignments before padding for SODA viz
     subfam_alignments = list(subfamily_sequences_matrix)
     chrom_alignments = list(chromosome_sequences_matrix)
 
@@ -227,16 +229,6 @@ def run_full(
         [sm.scores for sm in substitution_matrices],
     )
 
-    # NOTE: remove trailing edge stuff, but might want to add it back in ...
-    # fixme - do this in fill_align_matrix to avoid extra looping
-    # originally NonEmptyColumns and ActiveCells have trailing edge included
-    # redo these later to not include trailing edges
-    # non_empty_columns_trailing, active_cells_trailing = trailing_edges_info(
-    #     rows,
-    #     cols,
-    #     align_matrix,
-    # )
-
     (
         non_empty_columns,
         active_cells,
@@ -259,10 +251,8 @@ def run_full(
     # add skip state pad at end
     align_matrix[0, cols] = SKIP_ALIGN_SCORE
     non_empty_columns.append(cols)
-    # non_empty_columns_trailing.append(cols)
     non_empty_columns.append(cols)
     active_cells[cols] = [0]
-    # active_cells_trailing[cols] = [0]
     active_cells[cols] = [0]
     cols += 1
 
@@ -281,8 +271,6 @@ def run_full(
             shard_stop,
         )
 
-        # print(repeat_scores)
-
         # add skip states for TR cols
         for tr_col in repeat_scores:
             align_matrix[0, tr_col] = SKIP_ALIGN_SCORE
@@ -295,11 +283,9 @@ def run_full(
 
         confidence_matrix = fill_confidence_matrix_tr(
             non_empty_columns,
-            # non_empty_columns_trailing,
             subfam_counts,
             subfamily_matrix,
             active_cells,
-            # active_cells_trailing,
             active_cells,
             repeat_scores,
             align_matrix,
@@ -320,11 +306,9 @@ def run_full(
 
     else:
         confidence_matrix = fill_confidence_matrix(
-            # non_empty_columns_trailing,
             non_empty_columns,
             subfam_counts,
             subfamily_matrix,
-            # active_cells_trailing,
             active_cells,
             align_matrix,
         )
@@ -468,7 +452,7 @@ def run_full(
             break
 
         path_graph.clear()  # reuse old path_graph
-        # Update for TR's - no alternative edges
+
         path_graph = fill_path_graph(
             node_count,
             non_empty_columns,
@@ -539,7 +523,6 @@ def run_full(
         last_subfam_start = -1
         last_subfam_stop = -1
     else:
-        # FIXME: could a TR overlap multiple shards?
         first_subfam_start = (
             non_empty_columns_orig[changes_position_orig[i]] + start_all - 1
         )
@@ -565,10 +548,73 @@ def run_full(
             - 1
         )
 
+    tr_consensus_changes: Dict[int, str] = {}
+    if len(tandem_repeats) > 0:
+        # label TRs with their consensus sequence
+        changes_index: int = 0
+        while changes_index < len(changes_orig):
+            subfam: str = changes_orig[changes_index]
+            if subfam == "Tandem Repeat":
+                cur_changes_pos: int = changes_position_orig[changes_index]
+
+                start_seq_pos: int = (
+                    non_empty_columns_orig[cur_changes_pos] + start_all - 1
+                )
+                stop_seq_pos: int = (
+                    non_empty_columns_orig[
+                        changes_position_orig[changes_index + 1] - 1
+                    ]
+                    + start_all
+                    - 1
+                )
+
+                # track consensus label row
+                prev_subfam_row: int = subfam_alignments_collapse[
+                    subfam, start_seq_pos
+                ][0]
+                tr_row: int = prev_subfam_row - (
+                    len(subfamily_matrix) - len(tandem_repeats)
+                )
+                tr_consensus_changes[changes_index] = (
+                    "(" + tr_consensus_matrix[tr_row] + ")n#Simple_repeat"
+                )
+
+                # check if TR annotation is from multiple TR rows
+                for seq_pos in range(start_seq_pos, stop_seq_pos + 1):
+                    cur_subfam_row: int = subfam_alignments_collapse[
+                        subfam, seq_pos
+                    ][0]
+                    if prev_subfam_row != cur_subfam_row:
+                        # different TR row used
+                        changes_index += 1
+
+                        tr_row = cur_subfam_row - (
+                            len(subfamily_matrix) - len(tandem_repeats)
+                        )
+                        tr_consensus_changes[changes_index] = (
+                            "("
+                            + tr_consensus_matrix[tr_row]
+                            + ")n#Simple_repeat"
+                        )
+
+                        # insert for printing
+                        changes_orig.insert(changes_index, "Tandem Repeat")
+                        node_ids.insert(
+                            changes_index,
+                            node_ids[non_empty_columns_orig[cur_changes_pos]],
+                        )
+                        changes_position_orig.insert(
+                            changes_index, cur_changes_pos
+                        )
+                    cur_changes_pos += 1
+                    prev_subfam_row = cur_subfam_row
+            changes_index += 1
+
     # prints results
     if print_matrix_pos:
         print_results(
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -577,6 +623,7 @@ def run_full(
         print_results_sequence(
             start_all,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -586,6 +633,7 @@ def run_full(
             start_all,
             target.chrom_start,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
@@ -601,6 +649,7 @@ def run_full(
             target.chrom_stop,
             subfamily_matrix,
             changes_orig,
+            tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             consensus_lengths_matrix,

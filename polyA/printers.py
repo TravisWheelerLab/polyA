@@ -1,11 +1,9 @@
 import json
 from math import inf
 from sys import stdout
-from typing import Dict, List, Optional, TextIO, Tuple, Union, Any
-from uuid import uuid4
+from typing import Dict, List, TextIO, Tuple, Union, Any
 
 from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
-from .ultra_provider import TandemRepeat
 
 
 def print_matrix_hash(
@@ -78,6 +76,7 @@ def print_matrix_support(
 
 def print_results(
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -96,13 +95,17 @@ def print_results(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
 def print_results_sequence(
     edgestart: int,
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -121,7 +124,10 @@ def print_results_sequence(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
@@ -129,6 +135,7 @@ def print_results_chrom(
     edgestart: int,
     chrom_start: int,
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -160,7 +167,10 @@ def print_results_chrom(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
@@ -173,6 +183,7 @@ def print_results_soda(
     chrom_end: int,
     subfams: List[str],
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changes_position_orig: List[int],
     columns_orig: List[int],
     consensus_lengths: Dict[str, int],
@@ -217,6 +228,7 @@ def print_results_soda(
         json_dict_subid: Dict[str, List[Tuple[str, float]]] = {}
 
         if changes_orig[i] != "skip" and used[i]:
+            orig_subfam: str = changes_orig[i]
             subfam: str = changes_orig[i]
             strand: str = strand_matrix_collapse[
                 subfams_collapse_index[subfam],
@@ -226,8 +238,8 @@ def print_results_soda(
             left_flank: int
             right_flank: int
 
-            if subfam == "Tandem Repeat":
-                subfam = "Tandem#Repeat/TR"
+            if orig_subfam == "Tandem Repeat":
+                subfam = tr_consensus_changes[i]
                 left_flank = 0
                 right_flank = 0
             else:
@@ -314,7 +326,7 @@ def print_results_soda(
 
             j: int = i + 1
             while j < length:
-                if changes_orig[j] != "skip" and subfam != "Tandem#Repeat/TR":
+                if changes_orig[j] != "skip" and orig_subfam != "Tandem Repeat":
 
                     if (
                         ids[columns_orig[changes_position_orig[i]]]
@@ -435,7 +447,7 @@ def print_results_soda(
                 max_align_end = align_stop
 
             # get alignments for each block
-            if subfam != "Tandem#Repeat/TR":
+            if orig_subfam != "Tandem Repeat":
                 # col in seq
                 subfam_start_col = align_start - chrom_start - 1
                 subfam_stop_col = align_stop - chrom_start - 1
