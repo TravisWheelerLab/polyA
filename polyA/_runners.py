@@ -385,16 +385,9 @@ def run_full(
     # node_ids for each nucleotide will be assigned during DP backtrace
     node_ids = [""] * cols
 
-    changes_orig: List[str] = []
-    changes_position_orig: List[int] = []
-    non_empty_columns_orig: List[int] = []
-
     (changes_position, changes) = get_path(
         non_empty_columns,
         node_ids,
-        changes_orig,
-        changes_position_orig,
-        non_empty_columns_orig,
         subfams_collapse,
         ProbMatrixLastColumn,
         active_cells_collapse,
@@ -495,15 +488,9 @@ def run_full(
             collapsed_matrices,
         )
 
-        changes.clear()
-        changes_position.clear()
-
         (changes_position, changes) = get_path(
             non_empty_columns,
             node_ids,
-            changes,
-            changes_position,
-            non_empty_columns,
             subfams_collapse,
             ProbMatrixLastColumn,
             active_cells_collapse,
