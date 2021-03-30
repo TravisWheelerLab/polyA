@@ -219,8 +219,7 @@ def print_results_soda(
     confidence = []
     j: int = 0
     cur_subfam_row: int = 0
-    start_offset: int = chrom_start + start_all - 2
-    align_start: int = start_offset
+    align_start: int = chrom_start - 1
     # skip state values
     while j < num_col:
         heatmap_vals.append(round(matrix[0, j], 3))
@@ -240,22 +239,22 @@ def print_results_soda(
         subfam_rows = []
         confidence = []
         alignments = []
-        j = 0
-        cur_col = 0
+        cur_col = 1
+        prev_col = 0
         prev_subfam_row = 0
-        align_start = start_offset
-        while j < num_col:
-            if (k, j) in matrix:
+        align_start = chrom_start
+        while cur_col < num_col:
+            if (k, cur_col) in matrix:
                 # cur subfam row will be unique
                 subfam_row_consensus = alignments_matrix[
-                    subfams_collapse[k], j + start_all - 1
+                    subfams_collapse[k], cur_col + start_all - 1
                 ]
                 cur_subfam_row = subfam_row_consensus[0]
-                if j == cur_col and cur_subfam_row == prev_subfam_row:
+                if cur_col == prev_col and cur_subfam_row == prev_subfam_row:
                     # continue to add values
-                    heatmap_vals.append(round(matrix[k, j], 3))
+                    heatmap_vals.append(round(matrix[k, cur_col], 3))
                     subfam_rows.append(subfam_row_consensus[1])
-                    cur_col += 1
+                    prev_col += 1
                 else:
                     if len(heatmap_vals) > 0:
                         block_sub_alignment = {}
@@ -285,12 +284,15 @@ def print_results_soda(
                         confidence.append(
                             {"chromStart": align_start, "values": heatmap_vals}
                         )
-                    heatmap_vals = [round(matrix[k, j], 3)]
+                    heatmap_vals = [round(matrix[k, cur_col], 3)]
                     subfam_rows = [subfam_row_consensus[1]]
-                    cur_col = j + 1
-                    align_start = j + start_offset
+                    align_start = chrom_start + cur_col + start_all - 2
+                    prev_col = cur_col + 1
                     prev_subfam_row = cur_subfam_row
-            j += 1
+                    if subfams_collapse[k] == "L1M5_orf2#LINE/L1":
+                        print(align_start)
+
+            cur_col += 1
         if len(heatmap_vals) > 0:
             block_sub_alignment = {}
             if subfams_collapse[k] != "Tandem Repeat":
@@ -313,7 +315,7 @@ def print_results_soda(
                 ]
             alignments.append(block_sub_alignment)
             confidence.append(
-                {"chromStart": chrom_start, "values": heatmap_vals}
+                {"chromStart": align_start, "values": heatmap_vals}
             )
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = alignments
@@ -373,12 +375,16 @@ def print_results_soda(
                         ]
                     )
 
-            align_start: int = chrom_start + (
-                columns_orig[changes_position_orig[i]] + start_all
+            align_start: int = (
+                chrom_start
+                + (columns_orig[changes_position_orig[i]] + start_all)
+                - 2
             )
             feature_start: int = align_start - left_flank
-            align_stop: int = chrom_start + (
-                columns_orig[changes_position_orig[i + 1] - 1] + start_all
+            align_stop: int = (
+                chrom_start
+                + (columns_orig[changes_position_orig[i + 1] - 1] + start_all)
+                - 2
             )
             feature_stop: int = align_stop + right_flank
 
