@@ -289,9 +289,6 @@ def print_results_soda(
                     align_start = chrom_start + cur_col + start_all - 2
                     prev_col = cur_col + 1
                     prev_subfam_row = cur_subfam_row
-                    if subfams_collapse[k] == "L1M5_orf2#LINE/L1":
-                        print(align_start)
-
             cur_col += 1
         if len(heatmap_vals) > 0:
             block_sub_alignment = {}
