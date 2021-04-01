@@ -127,62 +127,64 @@ def run_full(
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
-    # fixme - rename, don't call 'matrix'
-    subfamily_matrix: List[str] = []
-    chromosome_matrix: List[str] = []
-    scores_matrix: List[int] = []
-    strands_matrix: List[str] = []
-    starts_matrix: List[int] = []
-    stops_matrix: List[int] = []
-    consensus_starts_matrix: List[int] = []
-    consensus_stops_matrix: List[int] = []
-    subfamily_sequences_matrix: List[str] = []
-    chromosome_sequences_matrix: List[str] = []
-    flanks_matrix: List[int] = []
-    substitution_matrices: List[SubMatrix] = []
-    gap_inits: List[float] = []
-    gap_exts: List[float] = []
-    lambda_values: List[float] = []
+    # We use a whole bunch of parallel lists to store alignment data. This may
+    # change in the future, but for now it is an artifact of an earlier version
+    # of the code and it has some benefits in that we can more easily iterate
+    # over a particular field. Each of these lists holds data for exactly one
+    # alignment (one row in the matrices we build later).
+    alignment_subfamilies: List[str] = []
+    alignment_chromosomes: List[str] = []
+    alignment_scores: List[int] = []
+    alignment_strands: List[str] = []
+    alignment_start_positions: List[int] = []
+    alignment_stop_positions: List[int] = []
+    alignment_consensus_start_positions: List[int] = []
+    alignment_consensus_stop_positions: List[int] = []
+    alignment_subfamily_sequences: List[str] = []
+    alignment_chromosome_sequences: List[str] = []
+    alignment_flanks: List[int] = []
+    alignment_substitution_matrices: List[SubMatrix] = []
+    alignment_gap_inits: List[float] = []
+    alignment_gap_exts: List[float] = []
+    alignment_lambdas: List[float] = []
 
-    for alignment in alignments:
-        subfamily_matrix.append(alignment.subfamily)
-        chromosome_matrix.append(alignment.chrom_name)
-        scores_matrix.append(alignment.score)
-        strands_matrix.append(alignment.strand)
-        starts_matrix.append(alignment.start)
-        stops_matrix.append(alignment.stop)
-        consensus_starts_matrix.append(alignment.consensus_start)
-        consensus_stops_matrix.append(alignment.consensus_stop)
-        subfamily_sequences_matrix.append(alignment.subfamily_sequence)
-        chromosome_sequences_matrix.append(alignment.sequence)
-        flanks_matrix.append(alignment.flank)
-        gap_inits.append(alignment.gap_init)
-        gap_exts.append(alignment.gap_ext)
+    for a in alignments:
+        alignment_subfamilies.append(a.subfamily)
+        alignment_chromosomes.append(a.chrom_name)
+        alignment_scores.append(a.score)
+        alignment_strands.append(a.strand)
+        alignment_start_positions.append(a.start)
+        alignment_stop_positions.append(a.stop)
+        alignment_consensus_start_positions.append(a.consensus_start)
+        alignment_consensus_stop_positions.append(a.consensus_stop)
+        alignment_subfamily_sequences.append(a.subfamily_sequence)
+        alignment_chromosome_sequences.append(a.sequence)
+        alignment_flanks.append(a.flank)
+        alignment_gap_inits.append(a.gap_init)
+        alignment_gap_exts.append(a.gap_ext)
 
         # fixme (george): is this a list of dicts?
         # fixme (george): change it to a dict of dicts?
-        if alignment.sub_matrix_name in sub_matrix_scores:
-            substitution_matrices.append(
-                sub_matrix_scores[alignment.sub_matrix_name]
+        if a.sub_matrix_name in sub_matrix_scores:
+            alignment_substitution_matrices.append(
+                sub_matrix_scores[a.sub_matrix_name]
             )
-            lambda_values.append(
-                sub_matrix_scores[alignment.sub_matrix_name].lamb
-            )
+            alignment_lambdas.append(sub_matrix_scores[a.sub_matrix_name].lamb)
         else:
-            substitution_matrices.append(SubMatrix("skip", 0.0))
-            lambda_values.append(0.0)
+            alignment_substitution_matrices.append(SubMatrix("skip", 0.0))
+            alignment_lambdas.append(0.0)
 
     # precomputes consensus seq length for PrintResultsViz()
     consensus_lengths_matrix: Dict[str, int] = {}
     if outfile_viz and outfile_conf:
-        for i in range(1, len(flanks_matrix)):
-            if strands_matrix[i] == "+":
-                consensus_lengths_matrix[subfamily_matrix[i]] = (
-                    consensus_stops_matrix[i] + flanks_matrix[i]
+        for i in range(1, len(alignment_flanks)):
+            if alignment_strands[i] == "+":
+                consensus_lengths_matrix[alignment_subfamilies[i]] = (
+                    alignment_consensus_stop_positions[i] + alignment_flanks[i]
                 )
             else:
-                consensus_lengths_matrix[subfamily_matrix[i]] = (
-                    consensus_starts_matrix[i] + flanks_matrix[i]
+                consensus_lengths_matrix[alignment_subfamilies[i]] = (
+                    alignment_consensus_start_positions[i] + alignment_flanks[i]
                 )
 
     tr_consensus_matrix: List[str] = []
@@ -192,40 +194,42 @@ def run_full(
             # add TR starts and stops
             # check they do not exceed chunk boundary
             if tr.start < shard_start:
-                starts_matrix.append(shard_start)
+                alignment_start_positions.append(shard_start)
             else:
-                starts_matrix.append(tr.start)
+                alignment_start_positions.append(tr.start)
             if tr.stop > shard_stop:
-                stops_matrix.append(shard_stop)
+                alignment_stop_positions.append(shard_stop)
             else:
-                stops_matrix.append(tr.stop)
+                alignment_stop_positions.append(tr.stop)
 
-    start_all, stop_all = edges(starts_matrix, stops_matrix)
+    start_all, stop_all = edges(
+        alignment_start_positions, alignment_stop_positions
+    )
 
     # save original alignments before padding for SODA viz
-    subfam_alignments = list(subfamily_sequences_matrix)
-    chrom_alignments = list(chromosome_sequences_matrix)
+    subfam_alignments = list(alignment_subfamily_sequences)
+    chrom_alignments = list(alignment_chromosome_sequences)
 
     pad_sequences(
         chunk_size,
-        subfamily_sequences_matrix,
-        chromosome_sequences_matrix,
+        alignment_subfamily_sequences,
+        alignment_chromosome_sequences,
     )
 
     # number of rows in matrices
     rows: int = seq_count
 
     cols, align_matrix = fill_align_matrix(
-        lambda_values,
+        alignment_lambdas,
         start_all,
         chunk_size,
-        gap_inits,
-        gap_exts,
+        alignment_gap_inits,
+        alignment_gap_exts,
         SKIP_ALIGN_SCORE,
-        subfamily_sequences_matrix,
-        chromosome_sequences_matrix,
-        starts_matrix,
-        [sm.scores for sm in substitution_matrices],
+        alignment_subfamily_sequences,
+        alignment_chromosome_sequences,
+        alignment_start_positions,
+        [sm.scores for sm in alignment_substitution_matrices],
     )
 
     (
@@ -236,12 +240,12 @@ def run_full(
         cols,
         rows,
         start_all,
-        subfamily_sequences_matrix,
-        chromosome_sequences_matrix,
-        starts_matrix,
-        stops_matrix,
-        consensus_starts_matrix,
-        strands_matrix,
+        alignment_subfamily_sequences,
+        alignment_chromosome_sequences,
+        alignment_start_positions,
+        alignment_stop_positions,
+        alignment_consensus_start_positions,
+        alignment_strands,
     )
 
     # skip state has no active rows
@@ -276,17 +280,16 @@ def run_full(
 
         # add TRs to subfams
         for _ in tandem_repeats:
-            subfamily_matrix.append("Tandem Repeat")
-            strands_matrix.append("+")
+            alignment_subfamilies.append("Tandem Repeat")
+            alignment_strands.append("+")
             rows += 1
 
         confidence_matrix = fill_confidence_matrix_tr(
             non_empty_columns,
-            subfam_counts,
-            subfamily_matrix,
-            active_cells,
-            active_cells,
             repeat_scores,
+            subfam_counts,
+            alignment_subfamilies,
+            active_cells,
             align_matrix,
         )
 
@@ -307,7 +310,7 @@ def run_full(
         confidence_matrix = fill_confidence_matrix(
             non_empty_columns,
             subfam_counts,
-            subfamily_matrix,
+            alignment_subfamilies,
             active_cells,
             align_matrix,
         )
@@ -322,9 +325,9 @@ def run_full(
         chunk_size,
         start_all,
         non_empty_columns,
-        starts_matrix,
-        stops_matrix,
-        subfamily_matrix,
+        alignment_start_positions,
+        alignment_stop_positions,
+        alignment_subfamilies,
         confidence_matrix,
         consensus_matrix,
     )
@@ -333,10 +336,10 @@ def run_full(
         rows,
         start_all,
         non_empty_columns,
-        subfamily_matrix,
-        strands_matrix,
-        starts_matrix,
-        stops_matrix,
+        alignment_subfamilies,
+        alignment_strands,
+        alignment_start_positions,
+        alignment_stop_positions,
         active_cells,
         support_matrix,
         consensus_matrix,
@@ -356,7 +359,7 @@ def run_full(
     support_matrix.clear()
     consensus_matrix.clear()
 
-    if not repeat_scores:
+    if len(tandem_repeats) > 0:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
         prev_tr_col = 0
@@ -384,16 +387,9 @@ def run_full(
     # node_ids for each nucleotide will be assigned during DP backtrace
     node_ids = [""] * cols
 
-    changes_orig: List[str] = []
-    changes_position_orig: List[int] = []
-    non_empty_columns_orig: List[int] = []
-
     (changes_position, changes) = get_path(
         non_empty_columns,
         node_ids,
-        changes_orig,
-        changes_position_orig,
-        non_empty_columns_orig,
         subfams_collapse,
         ProbMatrixLastColumn,
         active_cells_collapse,
@@ -427,17 +423,17 @@ def run_full(
         node_confidence = fill_node_confidence(
             node_count,
             start_all,
-            gap_inits,
-            gap_exts,
+            alignment_gap_inits,
+            alignment_gap_exts,
             non_empty_columns,
-            starts_matrix,
-            stops_matrix,
+            alignment_start_positions,
+            alignment_stop_positions,
             changes_position,
-            subfamily_matrix,
-            subfamily_sequences_matrix,
-            chromosome_sequences_matrix,
+            alignment_subfamilies,
+            alignment_subfamily_sequences,
+            alignment_chromosome_sequences,
             subfam_counts,
-            substitution_matrices,
+            alignment_substitution_matrices,
             repeat_scores,
             len(tandem_repeats),
         )
@@ -494,15 +490,9 @@ def run_full(
             collapsed_matrices,
         )
 
-        changes.clear()
-        changes_position.clear()
-
         (changes_position, changes) = get_path(
             non_empty_columns,
             node_ids,
-            changes,
-            changes_position,
-            non_empty_columns,
             subfams_collapse,
             ProbMatrixLastColumn,
             active_cells_collapse,
@@ -514,6 +504,7 @@ def run_full(
     # handles TRs overlapping shards
     i = 0
     # get first subfam in shard
+    tr_overlap_index: int = -1
     while i < len(changes_orig) and changes_orig[i] == "skip":
         i += 1
 
@@ -527,11 +518,9 @@ def run_full(
         )
         # check if first print pos is one after prev stop in seq pos
         if prev_stop + 1 == first_subfam_start:
+            tr_overlap_index = i
+            tr_start_seq_pos: int = prev_start - start_all + 1
             stdout.write("\033[2K\033[1G")  # remove last printed line
-            # change start pos of first subfam to be prev start seq pos
-            non_empty_columns_orig[changes_position_orig[i]] = (
-                prev_start - start_all + 1
-            )
 
         # get last subfam in shard
         # will find something since whole shard is not a skip state
@@ -559,6 +548,12 @@ def run_full(
                 start_seq_pos: int = (
                     non_empty_columns_orig[cur_changes_pos] + start_all - 1
                 )
+
+                if changes_index == tr_overlap_index:
+                    # change start pos of first subfam to be prev start seq pos
+                    non_empty_columns_orig[cur_changes_pos] = tr_start_seq_pos
+                    tr_overlap_index = -1
+
                 stop_seq_pos: int = (
                     non_empty_columns_orig[
                         changes_position_orig[changes_index + 1] - 1
@@ -572,7 +567,7 @@ def run_full(
                     subfam, start_seq_pos
                 ][0]
                 tr_row: int = prev_subfam_row - (
-                    len(subfamily_matrix) - len(tandem_repeats)
+                    len(alignment_subfamilies) - len(tandem_repeats)
                 )
                 tr_consensus_changes[changes_index] = (
                     "(" + tr_consensus_matrix[tr_row] + ")n#Simple_repeat"
@@ -588,7 +583,7 @@ def run_full(
                         changes_index += 1
 
                         tr_row = cur_subfam_row - (
-                            len(subfamily_matrix) - len(tandem_repeats)
+                            len(alignment_subfamilies) - len(tandem_repeats)
                         )
                         tr_consensus_changes[changes_index] = (
                             "("
@@ -646,7 +641,7 @@ def run_full(
             target.chrom_name,
             target.chrom_start,
             target.chrom_stop,
-            subfamily_matrix,
+            alignment_subfamilies,
             changes_orig,
             tr_consensus_changes,
             changes_position_orig,
