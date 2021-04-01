@@ -19,23 +19,29 @@ def fill_align_matrix(
     sub_matrices: List[Dict[str, int]],
 ) -> Tuple[int, Dict[Tuple[int, int], float]]:
     """
-    fills AlignScoreMatrix by calculating alignment score (according to crossmatch scoring)
-    for every segment of size chunksize for all seqs in alignments
+    Fills an alignment score matrix by calculating an alignment score (according
+    to crossmatch scoring) for every segment of size `chunk_size` for all
+    sequences.
 
-    Scores are of the surrounding chunksize nucleotides in the alignment. Ex: column 15 in
-    matrix holds aligment score for nucleotides at positons 0 - 30. (if chunksize = 31)
+    Scores are based on the surrounding `chunk_size` nucleotides in the
+    alignment. Ex: column 15 in the matrix holds the aligment score for
+    nucleotides at positons 0 - 30, assuming `chunk_size` = 31.
 
-    Starting and trailing cells are different - column 0 in matrix holds alignment score for
-    nucleotides 0 - 15, column 1 is nucleotides 0 - 16, etc. Scores are weighted based on number
-    of nucleotides that contribute to the score
+    Starting and trailing cells are treated differently. For example, column 0
+    in the matrix holds the alignment score for nucleotides 0 - 15, column 1
+    represents nucleotides 0 - 16, etc. Scores are weighted based on number of
+    nucleotides that contribute to the score.
 
-    ignores all padded indices in subfams and chroms array (padded with '.')
+    This algorithm ignores all padded indices (".") in the chroms and subfams
+    lists.
 
-    Speed up by computing base score for the first segment, moves to next column but adding next
-    chars score to base score and subtracting previous chars score from base score. Restarts and
-    recomputes new base score when necessary
+    Speed up by computing base score for the first segment, moves to next column
+    but adding next chars score to base score and subtracting previous chars
+    score from base score. Restarts and recomputes new base score when
+    necessary.
 
-    input:
+    Inputs:
+
     everything needed for CalcScore()
     edge_start: where alignment starts on the target/chrom sequence
     chunk_size: size of nucletide chunks that are scored
@@ -44,7 +50,8 @@ def fill_align_matrix(
     chroms: alignments to calculate scores from
     starts: where in the target sequence the competing alignments start
 
-    output:
+    Outputs:
+
     num_cols: number of columns in the matrix
     align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
