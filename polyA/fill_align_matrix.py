@@ -89,7 +89,9 @@ def fill_align_matrix(
         while temp_count < chunk_size - k:
             if chrom_seq[temp_index] != "-":
                 temp_count += 1
-            temp_index += 1
+            # stop offset before padding starts
+            if chrom_seq[temp_index] != ".":
+                temp_index += 1
 
         offset: int = temp_index - seq_index
 
