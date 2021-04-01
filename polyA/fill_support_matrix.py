@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
 from polyA.matrices import ConfidenceMatrix, SupportMatrix, ConsensusMatrix
+from polyA.performance import timeit
 
 
+@timeit
 def fill_support_matrix(
     row_num: int,
     chunk_size: int,
