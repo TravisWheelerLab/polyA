@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
 from .confidence_cm import confidence_cm
+from .performance import timeit
 
 
+@timeit
 def fill_confidence_matrix_tr(
     columns: List[int],
     subfam_countss: Dict[str, float],

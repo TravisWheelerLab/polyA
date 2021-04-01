@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
 from polyA.matrices import ConsensusMatrixContainer
+from polyA.performance import timeit
 
 
+@timeit
 def fill_consensus_position_matrix(
     col_num: int,
     row_num: int,

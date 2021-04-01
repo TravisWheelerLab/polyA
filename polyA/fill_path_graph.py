@@ -1,6 +1,9 @@
 from typing import Dict, List, Tuple
 
+from polyA.performance import timeit
 
+
+@timeit
 def fill_path_graph(
     nodes: int,
     columns: List[int],
