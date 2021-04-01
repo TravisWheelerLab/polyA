@@ -1,9 +1,10 @@
 from typing import Dict, Iterable, List, Tuple
-
 from .confidence_cm import confidence_cm
 from .matrices import ConfidenceMatrix
+from .performance import timeit
 
 
+@timeit
 def fill_confidence_matrix(
     columns: Iterable[int],
     subfam_counts: Dict[str, float],

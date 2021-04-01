@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 
-from polyA.matrices import ConfidenceMatrix, SupportMatrix
-from polyA.performance import timeit
+from .matrices import ConfidenceMatrix, SupportMatrix
+from .performance import timeit
 
 
 @timeit

@@ -2,8 +2,10 @@ from typing import Dict, Iterable, List, Tuple
 
 from .fill_confidence_matrix import fill_confidence_matrix
 from .matrices import ConfidenceMatrix
+from .performance import timeit
 
 
+@timeit
 def fill_confidence_matrix_tr(
     columns: Iterable[int],
     repeat_scores: Dict[int, float],
