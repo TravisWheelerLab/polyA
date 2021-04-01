@@ -1,6 +1,9 @@
 from typing import List
 
+from .performance import timeit
 
+
+@timeit
 def extract_nodes(
     num_col: int,
     nodes: int,
