@@ -2,8 +2,10 @@ from math import inf
 from typing import Dict, List, Tuple
 
 from polyA.calculate_score import calculate_score
+from polyA.performance import timeit
 
 
+@timeit
 def fill_align_matrix(
     lambda_values: List[float],
     edge_start: int,
