@@ -31,11 +31,11 @@ def pad_sequences(
     >>> c_seq = ['', 'a', 't-t']
     >>> pad_sequences(31, s_seq, c_seq, padding_char="-")
     >>> s_seq
-    ['', 'a---------------', 'aaa---------------']
+    ['', 'a----------------', 'aaa----------------']
     >>> c_seq
-    ['', 'a---------------', 't-t---------------']
+    ['', 'a----------------', 't-t----------------']
     """
-    padding = padding_char * ((chunk_size - 1) // 2)
+    padding = padding_char * ((chunk_size + 1) // 2)
 
     for i in range(1, len(subfam_seqs)):
         subfam_seqs[i] = subfam_seqs[i] + padding
