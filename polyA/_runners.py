@@ -290,9 +290,8 @@ def run_full(
             subfam_counts,
             alignment_subfamilies,
             active_cells,
-            active_cells,
-            repeat_scores,
             align_matrix,
+            repeat_scores,
         )
 
         # check if TR columns were added after last alignment

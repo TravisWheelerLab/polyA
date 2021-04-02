@@ -1,12 +1,13 @@
 from typing import Dict, List, NamedTuple, Tuple, Set
 from math import inf, log
 
-from polyA.matrices import (
+from .matrices import (
     CollapsedMatrices,
     ConsensusMatrix,
     SupportMatrix,
     SubfamAlignmentsMatrix,
 )
+from .performance import timeit
 
 
 def dp_for_collapse(
@@ -108,6 +109,7 @@ def dp_for_collapse(
     return path
 
 
+@timeit
 def collapse_matrices(
     row_num: int,
     start_all: int,
