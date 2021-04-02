@@ -24,12 +24,6 @@ class ConsensusMatrixContainer(NamedTuple):
     A container for a consensus matrix along with its context.
     """
 
-    active_columns: List[int]
-    """
-    A list of column indices in the matrix that are not empty.
-    This lets us avoid looping through unnecessary columns.
-    """
-
     active_rows: Dict[int, List[int]]
     """
     Mapping from column index to a list of row

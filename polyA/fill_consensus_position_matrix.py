@@ -6,8 +6,8 @@ from polyA.performance import timeit
 
 @timeit
 def fill_consensus_position_matrix(
-    col_num: int,
-    row_num: int,
+    column_count: int,
+    row_count: int,
     start_all: int,
     subfams: List[str],
     chroms: List[str],
@@ -21,11 +21,13 @@ def fill_consensus_position_matrix(
     position in the alignment. Walks along the alignments one nucleotide at a time adding
     the consensus position to the matrix.
 
-    At same time, fills NonEmptyColumns and ActiveCells.
+    At same time, fills ActiveCells.
 
     input:
-    col_num: number of columns in alignment matrix - will be same number of columns in consensus_matrix
-    row_num: number of rows in matrices
+
+    column_count: number of columns in alignment matrix - will be same number of
+    columns in consensus_matrix
+    row_count: number of rows in matrices
     start_all: min start position on chromosome/target sequences for whole alignment
     subfams: actual subfamily/consensus sequences from alignment
     chroms: actual target/chromosome sequences from alignment
@@ -35,6 +37,7 @@ def fill_consensus_position_matrix(
     strands: what strand each of the alignments are on - reverse strand will count down instead of up
 
     output:
+
     ConsensusMatrixContainer
 
     >>> subs = ["", ".AA", "TT-"]
@@ -51,12 +54,11 @@ def fill_consensus_position_matrix(
     >>> active
     {2: [0, 1, 2], 3: [0, 1, 2], 1: [0, 2], 0: [0]}
     """
-    columns: List[int] = []
     active_cells: Dict[int, List[int]] = {}
     consensus_matrix: Dict[Tuple[int, int], int] = {}
 
     # start at 1 to ignore 'skip state'
-    for row_index in range(1, row_num):
+    for row_index in range(1, row_count):
 
         if strands[row_index] == "+":
             consensus_pos = consensus_starts[row_index] - 1
@@ -101,9 +103,8 @@ def fill_consensus_position_matrix(
 
                 seq_index2 += 1
 
-    for i in range(col_num):
-        columns.append(i)
+    for i in range(column_count):
         if i not in active_cells:
             active_cells[i] = [0]
 
-    return ConsensusMatrixContainer(columns, active_cells, consensus_matrix)
+    return ConsensusMatrixContainer(active_cells, consensus_matrix)

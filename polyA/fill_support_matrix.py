@@ -159,17 +159,7 @@ def fill_support_matrix(
                 # later.
                 sum_of_scores = 0.0
                 for sum_index in range(chunk_start, chunk_stop + 1):
-                    # TODO: Problem is that start and stop are offset
-                    try:
-                        sum_of_scores += confidence_matrix[row_index, sum_index]
-                    except KeyError as e:
-                        print(f'start: {start}  stop: {stop}')
-                        # Find actual start and stop for row
-                        a_start = min(c for (r, c) in confidence_matrix if r == row_index)
-                        a_stop = max(c for (r, c) in confidence_matrix if r == row_index)
-                        print(f'actual start: {a_start}  actual stop: {a_stop}')
-                        print(f'col: {sum_index}  min: {chunk_start}  max: {chunk_stop + 1}')
-                        raise e
+                    sum_of_scores += confidence_matrix[row_index, sum_index]
             else:
                 # Subtract the value from the left-most column, but only if it
                 # has slipped out of our window. Add the value from the
@@ -179,17 +169,7 @@ def fill_support_matrix(
                         row_index, prev_chunk_start
                     ]
                 if chunk_stop > prev_chunk_stop:
-                    # TODO: The problem is that there are gaps in the skip state row in the confidence matrix
-                    # Is that expected / allowed? If so, we can deal with it, but do we need
-                    # to adjust any other code as a result?
-                    try:
-                        sum_of_scores += confidence_matrix[row_index, chunk_stop]
-                    except KeyError as e:
-                        skips = [c for (r, c) in confidence_matrix if r == 0]
-                        for i in range(len(skips) - 1):
-                            if skips[i+1] - skips[i] != 1:
-                                print(f'gap: {skips[i]} -> {skips[i+1]}')
-                        raise e
+                    sum_of_scores += confidence_matrix[row_index, chunk_stop]
 
             support_matrix[row_index, col_index] = sum_of_scores / column_count
 

@@ -246,11 +246,9 @@ def run_full(
         [sm.scores for sm in alignment_substitution_matrices],
     )
 
-    (
-        non_empty_columns,
-        active_cells,
-        consensus_matrix,
-    ) = fill_consensus_position_matrix(
+    non_empty_columns = [c for c in range(column_count)]
+
+    (active_cells, consensus_matrix,) = fill_consensus_position_matrix(
         column_count,
         rows,
         start_all,
@@ -262,13 +260,9 @@ def run_full(
         alignment_strands,
     )
 
+    # TODO: Is this comment accurate? The skip state IS a row, right?
     # skip state has no active rows
     active_cells[0] = [0]
-
-    # add skip state pad at end
-    # TODO: I don't think we want these any more since the padding is already accounted for
-    non_empty_columns.append(column_count)
-    non_empty_columns.append(column_count)
     active_cells[column_count] = [0]
 
     repeat_scores: Dict[int, float] = {}
@@ -473,7 +467,11 @@ def run_full(
         # Consider making this its own variable name so that column_count can maintain
         # its meaning / invariant
         cols = extract_nodes(
-            cols, node_count, non_empty_columns, changes_position, path_graph
+            column_count,
+            node_count,
+            non_empty_columns,
+            changes_position,
+            path_graph,
         )
 
         # run DP calculations again with nodes corresponding to inserted elements removed
