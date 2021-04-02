@@ -2,6 +2,8 @@ from typing import Dict, List, NamedTuple, Tuple
 
 RowColumn = Tuple[int, int]
 
+AlignMatrix = Dict[RowColumn, float]
+
 ConfidenceMatrix = Dict[RowColumn, float]
 
 ConsensusMatrix = Dict[RowColumn, int]

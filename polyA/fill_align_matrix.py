@@ -1,13 +1,15 @@
 from math import inf
 from typing import Dict, List, Tuple
 
-from polyA.calculate_score import calculate_score
-from polyA.performance import timeit
+from .calculate_score import calculate_score
+from .matrices import AlignMatrix
+from .performance import timeit
 
 
 @timeit
 def fill_align_matrix(
     lambda_values: List[float],
+    column_count: int,
     edge_start: int,
     chunk_size: int,
     gap_inits: List[float],
@@ -17,7 +19,7 @@ def fill_align_matrix(
     chroms: List[str],
     starts: List[int],
     sub_matrices: List[Dict[str, int]],
-) -> Tuple[int, Dict[Tuple[int, int], float]]:
+) -> AlignMatrix:
     """
     Fills an alignment score matrix by calculating an alignment score (according
     to crossmatch scoring) for every segment of size `chunk_size` for all
@@ -52,7 +54,6 @@ def fill_align_matrix(
 
     Outputs:
 
-    num_cols: number of columns in the matrix
     align_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations.
     Key is tuple[int, int] that maps row, col to the value held in that cell of matrix. Rows
     are  subfamilies in the input alignment file, cols are nucleotide positions in the target sequence.
@@ -68,7 +69,6 @@ def fill_align_matrix(
     {(1, 3): 3.1, (1, 4): 3.1, (1, 5): 3.1, (1, 6): 3.1, (1, 7): 3.1, (1, 8): 3.1, (1, 9): 3.1, (1, 10): 3.1, (1, 11): 3.1, (1, 12): 3.1, (1, 13): 3.1, (1, 14): 3.1, (1, 15): 3.1, (1, 16): 3.1, (1, 17): 3.1, (1, 18): 3.1, (1, 19): 3.1, (1, 20): 3.1, (1, 21): 3.1, (1, 22): 3.1, (1, 23): 3.1, (1, 24): 3.1, (1, 25): 2.9000000000000004, (1, 26): 2.8933333333333335, (1, 27): 2.8862068965517245, (1, 28): 2.878571428571429, (1, 29): 2.8703703703703702, (1, 30): 2.861538461538462, (1, 31): 2.8520000000000003, (1, 32): 2.841666666666667, (1, 33): 2.8304347826086955, (1, 34): 2.8181818181818183, (1, 35): 2.804761904761905, (1, 36): 2.7900000000000005, (1, 37): 2.7736842105263158, (1, 38): 2.7555555555555555, (1, 39): 2.735294117647059, (1, 40): 2.7125000000000004, (2, 1): 2.7125000000000004, (2, 2): 2.735294117647059, (2, 3): 2.755555555555556, (2, 4): 2.7736842105263158, (2, 5): 2.79, (2, 6): 2.804761904761905, (2, 7): 2.8181818181818183, (2, 8): 2.830434782608696, (2, 9): 2.841666666666667, (2, 10): 2.8520000000000003, (2, 11): 2.861538461538462, (2, 12): 2.8703703703703702, (2, 13): 2.8785714285714286, (2, 14): 2.8862068965517245, (2, 15): 2.8933333333333335, (2, 16): 2.9000000000000004, (2, 17): 3.1, (2, 18): 3.1, (2, 19): 3.1, (2, 20): 3.1, (2, 21): 3.1, (2, 22): 3.1, (2, 23): 0.5, (2, 24): -0.1, (2, 25): -0.30000000000000004, (2, 26): -0.41333333333333333, (2, 27): -0.5344827586206897, (2, 28): -0.6642857142857143, (2, 29): -0.8037037037037037, (2, 30): -0.9538461538461539, (2, 31): -1.116, (2, 32): -1.291666666666667, (2, 33): -1.482608695652174, (2, 34): -1.6909090909090907, (2, 35): -1.9190476190476191, (2, 36): -2.17, (2, 37): -2.447368421052632, (2, 38): -2.7555555555555555, (2, 39): -3.1, (2, 40): -3.4875000000000003, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0, (0, 40): 1.0}
     """
 
-    num_cols: int = 1
     half_chunk: int = int((chunk_size - 1) / 2)
     align_matrix: Dict[Tuple[int, int], float] = {}
 
@@ -285,13 +285,9 @@ def fill_align_matrix(
 
             seq_index += 1
 
-        # max col_index is assigned to cols
-        if num_cols < col_index:
-            num_cols = col_index
-
     # assigns skip states an alignment score
     # do not lambda adjust skip state score
-    for j in range(num_cols):
+    for j in range(column_count):
         align_matrix[0, j] = skip_align_score
 
-    return num_cols, align_matrix
+    return align_matrix

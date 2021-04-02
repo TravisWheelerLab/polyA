@@ -12,12 +12,12 @@ def fill_support_matrix(
     confidence_matrix: ConfidenceMatrix,
 ) -> SupportMatrix:
     """
-    Fill the support_matrix using values in confidence_matrix. Average
-    confidence values for surrounding chunk_size confidence values - normalized
-    by dividing by number of segments.
+    Fill the support_matrix using values in `confidence_matrix`. Average
+    confidence values for surrounding `chunk_size` confidence values -
+    normalized by dividing by number of segments.
 
-    The score for subfam x at position i is sum of all confidences for subfam x
-    for all segments that overlap position i - divided by the number of
+    The score for subfam x at position i is the sum of all confidences for
+    subfam x for all segments that overlap position i - divided by the number of
     segments.
 
     TODO: Verify that this function works when TRs are present in the matrix
@@ -42,8 +42,8 @@ def fill_support_matrix(
 
     stops - equivalent to the starts list, but contains the last column in each
     row that contains data. Again, the first value is special and should contain
-    the maximum of the remaining values (but without any offset). In other
-    words, `stops[0] == max(stops[1:])`.
+    the maximum of the remaining values. In other words, `stops[0] ==
+    max(stops[1:]) + 1`.
 
     confidence_matrix - confidence values computed with fill_confidence_matrix.
     The confidence matrix should have one contiguous run of values per row.
@@ -88,8 +88,8 @@ def fill_support_matrix(
     ... }
     >>> supp_mat = fill_support_matrix(
     ...     chunk_size=3,
-    ...     starts=[0, 1],
-    ...     stops=[5, 4],
+    ...     starts=[10, 11],
+    ...     stops=[15, 14],
     ...     confidence_matrix=conf_mat)
     >>> len(supp_mat) == len(conf_mat)
     True
@@ -179,7 +179,17 @@ def fill_support_matrix(
                         row_index, prev_chunk_start
                     ]
                 if chunk_stop > prev_chunk_stop:
-                    sum_of_scores += confidence_matrix[row_index, chunk_stop]
+                    # TODO: The problem is that there are gaps in the skip state row in the confidence matrix
+                    # Is that expected / allowed? If so, we can deal with it, but do we need
+                    # to adjust any other code as a result?
+                    try:
+                        sum_of_scores += confidence_matrix[row_index, chunk_stop]
+                    except KeyError as e:
+                        skips = [c for (r, c) in confidence_matrix if r == 0]
+                        for i in range(len(skips) - 1):
+                            if skips[i+1] - skips[i] != 1:
+                                print(f'gap: {skips[i]} -> {skips[i+1]}')
+                        raise e
 
             support_matrix[row_index, col_index] = sum_of_scores / column_count
 
