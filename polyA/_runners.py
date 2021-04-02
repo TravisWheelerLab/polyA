@@ -248,9 +248,9 @@ def run_full(
 
     non_empty_columns = [c for c in range(column_count)]
 
-    (active_cells, consensus_matrix,) = fill_consensus_position_matrix(
-        column_count,
+    (active_cells, consensus_matrix) = fill_consensus_position_matrix(
         rows,
+        column_count,
         start_all,
         alignment_subfamily_sequences,
         alignment_chromosome_sequences,

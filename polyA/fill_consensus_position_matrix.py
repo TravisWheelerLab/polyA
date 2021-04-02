@@ -6,8 +6,8 @@ from polyA.performance import timeit
 
 @timeit
 def fill_consensus_position_matrix(
-    column_count: int,
     row_count: int,
+    column_count: int,
     start_all: int,
     subfams: List[str],
     chroms: List[str],
@@ -48,7 +48,7 @@ def fill_consensus_position_matrix(
     >>> strandss = ["", "+", "-"]
     >>> active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     >>> con_mat
-    {(1, 2): 0, (1, 3): 1, (2, 1): 10, (2, 2): 9, (2, 3): 9}
+    {(1, 2): 0, (1, 3): 1, (2, 1): 10, (2, 2): 9, (2, 3): 9, (0, 0): 0, (0, 1): 0, (0, 2): 0}
     >>> active
     {2: [0, 1, 2], 3: [0, 1, 2], 1: [0, 2], 0: [0]}
     """
@@ -102,6 +102,7 @@ def fill_consensus_position_matrix(
                 seq_index2 += 1
 
     for i in range(column_count):
+        consensus_matrix[0, i] = 0
         if i not in active_cells:
             active_cells[i] = [0]
 
