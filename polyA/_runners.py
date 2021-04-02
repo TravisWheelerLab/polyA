@@ -440,12 +440,7 @@ def run_full(
         if not test:
             break
 
-        # TODO: Why do we reassign this here? We already had the correct value, didn't we?
-        # TODO: The return value isn't used so maybe just get rid of it
-        # Consider making this its own variable name so that column_count can maintain
-        # its meaning / invariant
-        cols = extract_nodes(
-            column_count,
+        extract_nodes(
             node_count,
             non_empty_columns,
             changes_position,
