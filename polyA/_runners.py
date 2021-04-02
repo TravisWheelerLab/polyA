@@ -207,12 +207,14 @@ def run_full(
     subfam_alignments = list(alignment_subfamily_sequences)
     chrom_alignments = list(alignment_chromosome_sequences)
 
-    start_all, stop_all = pad_sequences(
+    pad_sequences(
         chunk_size,
-        alignment_start_positions,
-        alignment_stop_positions,
         alignment_subfamily_sequences,
         alignment_chromosome_sequences,
+    )
+
+    start_all, stop_all = edges(
+        alignment_start_positions, alignment_stop_positions
     )
 
     # number of rows in matrices
