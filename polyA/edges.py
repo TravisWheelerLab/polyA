@@ -6,16 +6,17 @@ def edges(starts: List[int], stops: List[int]) -> Tuple[int, int]:
     Find and return the min start and max stop positions for the entire region
     included in the alignments.
 
-    input:
-    starts: start positions on the target sequence from the input alignment
-    stops: stop positions on the target sequence from the input alignment
+    Inputs:
 
-    output:
-    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+    starts - start positions on the target sequence from the input alignment
+    stops - stop positions on the target sequence from the input alignment
 
-    >>> starts_values = [0, 1, 4, 7]
-    >>> stops_values = [0, 3, 10, 9]
-    >>> b, e = edges(starts_values, stops_values)
+    Outputs:
+
+    minimum and maximum start and stop positions on the chromosome/target
+    sequences for whole alignment
+
+    >>> b, e = edges(starts=[0, 1, 4, 7], stops=[0, 3, 10, 9])
     >>> b
     1
     >>> e

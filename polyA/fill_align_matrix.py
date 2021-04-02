@@ -89,11 +89,15 @@ def fill_align_matrix(
         col_index = (
             starts[i] - edge_start + half_chunk + 1
         )  # col in align_matrix
+
         k = half_chunk
         temp_index = seq_index
         temp_count = 0
 
         while temp_count < chunk_size - k:
+            # stop offset before padding starts
+            if chrom_seq[temp_index] == ".":
+                break
             if chrom_seq[temp_index] != "-":
                 temp_count += 1
             temp_index += 1
@@ -108,6 +112,7 @@ def fill_align_matrix(
         align_score: float = calculate_score(
             gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
         )
+
         align_matrix[i, col_index - k] = lamb * (
             align_score * chunk_size / (chunk_size - k)
         )
@@ -142,6 +147,8 @@ def fill_align_matrix(
                 temp_count = 0
 
                 while temp_count < chunk_size - k:
+                    if chrom_seq[temp_index] == ".":
+                        break
                     if chrom_seq[temp_index] != "-":
                         temp_count += 1
                     temp_index += 1
@@ -160,6 +167,7 @@ def fill_align_matrix(
                     chroms[i][seq_index - 1],
                     sub_matrix,
                 )
+
                 align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
@@ -188,6 +196,8 @@ def fill_align_matrix(
                     or chrom_seq[seq_index] == "-"
                 ):
                     while temp_count < chunk_size:
+                        if chrom_seq[temp_index + 1] == ".":
+                            break
                         if chrom_seq[temp_index + 1] != "-":
                             temp_count += 1
                         temp_index += 1
@@ -197,6 +207,7 @@ def fill_align_matrix(
                     chrom_slice = chrom_seq[
                         seq_index + 1 : seq_index + offset + 1
                     ]
+
                     subfam_slice = subfam_seq[
                         seq_index + 1 : seq_index + offset + 1
                     ]
@@ -214,7 +225,7 @@ def fill_align_matrix(
                     for nuc in chrom_slice:
                         if nuc == ".":
                             break
-                        if nuc != "-" and nuc != ".":
+                        if nuc != "-":
                             temp_count2 += 1
                     num_nucls = temp_count2
 
