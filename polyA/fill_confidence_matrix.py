@@ -7,7 +7,7 @@ from .performance import timeit
 
 @timeit
 def fill_confidence_matrix(
-    columns: Iterable[int],
+    column_count: int,
     subfam_counts: Dict[str, float],
     subfams: List[str],
     active_cells: Dict[int, List[int]],
@@ -41,10 +41,10 @@ def fill_confidence_matrix(
 
     >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
     >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
-    >>> non_cols = [0, 1, 2]
+    >>> col_count = 3
     >>> counts = {"s1": .33, "s2": .33, "s3": .33}
     >>> subs = ["s1", "s2"]
-    >>> conf_mat = fill_confidence_matrix(non_cols, counts, subs, active, align_mat)
+    >>> conf_mat = fill_confidence_matrix(col_count, counts, subs, active, align_mat)
     >>> f"{conf_mat[0,0]:.4f}"
     '0.0100'
     >>> f"{conf_mat[1,0]:.4f}"
@@ -60,7 +60,7 @@ def fill_confidence_matrix(
     """
     confidence_matrix: ConfidenceMatrix = {}
 
-    for col_index in columns:
+    for col_index in range(column_count):
         temp_region: List[float] = []
 
         for row_index in active_cells[col_index]:

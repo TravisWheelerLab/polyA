@@ -286,35 +286,13 @@ def run_full(
             alignment_strands.append("+")
             rows += 1
 
-        confidence_matrix = fill_confidence_matrix_tr(
-            non_empty_columns,
-            subfam_counts,
-            alignment_subfamilies,
-            active_cells,
-            align_matrix,
-            repeat_scores,
-        )
-
-        # add TR cols to NonEmptyColumns
-        for tr_col in repeat_scores:
-            col_set = set(non_empty_columns)  # only add new columns
-            col_set.add(tr_col)
-            non_empty_columns = list(col_set)
-        non_empty_columns.sort()
-
-    else:
-        confidence_matrix = fill_confidence_matrix(
-            non_empty_columns,
-            subfam_counts,
-            alignment_subfamilies,
-            active_cells,
-            align_matrix,
-        )
-
-    # add skip state to consensus matrix
-    # wait till after incase NonEmptyColumns is updated by TR stuff
-    for j in non_empty_columns:
-        consensus_matrix[0, j] = 0
+    confidence_matrix = fill_confidence_matrix(
+        column_count,
+        subfam_counts,
+        alignment_subfamilies,
+        active_cells,
+        align_matrix,
+    )
 
     support_matrix = fill_support_matrix(
         chunk_size,
