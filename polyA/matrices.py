@@ -2,6 +2,8 @@ from typing import Dict, List, NamedTuple, Tuple
 
 RowColumn = Tuple[int, int]
 
+AlignMatrix = Dict[RowColumn, float]
+
 ConfidenceMatrix = Dict[RowColumn, float]
 
 ConsensusMatrix = Dict[RowColumn, int]
@@ -20,12 +22,6 @@ SubfamAlignmentsMatrix = Dict[SubfamCol, RowConsensus]
 class ConsensusMatrixContainer(NamedTuple):
     """
     A container for a consensus matrix along with its context.
-    """
-
-    active_columns: List[int]
-    """
-    A list of column indices in the matrix that are not empty.
-    This lets us avoid looping through unnecessary columns.
     """
 
     active_rows: Dict[int, List[int]]

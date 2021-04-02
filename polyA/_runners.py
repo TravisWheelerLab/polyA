@@ -203,6 +203,13 @@ def run_full(
             else:
                 alignment_stop_positions.append(tr.stop)
 
+    # The implicit start and stop positions for the skip state are the index
+    # prior to the minimum start and the index after the maximum stop. In other
+    # words, the skip state has N+2 columns, where N is the number of columns
+    # spanned by the alignments.
+    alignment_start_positions[0] = min(alignment_start_positions[1:]) - 1
+    alignment_stop_positions[0] = max(alignment_stop_positions[1:]) + 1
+
     # save original alignments before padding for SODA viz
     subfam_alignments = list(alignment_subfamily_sequences)
     chrom_alignments = list(alignment_chromosome_sequences)
@@ -217,11 +224,17 @@ def run_full(
         alignment_start_positions, alignment_stop_positions
     )
 
+    # Plus one because the range is inclusive, plus two because
+    # we have the implicit first and last positions that only
+    # have data for the skip state.
+    column_count = stop_all - start_all + 1 + 2
+
     # number of rows in matrices
     rows: int = seq_count
 
-    cols, align_matrix = fill_align_matrix(
+    align_matrix = fill_align_matrix(
         alignment_lambdas,
+        column_count,
         start_all,
         chunk_size,
         alignment_gap_inits,
@@ -233,12 +246,10 @@ def run_full(
         [sm.scores for sm in alignment_substitution_matrices],
     )
 
-    (
-        non_empty_columns,
-        active_cells,
-        consensus_matrix,
-    ) = fill_consensus_position_matrix(
-        cols,
+    non_empty_columns = [c for c in range(column_count)]
+
+    (active_cells, consensus_matrix,) = fill_consensus_position_matrix(
+        column_count,
         rows,
         start_all,
         alignment_subfamily_sequences,
@@ -249,16 +260,10 @@ def run_full(
         alignment_strands,
     )
 
+    # TODO: Is this comment accurate? The skip state IS a row, right?
     # skip state has no active rows
     active_cells[0] = [0]
-
-    # add skip state pad at end
-    align_matrix[0, cols] = SKIP_ALIGN_SCORE
-    non_empty_columns.append(cols)
-    non_empty_columns.append(cols)
-    active_cells[cols] = [0]
-    active_cells[cols] = [0]
-    cols += 1
+    active_cells[column_count] = [0]
 
     repeat_scores: Dict[int, float] = {}
 
@@ -275,10 +280,6 @@ def run_full(
             shard_stop,
         )
 
-        # add skip states for TR cols
-        for tr_col in repeat_scores:
-            align_matrix[0, tr_col] = SKIP_ALIGN_SCORE
-
         # add TRs to subfams
         for _ in tandem_repeats:
             alignment_subfamilies.append("Tandem Repeat")
@@ -293,12 +294,6 @@ def run_full(
             align_matrix,
             repeat_scores,
         )
-
-        # check if TR columns were added after last alignment
-        # TR cols before alignments were accounted for in PadSeqs
-        max_col_index: int = max(repeat_scores)
-        if max_col_index + 1 > cols:
-            cols = max_col_index + 1
 
         # add TR cols to NonEmptyColumns
         for tr_col in repeat_scores:
@@ -322,15 +317,10 @@ def run_full(
         consensus_matrix[0, j] = 0
 
     support_matrix = fill_support_matrix(
-        rows,
         chunk_size,
-        start_all,
-        non_empty_columns,
         alignment_start_positions,
         alignment_stop_positions,
-        alignment_subfamilies,
         confidence_matrix,
-        consensus_matrix,
     )
 
     collapsed_matrices = collapse_matrices(
@@ -371,7 +361,7 @@ def run_full(
             prev_tr_col = tr_col
 
     # save original cols for printing heatmap
-    cols_orig = cols
+    cols_orig = column_count
     (
         ProbMatrixLastColumn,
         OriginMatrix,
@@ -386,7 +376,7 @@ def run_full(
     )
 
     # node_ids for each nucleotide will be assigned during DP backtrace
-    node_ids = [""] * cols
+    node_ids = [""] * column_count
 
     (changes_position, changes) = get_path(
         non_empty_columns,
@@ -472,8 +462,16 @@ def run_full(
         if not test:
             break
 
+        # TODO: Why do we reassign this here? We already had the correct value, didn't we?
+        # TODO: The return value isn't used so maybe just get rid of it
+        # Consider making this its own variable name so that column_count can maintain
+        # its meaning / invariant
         cols = extract_nodes(
-            cols, node_count, non_empty_columns, changes_position, path_graph
+            column_count,
+            node_count,
+            non_empty_columns,
+            changes_position,
+            path_graph,
         )
 
         # run DP calculations again with nodes corresponding to inserted elements removed
