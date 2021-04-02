@@ -46,11 +46,9 @@ def fill_consensus_position_matrix(
     >>> stps = [0, 2, 2]
     >>> con_strts = [-1, 0, 10]
     >>> strandss = ["", "+", "-"]
-    >>> col, active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
+    >>> active, con_mat = fill_consensus_position_matrix(3, 3, 0, subs, chrs, strts, stps, con_strts, strandss)
     >>> con_mat
     {(1, 2): 0, (1, 3): 1, (2, 1): 10, (2, 2): 9, (2, 3): 9}
-    >>> col
-    [0, 1, 2]
     >>> active
     {2: [0, 1, 2], 3: [0, 1, 2], 1: [0, 2], 0: [0]}
     """
