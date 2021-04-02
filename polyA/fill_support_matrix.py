@@ -128,6 +128,9 @@ def fill_support_matrix(
     # over to the left to account for the fact that the window of alignments
     # we're looking at didn't necessarily start at position 0 on its sequence.
     # See the documentation for `start` on the `Alignment` class.
+    # TODO: Here's the problem, we're not setting this yet
+    # This is a problem, the tests don't cover this and they only pass because
+    # the value is zero in both cases.
     position_offset = starts[0]
 
     # Note: start and stop values are closed ranges, so when a stop value is
@@ -156,7 +159,17 @@ def fill_support_matrix(
                 # later.
                 sum_of_scores = 0.0
                 for sum_index in range(chunk_start, chunk_stop + 1):
-                    sum_of_scores += confidence_matrix[row_index, sum_index]
+                    # TODO: Problem is that start and stop are offset
+                    try:
+                        sum_of_scores += confidence_matrix[row_index, sum_index]
+                    except KeyError as e:
+                        print(f'start: {start}  stop: {stop}')
+                        # Find actual start and stop for row
+                        a_start = min(c for (r, c) in confidence_matrix if r == row_index)
+                        a_stop = max(c for (r, c) in confidence_matrix if r == row_index)
+                        print(f'actual start: {a_start}  actual stop: {a_stop}')
+                        print(f'col: {sum_index}  min: {chunk_start}  max: {chunk_stop + 1}')
+                        raise e
             else:
                 # Subtract the value from the left-most column, but only if it
                 # has slipped out of our window. Add the value from the

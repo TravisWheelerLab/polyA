@@ -320,15 +320,10 @@ def run_full(
         consensus_matrix[0, j] = 0
 
     support_matrix = fill_support_matrix(
-        rows,
         chunk_size,
-        start_all,
-        non_empty_columns,
         alignment_start_positions,
         alignment_stop_positions,
-        alignment_subfamilies,
         confidence_matrix,
-        consensus_matrix,
     )
 
     collapsed_matrices = collapse_matrices(
