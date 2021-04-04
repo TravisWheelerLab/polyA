@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, Tuple, Set
+from typing import Dict, List, Tuple, Set
 from math import inf, log
 
 from .matrices import (
@@ -63,7 +63,7 @@ def dp_for_collapse(
         for row0 in active[curr_col]:
             row = map_rows[row0]
 
-            max: float = -inf
+            max_value: float = -inf
             max_index: int = -1
             support_log: float = log(support_matrix[row0, curr_col])
 
@@ -77,20 +77,20 @@ def dp_for_collapse(
                 else:
                     score += change
 
-                if score > max:
-                    max = score
+                if score > max_value:
+                    max_value = score
                     max_index = row1
 
             origin[row0, curr_col] = max_index
-            dp[row0, curr_col] = max
+            dp[row0, curr_col] = max_value
 
     # get path from origin matrix
     # which row to start backtrace
-    maxx = -inf
+    max_value = -inf
     max_row_index = 0
     for i in active[non_empty[-1]]:
-        if maxx < dp[i, non_empty[-1]]:
-            maxx = dp[i, non_empty[-1]]
+        if max_value < dp[i, non_empty[-1]]:
+            max_value = dp[i, non_empty[-1]]
             max_row_index = i
 
     prev_row_index: int = origin[max_row_index, non_empty[-1]]
@@ -272,7 +272,6 @@ def collapse_matrices(
             ]
             if len(dp_active_rows[region]) > 1:
                 # do dp
-                x = 0
                 collapse_path = dp_for_collapse(
                     dp_active_rows[region],
                     dp_active,

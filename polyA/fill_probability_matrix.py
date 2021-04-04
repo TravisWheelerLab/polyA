@@ -58,7 +58,7 @@ def fill_probability_matrix(
 
     prev_col_list: List[float] = []
     # first col of prob_matrix is 0s
-    for k in active_cells_collapse[columns[0]]:
+    for _ in active_cells_collapse[columns[0]]:
         prev_col_list.append(0.0)
 
     consensus_curr: int

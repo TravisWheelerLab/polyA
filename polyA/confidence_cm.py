@@ -68,7 +68,7 @@ def confidence_cm(
         # alignment scores
         for index in range(len(region) - repeats):
             subfam: str = subfams[subfam_rows[index]]
-            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
+            m = re.search(r"(.+?)#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
             converted_score = (2 ** int(region[index])) * subfam_counts[subfam]
@@ -77,7 +77,7 @@ def confidence_cm(
         # TR scores
         for index in range(len(region) - repeats, len(region)):
             subfam = subfams[subfam_rows[index]]
-            m = re.search(r"(.+?)\#.+", subfams[subfam_rows[index]])
+            m = re.search(r"(.+?)#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
             tr_score = (2 ** int(region[index])) * subfam_counts[subfam]
@@ -100,8 +100,9 @@ def confidence_cm(
     for index in range(len(region)):
         confidence_list[index] = confidence_list[index] / score_total
 
-    # if skip state confidence is < 1 %, increase it to 1 % and normalize all others
-    # do not do this when conputing node confidence (skip state is not used)
+    # if skip state confidence is < 1 %, increase it to 1 % and normalize all
+    # others do not do this when computing node confidence (skip state is not
+    # used)
     if confidence_list[0] < 0.01 and not node_confidence_bool:
         summ = 0.0
         for i in range(1, len(confidence_list)):
