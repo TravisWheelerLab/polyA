@@ -214,10 +214,7 @@ def print_results_soda(
     ] * length  # wont print out the results of the same thing twice
 
     json_dict_id: Dict[str, Any] = {}
-    json_dict: Dict[str, Any] = {}
-    json_dict["chr"] = chrom
-    json_dict["annotations"] = []
-    json_dict["heatmap"] = {}
+    json_dict: Dict[str, Any] = {"chr": chrom, "annotations": [], "heatmap": {}}
 
     min_align_start: int = chrom_end
     max_align_end: int = 0
@@ -409,7 +406,7 @@ def print_results_soda(
 
             json_dict_id[str(id)] = json_dict_subid
 
-            ucscString = (
+            ucsc_string = (
                 "000 "
                 + chrom
                 + " "
@@ -434,12 +431,13 @@ def print_results_soda(
                 + str(id)
             )
 
-            json_annotation: Dict[str, Any] = {}
-            json_annotation["id"] = id
-            json_annotation["blockCount"] = block_count
-            json_annotation["ucscString"] = ucscString
-            json_annotation["chrStart"] = align_start
-            json_annotation["chrEnd"] = align_stop
+            json_annotation: Dict[str, Any] = {
+                "id": id,
+                "blockCount": block_count,
+                "ucscString": ucsc_string,
+                "chrStart": align_start,
+                "chrEnd": align_stop,
+            }
             block_alignments = []
             if align_start < min_align_start:
                 min_align_start = align_start
@@ -472,19 +470,12 @@ def print_results_soda(
                     block_subfam = align_changes[align_num][
                         0
                     ]  # collapsed subfam row
-                    block_sub_alignment = {}
-                    block_sub_alignment["chrSeq"] = chrom_alignments[
-                        block_subfam
-                    ]
-                    block_sub_alignment["famSeq"] = subfam_alignments[
-                        block_subfam
-                    ]
-                    block_sub_alignment["alignStart"] = align_changes[
-                        align_num
-                    ][1]
-                    block_sub_alignment["alignEnd"] = align_changes[
-                        align_num + 1
-                    ][1]
+                    block_sub_alignment = {
+                        "chrSeq": chrom_alignments[block_subfam],
+                        "famSeq": subfam_alignments[block_subfam],
+                        "alignStart": align_changes[align_num][1],
+                        "alignEnd": align_changes[align_num + 1][1],
+                    }
                     # consensus positions skip ahead, ex: [167, 407], [167, 416], ...
                     block_alignments.append(block_sub_alignment)
             json_annotation["alignments"] = block_alignments

@@ -89,7 +89,6 @@ def get_path(
     for columns_index in range(len(columns) - 1, 1, -1):
 
         prev_column: int = columns[columns_index - 1]
-        curr_column: int = columns[columns_index]
 
         ids[columns[columns_index - 1]] = current_id
 

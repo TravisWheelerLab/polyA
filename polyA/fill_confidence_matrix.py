@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 from .confidence_cm import confidence_cm
 from .matrices import ConfidenceMatrix

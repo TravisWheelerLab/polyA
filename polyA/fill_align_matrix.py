@@ -251,7 +251,6 @@ def fill_align_matrix(
 
                     # adding next chars score
                     if subfam_seq[seq_index + offset - half_chunk] == ".":
-                        align_score = -inf
                         break
                     elif subfam_seq[seq_index + offset] == "-":
                         num_nucls += 1

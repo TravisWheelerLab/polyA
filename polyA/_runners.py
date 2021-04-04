@@ -341,9 +341,9 @@ def run_full(
     # save original cols for printing heatmap
     cols_orig = column_count
     (
-        ProbMatrixLastColumn,
-        OriginMatrix,
-        SameSubfamChangeMatrix,
+        prob_matrix_last_column,
+        origin_matrix,
+        same_subfam_change_matrix,
     ) = fill_probability_matrix(
         same_prob_skip,
         SAME_PROB_LOG,
@@ -360,10 +360,10 @@ def run_full(
         non_empty_columns,
         node_ids,
         subfams_collapse,
-        ProbMatrixLastColumn,
+        prob_matrix_last_column,
         active_cells_collapse,
-        OriginMatrix,
-        SameSubfamChangeMatrix,
+        origin_matrix,
+        same_subfam_change_matrix,
     )
 
     # keep the original annotation for reporting results
@@ -450,9 +450,9 @@ def run_full(
         # run DP calculations again with nodes corresponding to inserted elements removed
         # ignores removed nodes because they are no longer in NonEmptyColumns
         (
-            ProbMatrixLastColumn,
-            OriginMatrix,
-            SameSubfamChangeMatrix,
+            prob_matrix_last_column,
+            origin_matrix,
+            same_subfam_change_matrix,
         ) = fill_probability_matrix(
             same_prob_skip,
             SAME_PROB_LOG,
@@ -466,10 +466,10 @@ def run_full(
             non_empty_columns,
             node_ids,
             subfams_collapse,
-            ProbMatrixLastColumn,
+            prob_matrix_last_column,
             active_cells_collapse,
-            OriginMatrix,
-            SameSubfamChangeMatrix,
+            origin_matrix,
+            same_subfam_change_matrix,
         )
         prev_num_nodes = node_count
 
