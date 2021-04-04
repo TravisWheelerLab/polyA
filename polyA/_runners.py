@@ -3,7 +3,33 @@ from math import log
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
-from polyA import *
+from polyA import (
+    Alignment,
+    CHANGE_PROB,
+    SAME_PROB_LOG,
+    SKIP_ALIGN_SCORE,
+    SubMatrix,
+    SubMatrixCollection,
+    TandemRepeat,
+    calculate_repeat_scores,
+    collapse_matrices,
+    confidence_only,
+    edges,
+    extract_nodes,
+    fill_align_matrix,
+    fill_confidence_matrix,
+    fill_consensus_position_matrix,
+    fill_node_confidence,
+    fill_path_graph,
+    fill_probability_matrix,
+    fill_support_matrix,
+    get_path,
+    pad_sequences,
+    print_results,
+    print_results_chrom,
+    print_results_sequence,
+    print_results_soda,
+)
 
 
 def run_confidence(
