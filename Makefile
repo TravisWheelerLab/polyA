@@ -50,7 +50,7 @@ publish-conda-package:
 	@echo "NOT IMPLEMENTED"
 
 .PHONY: check
-check: check-fast check-slow check-format check-types
+check: check-format check-lints check-types check-fast check-slow
 
 .PHONY: check-fast
 check-fast:
@@ -59,6 +59,10 @@ check-fast:
 .PHONY: check-format
 check-format:
 	${FMT_CMD} --check ${FMT_OPTS} ${FMT_TARGETS}
+
+.PHONY: check-lints
+check-lints:
+	${RUN_CMD} pylint -E polyA/
 
 .PHONY: check-types
 check-types:
