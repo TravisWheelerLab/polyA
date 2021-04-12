@@ -245,9 +245,19 @@ def run_full(
         )
         # complexity adjustment
         adj_score = calculate_complexity_adjusted_score(
-            alignment_subfamily_sequences[i], alignment_lambdas[i], score
+            alignment_subfamily_sequences[i],
+            alignment_chromosome_sequences[i],
+            alignment_lambdas[i],
+            score,
         )
-        print("score: ", int(score), "adj score: ", adj_score)
+        print(
+            "score: ",
+            int(score),
+            "calc adj score: ",
+            adj_score,
+            "adj score: ",
+            alignment_scores[i],
+        )
     exit()
     # The implicit start and stop positions for the skip state are the index
     # prior to the minimum start and the index after the maximum stop. In other
