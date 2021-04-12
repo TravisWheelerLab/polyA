@@ -1,11 +1,13 @@
 from typing import Dict, List, Tuple
 
 from .confidence_cm import confidence_cm
+from .performance import timeit
 from .substitution_matrix import SubMatrix
 from .calculate_score import calculate_score
-from .sum_repeat_scores import SumRepeatScores
+from .sum_repeat_scores import sub_repeat_scores
 
 
+@timeit
 def fill_node_confidence(
     nodes: int,
     start_all: int,
@@ -101,19 +103,15 @@ def fill_node_confidence(
             gap_init = gap_inits[subfam_index]
             gap_ext = gap_exts[subfam_index]
 
-            align_score: float
-            if subfam_start > end_node or subfam_stop < begin_node:
-                # subfam not in node
-                align_score = 0.0
-            else:
+            if subfam_start <= end_node and subfam_stop >= begin_node:
                 # subfam in node, calculate alignment score
                 last_prev_subfam = ""
                 last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
 
                 if (
-                    alignment_index_start - 1 >= 0
-                    and alignment_index_start - 1
+                    0
+                    <= alignment_index_start - 1
                     <= len(gap_offset[subfam_index])
                 ):
                     chrom_offset = gap_offset[subfam_index][
@@ -132,8 +130,8 @@ def fill_node_confidence(
                 ):
                     i = columns[j] - begin_node
                     if (
-                        alignment_index_start + i >= 0
-                        and alignment_index_start + i
+                        0
+                        <= alignment_index_start + i
                         < len(gap_offset[subfam_index])
                     ):
                         chrom_offset = gap_offset[subfam_index][
@@ -150,8 +148,8 @@ def fill_node_confidence(
                 ):
                     i = columns[j] - begin_node
                     if (
-                        alignment_index_start + i >= 0
-                        and alignment_index_start + i
+                        0
+                        <= alignment_index_start + i
                         < len(gap_offset[subfam_index])
                     ):
                         chrom_offset = gap_offset[subfam_index][
@@ -194,7 +192,7 @@ def fill_node_confidence(
             tr_stop = stops[subfam_index] - start_all + 1
 
             if not (tr_start > end_node or tr_stop < begin_node):
-                rep_sum_score = SumRepeatScores(
+                rep_sum_score = sub_repeat_scores(
                     begin_node, end_node, repeat_scores
                 )
 
@@ -212,7 +210,7 @@ def fill_node_confidence(
         for row_index in active[node_index]:
             temp.append(node_confidence_temp[row_index, node_index])
         confidence_temp: List[float] = confidence_cm(
-            temp, subfam_countss, subfams, active[node_index], tr_count, 1
+            temp, subfam_countss, subfams, active[node_index], tr_count, True
         )
         for row_index2 in range(len(confidence_temp)):
             node_confidence_temp[

@@ -19,7 +19,7 @@ def read_prior_counts(
     # Burn the first line headers
     next(prior_counts_file)
 
-    total_count = 0
+    total_count: float = 0
 
     for line in prior_counts_file:
         subfam, count = line.strip().split()

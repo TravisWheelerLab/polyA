@@ -1,12 +1,13 @@
-from typing import Dict, List, NamedTuple, Tuple
+from typing import Dict, List, Tuple, Set
 from math import inf, log
 
-from polyA.matrices import (
+from .matrices import (
     CollapsedMatrices,
     ConsensusMatrix,
     SupportMatrix,
     SubfamAlignmentsMatrix,
 )
+from .performance import timeit
 
 
 def dp_for_collapse(
@@ -62,8 +63,8 @@ def dp_for_collapse(
         for row0 in active[curr_col]:
             row = map_rows[row0]
 
-            max: float = -inf
-            max_index: int = -inf
+            max_value: float = -inf
+            max_index: int = -1
             support_log: float = log(support_matrix[row0, curr_col])
 
             for row1 in active[prev_col]:
@@ -76,20 +77,20 @@ def dp_for_collapse(
                 else:
                     score += change
 
-                if score > max:
-                    max = score
+                if score > max_value:
+                    max_value = score
                     max_index = row1
 
             origin[row0, curr_col] = max_index
-            dp[row0, curr_col] = max
+            dp[row0, curr_col] = max_value
 
     # get path from origin matrix
     # which row to start backtrace
-    maxx = -inf
+    max_value = -inf
     max_row_index = 0
     for i in active[non_empty[-1]]:
-        if maxx < dp[i, non_empty[-1]]:
-            maxx = dp[i, non_empty[-1]]
+        if max_value < dp[i, non_empty[-1]]:
+            max_value = dp[i, non_empty[-1]]
             max_row_index = i
 
     prev_row_index: int = origin[max_row_index, non_empty[-1]]
@@ -108,6 +109,7 @@ def dp_for_collapse(
     return path
 
 
+@timeit
 def collapse_matrices(
     row_num: int,
     start_all: int,
@@ -157,7 +159,7 @@ def collapse_matrices(
     >>> sub_col_ind
     {'s1': 0, 's2': 1, 's3': 2}
     >>> sub_aligns
-    {('s1', 1): [0, 0], ('s2', 1): [1, 0], ('s3', 1): [2, 0], ('s1', 2): [0, 1], ('s2', 2): [1, 1], ('s3', 2): [2, 3], ('s1', 3): [0, 2], ('s2', 3): [1, 2], ('s3', 3): [2, 10]}
+    {('s1', 1): (0, 0), ('s2', 1): (1, 0), ('s3', 1): (2, 0), ('s1', 2): (0, 1), ('s2', 2): (1, 1), ('s3', 2): (2, 3), ('s1', 3): (0, 2), ('s2', 3): (1, 2), ('s3', 3): (2, 10)}
     """
     # fixme - write another test for when there is overlap and mini dp is done
 
@@ -169,7 +171,7 @@ def collapse_matrices(
         str, int
     ] = {}  # maps subfam name to new row index
     subfams_count: Dict[str, List[int]] = {}  # original row in matrix
-    active_cells_collapse: Dict[int, List[int]] = {}
+    active_cells_collapsed_set: Dict[int, Set[int]] = {}
     subfams_dp = set()
 
     subfam_alignments_collapse: SubfamAlignmentsMatrix = {}
@@ -193,10 +195,8 @@ def collapse_matrices(
 
     for col in range(len(columns)):
         col_index: int = columns[col]
-        active_cols = (
-            set()
-        )  # use set so don't add duplicates of subfams with mulitple alignments
-        active_cells_collapse[col_index] = active_cols
+        # use set so don't add duplicates of subfams with mulitple alignments
+        active_cells_collapsed_set[col_index] = set()
 
         for row_index in active_cells[col_index]:
             subfam: str = subfams[row_index]
@@ -217,17 +217,20 @@ def collapse_matrices(
 
                 subfam_alignments_collapse[
                     subfam, col_index + start_all - 1
-                ] = [row_index, consensus_pos]
+                ] = (row_index, consensus_pos)
 
-            active_cells_collapse[col_index].add(subfams_collapse_temp[subfam])
+            active_cells_collapsed_set[col_index].add(
+                subfams_collapse_temp[subfam]
+            )
 
     # convert all sets into lists for easier use later
-    for key in active_cells_collapse:
-        active_cells_collapse[key] = list(active_cells_collapse[key])
+    active_cells_collapse: Dict[int, List[int]] = {}
+    for key in active_cells_collapsed_set:
+        active_cells_collapse[key] = list(active_cells_collapsed_set[key])
 
     for subfam in subfams_dp:
         dp_rows = subfams_count[subfam]
-        dp_non_empty = set()
+        dp_non_empty_set = set()
         dp_active: Dict[int, List[int]] = {}
 
         for i in range(len(dp_rows)):
@@ -235,13 +238,13 @@ def collapse_matrices(
                 starts[dp_rows[i]] - start_all + 1,
                 stops[dp_rows[i]] - start_all + 1 + 1,
             ):
-                dp_non_empty.add(j)
+                dp_non_empty_set.add(j)
                 if j in dp_active:
                     dp_active[j].append(dp_rows[i])
                 else:
                     dp_active[j] = [dp_rows[i]]
 
-        dp_non_empty = list(dp_non_empty)
+        dp_non_empty = list(dp_non_empty_set)
         dp_non_empty.sort()
 
         dp_region_starts = []
@@ -269,7 +272,6 @@ def collapse_matrices(
             ]
             if len(dp_active_rows[region]) > 1:
                 # do dp
-                x = 0
                 collapse_path = dp_for_collapse(
                     dp_active_rows[region],
                     dp_active,
@@ -284,7 +286,7 @@ def collapse_matrices(
                     consensus_pos = consensus_matrix[collapse_row, collapse_col]
                     subfam_alignments_collapse[
                         subfam, collapse_col + start_all - 1
-                    ] = [collapse_row, consensus_pos]
+                    ] = (collapse_row, consensus_pos)
                     consensus_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
                     ] = consensus_pos
@@ -303,7 +305,7 @@ def collapse_matrices(
                     consensus_pos = consensus_matrix[row_index, collapse_col]
                     subfam_alignments_collapse[
                         subfam, collapse_col + start_all - 1
-                    ] = [collapse_row, consensus_pos]
+                    ] = (collapse_row, consensus_pos)
 
                     consensus_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col

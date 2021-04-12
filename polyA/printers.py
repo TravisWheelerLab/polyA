@@ -1,11 +1,9 @@
 import json
 from math import inf
 from sys import stdout
-from typing import Dict, List, Optional, TextIO, Tuple, Union
-from uuid import uuid4
+from typing import Dict, List, TextIO, Tuple, Union, Any
 
 from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
-from .ultra_provider import TandemRepeat
 
 
 def print_matrix_hash(
@@ -29,7 +27,7 @@ def print_matrix_hash(
     i: int = 0
     while i < num_row:
         file.write(f"{subfams[i]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (i, j) in matrix:
                 file.write(f"{matrix[i, j]}")
@@ -65,7 +63,7 @@ def print_matrix_support(
 
     for k in range(len(subfams_collapse)):
         outfile.write(f"{subfams_collapse[k]}\t")
-        j: int = 0
+        j = 0
         while j < num_col:
             if (k, j) in matrix:
                 outfile.write(str(matrix[k, j]))
@@ -78,6 +76,7 @@ def print_matrix_support(
 
 def print_results(
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -96,13 +95,17 @@ def print_results(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
 def print_results_sequence(
     edgestart: int,
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -121,7 +124,10 @@ def print_results_sequence(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
@@ -129,6 +135,7 @@ def print_results_chrom(
     edgestart: int,
     chrom_start: int,
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changespos_orig: List[int],
     columns_orig: List[int],
     ids: List[str],
@@ -160,19 +167,23 @@ def print_results_chrom(
             stdout.write("\t")
             stdout.write(str(ids[columns_orig[changespos_orig[i]]]))
             stdout.write("\t")
-            stdout.write(str(changes_orig[i]))
+            if str(changes_orig[i]) != "Tandem Repeat":
+                stdout.write(str(changes_orig[i]))
+            else:
+                stdout.write(str(tr_consensus_changes[i]))
             stdout.write("\n")
 
 
 def print_results_soda(
     start_all: int,
-    outfile: Optional[TextIO],
-    outfile_json: Optional[TextIO],
+    outfile: TextIO,
+    outfile_json: TextIO,
     chrom: str,
     chrom_start: int,
     chrom_end: int,
     subfams: List[str],
     changes_orig: List[str],
+    tr_consensus_changes: Dict[int, str],
     changes_position_orig: List[int],
     columns_orig: List[int],
     consensus_lengths: Dict[str, int],
@@ -180,7 +191,7 @@ def print_results_soda(
     consensus_matrix_collapse: Dict[Tuple[int, int], int],
     subfams_collapse_index: Dict[str, int],
     node_confidence_orig: Dict[Tuple[str, int], float],
-    ids: List[int],
+    ids: List[str],
     subfam_alignments: List[str],
     chrom_alignments: List[str],
     consensus_starts: List[int],
@@ -324,9 +335,10 @@ def print_results_soda(
     i = 0
     while i < length:
         sub_id: int = 0
-        json_dict_subid: Dict[str, Dict[str, float]] = {}
+        json_dict_subid: Dict[str, List[Tuple[str, float]]] = {}
 
         if changes_orig[i] != "skip" and used[i]:
+            orig_subfam: str = changes_orig[i]
             subfam: str = changes_orig[i]
             strand: str = strand_matrix_collapse[
                 subfams_collapse_index[subfam],
@@ -336,8 +348,8 @@ def print_results_soda(
             left_flank: int
             right_flank: int
 
-            if subfam == "Tandem Repeat":
-                subfam = "Tandem#Repeat/TR"
+            if orig_subfam == "Tandem Repeat":
+                subfam = tr_consensus_changes[i]
                 left_flank = 0
                 right_flank = 0
             else:
@@ -428,7 +440,7 @@ def print_results_soda(
 
             j: int = i + 1
             while j < length:
-                if changes_orig[j] != "skip" and subfam != "Tandem#Repeat/TR":
+                if changes_orig[j] != "skip" and orig_subfam != "Tandem Repeat":
 
                     if (
                         ids[columns_orig[changes_position_orig[i]]]
@@ -458,11 +470,11 @@ def print_results_soda(
                         del block_size[-1]
                         block_size.append("0")
 
-                        align_stop: int = chrom_start + (
+                        align_stop = chrom_start + (
                             columns_orig[changes_position_orig[j + 1] - 1]
                             + start_all
                         )
-                        feature_stop: int = align_stop + right_flank
+                        feature_stop = align_stop + right_flank
 
                         block_start.append(
                             str(
@@ -510,7 +522,7 @@ def print_results_soda(
                 j += 1
 
             json_dict_id[str(id)] = json_dict_subid
-            json_annotation = {}
+            json_annotation: Dict[str, Any] = {}
             json_annotation["bin"] = "0"
             json_annotation["chrom"] = chrom
             json_annotation["chromStart"] = str(feature_start)
@@ -531,12 +543,12 @@ def print_results_soda(
                 min_align_start = align_start
             if align_stop > max_align_end:
                 max_align_end = align_stop
-
         used[i] = 0
         i += 1
 
     json_dict["chrStart"] = min_align_start
     json_dict["chrEnd"] = max_align_end
+
     # prints  outfile for SODA viz
     outfile.write(json.dumps(json_dict))
 

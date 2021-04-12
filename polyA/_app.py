@@ -134,7 +134,6 @@ def run():
     stdout.write("start\tstop\tID\tname\n")
     stdout.write("----------------------------------------\n")
     tr_start: int = 0
-    tr_end: int = 0
     _prev_start: int = -1
     _prev_stop: int = -1
     for index, chunk in enumerate(
@@ -143,7 +142,6 @@ def run():
         chunk_start = chunk.start
         chunk_stop = chunk.stop
         # get TRs between chunk stop and start
-        tandem_repeats_chunk: List[TandemRepeat] = []
         tr_end = tr_start
         while tr_end < len(tandem_repeats):
             tr = tandem_repeats[tr_end]
