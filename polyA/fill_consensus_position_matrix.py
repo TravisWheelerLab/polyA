@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 
-from polyA.matrices import ConsensusMatrixContainer
-from polyA.performance import timeit
+from .matrices import ConsensusMatrixContainer
+from .performance import timeit
 
 
 @timeit

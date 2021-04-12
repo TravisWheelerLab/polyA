@@ -3,7 +3,7 @@ from math import inf
 from sys import stdout
 from typing import Dict, List, TextIO, Tuple, Union, Any
 
-from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
+from .matrices import SupportMatrix, SubfamAlignmentsMatrix
 
 
 def print_matrix_hash(

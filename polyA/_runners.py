@@ -3,33 +3,26 @@ from math import log
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
-from polyA import (
-    Alignment,
-    CHANGE_PROB,
-    SAME_PROB_LOG,
-    SKIP_ALIGN_SCORE,
-    SubMatrix,
-    SubMatrixCollection,
-    TandemRepeat,
-    calculate_repeat_scores,
-    collapse_matrices,
-    confidence_only,
-    edges,
-    extract_nodes,
-    fill_align_matrix,
-    fill_confidence_matrix,
-    fill_consensus_position_matrix,
-    fill_node_confidence,
-    fill_path_graph,
-    fill_probability_matrix,
-    fill_support_matrix,
-    get_path,
-    pad_sequences,
-    print_results,
-    print_results_chrom,
-    print_results_sequence,
-    print_results_soda,
-)
+from .alignment import Alignment
+from .calc_repeat_scores import calculate_repeat_scores
+from .collapse_matrices import collapse_matrices
+from .confidence_cm import confidence_only
+from .constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
+from .edges import edges
+from .extract_nodes import extract_nodes
+from .fill_align_matrix import fill_align_matrix
+from .fill_confidence_matrix import fill_confidence_matrix
+from .fill_consensus_position_matrix import fill_consensus_position_matrix
+from .fill_node_confidence import fill_node_confidence
+from .fill_path_graph import fill_path_graph
+from .fill_probability_matrix import fill_probability_matrix
+from .fill_support_matrix import fill_support_matrix
+from .get_path import get_path
+from .pad_sequences import pad_sequences
+from .print_helpers import find_consensus_lengths
+from .printers import print_results, print_results_chrom, print_results_sequence, print_results_soda
+from .substitution_matrix import SubMatrix, SubMatrixCollection
+from .ultra_provider import TandemRepeat
 
 
 def run_confidence(
