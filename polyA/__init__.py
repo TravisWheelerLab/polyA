@@ -6,7 +6,10 @@ __version__ = "0.1.0"
 
 from .alignment import Alignment, get_skip_state
 from .calc_repeat_scores import calculate_repeat_scores
-from .calculate_score import calculate_score
+from .calculate_score import (
+    calculate_score,
+    calculate_complexity_adjusted_score,
+)
 from .collapse_matrices import collapse_matrices
 from .confidence_cm import confidence_cm, confidence_only
 from .constants import (

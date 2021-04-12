@@ -1,4 +1,5 @@
 from typing import Dict
+import math
 
 
 def calculate_score(
@@ -72,3 +73,36 @@ def calculate_score(
             chunk_score += sub_matrix[seq1_char + seq2_char]
 
     return chunk_score
+
+
+def query_char_frequency(char, query_seq):
+    char_count = 0
+    total_chars = 0
+    for query_char in query_seq:
+        if query_char == char:
+            char_count += 1
+        if query_char != "-":
+            total_chars += 1
+    # want the amount of that char / len(query_seq) excluding gaps
+    return char_count / total_chars
+
+
+def calculate_complexity_adjusted_score(query_seq, lmbda, score):
+    t_factor = 0
+    t_sum = 0
+    t_counts = 0
+    # From CM file
+    background_freq = {"A": 0.295, "C": 0.205, "G": 0.205, "T": 0.295}
+    for char, freq in background_freq.items():
+        count = query_char_frequency(char, query_seq)
+        if count > 0 and freq > 0 and math.log(freq) != 0:
+            t_factor += count * math.log(count)
+            t_sum += count * math.log(freq)
+            t_counts += count
+
+    if t_counts != 0:
+        t_factor -= t_counts * math.log(t_counts)
+    t_sum -= t_factor
+    new_score = int(score + (t_sum / lmbda) + 0.999)
+    new_score = max(0, new_score)
+    return new_score
