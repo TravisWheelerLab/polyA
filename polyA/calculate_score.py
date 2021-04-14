@@ -77,32 +77,64 @@ def calculate_score(
 
 def calc_query_char_counts(query_seq, target_seq):
     query_char_count = {"A": 0, "C": 0, "G": 0, "T": 0}
+    total_chars = 0
     for q_base, t_base in zip(target_seq, query_seq):
-        if q_base == "-":
+        if q_base not in ["A", "G", "T", "C"]:
             continue
         if t_base == "-":
             continue
         query_char_count[q_base] += 1
-    return query_char_count
+        total_chars += 1
+    return query_char_count, total_chars
 
 
 def calculate_complexity_adjusted_score(query_seq, target_seq, lmbda, score):
     t_factor = 0
     t_sum = 0
     t_counts = 0
-    # From CM file
+    # background_freq from CM file
     background_freq = {"A": 0.295, "C": 0.205, "G": 0.205, "T": 0.295}
-    query_char_counts = calc_query_char_counts(query_seq, target_seq)
+    query_char_counts, total_chars = calc_query_char_counts(
+        query_seq, target_seq
+    )
+    position_char_adjustment = {"A": 0, "C": 0, "G": 0, "T": 0}
     for char, freq in background_freq.items():
         count = query_char_counts[char]
         if count > 0 and freq > 0 and math.log(freq) != 0:
             t_factor += count * math.log(count)
             t_sum += count * math.log(freq)
             t_counts += count
+            position_char_adjustment[char] += count * math.log(freq)
+
+    # char percent contribution to t_sum
+    for c, v in position_char_adjustment.items():
+        position_char_adjustment[c] /= t_sum
 
     if t_counts != 0:
         t_factor -= t_counts * math.log(t_counts)
     t_sum -= t_factor
+
+    # char value contribution to t_sum
+    for c, v in position_char_adjustment.items():
+        position_char_adjustment[c] *= t_sum
+
+    # per position char value contribution to score adjustment
+    for c, v in position_char_adjustment.items():
+        position_char_adjustment[c] /= query_char_counts[c]
+        position_char_adjustment[c] /= lmbda
+        position_char_adjustment[c] += 0.999 / total_chars
+
+    # check that summ matches t_sum / lmbda + 0.999
+    # FIXME: slightly off for shorter lengths - rounding errors?
+    summ = 0
+    for q, t in zip(query_seq, target_seq):
+        if q not in ["A", "G", "T", "C"]:
+            continue
+        if t == "-":
+            continue
+        summ += position_char_adjustment[q]
+
     new_score = int(score + t_sum / lmbda + 0.999)
     new_score = max(0, new_score)
-    return new_score
+    # FIXME: do I need to check if 0 is returned?
+    return position_char_adjustment
