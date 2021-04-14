@@ -215,9 +215,9 @@ def print_results_soda(
         1
     ] * length  # wont print out the results of the same thing twice
 
-    json_dict_id: Dict[str, Dict[str, Dict[str, float]]] = {}
+    json_dict_id: Dict[str, Any] = {}
 
-    json_dict = {}
+    json_dict: Dict[str, Any] = {}
     json_dict["chr"] = chrom
     json_dict["annotations"] = []
     json_dict["heatmap"] = []
@@ -265,7 +265,7 @@ def print_results_soda(
                     prev_col += 1
                 else:
                     if len(heatmap_vals) > 0:
-                        block_sub_alignment = {}
+                        block_sub_alignment: Dict[str, Any] = {}
                         if subfams_collapse[k] != "Tandem Repeat":
                             block_sub_alignment["ID"] = prev_subfam_row
                             block_sub_alignment["chrSeq"] = chrom_alignments[
@@ -381,7 +381,7 @@ def print_results_soda(
                         ]
                     )
 
-            align_start: int = (
+            align_start = (
                 chrom_start
                 + (columns_orig[changes_position_orig[i]] + start_all)
                 - 2
@@ -435,7 +435,7 @@ def print_results_soda(
             )
             block_size.append(str(right_flank))
 
-            j: int = i + 1
+            j = i + 1
             while j < length:
                 if changes_orig[j] != "skip" and orig_subfam != "Tandem Repeat":
 
