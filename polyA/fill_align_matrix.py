@@ -1,7 +1,10 @@
 from math import inf
 from typing import Dict, List, Tuple
 
-from .calculate_score import calculate_score
+from .calculate_score import (
+    calculate_score,
+    calculate_complexity_adjusted_score,
+)
 from .matrices import AlignMatrix
 from .performance import timeit
 
@@ -61,7 +64,7 @@ def fill_align_matrix(
     >>> chros = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT...............", "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT..............."]
     >>> subs = ["", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...............", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--A..............."]
     >>> strts = [0, 2, 0]
-    >>> sub_mat = [{"AA":1, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
+    >>> sub_mat = [{"AA":8, "AT":-1, "TA":-1, "TT":1, "..":0}] * 3
     >>> m = fill_align_matrix([0.0, 0.1, 0.1], 41, 0, 31, [0, -25, -25], [0, -5, -5], 1.0, subs, chros, strts, sub_mat)
     >>> m
     {(1, 3): 3.1, (1, 4): 3.1, (1, 5): 3.1, (1, 6): 3.1, (1, 7): 3.1, (1, 8): 3.1, (1, 9): 3.1, (1, 10): 3.1, (1, 11): 3.1, (1, 12): 3.1, (1, 13): 3.1, (1, 14): 3.1, (1, 15): 3.1, (1, 16): 3.1, (1, 17): 3.1, (1, 18): 3.1, (1, 19): 3.1, (1, 20): 3.1, (1, 21): 3.1, (1, 22): 3.1, (1, 23): 3.1, (1, 24): 3.1, (1, 25): 2.9000000000000004, (1, 26): 2.8933333333333335, (1, 27): 2.8862068965517245, (1, 28): 2.878571428571429, (1, 29): 2.8703703703703702, (1, 30): 2.861538461538462, (1, 31): 2.8520000000000003, (1, 32): 2.841666666666667, (1, 33): 2.8304347826086955, (1, 34): 2.8181818181818183, (1, 35): 2.804761904761905, (1, 36): 2.7900000000000005, (1, 37): 2.7736842105263158, (1, 38): 2.7555555555555555, (1, 39): 2.735294117647059, (1, 40): 2.7125000000000004, (2, 1): 2.7125000000000004, (2, 2): 2.735294117647059, (2, 3): 2.755555555555556, (2, 4): 2.7736842105263158, (2, 5): 2.79, (2, 6): 2.804761904761905, (2, 7): 2.8181818181818183, (2, 8): 2.830434782608696, (2, 9): 2.841666666666667, (2, 10): 2.8520000000000003, (2, 11): 2.861538461538462, (2, 12): 2.8703703703703702, (2, 13): 2.8785714285714286, (2, 14): 2.8862068965517245, (2, 15): 2.8933333333333335, (2, 16): 2.9000000000000004, (2, 17): 3.1, (2, 18): 3.1, (2, 19): 3.1, (2, 20): 3.1, (2, 21): 3.1, (2, 22): 3.1, (2, 23): 0.5, (2, 24): -0.1, (2, 25): -0.30000000000000004, (2, 26): -0.41333333333333333, (2, 27): -0.5344827586206897, (2, 28): -0.6642857142857143, (2, 29): -0.8037037037037037, (2, 30): -0.9538461538461539, (2, 31): -1.116, (2, 32): -1.291666666666667, (2, 33): -1.482608695652174, (2, 34): -1.6909090909090907, (2, 35): -1.9190476190476191, (2, 36): -2.17, (2, 37): -2.447368421052632, (2, 38): -2.7555555555555555, (2, 39): -3.1, (2, 40): -3.4875000000000003, (0, 0): 1.0, (0, 1): 1.0, (0, 2): 1.0, (0, 3): 1.0, (0, 4): 1.0, (0, 5): 1.0, (0, 6): 1.0, (0, 7): 1.0, (0, 8): 1.0, (0, 9): 1.0, (0, 10): 1.0, (0, 11): 1.0, (0, 12): 1.0, (0, 13): 1.0, (0, 14): 1.0, (0, 15): 1.0, (0, 16): 1.0, (0, 17): 1.0, (0, 18): 1.0, (0, 19): 1.0, (0, 20): 1.0, (0, 21): 1.0, (0, 22): 1.0, (0, 23): 1.0, (0, 24): 1.0, (0, 25): 1.0, (0, 26): 1.0, (0, 27): 1.0, (0, 28): 1.0, (0, 29): 1.0, (0, 30): 1.0, (0, 31): 1.0, (0, 32): 1.0, (0, 33): 1.0, (0, 34): 1.0, (0, 35): 1.0, (0, 36): 1.0, (0, 37): 1.0, (0, 38): 1.0, (0, 39): 1.0, (0, 40): 1.0}
@@ -78,7 +81,9 @@ def fill_align_matrix(
         lamb = lambda_values[i]
         gap_init = gap_inits[i]
         gap_ext = gap_exts[i]
-
+        char_complexity_adjustments: Dict[
+            str, int
+        ] = calculate_complexity_adjusted_score(subfam_seq, chrom_seq, lamb)
         # starts at the first non '.' char, but offsets it in the matrix based on where
         # the alignments start in the seq - ex: if first alignment in the seq starts at 10,
         # will offset by 10
@@ -108,7 +113,14 @@ def fill_align_matrix(
 
         # calculates score for first chunk and puts in align_matrix
         align_score: float = calculate_score(
-            gap_ext, gap_init, subfam_slice, chrom_slice, "", "", sub_matrix
+            gap_ext,
+            gap_init,
+            subfam_slice,
+            chrom_slice,
+            "",
+            "",
+            sub_matrix,
+            char_complexity_adjustments,
         )
 
         align_matrix[i, col_index - k] = lamb * (
@@ -132,8 +144,10 @@ def fill_align_matrix(
                             subfams[i][seq_index + offset]
                             + chroms[i][seq_index + offset]
                         ]
+                        + char_complexity_adjustments[
+                            chroms[i][seq_index + offset]
+                        ]
                     )
-
                 align_matrix[i, col_index - k] = lamb * (
                     align_score * chunk_size / (chunk_size - k)
                 )
@@ -164,6 +178,7 @@ def fill_align_matrix(
                     subfams[i][seq_index - 1],
                     chroms[i][seq_index - 1],
                     sub_matrix,
+                    char_complexity_adjustments,
                 )
 
                 align_matrix[i, col_index - k] = lamb * (
@@ -217,6 +232,7 @@ def fill_align_matrix(
                         subfam_seq[seq_index],
                         chrom_seq[seq_index],
                         sub_matrix,
+                        char_complexity_adjustments,
                     )
 
                     temp_count2: int = 0
@@ -246,6 +262,7 @@ def fill_align_matrix(
                             - sub_matrix[
                                 subfam_seq[seq_index] + chrom_seq[seq_index]
                             ]
+                            - char_complexity_adjustments[chrom_seq[seq_index]]
                         )
                         num_nucls -= 1
 
@@ -266,6 +283,9 @@ def fill_align_matrix(
                             + sub_matrix[
                                 subfam_seq[seq_index + offset]
                                 + chrom_seq[seq_index + offset]
+                            ]
+                            + char_complexity_adjustments[
+                                chrom_seq[seq_index + offset]
                             ]
                         )
                         num_nucls += 1
