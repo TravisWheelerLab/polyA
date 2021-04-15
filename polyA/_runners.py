@@ -231,27 +231,6 @@ def run_full(
             else:
                 alignment_stop_positions.append(tr.stop)
 
-    # calc full scores and per position char complexity adjustments
-    sub_matrices = [sm.scores for sm in alignment_substitution_matrices]
-    for i in range(1, len(alignment_subfamily_sequences)):
-        # full score
-        score = calculate_score(
-            alignment_gap_exts[i],
-            alignment_gap_inits[i],
-            alignment_subfamily_sequences[i],
-            alignment_chromosome_sequences[i],
-            "",
-            "",
-            sub_matrices[i],
-        )
-        # complexity adjustment
-        char_adjustments = calculate_complexity_adjusted_score(
-            alignment_subfamily_sequences[i],
-            alignment_chromosome_sequences[i],
-            alignment_lambdas[i],
-            score,
-        )
-
     # The implicit start and stop positions for the skip state are the index
     # prior to the minimum start and the index after the maximum stop. In other
     # words, the skip state has N+2 columns, where N is the number of columns
