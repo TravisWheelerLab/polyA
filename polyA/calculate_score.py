@@ -95,11 +95,21 @@ def calc_query_char_counts(query_seq, target_seq):
     return query_char_count, total_chars, other_chars
 
 
-def calculate_complexity_adjusted_score(query_seq, target_seq, lamb):
+def calculate_complexity_adjusted_score(
+    complexity_adjust_scores, query_seq, target_seq, lamb
+):
+    char_complexity_adjustments: Dict[str, int] = {}
+    if not complexity_adjust_scores:
+        # set the complexity adjustment to zero for every char
+        for char in target_seq:
+            char_complexity_adjustments[char] = 0
+            if char == ".":
+                break
+        return char_complexity_adjustments
     t_factor = 0
     t_sum = 0
     t_counts = 0
-    # background_freq from CM file
+    # get background_freq from CM file
     background_freq = {"A": 0.295, "C": 0.205, "G": 0.205, "T": 0.295}
     query_char_counts, total_chars, other_chars = calc_query_char_counts(
         query_seq, target_seq

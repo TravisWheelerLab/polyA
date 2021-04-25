@@ -172,6 +172,7 @@ def run():
             chunk_stop,
             _prev_start,
             _prev_stop,
+            opts.complexity_adjustment,
         )
         _prev_start, _prev_stop = (
             _last_start,

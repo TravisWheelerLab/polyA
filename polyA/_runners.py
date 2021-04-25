@@ -29,8 +29,6 @@ from polyA import (
     print_results_chrom,
     print_results_sequence,
     print_results_soda,
-    calculate_score,
-    calculate_complexity_adjusted_score,
 )
 
 
@@ -140,6 +138,7 @@ def run_full(
     shard_stop: int,
     prev_start: int,
     prev_stop: int,
+    complexity_adjust_scores: bool,
 ) -> Tuple[int, int]:
     # chunk start and stop are positions in seq
     seq_count = len(alignments)
@@ -272,6 +271,7 @@ def run_full(
         alignment_chromosome_sequences,
         alignment_start_positions,
         [sm.scores for sm in alignment_substitution_matrices],
+        complexity_adjust_scores,
     )
 
     non_empty_columns = [c for c in range(column_count)]
