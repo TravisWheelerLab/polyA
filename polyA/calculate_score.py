@@ -79,20 +79,19 @@ def calculate_score(
     return chunk_score
 
 
-def calc_query_char_counts(query_seq, target_seq):
-    query_char_count = {"A": 0, "C": 0, "G": 0, "T": 0}
+def calc_target_char_counts(query_seq, target_seq):
+    query_char_counts = {"A": 0, "C": 0, "G": 0, "T": 0}
     other_chars = set()
     total_chars = 0
-    # FIXME: why should counts be based on the target seq?
     for q_base, t_base in zip(query_seq, target_seq):
         if t_base not in ["A", "G", "T", "C"]:
             other_chars.add(t_base)
             continue
         if q_base == "-":
             continue
-        query_char_count[t_base] += 1
+        query_char_counts[t_base] += 1
         total_chars += 1
-    return query_char_count, total_chars, other_chars
+    return query_char_counts, total_chars, other_chars
 
 
 def calculate_complexity_adjusted_score(
@@ -111,13 +110,13 @@ def calculate_complexity_adjusted_score(
     t_counts = 0
     # get background_freq from CM file
     background_freq = {"A": 0.295, "C": 0.205, "G": 0.205, "T": 0.295}
-    query_char_counts, total_chars, other_chars = calc_query_char_counts(
+    target_char_counts, total_chars, other_chars = calc_target_char_counts(
         query_seq, target_seq
     )
 
     char_complexity_adjustments = {"A": 0, "C": 0, "G": 0, "T": 0}
     for char, freq in background_freq.items():
-        count = query_char_counts[char]
+        count = target_char_counts[char]
         if count > 0 and freq > 0 and math.log(freq) != 0:
             t_factor += count * math.log(count)
             t_sum += count * math.log(freq)
@@ -139,7 +138,7 @@ def calculate_complexity_adjusted_score(
     # per position char value contribution to score adjustment
     for c, v in char_complexity_adjustments.items():
         if v != 0:
-            char_complexity_adjustments[c] /= query_char_counts[c]
+            char_complexity_adjustments[c] /= target_char_counts[c]
             char_complexity_adjustments[c] /= lamb
             char_complexity_adjustments[c] += 0.999 / total_chars
 
