@@ -3,7 +3,7 @@ from math import inf
 from sys import stdout
 from typing import Dict, List, TextIO, Tuple, Union, Any
 
-from polyA.matrices import SupportMatrix, SubfamAlignmentsMatrix
+from .matrices import SupportMatrix, SubfamAlignmentsMatrix
 
 
 def print_matrix_hash(
@@ -202,9 +202,10 @@ def print_results_soda(
     num_col: int,
 ) -> None:
     """
-    prints the results in the proper format to input into the SODA visualization tool
+    Prints the results in the proper format to input into the SODA visualization
+    tool.
 
-    format described here:
+    The output format is described here:
     https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
     """
     id: int = 0

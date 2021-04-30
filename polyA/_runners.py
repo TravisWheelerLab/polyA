@@ -3,33 +3,31 @@ from math import log
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
-from polyA import (
-    Alignment,
-    CHANGE_PROB,
-    SAME_PROB_LOG,
-    SKIP_ALIGN_SCORE,
-    SubMatrix,
-    SubMatrixCollection,
-    TandemRepeat,
-    calculate_repeat_scores,
-    collapse_matrices,
-    confidence_only,
-    edges,
-    extract_nodes,
-    fill_align_matrix,
-    fill_confidence_matrix,
-    fill_consensus_position_matrix,
-    fill_node_confidence,
-    fill_path_graph,
-    fill_probability_matrix,
-    fill_support_matrix,
-    get_path,
-    pad_sequences,
+from .alignment import Alignment
+from .calc_repeat_scores import calculate_repeat_scores
+from .collapse_matrices import collapse_matrices
+from .confidence_cm import confidence_only
+from .constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
+from .edges import edges
+from .extract_nodes import extract_nodes
+from .fill_align_matrix import fill_align_matrix
+from .fill_confidence_matrix import fill_confidence_matrix
+from .fill_consensus_position_matrix import fill_consensus_position_matrix
+from .fill_node_confidence import fill_node_confidence
+from .fill_path_graph import fill_path_graph
+from .fill_probability_matrix import fill_probability_matrix
+from .fill_support_matrix import fill_support_matrix
+from .get_path import get_path
+from .pad_sequences import pad_sequences
+from .print_helpers import find_consensus_lengths
+from .printers import (
     print_results,
     print_results_chrom,
     print_results_sequence,
     print_results_soda,
 )
+from .substitution_matrix import SubMatrix, SubMatrixCollection
+from .ultra_provider import TandemRepeat
 
 
 def run_confidence(
@@ -201,21 +199,8 @@ def run_full(
             alignment_substitution_matrices.append(SubMatrix("skip", 0.0))
             alignment_lambdas.append(0.0)
 
-    # precomputes consensus seq length for PrintResultsViz()
-    consensus_lengths_matrix: Dict[str, int] = {}
-    if outfile_viz and outfile_conf:
-        for i in range(1, len(alignment_flanks)):
-            if alignment_strands[i] == "+":
-                consensus_lengths_matrix[alignment_subfamilies[i]] = (
-                    alignment_consensus_stop_positions[i] + alignment_flanks[i]
-                )
-            else:
-                consensus_lengths_matrix[alignment_subfamilies[i]] = (
-                    alignment_consensus_start_positions[i] + alignment_flanks[i]
-                )
-
     tr_consensus_matrix: List[str] = []
-    if len(tandem_repeats) > 0:
+    if tandem_repeats:
         for tr in tandem_repeats:
             tr_consensus_matrix.append(tr.consensus)
             # add TR starts and stops
@@ -237,8 +222,8 @@ def run_full(
     alignment_stop_positions[0] = max(alignment_stop_positions[1:]) + 1
 
     # save original alignments before padding for SODA viz
-    subfam_alignments = list(alignment_subfamily_sequences)
-    chrom_alignments = list(alignment_chromosome_sequences)
+    original_subfamily_sequences = list(alignment_subfamily_sequences)
+    original_chromosome_sequences = list(alignment_chromosome_sequences)
 
     pad_sequences(
         chunk_size,
@@ -256,7 +241,7 @@ def run_full(
     column_count = stop_all - start_all + 1 + 2
 
     # number of rows in matrices
-    rows: int = seq_count
+    row_count: int = seq_count
 
     align_matrix = fill_align_matrix(
         alignment_lambdas,
@@ -272,10 +257,8 @@ def run_full(
         [sm.scores for sm in alignment_substitution_matrices],
     )
 
-    non_empty_columns = [c for c in range(column_count)]
-
     (active_cells, consensus_matrix) = fill_consensus_position_matrix(
-        rows,
+        row_count,
         column_count,
         start_all,
         alignment_subfamily_sequences,
@@ -286,19 +269,13 @@ def run_full(
         alignment_strands,
     )
 
-    # TODO: Is this comment accurate? The skip state IS a row, right?
-    # skip state has no active rows
-    active_cells[0] = [0]
-    active_cells[column_count] = [0]
-
     repeat_scores: Dict[int, float] = {}
-
     if len(tandem_repeats) > 0:
         repeat_scores = calculate_repeat_scores(
             tandem_repeats,
             chunk_size,
             start_all,
-            rows,
+            row_count,
             active_cells,
             align_matrix,
             consensus_matrix,
@@ -310,7 +287,7 @@ def run_full(
         for _ in tandem_repeats:
             alignment_subfamilies.append("Tandem Repeat")
             alignment_strands.append("+")
-            rows += 1
+            row_count += 1
 
     confidence_matrix = fill_confidence_matrix(
         column_count,
@@ -327,8 +304,10 @@ def run_full(
         confidence_matrix,
     )
 
+    non_empty_columns = [c for c in range(column_count)]
+
     collapsed_matrices = collapse_matrices(
-        rows,
+        row_count,
         start_all,
         non_empty_columns,
         alignment_subfamilies,
@@ -346,7 +325,7 @@ def run_full(
     consensus_matrix_collapse = collapsed_matrices.consensus_matrix
     strand_matrix_collapse = collapsed_matrices.strand_matrix
     subfams_collapse_index = collapsed_matrices.subfamily_indices
-    rows = collapsed_matrices.row_num_update
+    row_count = collapsed_matrices.row_num_update
     subfam_alignments_collapse = collapsed_matrices.subfam_alignments_matrix
 
     align_matrix.clear()
@@ -354,18 +333,18 @@ def run_full(
     support_matrix.clear()
     consensus_matrix.clear()
 
-    if len(tandem_repeats) > 0:
+    if tandem_repeats:
         # give different TRs consensus positions that don't allow them to be stitched
         tr_consensus_pos = 1000000
         prev_tr_col = 0
         for tr_col in repeat_scores:
             if prev_tr_col != tr_col - 1:
                 tr_consensus_pos -= 500
-            consensus_matrix_collapse[rows - 1, tr_col + 1] = tr_consensus_pos
+            consensus_matrix_collapse[
+                row_count - 1, tr_col + 1
+            ] = tr_consensus_pos
             prev_tr_col = tr_col
 
-    # save original cols for printing heatmap
-    cols_orig = column_count
     (
         prob_matrix_last_column,
         origin_matrix,
@@ -632,6 +611,8 @@ def run_full(
         )
 
     if outfile_viz and outfile_conf:
+        consensus_lengths = find_consensus_lengths(alignments)
+
         print_results_soda(
             start_all,
             outfile_viz,
@@ -644,20 +625,20 @@ def run_full(
             tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
-            consensus_lengths_matrix,
+            consensus_lengths,
             strand_matrix_collapse,
             consensus_matrix_collapse,
             subfams_collapse_index,
             node_confidence_orig,
             node_ids,
-            subfam_alignments,
-            chrom_alignments,
+            original_subfamily_sequences,
+            original_chromosome_sequences,
             alignment_consensus_start_positions,
             alignment_consensus_stop_positions,
             subfam_alignments_collapse,
             support_matrix_collapse,
             subfams_collapse,
-            cols_orig,
+            column_count,
         )
 
     return last_subfam_start, last_subfam_stop
