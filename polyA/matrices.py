@@ -8,6 +8,8 @@ ConfidenceMatrix = Dict[RowColumn, float]
 
 ConsensusMatrix = Dict[RowColumn, int]
 
+NodeConfidenceMatrix = Dict[Tuple[str, int], float]
+
 StrandMatrix = Dict[RowColumn, str]
 
 SupportMatrix = Dict[RowColumn, float]

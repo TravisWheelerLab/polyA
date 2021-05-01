@@ -1,6 +1,6 @@
 from typing import Dict, TextIO
 
-from polyA import PROB_SKIP, PROB_SKIP_TR
+from .constants import PROB_SKIP, PROB_SKIP_TR
 
 
 def read_prior_counts(
