@@ -7,6 +7,7 @@ from ._runners import run_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import (
     load_alignments,
+    load_alignment_tool,
     shard_overlapping_alignments,
 )
 from .output import Output
@@ -112,6 +113,11 @@ def run():
 
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
+        alignment_tool: str = load_alignment_tool(_infile)
+
+    complexity_adjustment: bool = opts.complexity_adjustment
+    if alignment_tool != "cross_match":
+        complexity_adjustment = False
 
     # --------------------------
     # Run confidence calculation
@@ -172,7 +178,7 @@ def run():
             chunk_stop,
             _prev_start,
             _prev_stop,
-            opts.complexity_adjustment,
+            complexity_adjustment,
         )
         _prev_start, _prev_stop = (
             _last_start,

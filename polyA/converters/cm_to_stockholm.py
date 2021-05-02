@@ -195,6 +195,7 @@ def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
 def main():
     filename_cm = sys.argv[1]
     file_contents = read_file(filename_cm)
+    alignment_tool = sys.argv[2].lower()
 
     filename_out_sto = filename_cm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
@@ -203,6 +204,7 @@ def main():
     matrix_name = "matrix1"
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
+    f_out_sto.write(f"# ALIGNMENT TOOL {alignment_tool}\n")
 
     score_matrix = get_score_matrix(file_contents)
     print_score_matrix(filename_out_matrix, score_matrix, matrix_name)

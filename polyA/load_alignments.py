@@ -178,6 +178,21 @@ def load_alignments(
             seqs.clear()
 
 
+def load_alignment_tool(file: TextIO) -> str:
+    """
+    Return alignment tool used.
+    """
+    for line in file:
+        if _parse_preamble_line(line):
+            continue
+
+        if line.strip().upper().startswith("# ALIGNMENT TOOL:"):
+            # get alignment tool
+            return line.split()[-1]
+        return ""
+    return ""
+
+
 class Shard(NamedTuple):
     start: int
     stop: int
