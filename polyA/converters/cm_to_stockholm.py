@@ -206,6 +206,23 @@ def main():
     f_out_sto.write("# STOCKHOLM 1.0\n")
     f_out_sto.write(f"# ALIGNMENT TOOL {alignment_tool}\n")
 
+    # only look for background freqs if using cross_match
+    if alignment_tool == "cross_match":
+        background_freqs = re.findall(
+            r"Assumed background frequencies:.*\n.*\n.*",
+            file_contents,
+        )
+        background_freqs = background_freqs[0].splitlines()[1].split()
+        background_freqs = background_freqs[: len(background_freqs) - 2]
+        background_freqs_dict = {}
+        for i in range(0, len(background_freqs), 2):
+            char = background_freqs[i][0]
+            freq = float(background_freqs[i + 1])
+            if freq != 0:
+                background_freqs_dict[char] = freq
+        # write background freqs to file
+        f_out_sto.write(f"# BACKGROUND FREQUENCIES: {background_freqs_dict}\n")
+
     score_matrix = get_score_matrix(file_contents)
     print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
 
