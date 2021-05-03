@@ -136,7 +136,7 @@ def run_full(
     shard_stop: int,
     prev_start: int,
     prev_stop: int,
-    complexity_adjust_scores: bool,
+    char_background_freqs: Optional[Dict[str, float]],
 ) -> Tuple[int, int]:
     # chunk start and stop are positions in seq
     seq_count = len(alignments)
@@ -256,7 +256,7 @@ def run_full(
         alignment_chromosome_sequences,
         alignment_start_positions,
         [sm.scores for sm in alignment_substitution_matrices],
-        complexity_adjust_scores,
+        char_background_freqs,
     )
 
     (active_cells, consensus_matrix) = fill_consensus_position_matrix(

@@ -186,9 +186,26 @@ def load_alignment_tool(file: TextIO) -> str:
         if _parse_preamble_line(line):
             continue
 
-        if line.strip().upper().startswith("# ALIGNMENT TOOL:"):
+        if line.strip().upper().startswith("# ALIGNMENT TOOL"):
             # get alignment tool
             return line.split()[-1]
+        return ""
+    return ""
+
+
+def load_background_freqs(file: TextIO) -> str:
+    """
+    Return assumed background frequencies for complexity adjusted scoring.
+    """
+    for line in file:
+        if _parse_preamble_line(line):
+            continue
+
+        if line.strip().upper().startswith("# ALIGNMENT TOOL"):
+            continue
+
+        if line.strip().upper().startswith("# BACKGROUND FREQUENCIES:"):
+            return line.strip().split(":")[-1]
         return ""
     return ""
 

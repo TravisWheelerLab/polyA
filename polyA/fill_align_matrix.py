@@ -1,5 +1,5 @@
 from math import inf
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from .calculate_score import (
     calculate_score,
@@ -22,7 +22,7 @@ def fill_align_matrix(
     chroms: List[str],
     starts: List[int],
     sub_matrices: List[Dict[str, int]],
-    complexity_adjust_scores: bool,
+    char_background_freqs: Optional[Dict[str, float]],
 ) -> AlignMatrix:
     """
     Fills an alignment score matrix by calculating an alignment score (according
@@ -86,7 +86,7 @@ def fill_align_matrix(
         char_complexity_adjustments: Dict[
             str, int
         ] = calculate_complexity_adjusted_score(
-            complexity_adjust_scores, subfam_seq, chrom_seq, lamb
+            char_background_freqs, subfam_seq, chrom_seq, lamb
         )
         # or maybe pass in if it's being used here, if not, return the dictionary but with zeros mapped to everything
 
