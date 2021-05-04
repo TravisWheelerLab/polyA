@@ -1,7 +1,7 @@
 import logging
 import json
 from sys import argv, stderr, stdout
-from typing import List
+from typing import List, Dict
 
 from ._options import Options
 from ._runners import run_confidence, run_full
@@ -113,7 +113,7 @@ def run():
     # Load alignments to operate on
     # -----------------------------
 
-    background_freqs_dict: dict[str, float] = None
+    background_freqs_dict: Dict[str, float] = None
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
         alignment_tool: str = load_alignment_tool(_infile)
