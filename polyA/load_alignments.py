@@ -185,7 +185,6 @@ def load_alignment_tool(file: TextIO) -> str:
     for line in file:
         if _parse_preamble_line(line):
             continue
-
         if line.strip().upper().startswith("# ALIGNMENT TOOL"):
             # get alignment tool
             return line.split()[-1]
@@ -205,7 +204,7 @@ def load_background_freqs(file: TextIO) -> str:
             continue
 
         if line.strip().upper().startswith("# BACKGROUND FREQUENCIES:"):
-            return line.strip().split(":")[-1]
+            return line[line.find("{") : line.find("}") + 1]
         return ""
     return ""
 
