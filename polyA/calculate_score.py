@@ -104,24 +104,23 @@ def calculate_complexity_adjusted_score(
     lamb: float,
 ):
     char_complexity_adjustments: Dict[str, float] = {}
-    if char_background_freqs is not None:
+    if char_background_freqs is None:
         # set the complexity adjustment to zero for every char
         for char in target_seq:
             char_complexity_adjustments[char] = 0
             if char == ".":
                 break
         return char_complexity_adjustments
+
     t_factor: float = 0
     t_sum: float = 0
     t_counts: int = 0
-    # get background_freq from CM file
-    background_freq = {"A": 0.295, "C": 0.205, "G": 0.205, "T": 0.295}
     target_char_counts, total_chars, other_chars = calc_target_char_counts(
         query_seq, target_seq
     )
 
     char_complexity_adjustments = {"A": 0, "C": 0, "G": 0, "T": 0}
-    for char, freq in background_freq.items():
+    for char, freq in char_background_freqs.items():
         count = target_char_counts[char]
         if count > 0 and freq > 0 and math.log(freq) != 0:
             t_factor += count * math.log(count)
