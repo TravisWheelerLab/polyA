@@ -4,7 +4,7 @@ from .matrices import ConfidenceMatrix, SupportMatrix
 from .performance import timeit
 
 
-@timeit
+@timeit()
 def fill_support_matrix(
     chunk_size: int,
     starts: List[int],

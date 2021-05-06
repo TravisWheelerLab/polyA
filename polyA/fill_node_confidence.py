@@ -7,7 +7,7 @@ from .calculate_score import calculate_score
 from .sum_repeat_scores import sub_repeat_scores
 
 
-@timeit
+@timeit()
 def fill_node_confidence(
     nodes: int,
     start_all: int,

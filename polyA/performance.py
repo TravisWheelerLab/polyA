@@ -7,7 +7,11 @@ from typing import Optional, TextIO
 ENV_VAR_NAME = "POLYA_PERFORMANCE"
 
 
-def timeit(method, file: TextIO = stderr, logger: Optional[Logger] = None):
+def timeit(
+    file: TextIO = stderr,
+    logger: Optional[Logger] = None,
+    name: Optional[str] = None,
+):
     """
     A benchmarking helper intended for us as a decorator. To use,
     decorate a function with `@timeit`, then set the `POLYA_PERFORMANCE`
@@ -22,27 +26,34 @@ def timeit(method, file: TextIO = stderr, logger: Optional[Logger] = None):
     >>> import os, io
     >>> stream = io.StringIO()
     >>> os.environ[ENV_VAR_NAME] = 'true'
-    >>> perf_sum = timeit(sum, file=stream)
+    >>> perf_sum = timeit(file=stream)(sum)
     >>> perf_sum([1, 2])
     3
-    >>> stream.getvalue()
-    '[PERFORMANCE] sum 0s\\n'
+    >>> stream.getvalue()[:17]
+    '[PERFORMANCE] sum'
     """
-    if ENV_VAR_NAME not in environ:
-        return method
+    def decorator(method):
+        if ENV_VAR_NAME not in environ:
+            return method
 
-    def timed(*args, **kw):
-        ts = time()
-        result = method(*args, **kw)
-        te = time()
+        def timed(*args, **kw):
+            ts = time()
+            result = method(*args, **kw)
+            te = time()
 
-        msg = f"[PERFORMANCE] {method.__name__} {int(te - ts)}s\n"
+            if name is None:
+                method_name = method.__name__
+            else:
+                method_name = name
 
-        if logger is None:
-            file.write(msg)
-        else:
-            logger.info(msg)
+            msg = f"{method_name} {float(te - ts):.4f}s"
 
-        return result
+            if logger:
+                logger.info(msg)
+            else:
+                file.write(f"[PERFORMANCE] {msg}\n")
 
-    return timed
+            return result
+        return timed
+
+    return decorator
