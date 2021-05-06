@@ -3,6 +3,8 @@ import re
 from tempfile import NamedTemporaryFile
 from typing import Callable, Dict
 
+from .performance import timeit
+
 LambdaProvider = Callable[[Dict[str, int]], float]
 """
 A callback that accepts a substitution matrix name
@@ -41,6 +43,7 @@ class EaselLambdaProvider:
     def __init__(self, easel_path: str):
         self._path = easel_path
 
+    @timeit()
     def __call__(self, matrix: Dict[str, int]) -> float:
         # Create the temporary matrix file
         with NamedTemporaryFile("w", delete=False) as matrix_file:

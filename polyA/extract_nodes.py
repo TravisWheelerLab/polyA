@@ -3,7 +3,7 @@ from typing import List
 from .performance import timeit
 
 
-@timeit
+@timeit()
 def extract_nodes(
     nodes: int,
     columns: List[int],

@@ -4,7 +4,7 @@ from .matrices import ConsensusMatrixContainer
 from .performance import timeit
 
 
-@timeit
+@timeit()
 def fill_consensus_position_matrix(
     row_count: int,
     column_count: int,
