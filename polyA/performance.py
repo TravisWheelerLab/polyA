@@ -32,6 +32,7 @@ def timeit(
     >>> stream.getvalue()[:17]
     '[PERFORMANCE] sum'
     """
+
     def decorator(method):
         if ENV_VAR_NAME not in environ:
             return method
@@ -54,6 +55,7 @@ def timeit(
                 file.write(f"[PERFORMANCE] {msg}\n")
 
             return result
+
         return timed
 
     return decorator
