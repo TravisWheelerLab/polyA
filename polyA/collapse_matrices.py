@@ -197,7 +197,7 @@ def collapse_matrices(
         active_cells_collapsed_set[col_index] = set()
 
         for row_index in active_cells[col_index]:
-            subfam: str = subfams[row_index]
+            subfam = subfams[row_index]
 
             # if there is only one alignment for a subfam, just copy what was in the uncollapsed matrix
             # always do this for TRs
