@@ -77,7 +77,17 @@ def get_score_matrix(matrix_name):
     grabs score matrix info from original matrix file, puts it in correct format, returns string
     """
     matrix_file_contents = read_file("../fixtures/matrices/" + matrix_name)
-    return "\n".join((matrix_file_contents.split('\n')[1:]))
+    matrix_file_contents = matrix_file_contents.split('\n')
+    background_freqs_line = matrix_file_contents[0]
+    # reformat background freqs
+    background_freqs = background_freqs_line.split()[1:]
+    background_freqs_dict = {}
+    for i in range(0, len(background_freqs), 2):
+        char = background_freqs[i][0]
+        freq = float(background_freqs[i + 1])
+        background_freqs_dict[char] = freq
+    freqs_string = "BACKGROUND FREQS: "+ str(background_freqs_dict)
+    return "\n".join(([freqs_string] + matrix_file_contents[1:]))
 
 
 def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto):
@@ -136,7 +146,7 @@ def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto):
     f_out_sto.write("//\n")
 
 
-def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
+def print_score_matrix(f_out_matrix, score_matrix, matrix_name):
     """
     print score matrix to its output file with extension ".matrix"
     """
@@ -144,7 +154,6 @@ def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
     f_out_matrix.write("\n")
     f_out_matrix.write(score_matrix)
     f_out_matrix.write("//\n")
-
 
 
 if __name__ == "__main__":
@@ -159,6 +168,7 @@ if __name__ == "__main__":
     f_out_matrix = open(filename_out_matrix, 'w')
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
+    f_out_sto.write(f"# ALIGNMENT TOOL RepeatMasker\n")
 
     alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
 
@@ -171,7 +181,7 @@ if __name__ == "__main__":
         m_matrix = re.search(r'Matrix = (.+?)\n', region)
         matrix_name = m_matrix[1]
 
-        if matrix_name not in matrices: #do not put duplicate of matrices in output file
+        if matrix_name not in matrices:  # do not put duplicate of matrices in output file
             matrices[matrix_name] = 0
             score_matrix = get_score_matrix(matrix_name)
             print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
