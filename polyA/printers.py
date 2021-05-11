@@ -225,7 +225,9 @@ def print_results_soda(
 
     # heatmap
     subfam_ids: Dict[str, int] = {}
+    subfam_subids: Dict[str, int] = {}
     subfam_ids[subfams_collapse[0]] = 0
+    subfam_subids[subfams_collapse[0]] = 1
     heatmap_dict = {"name": subfams_collapse[0], "id": 0}
     heatmap_vals = []
     confidence = []
@@ -243,6 +245,7 @@ def print_results_soda(
     # "Tandem#Repeat/TR"
     for k in range(1, len(subfams_collapse)):
         subfam_ids[subfams_collapse[k]] = k
+        subfam_subids[subfams_collapse[k]] = 1
         heatmap_dict = {"name": subfams_collapse[k], "id": k}
         heatmap_vals = []
         subfam_rows = []
@@ -518,7 +521,6 @@ def print_results_soda(
                         sub_id += 1
 
                 j += 1
-
             json_dict_id[str(id)] = json_dict_subid
             json_annotation: Dict[str, Any] = {}
             json_annotation["bin"] = "0"
@@ -534,7 +536,14 @@ def print_results_soda(
             json_annotation["blockCount"] = str(block_count)
             json_annotation["blockSizes"] = block_size
             json_annotation["blockStarts"] = block_start
-            json_annotation["id"] = subfam_ids[orig_subfam]
+            json_annotation["id"] = str(subfam_ids[orig_subfam])
+            json_annotation["subid"] = (
+                str(subfam_ids[orig_subfam])
+                + "-"
+                + str(subfam_subids[orig_subfam])
+            )
+            subfam_subids[orig_subfam] += 1
+
             json_dict["annotations"].append(json_annotation)
 
             if align_start < min_align_start:
