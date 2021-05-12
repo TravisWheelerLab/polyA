@@ -1,6 +1,6 @@
 import logging
 from sys import argv, stderr, stdout
-from typing import List, Dict
+from typing import List
 
 from ._options import Options
 from ._runners import run_confidence, run_full
@@ -8,7 +8,6 @@ from .lambda_provider import EaselLambdaProvider
 from .load_alignments import (
     load_alignments,
     load_alignment_tool,
-    load_background_freqs,
     shard_overlapping_alignments,
 )
 from .output import Output
@@ -96,10 +95,18 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
+    complexity_adjustment: bool = opts.complexity_adjustment
+    with open(opts.alignments_file_path) as _infile:
+        with open(opts.alignments_file_path) as _infile:
+            alignment_tool: str = load_alignment_tool(_infile)
+
+    if alignment_tool not in ["cross_match", "RepeatMasker"]:
+        complexity_adjustment = False
+
     _lambda_provider = EaselLambdaProvider(opts.easel_path)
     with open(opts.sub_matrices_path) as _sub_matrices_file:
         sub_matrices = load_substitution_matrices(
-            _sub_matrices_file, _lambda_provider
+            _sub_matrices_file, _lambda_provider, complexity_adjustment
         )
 
     # -------------------------------------------------
@@ -111,20 +118,8 @@ def run():
     # -----------------------------
     # Load alignments to operate on
     # -----------------------------
-
-    background_freqs_dict: Dict[str, float] = None
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
-
-    with open(opts.alignments_file_path) as _infile:
-        alignment_tool: str = load_alignment_tool(_infile)
-
-    if alignment_tool == "cross_match" and opts.complexity_adjustment:
-        # get background freqs
-        with open(opts.alignments_file_path) as _infile:
-            background_freqs = load_background_freqs(_infile)
-        if background_freqs != "":
-            background_freqs_dict = eval(background_freqs)
 
     # --------------------------
     # Run confidence calculation
@@ -185,7 +180,6 @@ def run():
             chunk_stop,
             _prev_start,
             _prev_stop,
-            background_freqs_dict,
         )
         _prev_start, _prev_stop = (
             _last_start,

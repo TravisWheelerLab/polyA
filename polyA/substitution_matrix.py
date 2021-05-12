@@ -17,9 +17,12 @@ ScoresDict = Dict[str, int]
 
 class SubMatrix:
     """
-    A single substitution matrix, including its name and lambda value.
+    A single substitution matrix, including its name, lambda value, and assumed
+    character background frequencies.
     The lambda value may be `None`, in which case it must be computed
     before the matrix can be used.
+    The background frequencies may also be 'None' if complexity adjusted scoring
+    will not be used.
 
     A single matrix maps '<char1><char2>' (a pair of characters from
     the input alphabet) to the score from the input substitution
@@ -31,11 +34,13 @@ class SubMatrix:
     lamb: float
     name: str
     scores: ScoresDict
+    background_freqs: Optional[Dict[str, float]]
 
     def __init__(self, name: str, lamb: float):
         self.lamb = lamb
         self.name = name
         self.scores = {}
+        self.background_freqs = None
 
 
 SubMatrixCollection = Dict[str, SubMatrix]
@@ -60,6 +65,22 @@ def _parse_matrix_header(line: str) -> Tuple[str, Optional[float]]:
     return tokens[0], float(tokens[1])
 
 
+def _parse_background_freqs(line: str) -> Dict[str, float]:
+    """
+    Attempt to parse a matrix background frequencies from the given line, containing
+    each char and it's assumed background frequency.
+    """
+    matrix_background_freqs: Dict[str, float] = {}
+    clean_line = re.sub(r"^\s+|\s+$", "", line)
+    if line.strip().upper().startswith("BACKGROUND FREQS"):
+        # convert to dictionary
+        string_dict = clean_line[
+            clean_line.find("{") : clean_line.find("}") + 1
+        ]
+        matrix_background_freqs = eval(string_dict)
+    return matrix_background_freqs
+
+
 def _parse_chars(line: str) -> List[str]:
     clean_line = re.sub(r"^\s+|\s+$", "", line)
     return re.split(r"\s+", clean_line)
@@ -68,6 +89,7 @@ def _parse_chars(line: str) -> List[str]:
 def load_substitution_matrices(
     file: TextIO,
     lambda_provider: LambdaProvider,
+    complexity_adjustment: bool,
     alphabet_chars: str = "AGCTYRWSKMDVHBXN",
     ambiguity_chars: str = ".",
 ) -> SubMatrixCollection:
@@ -88,6 +110,7 @@ def load_substitution_matrices(
 
     while True:
         next_scores: ScoresDict = {}
+        matrix_background_freqs: Dict[str, float] = {}
 
         for char1 in alphabet_chars + ambiguity_chars:
             for char2 in alphabet_chars + ambiguity_chars:
@@ -96,6 +119,14 @@ def load_substitution_matrices(
         try:
             header_line = next(file)
             name, lamb = _parse_matrix_header(header_line)
+        except StopIteration:
+            break
+
+        try:
+            background_freqs_line = next(file)
+            matrix_background_freqs = _parse_background_freqs(
+                background_freqs_line
+            )
         except StopIteration:
             break
 
@@ -127,5 +158,6 @@ def load_substitution_matrices(
         sub_matrix = SubMatrix(name, lamb)
         sub_matrix.scores = next_scores
         collection[name] = sub_matrix
-
+        if complexity_adjustment and len(matrix_background_freqs) != 0:
+            sub_matrix.background_freqs = matrix_background_freqs
     return collection
