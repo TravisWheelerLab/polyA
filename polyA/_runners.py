@@ -20,12 +20,7 @@ from .fill_support_matrix import fill_support_matrix
 from .get_path import get_path
 from .pad_sequences import pad_sequences
 from .print_helpers import find_consensus_lengths
-from .printers import (
-    print_results,
-    print_results_chrom,
-    print_results_sequence,
-    print_results_soda,
-)
+from .printers import Printer
 from .substitution_matrix import SubMatrix, SubMatrixCollection
 from .ultra_provider import TandemRepeat
 
@@ -85,8 +80,7 @@ def _validate_target(target: Alignment) -> None:
 
 def _handle_single_alignment(
     target: Alignment,
-    print_seq_pos: bool,
-    print_matrix_pos: bool,
+    printer: Printer,
 ) -> Tuple[int, int]:
     """
     If there is only one subfam in the alignment file, no need
@@ -95,17 +89,26 @@ def _handle_single_alignment(
     from uuid import uuid4
 
     node_id = uuid4().hex
-    if print_seq_pos:
-        stdout.write(
-            f"{target.start}\t{target.stop}\t{node_id}\t{target.subfamily}\n"
+    if printer.use_matrix_position:
+        printer.print_results_simple(
+            1,
+            target.stop - target.start + 1,
+            node_id,
+            target.subfamily,
         )
-    elif print_matrix_pos:
-        stdout.write(
-            f"{1}\t{target.stop - target.start + 1}\t{node_id}\t{target.subfamily}\n"
+    elif printer.use_sequence_position:
+        printer.print_results_simple(
+            target.start,
+            target.stop,
+            node_id,
+            target.subfamily,
         )
     else:
-        stdout.write(
-            f"{target.start + target.chrom_start}\t{target.stop + target.chrom_start}\t{node_id}\t{target.subfamily}\n"
+        printer.print_results_simple(
+            target.start + target.chrom_start,
+            target.stop + target.chrom_start,
+            node_id,
+            target.subfamily,
         )
     return target.start, target.stop
 
@@ -126,16 +129,13 @@ def run_full(
     alignments: List[Alignment],
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
-    outfile_viz: Optional[TextIO],
-    outfile_conf: Optional[TextIO],
-    print_matrix_pos: bool,
-    print_seq_pos: bool,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
     shard_start: int,
     shard_stop: int,
     prev_start: int,
     prev_stop: int,
+    printer: Printer,
 ) -> Tuple[int, int]:
     # chunk start and stop are positions in seq
     seq_count = len(alignments)
@@ -145,10 +145,10 @@ def run_full(
 
     if len(tandem_repeats) == 0 and seq_count == 2:
         # only one alignment other than the skip state
-        last_subfam_start, last_subfam_stop = _handle_single_alignment(
-            target, print_seq_pos, print_matrix_pos
+        return _handle_single_alignment(
+            target,
+            printer,
         )
-        return last_subfam_start, last_subfam_stop
 
     change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
 
@@ -582,16 +582,16 @@ def run_full(
             changes_index += 1
 
     # prints results
-    if print_matrix_pos:
-        print_results(
+    if printer.use_matrix_position:
+        printer.print_results_matrix(
             changes_orig,
             tr_consensus_changes,
             changes_position_orig,
             non_empty_columns_orig,
             node_ids,
         )
-    elif print_seq_pos:
-        print_results_sequence(
+    elif printer.use_sequence_position:
+        printer.print_results_sequence(
             start_all,
             changes_orig,
             tr_consensus_changes,
@@ -600,7 +600,7 @@ def run_full(
             node_ids,
         )
     else:
-        print_results_chrom(
+        printer.print_results_chrom(
             start_all,
             target.chrom_start,
             changes_orig,
@@ -610,33 +610,29 @@ def run_full(
             node_ids,
         )
 
-    if outfile_viz and outfile_conf:
-        consensus_lengths = find_consensus_lengths(alignments)
-
-        print_results_soda(
-            start_all,
-            outfile_viz,
-            outfile_conf,
-            target.chrom_name,
-            target.chrom_start,
-            target.chrom_stop,
-            alignment_subfamilies,
-            changes_orig,
-            tr_consensus_changes,
-            changes_position_orig,
-            non_empty_columns_orig,
-            consensus_lengths,
-            strand_matrix_collapse,
-            consensus_matrix_collapse,
-            subfams_collapse_index,
-            node_confidence_orig,
-            node_ids,
-            original_subfamily_sequences,
-            original_chromosome_sequences,
-            subfam_alignments_collapse,
-            support_matrix_collapse,
-            subfams_collapse,
-            column_count,
-        )
+    consensus_lengths = find_consensus_lengths(alignments)
+    printer.print_results_soda(
+        start_all,
+        target.chrom_name,
+        target.chrom_start,
+        target.chrom_stop,
+        alignment_subfamilies,
+        changes_orig,
+        tr_consensus_changes,
+        changes_position_orig,
+        non_empty_columns_orig,
+        consensus_lengths,
+        strand_matrix_collapse,
+        consensus_matrix_collapse,
+        subfams_collapse_index,
+        node_confidence_orig,
+        node_ids,
+        original_subfamily_sequences,
+        original_chromosome_sequences,
+        subfam_alignments_collapse,
+        support_matrix_collapse,
+        subfams_collapse,
+        column_count,
+    )
 
     return last_subfam_start, last_subfam_stop

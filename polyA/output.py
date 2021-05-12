@@ -6,10 +6,10 @@ class Output:
     """
     A class to manage creating output file objects.
 
-    TODO(George): Use this for the log file and the main output as well
+    TODO(George): Use this for the log file
     """
 
-    base_filename: str
+    __base_filename: str
 
     def __init__(self, output_path: str):
         base_filename: str
@@ -24,13 +24,17 @@ class Output:
             mkdir(base_filename)
             base_filename = path.join(base_filename, "output")
 
-        self.base_filename = base_filename
+        self.__base_filename = base_filename
 
     def get_heatmap(self, index: int) -> TextIO:
-        return open(f"{self.base_filename}.{index}.heatmap", "w")
+        return open(f"{self.__base_filename}.{index}.heatmap", "w")
+
+    def get_results(self) -> TextIO:
+        results_file = open(f"{self.__base_filename}.output", "w")
+        return results_file
 
     def get_soda(self, index: int) -> Tuple[TextIO, TextIO]:
-        viz_file = open(f"{self.base_filename}.{index}.viz", "w")
-        conf_file = open(f"{self.base_filename}.{index}.viz.json", "w")
+        viz_file = open(f"{self.__base_filename}.{index}.viz", "w")
+        conf_file = open(f"{self.__base_filename}.{index}.viz.json", "w")
 
         return viz_file, conf_file
