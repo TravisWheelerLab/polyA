@@ -271,7 +271,7 @@ def print_results_soda(
                     if len(heatmap_vals) > 0:
                         block_sub_alignment: Dict[str, Any] = {}
                         if subfams_collapse[k] != "Tandem Repeat":
-                            block_sub_alignment["ID"] = prev_subfam_row
+                            block_sub_alignment["id"] = prev_subfam_row
                             block_sub_alignment["chrSeq"] = chrom_alignments[
                                 prev_subfam_row
                             ]
@@ -292,7 +292,7 @@ def print_results_soda(
                             block_sub_alignment["alignEnd"] = consensus_stops[
                                 prev_subfam_row
                             ]
-                        alignments.append(block_sub_alignment)
+                            alignments.append(block_sub_alignment)
                         confidence.append(
                             {"chromStart": align_start, "values": heatmap_vals}
                         )
@@ -305,7 +305,7 @@ def print_results_soda(
         if len(heatmap_vals) > 0:
             block_sub_alignment = {}
             if subfams_collapse[k] != "Tandem Repeat":
-                block_sub_alignment["ID"] = cur_subfam_row
+                block_sub_alignment["id"] = cur_subfam_row
                 block_sub_alignment["chrSeq"] = chrom_alignments[cur_subfam_row]
                 block_sub_alignment["famSeq"] = subfam_alignments[
                     cur_subfam_row
@@ -322,7 +322,7 @@ def print_results_soda(
                 block_sub_alignment["alignEnd"] = consensus_stops[
                     cur_subfam_row
                 ]
-            alignments.append(block_sub_alignment)
+                alignments.append(block_sub_alignment)
             confidence.append(
                 {"chromStart": align_start, "values": heatmap_vals}
             )
@@ -536,8 +536,7 @@ def print_results_soda(
             json_annotation["blockCount"] = str(block_count)
             json_annotation["blockSizes"] = block_size
             json_annotation["blockStarts"] = block_start
-            json_annotation["id"] = str(subfam_ids[orig_subfam])
-            json_annotation["subid"] = (
+            json_annotation["id"] = (
                 str(subfam_ids[orig_subfam])
                 + "-"
                 + str(subfam_subids[orig_subfam])
