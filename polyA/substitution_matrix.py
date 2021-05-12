@@ -72,12 +72,14 @@ def _parse_background_freqs(line: str) -> Dict[str, float]:
     """
     matrix_background_freqs: Dict[str, float] = {}
     clean_line = re.sub(r"^\s+|\s+$", "", line)
+    print(clean_line)
     if line.strip().upper().startswith("BACKGROUND FREQS"):
         # convert to dictionary
         string_dict = clean_line[
             clean_line.find("{") : clean_line.find("}") + 1
         ]
         matrix_background_freqs = eval(string_dict)
+        print(matrix_background_freqs)
     return matrix_background_freqs
 
 
@@ -122,16 +124,13 @@ def load_substitution_matrices(
         except StopIteration:
             break
 
-        try:
-            background_freqs_line = next(file)
-            matrix_background_freqs = _parse_background_freqs(
-                background_freqs_line
-            )
-        except StopIteration:
-            break
+        next_line = next(file)
+        if next_line.strip().upper().startswith("BACKGROUND FREQS"):
+            matrix_background_freqs = _parse_background_freqs(next_line)
+            next_line = next(file)
 
         try:
-            chars_line = next(file)
+            chars_line = next_line
             chars = _parse_chars(chars_line)
         except StopIteration:
             raise ParseError("dangling substitution matrix header")
