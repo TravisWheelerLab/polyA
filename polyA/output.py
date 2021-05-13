@@ -1,4 +1,5 @@
 from os import path, mkdir
+from sys import stdout
 from typing import TextIO, Tuple
 
 
@@ -30,8 +31,10 @@ class Output:
         return open(f"{self.__base_filename}.{index}.heatmap", "w")
 
     def get_results(self) -> TextIO:
-        results_file = open(f"{self.__base_filename}.output", "w")
-        return results_file
+        return stdout
+        # TODO: For now we use stdout, but later make it an option
+        # results_file = open(f"{self.__base_filename}.output", "w")
+        # return results_file
 
     def get_soda(self, index: int) -> Tuple[TextIO, TextIO]:
         viz_file = open(f"{self.__base_filename}.{index}.viz", "w")
