@@ -95,18 +95,23 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
-    complexity_adjustment: bool = opts.complexity_adjustment
     with open(opts.alignments_file_path) as _infile:
         with open(opts.alignments_file_path) as _infile:
             alignment_tool: str = load_alignment_tool(_infile)
 
-    if alignment_tool not in ["cross_match", "RepeatMasker"]:
-        complexity_adjustment = False
+    # Note: alignments from blast or HMMER are not set-up to use complexity adjusted scoring
+    if opts.complexity_adjustment and alignment_tool not in [
+        "cross_match",
+        "RepeatMasker",
+    ]:
+        raise AppError(
+            "cannot use complexity adjusted scoring with this alignment tool"
+        )
 
     _lambda_provider = EaselLambdaProvider(opts.easel_path)
     with open(opts.sub_matrices_path) as _sub_matrices_file:
         sub_matrices = load_substitution_matrices(
-            _sub_matrices_file, _lambda_provider, complexity_adjustment
+            _sub_matrices_file, _lambda_provider, opts.complexity_adjustment
         )
 
     # -------------------------------------------------

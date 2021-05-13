@@ -71,15 +71,16 @@ def _parse_background_freqs(line: str) -> Dict[str, float]:
     each char and it's assumed background frequency.
     """
     matrix_background_freqs: Dict[str, float] = {}
-    clean_line = re.sub(r"^\s+|\s+$", "", line)
-    print(clean_line)
     if line.strip().upper().startswith("BACKGROUND FREQS"):
-        # convert to dictionary
-        string_dict = clean_line[
-            clean_line.find("{") : clean_line.find("}") + 1
-        ]
-        matrix_background_freqs = eval(string_dict)
-        print(matrix_background_freqs)
+        clean_line = re.sub(r"^\s+|\s+$", "", line)
+        print(clean_line)
+        if line.strip().upper().startswith("BACKGROUND FREQS"):
+            # convert to dictionary
+            string_dict = clean_line[
+                clean_line.find("{") : clean_line.find("}") + 1
+            ]
+            matrix_background_freqs = eval(string_dict)
+            print(matrix_background_freqs)
     return matrix_background_freqs
 
 
@@ -125,8 +126,13 @@ def load_substitution_matrices(
             break
 
         next_line = next(file)
-        if next_line.strip().upper().startswith("BACKGROUND FREQS"):
+        if complexity_adjustment:
             matrix_background_freqs = _parse_background_freqs(next_line)
+            if len(matrix_background_freqs) == 0:
+                # no matrix background frequencies were found
+                raise ParseError(
+                    f"cannot use complexity adjusted scoring, missing substitution matrix background frequencies: '{file.name}'"
+                )
             next_line = next(file)
 
         try:
@@ -157,6 +163,6 @@ def load_substitution_matrices(
         sub_matrix = SubMatrix(name, lamb)
         sub_matrix.scores = next_scores
         collection[name] = sub_matrix
-        if complexity_adjustment and len(matrix_background_freqs) != 0:
+        if complexity_adjustment:
             sub_matrix.background_freqs = matrix_background_freqs
     return collection
