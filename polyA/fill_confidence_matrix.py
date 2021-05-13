@@ -5,7 +5,7 @@ from .matrices import ConfidenceMatrix
 from .performance import timeit
 
 
-@timeit
+@timeit()
 def fill_confidence_matrix(
     column_count: int,
     subfam_counts: Dict[str, float],

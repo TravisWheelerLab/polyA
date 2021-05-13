@@ -4,7 +4,7 @@ from .performance import timeit
 from .ultra_provider import TandemRepeat
 
 
-@timeit
+@timeit()
 def calculate_repeat_scores(
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
