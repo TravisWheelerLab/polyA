@@ -125,14 +125,16 @@ def load_substitution_matrices(
         except StopIteration:
             break
 
+        # FIXME: will this break if there is no next line?
         next_line = next(file)
-        if complexity_adjustment:
-            matrix_background_freqs = _parse_background_freqs(next_line)
-            if len(matrix_background_freqs) == 0:
-                # no matrix background frequencies were found
-                raise ParseError(
-                    f"cannot use complexity adjusted scoring, missing substitution matrix background frequencies: '{file.name}'"
-                )
+        if next_line.strip().upper().startswith("BACKGROUND FREQS"):
+            if complexity_adjustment:
+                matrix_background_freqs = _parse_background_freqs(next_line)
+                if len(matrix_background_freqs) == 0:
+                    # no matrix background frequencies were found
+                    raise ParseError(
+                        f"cannot use complexity adjusted scoring, missing background frequencies: '{file.name}'"
+                    )
             next_line = next(file)
 
         try:
