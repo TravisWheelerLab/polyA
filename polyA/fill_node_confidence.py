@@ -109,6 +109,8 @@ def fill_node_confidence(
                 last_prev_chrom = ""
                 alignment_index_start = begin_node - subfam_start
 
+                last_index = 0
+
                 if (
                     0
                     <= alignment_index_start - 1
