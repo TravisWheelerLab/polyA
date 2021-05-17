@@ -611,28 +611,28 @@ def run_full(
         )
 
     consensus_lengths = find_consensus_lengths(alignments)
-    printer.print_results_soda(
-        start_all,
-        target.chrom_name,
-        target.chrom_start,
-        target.chrom_stop,
-        alignment_subfamilies,
-        changes_orig,
-        tr_consensus_changes,
-        changes_position_orig,
-        non_empty_columns_orig,
-        consensus_lengths,
-        strand_matrix_collapse,
-        consensus_matrix_collapse,
-        subfams_collapse_index,
-        node_confidence_orig,
-        node_ids,
-        original_subfamily_sequences,
-        original_chromosome_sequences,
-        subfam_alignments_collapse,
-        support_matrix_collapse,
-        subfams_collapse,
-        column_count,
-    )
+    # printer.print_results_soda(
+    #     start_all,
+    #     target.chrom_name,
+    #     target.chrom_start,
+    #     target.chrom_stop,
+    #     alignment_subfamilies,
+    #     changes_orig,
+    #     tr_consensus_changes,
+    #     changes_position_orig,
+    #     non_empty_columns_orig,
+    #     consensus_lengths,
+    #     strand_matrix_collapse,
+    #     consensus_matrix_collapse,
+    #     subfams_collapse_index,
+    #     node_confidence_orig,
+    #     node_ids,
+    #     original_subfamily_sequences,
+    #     original_chromosome_sequences,
+    #     subfam_alignments_collapse,
+    #     support_matrix_collapse,
+    #     subfams_collapse,
+    #     column_count,
+    # )
 
     return last_subfam_start, last_subfam_stop
