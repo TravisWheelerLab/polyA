@@ -73,14 +73,12 @@ def _parse_background_freqs(line: str) -> Dict[str, float]:
     matrix_background_freqs: Dict[str, float] = {}
     if line.strip().upper().startswith("BACKGROUND FREQS"):
         clean_line = re.sub(r"^\s+|\s+$", "", line)
-        print(clean_line)
         if line.strip().upper().startswith("BACKGROUND FREQS"):
             # convert to dictionary
             string_dict = clean_line[
                 clean_line.find("{") : clean_line.find("}") + 1
             ]
             matrix_background_freqs = eval(string_dict)
-            print(matrix_background_freqs)
     return matrix_background_freqs
 
 
