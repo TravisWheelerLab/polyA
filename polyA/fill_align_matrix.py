@@ -9,7 +9,7 @@ from .matrices import AlignMatrix
 from .performance import timeit
 
 
-@timeit
+@timeit()
 def fill_align_matrix(
     lambda_values: List[float],
     column_count: int,

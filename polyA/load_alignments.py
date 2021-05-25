@@ -3,6 +3,7 @@ from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
 from .alignment import Alignment, get_skip_state
 from .constants import INFINITE_SHARD_GAP
+from .performance import timeit
 
 
 def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
@@ -82,6 +83,7 @@ def _parse_chrom_meta(line: str) -> Optional[Tuple[str, int, int]]:
     return chrom_name, chrom_start, chrom_stop
 
 
+@timeit()
 def load_alignments(
     file: TextIO, add_skip_state: bool = False
 ) -> Iterable[Alignment]:

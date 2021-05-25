@@ -634,6 +634,8 @@ def run_full(
             node_ids,
             original_subfamily_sequences,
             original_chromosome_sequences,
+            alignment_consensus_start_positions,
+            alignment_consensus_stop_positions,
             subfam_alignments_collapse,
             support_matrix_collapse,
             subfams_collapse,
