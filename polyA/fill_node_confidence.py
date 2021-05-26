@@ -54,6 +54,7 @@ def fill_node_confidence(
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = SubMatrix("", 0.1227)
     >>> sub_mat.scores = {"AA": 10, "AT": -1, "TA": -1, "TT": 10, "..":0}
+    >>> sub_mat.background_freqs = None
     >>> sub_mats = [sub_mat] * 3
     >>> rep_scores = {}
     >>> node_conf = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
@@ -175,6 +176,7 @@ def fill_node_confidence(
                     last_prev_subfam,
                     last_prev_chrom,
                     sub_matrix.scores,
+                    sub_matrix.background_freqs,
                 )
 
                 node_confidence_temp[subfam_index, node_index] = align_score
