@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple, Set, List
 import math
 
 
@@ -10,7 +10,7 @@ def calculate_score(
     prev_char_seq1: str,
     prev_char_seq2: str,
     sub_matrix: Dict[str, int],
-    char_complexity_adjustment: Dict[str, int] = None,
+    char_complexity_adjustment: Optional[Dict[str, float]],
 ) -> float:
     """
     Calculate the score for an alignment between a subfamily and a target/chromsome sequence.
@@ -32,11 +32,11 @@ def calculate_score(
     alignment score
 
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> calculate_score(-5, -25, "AT", "AT", "", "", sub_mat)
+    >>> calculate_score(-5, -25, "AT", "AT", "", "", sub_mat, None)
     2.0
-    >>> calculate_score(-5, -25, "-T", "AT", "A", "A", sub_mat)
+    >>> calculate_score(-5, -25, "-T", "AT", "A", "A", sub_mat, None)
     -24.0
-    >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat)
+    >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat, None)
     -4.0
     """
     chunk_score: float = 0.0
@@ -82,19 +82,37 @@ def calculate_score(
 def calc_target_char_counts(
     query_seq: str,
     target_seq: str,
-):
-    query_char_counts = {"A": 0, "C": 0, "G": 0, "T": 0}
+    target_chars: List[str],
+) -> Tuple[Dict[str, int], int, Set[str]]:
+    """
+    Finds the char counts in the target sequence which will be used in the calculation
+    to determine a character's contribution to the complexity adjusted score.
+
+    input:
+    query_seq: query sequence from alignment
+    target_seq: target sequence from alignment
+    target_chars: chars in the target sequence that will contribute to
+    the complexity adjusted score
+
+    output:
+    target_char_counts: dictionary of the target chars to their count
+    in the target sequence that will contribute to the adjusted score
+    total_chars: total number of contributing chars from the target sequence
+    other_chars: other chars found in the target sequence that do not contribute
+    to the complexity adjustment (gaps, padding)
+    """
+    target_char_counts: Dict[str, int] = {char: 0 for char in target_chars}
     other_chars = set()
     total_chars = 0
     for q_base, t_base in zip(query_seq, target_seq):
-        if t_base not in ["A", "G", "T", "C"]:
+        if t_base not in target_chars:
             other_chars.add(t_base)
             continue
         if q_base == "-":
             continue
-        query_char_counts[t_base] += 1
+        target_char_counts[t_base] += 1
         total_chars += 1
-    return query_char_counts, total_chars, other_chars
+    return target_char_counts, total_chars, other_chars
 
 
 def calculate_complexity_adjusted_score(
@@ -102,7 +120,21 @@ def calculate_complexity_adjusted_score(
     query_seq: str,
     target_seq: str,
     lamb: float,
-):
+) -> Dict[str, float]:
+    """
+    Calculates the per position contribution to the complexity adjusted score
+    of the alignment for each valid char in the target sequence .
+
+    input:
+    char_background_freqs: background frequencies of the chars from the scoring matrix
+    query_seq: query sequence from alignment
+    target_seq: target sequence from alignment
+    lamb: lambda value used from the scoring matrix
+
+    output:
+    char_complexity_adjustments: a char's per position contribution to the
+    complexity adjusted score
+    """
     char_complexity_adjustments: Dict[str, float] = {}
     if char_background_freqs is None:
         # set the complexity adjustment to zero for every char
@@ -115,11 +147,12 @@ def calculate_complexity_adjusted_score(
     t_factor: float = 0
     t_sum: float = 0
     t_counts: int = 0
+    target_chars = list(char_background_freqs.keys())
     target_char_counts, total_chars, other_chars = calc_target_char_counts(
-        query_seq, target_seq
+        query_seq, target_seq, target_chars
     )
 
-    char_complexity_adjustments = {"A": 0, "C": 0, "G": 0, "T": 0}
+    char_complexity_adjustments = {char: 0 for char in target_chars}
     for char, freq in char_background_freqs.items():
         count = target_char_counts[char]
         if count > 0 and freq > 0 and math.log(freq) != 0:
