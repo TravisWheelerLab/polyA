@@ -83,7 +83,7 @@ def calc_target_char_counts(
     query_seq: str,
     target_seq: str,
     target_chars: List[str],
-) -> Tuple[Dict[str, int], int, Set[str]]:
+) -> Tuple[Dict[str, int], Set[str]]:
     """
     Finds the char counts in the target sequence which will be used in the calculation
     to determine a character's contribution to the complexity adjusted score.
@@ -97,13 +97,11 @@ def calc_target_char_counts(
     output:
     target_char_counts: dictionary of the target chars to their count
     in the target sequence that will contribute to the adjusted score
-    total_chars: total number of contributing chars from the target sequence
     other_chars: other chars found in the target sequence that do not contribute
     to the complexity adjustment (gaps, padding)
     """
     target_char_counts: Dict[str, int] = {char: 0 for char in target_chars}
     other_chars = set()
-    total_chars = 0
     for q_base, t_base in zip(query_seq, target_seq):
         if t_base not in target_chars:
             other_chars.add(t_base)
@@ -111,8 +109,7 @@ def calc_target_char_counts(
         if q_base == "-":
             continue
         target_char_counts[t_base] += 1
-        total_chars += 1
-    return target_char_counts, total_chars, other_chars
+    return target_char_counts, other_chars
 
 
 def calculate_complexity_adjusted_score(
@@ -123,7 +120,11 @@ def calculate_complexity_adjusted_score(
 ) -> Dict[str, float]:
     """
     Calculates the per position contribution to the complexity adjusted score
-    of the alignment for each valid char in the target sequence .
+    of the alignment for each valid char in the target sequence.
+    This calculation is from the cross_match complexity adjustment functions:
+    t_factor = sum(target_char_count * ln(target_char_count)) - ( sum(target_char_count) * ln(sum(target_char_count)) )
+    t_sum = sum(target_char_count * ln(char_background_freq)) - t_factor
+    adj_score = score + (t_sum / lamb) + 0.999
 
     input:
     char_background_freqs: background frequencies of the chars from the scoring matrix
@@ -148,14 +149,15 @@ def calculate_complexity_adjusted_score(
     t_sum: float = 0
     t_counts: int = 0
     target_chars = list(char_background_freqs.keys())
-    target_char_counts, total_chars, other_chars = calc_target_char_counts(
+    target_char_counts, other_chars = calc_target_char_counts(
         query_seq, target_seq, target_chars
     )
+    total_chars = sum(target_char_counts.values())
 
     char_complexity_adjustments = {char: 0 for char in target_chars}
     for char, freq in char_background_freqs.items():
         count = target_char_counts[char]
-        if count > 0 and freq > 0 and math.log(freq) != 0:
+        if count > 0 and 0 < freq < 1:
             t_factor += count * math.log(count)
             t_sum += count * math.log(freq)
             t_counts += count
@@ -182,6 +184,6 @@ def calculate_complexity_adjusted_score(
 
     # to avoid any key errors
     for char in other_chars:
-        char_complexity_adjustments[char] = 0
+        char_complexity_adjustments[char] = 0.0
 
     return char_complexity_adjustments

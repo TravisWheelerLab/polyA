@@ -54,6 +54,12 @@ The arbitrary temporary ID used to bootstrap the graph process. The
 value doesn't matter, but it's here for clarity.
 """
 
+CROSS_MATCH_ADJUSTMENT = 0.999
+"""
+A constant value used in the equations from cross_match to calculate 
+the complexity adjusted score of an alignment.
+"""
+
 # +-------------------------------------------------------------+
 # | Computed constants, do not manually modify below this line. |
 # +-------------------------------------------------------------+
