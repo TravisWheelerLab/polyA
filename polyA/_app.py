@@ -105,7 +105,7 @@ def run():
         "RepeatMasker",
     ]:
         raise AppError(
-            "cannot use complexity adjusted scoring with this alignment tool"
+            f"cannot use complexity adjusted scoring with {alignment_tool}"
         )
 
     _lambda_provider = EaselLambdaProvider(opts.easel_path)

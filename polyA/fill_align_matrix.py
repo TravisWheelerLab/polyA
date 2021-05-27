@@ -84,9 +84,7 @@ def fill_align_matrix(
         gap_init = gap_inits[i]
         gap_ext = gap_exts[i]
 
-        char_complexity_adjustments: Dict[
-            str, float
-        ] = calculate_complexity_adjusted_score(
+        char_complexity_adjustments = calculate_complexity_adjusted_score(
             background_freqs[i], subfam_seq, chrom_seq, lamb
         )
 

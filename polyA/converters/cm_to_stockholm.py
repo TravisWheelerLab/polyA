@@ -187,13 +187,13 @@ def print_score_matrix(
     """
     print score matrix to its own output file with extension ".matrix"
     """
-    f_out_matrix = open(filename_out_matrix, "w")
-    f_out_matrix.write(matrix_name)
-    f_out_matrix.write("\n")
-    f_out_matrix.write(f"BACKGROUND FREQS: {background_freqs}")
-    f_out_matrix.write("\n")
-    f_out_matrix.write(score_matrix)
-    f_out_matrix.write("//\n")
+    with open(filename_out_matrix) as f_out_matrix:
+        f_out_matrix.write(matrix_name)
+        f_out_matrix.write("\n")
+        f_out_matrix.write(f"BACKGROUND FREQS: {background_freqs}")
+        f_out_matrix.write("\n")
+        f_out_matrix.write(score_matrix)
+        f_out_matrix.write("//\n")
 
 
 def main():
