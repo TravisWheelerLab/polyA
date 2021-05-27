@@ -152,33 +152,34 @@ def calculate_complexity_adjusted_score(
     )
     total_chars = sum(target_char_counts.values())
 
-    char_complexity_adjustments = {char: 0 for char in target_chars}
-    for char, freq in char_background_freqs.items():
-        count = target_char_counts[char]
-        if count > 0 and 0 < freq < 1:
-            t_factor += count * math.log(count)
-            t_sum += count * math.log(freq)
-            t_counts += count
-            char_complexity_adjustments[char] += count * math.log(freq)
+    if total_chars > 0:
+        char_complexity_adjustments = {char: 0 for char in target_chars}
+        for char, freq in char_background_freqs.items():
+            count = target_char_counts[char]
+            if count > 0 and 0 < freq < 1:
+                t_factor += count * math.log(count)
+                t_sum += count * math.log(freq)
+                t_counts += count
+                char_complexity_adjustments[char] += count * math.log(freq)
 
-    # char percent contribution to t_sum
-    for c, v in char_complexity_adjustments.items():
-        char_complexity_adjustments[c] /= t_sum
+        # char percent contribution to t_sum
+        for c, v in char_complexity_adjustments.items():
+            char_complexity_adjustments[c] /= t_sum
 
-    if t_counts != 0:
-        t_factor -= t_counts * math.log(t_counts)
-    t_sum -= t_factor
+        if t_counts != 0:
+            t_factor -= t_counts * math.log(t_counts)
+        t_sum -= t_factor
 
-    # char value contribution to t_sum
-    for c, v in char_complexity_adjustments.items():
-        char_complexity_adjustments[c] *= t_sum
+        # char value contribution to t_sum
+        for c, v in char_complexity_adjustments.items():
+            char_complexity_adjustments[c] *= t_sum
 
-    # per position char value contribution to score adjustment
-    for c, v in char_complexity_adjustments.items():
-        if v != 0:
-            char_complexity_adjustments[c] /= target_char_counts[c]
-            char_complexity_adjustments[c] /= lamb
-            char_complexity_adjustments[c] += 0.999 / total_chars
+        # per position char value contribution to score adjustment
+        for c, v in char_complexity_adjustments.items():
+            if v != 0:
+                char_complexity_adjustments[c] /= target_char_counts[c]
+                char_complexity_adjustments[c] /= lamb
+                char_complexity_adjustments[c] += 0.999 / total_chars
 
     # to avoid any key errors
     for char in other_chars:
