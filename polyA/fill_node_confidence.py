@@ -3,7 +3,10 @@ from typing import Dict, List, Tuple
 from .confidence_cm import confidence_cm
 from .performance import timeit
 from .substitution_matrix import SubMatrix
-from .calculate_score import calculate_score
+from .calculate_score import (
+    calculate_score,
+    calculate_complexity_adjusted_score,
+)
 from .sum_repeat_scores import sub_repeat_scores
 
 
@@ -168,6 +171,12 @@ def fill_node_confidence(
                     + subfam_seqs[subfam_index][first_index : last_index + 1]
                 )
 
+                char_complexity_adjustments = (
+                    calculate_complexity_adjusted_score(
+                        sub_matrix.background_freqs, subfam_seq, chrom_seq, lamb
+                    )
+                )
+
                 align_score = lamb * calculate_score(
                     gap_ext,
                     gap_init,
@@ -176,7 +185,7 @@ def fill_node_confidence(
                     last_prev_subfam,
                     last_prev_chrom,
                     sub_matrix.scores,
-                    sub_matrix.background_freqs,
+                    char_complexity_adjustments,
                 )
 
                 node_confidence_temp[subfam_index, node_index] = align_score

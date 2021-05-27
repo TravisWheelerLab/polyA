@@ -141,8 +141,6 @@ def calculate_complexity_adjusted_score(
         # set the complexity adjustment to zero for every char
         for char in target_seq:
             char_complexity_adjustments[char] = 0
-            if char == ".":
-                break
         return char_complexity_adjustments
 
     t_factor: float = 0
