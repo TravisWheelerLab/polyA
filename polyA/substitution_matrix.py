@@ -123,23 +123,31 @@ def load_substitution_matrices(
         except StopIteration:
             break
 
-        # FIXME: will this break if there is no next line?
-        next_line = next(file)
-        if next_line.strip().upper().startswith("BACKGROUND FREQS"):
-            if complexity_adjustment:
-                matrix_background_freqs = _parse_background_freqs(next_line)
-                if len(matrix_background_freqs) == 0:
-                    # no matrix background frequencies were found
-                    raise ParseError(
-                        f"cannot use complexity adjusted scoring, missing background frequencies: '{file.name}'"
-                    )
-            next_line = next(file)
-
         try:
-            chars_line = next_line
-            chars = _parse_chars(chars_line)
+            unknown_line = next(
+                file
+            )  # this could be background freqs or matrix chars
+            if unknown_line.strip().upper().startswith("BACKGROUND FREQS"):
+                if complexity_adjustment:
+                    matrix_background_freqs = _parse_background_freqs(
+                        unknown_line
+                    )
+                    if len(matrix_background_freqs) == 0:
+                        # no matrix background frequencies were found
+                        raise ParseError(
+                            f"cannot use complexity adjusted scoring, missing background frequencies: '{file.name}'"
+                        )
+                try:
+                    # skip background freqs line
+                    # this should be the substitution matrix chars
+                    unknown_line = next(file)
+                except StopIteration:
+                    raise ParseError("dangling substitution matrix header")
         except StopIteration:
-            raise ParseError("dangling substitution matrix header")
+            break
+
+        chars_line = unknown_line
+        chars = _parse_chars(chars_line)
 
         count: int = 0
         for line in file:

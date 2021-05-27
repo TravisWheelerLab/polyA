@@ -184,14 +184,23 @@ def load_alignment_tool(file: TextIO) -> str:
     """
     Return alignment tool used.
     """
-    for line in file:
-        if _parse_preamble_line(line):
-            continue
-        if line.strip().upper().startswith("# ALIGNMENT TOOL"):
-            # get alignment tool
-            return line.split()[-1]
-        return ""
-    return ""
+
+    while True:
+        try:
+            line = next(file)
+            if _parse_preamble_line(line):
+                continue
+        except StopIteration:
+            return "no alignment tool"
+
+        try:
+            line = next(file)
+            if line.strip().upper().startswith("# ALIGNMENT TOOL"):
+                # get alignment tool
+                return line.split()[-1]
+            return "no alignment tool"
+        except StopIteration:
+            return "no alignment tool"
 
 
 class Shard(NamedTuple):
