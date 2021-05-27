@@ -187,9 +187,8 @@ def load_alignment_tool(file: TextIO) -> str:
 
     while True:
         try:
-            line = next(file)
-            if _parse_preamble_line(line):
-                continue
+            # skip header line
+            header_line = next(file)
         except StopIteration:
             return "no alignment tool"
 
