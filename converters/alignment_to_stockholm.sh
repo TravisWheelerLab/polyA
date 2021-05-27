@@ -11,5 +11,9 @@ alignment_file="$1"
 alignment_tool="$2"
 
 if [ "$alignment_tool" = "cross_match" ]; then
-  python cm_to_stockholm.py "$alignment_file"
+  python ../polyA/converters/cm_to_stockholm.py "$alignment_file"
+fi
+
+if [ "$alignment_tool" = "RepeatMasker" ]; then
+  python rm_to_stockholm.py "$alignment_file"
 fi
