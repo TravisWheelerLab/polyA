@@ -122,9 +122,12 @@ def calculate_complexity_adjusted_score(
     Calculates the per position contribution to the complexity adjusted score
     of the alignment for each valid char in the target sequence.
     This calculation is from the cross_match complexity adjustment functions:
-    t_factor = sum(target_char_count * ln(target_char_count)) - ( sum(target_char_count) * ln(sum(target_char_count)) )
-    t_sum = sum(target_char_count * ln(char_background_freq)) - t_factor
-    adj_score = score + (t_sum / lamb) + 0.999
+    .. math::
+        t_{i} = char \textunderscore i \textunderscore target \textunderscore count
+        p_{i} = char \textunderscore i \textunderscore background \textunderscore frequency
+        t\textunderscore factor = \sum_{i=0}^{N} t_{i}ln(t_{i}) - [(\sum_{i=0}^{N} t_{i})ln(\sum_{i=0}^{N} t_{i})]
+        t \textunderscore sum = (\sum_{i=0}^{N} t_{i} ln(p_{i})) - t \textunderscore factor
+        adj \textunderscore score = raw \textunderscore score + (\frac{t \textunderscore sum}{\lambda}) + 0.999
 
     input:
     char_background_freqs: background frequencies of the chars from the scoring matrix
@@ -135,6 +138,16 @@ def calculate_complexity_adjusted_score(
     output:
     char_complexity_adjustments: a char's per position contribution to the
     complexity adjusted score
+
+    >>> query = "TCAGACTGTTCA-----ACTCACCTGGCAGCCACTTCCAGA"
+    >>> target = "TCAGACTGTTCATGAGTGCTCACCTGGTAGAGG-----AAA"
+    >>> lamb = 0.1227
+    >>> calculate_complexity_adjusted_score(None, query, target, lamb)
+    {'T': 0, 'C': 0, 'A': 0, 'G': 0, '-': 0}
+
+    >>> char_freqs = {'A': 0.295, 'G': 0.205, 'C': 0.205, 'T': 0.295}
+    >>> calculate_complexity_adjusted_score(char_freqs, query, target, lamb)
+    {'A': -0.08342236356495786, 'G': -0.11790190327726593, 'C': -0.11790190327726593, 'T': -0.08342236356495786, '-': 0.0}
     """
     char_complexity_adjustments: Dict[str, float] = {}
     if char_background_freqs is None:
