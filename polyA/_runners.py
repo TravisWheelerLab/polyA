@@ -254,6 +254,7 @@ def run_full(
         alignment_subfamily_sequences,
         alignment_chromosome_sequences,
         alignment_start_positions,
+        alignment_stop_positions,
         [sm.scores for sm in alignment_substitution_matrices],
         [sm.background_freqs for sm in alignment_substitution_matrices],
     )
