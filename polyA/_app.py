@@ -95,9 +95,8 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
-    with open(opts.alignments_file_path) as _infile:
-        with open(opts.alignments_file_path) as _infile:
-            alignment_tool: str = load_alignment_tool(_infile)
+    with open(opts.alignments_file_path) as _align_tool_infile:
+        alignment_tool: str = load_alignment_tool(_align_tool_infile)
 
     # Note: alignments from blast or HMMER are not set-up to use complexity adjusted scoring
     if opts.complexity_adjustment and alignment_tool not in [
