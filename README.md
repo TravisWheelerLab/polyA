@@ -370,6 +370,12 @@ make check-fast check-slow
 make check
 ```
 
+### Documentation
+
+We use Sphinx for project documentation. Run `make docs` to update the
+documentation sources and build the HTML. Use `make docs-serve` to serve the
+documentation locally.
+
 ## License
 
 BSD license. See `LICENSE`.

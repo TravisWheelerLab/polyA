@@ -9,6 +9,8 @@ help:
 	@echo "container        build and push a new container image"
 	@echo "container-build  build the testing container"
 	@echo "container-push   push the testing container to Docker Hub"
+	@echo "docs             build HTML version of documentation"
+	@echo "docs-serve       serve the HTML documentation on port 8000"
 	@echo "format           run the code formatter"
 	@echo "setup            install runtime dependencies"
 	@echo "setup-dev        install development dependencies"
@@ -19,6 +21,9 @@ endif
 
 RUN_CMD := pipenv run
 PYTHON_CMD := ${RUN_CMD} python
+
+DOCS_CMD := ${RUN_CMD} sphinx-apidoc
+DOCS_OPTS := -f -o docs/source polyA
 
 FMT_CMD := ${PYTHON_CMD} -m black
 FMT_TARGETS := polyA/ tests/
@@ -113,6 +118,15 @@ container-esl_scorematrix-build:
 .PHONY: container-esl_scorematrix-push
 container-esl_scorematrix-push:
 	docker push traviswheelerlab/polya-esl_scorematrix:${CONTAINER_VERSION}
+
+.PHONY: docs
+docs:
+	${DOCS_CMD} ${DOCS_OPTS}
+	cd docs && make html
+
+.PHONY: docs-serve
+docs-serve:
+	${PYTHON_CMD} -m http.server --directory docs/build/html
 
 .PHONY: format
 format:

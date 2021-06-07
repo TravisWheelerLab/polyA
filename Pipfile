@@ -14,6 +14,7 @@ rope = "*"
 scalene = "*"
 
 [packages]
+sphinx = "*"
 
 [pipenv]
 allow_prereleases = true

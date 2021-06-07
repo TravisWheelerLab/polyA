@@ -122,16 +122,25 @@ def calculate_complexity_adjusted_score(
     target_seq: str,
     lamb: float,
 ) -> Dict[str, float]:
-    """
+    r"""
     Calculates the per position contribution to the complexity adjusted score
     of the alignment for each valid char in the target sequence.
     This calculation is from the cross_match complexity adjustment functions:
+
     .. math::
-        t_{i} = char \textunderscore i \textunderscore target \textunderscore count
-        p_{i} = char \textunderscore i \textunderscore background \textunderscore frequency
-        t\textunderscore factor = \sum_{i=0}^{N} t_{i}ln(t_{i}) - [(\sum_{i=0}^{N} t_{i})ln(\sum_{i=0}^{N} t_{i})]
-        t \textunderscore sum = (\sum_{i=0}^{N} t_{i} ln(p_{i})) - t \textunderscore factor
-        adj \textunderscore score = raw \textunderscore score + (\frac{t \textunderscore sum}{\lambda}) + 0.999
+        t_{i} = \text{count of $i^{th}$ character}
+
+    .. math::
+        p_{i} = \text{background frequency of $i^{th}$ character}
+
+    .. math::
+        t_{factor} = \sum_{i=0}^{N} t_{i}ln(t_{i}) - \left[ \left( \sum_{i=0}^{N} t_{i} \right) ln(\sum_{i=0}^{N} t_{i}) \right]
+
+    .. math::
+        t_{sum} = \left[ \sum_{i=0}^{N} t_{i} ln(p_{i}) \right] - t_{factor}
+
+    .. math::
+        s_{adj} = s_{raw} + (\frac{t_{sum}}{\lambda}) + 0.999
 
     input:
     char_background_freqs: background frequencies of the chars from the scoring matrix
