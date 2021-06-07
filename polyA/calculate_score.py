@@ -10,7 +10,7 @@ def calculate_score(
     prev_char_seq1: str,
     prev_char_seq2: str,
     sub_matrix: Dict[str, int],
-    char_complexity_adjustment: Optional[Dict[str, float]],
+    char_complexity_adjustment: Dict[str, float],
 ) -> float:
     """
     Calculate the score for an alignment between a subfamily and a target/chromsome sequence.
@@ -32,12 +32,18 @@ def calculate_score(
     alignment score
 
     >>> sub_mat = {"AA":1, "AT":-1, "TA":-1, "TT":1}
-    >>> calculate_score(-5, -25, "AT", "AT", "", "", sub_mat, None)
+    >>> char_adjustments = {'T': 0.0, 'C': 0.0, 'A': 0.0, 'G': 0.0, '-': 0.0}
+    >>> calculate_score(-5, -25, "AT", "AT", "", "", sub_mat, char_adjustments)
     2.0
-    >>> calculate_score(-5, -25, "-T", "AT", "A", "A", sub_mat, None)
+    >>> calculate_score(-5, -25, "-T", "AT", "A", "A", sub_mat, char_adjustments)
     -24.0
-    >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat, None)
+    >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat, char_adjustments)
     -4.0
+    >>> char_adjustments = {'T': -0.4, 'C': 0.0, 'A': -0.2, 'G': 0.0, '-': 0.0}
+    >>> calculate_score(-5, -25, "-T", "AT", "A", "A", sub_mat, char_adjustments)
+    -24.4
+    >>> calculate_score(-5, -25, "-T", "AT", "-", "", sub_mat, char_adjustments)
+    -4.4
     """
     chunk_score: float = 0.0
 
@@ -55,8 +61,7 @@ def calculate_score(
             chunk_score += gap_init
     else:
         chunk_score += sub_matrix[seq1[0] + seq2[0]]
-        if char_complexity_adjustment:
-            chunk_score += char_complexity_adjustment[seq2[0]]
+        chunk_score += char_complexity_adjustment[seq2[0]]
 
     for j in range(1, len(seq1)):
         seq1_char: str = seq1[j]
@@ -74,8 +79,7 @@ def calculate_score(
                 chunk_score += gap_init
         else:
             chunk_score += sub_matrix[seq1_char + seq2_char]
-            if char_complexity_adjustment:
-                chunk_score += char_complexity_adjustment[seq2_char]
+            chunk_score += char_complexity_adjustment[seq2_char]
     return chunk_score
 
 
@@ -143,7 +147,7 @@ def calculate_complexity_adjusted_score(
     >>> target = "TCAGACTGTTCATGAGTGCTCACCTGGTAGAGG-----AAA"
     >>> lamb = 0.1227
     >>> calculate_complexity_adjusted_score(None, query, target, lamb)
-    {'T': 0, 'C': 0, 'A': 0, 'G': 0, '-': 0}
+    {'T': 0.0, 'C': 0.0, 'A': 0.0, 'G': 0.0, '-': 0.0}
 
     >>> char_freqs = {'A': 0.295, 'G': 0.205, 'C': 0.205, 'T': 0.295}
     >>> calculate_complexity_adjusted_score(char_freqs, query, target, lamb)
@@ -153,11 +157,11 @@ def calculate_complexity_adjusted_score(
     if char_background_freqs is None:
         # set the complexity adjustment to zero for every char
         for char in target_seq:
-            char_complexity_adjustments[char] = 0
+            char_complexity_adjustments[char] = 0.0
         return char_complexity_adjustments
 
-    t_factor: float = 0
-    t_sum: float = 0
+    t_factor = 0.0
+    t_sum = 0.0
     t_counts: int = 0
     target_chars = list(char_background_freqs.keys())
     target_char_counts, other_chars = calc_target_char_counts(
