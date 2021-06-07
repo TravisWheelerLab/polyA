@@ -198,12 +198,9 @@ def fill_align_matrix(
         while seq_index + offset < len(chrom_seq):
             temp_index = seq_index
             temp_count = 0
-            # FIXME: we know when to break based on col_index, do we need the other break checks?
-            if col_index > stops[i] - edge_start + 1:
-                break
 
-            # stop when get to end of alignment and padding starts
-            if chrom_seq[seq_index + 1] == ".":
+            # stop when you reach the last col to fill in
+            if col_index > stops[i] - edge_start + 1:
                 break
 
             # update offset if removing a gap
