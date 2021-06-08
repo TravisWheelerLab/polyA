@@ -41,7 +41,10 @@ class Printer:
 
     @property
     def use_soda_output(self) -> bool:
-        return self.__soda_viz_file is not None and self.__soda_conf_file is not None
+        return (
+            self.__soda_viz_file is not None
+            and self.__soda_conf_file is not None
+        )
 
     def print_results_header(self):
         self.__output_file.write("start\tstop\t")
