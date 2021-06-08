@@ -7,14 +7,15 @@ verify_ssl = true
 black = "*"
 flit = "*"
 ipython = "*"
+m2r2 = "*"
 mypy = "*"
 pylint = ">=2.4.4,<3.0.0"
 pytest = ">=5.3.5,<6.0.0"
 rope = "*"
 scalene = "*"
+sphinx = "*"
 
 [packages]
-sphinx = "*"
 
 [pipenv]
 allow_prereleases = true
