@@ -7,6 +7,7 @@ from ._runners import run_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import (
     load_alignments,
+    load_alignment_tool,
     shard_overlapping_alignments,
 )
 from .output import Output
@@ -94,10 +95,22 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
+    with open(opts.alignments_file_path) as _align_tool_infile:
+        alignment_tool: str = load_alignment_tool(_align_tool_infile)
+
+    # Note: alignments from blast or HMMER are not set-up to use complexity adjusted scoring
+    if opts.complexity_adjustment and alignment_tool not in [
+        "cross_match",
+        "RepeatMasker",
+    ]:
+        raise AppError(
+            f"cannot use complexity adjusted scoring with {alignment_tool}"
+        )
+
     _lambda_provider = EaselLambdaProvider(opts.easel_path)
     with open(opts.sub_matrices_path) as _sub_matrices_file:
         sub_matrices = load_substitution_matrices(
-            _sub_matrices_file, _lambda_provider
+            _sub_matrices_file, _lambda_provider, opts.complexity_adjustment
         )
 
     # -------------------------------------------------
@@ -109,7 +122,6 @@ def run():
     # -----------------------------
     # Load alignments to operate on
     # -----------------------------
-
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
 

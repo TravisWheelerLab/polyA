@@ -3,7 +3,10 @@ from typing import Dict, List, Tuple
 from .confidence_cm import confidence_cm
 from .performance import timeit
 from .substitution_matrix import SubMatrix
-from .calculate_score import calculate_score
+from .calculate_score import (
+    calculate_score,
+    calculate_complexity_adjusted_score,
+)
 from .sum_repeat_scores import sub_repeat_scores
 
 
@@ -54,6 +57,7 @@ def fill_node_confidence(
     >>> counts = {"skip": .33, "n1": .33, "n2": .33}
     >>> sub_mat = SubMatrix("", 0.1227)
     >>> sub_mat.scores = {"AA": 10, "AT": -1, "TA": -1, "TT": 10, "..":0}
+    >>> sub_mat.background_freqs = None
     >>> sub_mats = [sub_mat] * 3
     >>> rep_scores = {}
     >>> node_conf = fill_node_confidence(3, 0, [0, -25, -25], [0, -5, -5], non_cols, strts, stps, change_pos, names, s_seqs, c_seqs, counts, sub_mats, rep_scores, 0)
@@ -167,6 +171,12 @@ def fill_node_confidence(
                     + subfam_seqs[subfam_index][first_index : last_index + 1]
                 )
 
+                char_complexity_adjustments = (
+                    calculate_complexity_adjusted_score(
+                        sub_matrix.background_freqs, subfam_seq, chrom_seq, lamb
+                    )
+                )
+
                 align_score = lamb * calculate_score(
                     gap_ext,
                     gap_init,
@@ -175,6 +185,7 @@ def fill_node_confidence(
                     last_prev_subfam,
                     last_prev_chrom,
                     sub_matrix.scores,
+                    char_complexity_adjustments,
                 )
 
                 node_confidence_temp[subfam_index, node_index] = align_score

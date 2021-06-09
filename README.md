@@ -68,34 +68,37 @@ usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
 PolyA sequence adjudication tool
 
 positional arguments:
-  ALIGNMENTS            alignments file in Stockholm format
-  MATRICES              substitution matrices file in PolyA matrix format
+  ALIGNMENTS              alignments file in Stockholm format
+  MATRICES                substitution matrices file in PolyA matrix format
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -v, --version         show version and exit
+  -h, --help              show this help message and exit
+  -v, --version           show version and exit
   --chunk-size CHUNK_SIZE
-                        size of the window in base pairs analyzed together
-  --confidence          run the confidence calculation and then exit
-  --prior-counts FILE   file containing query genomic counts
+                          size of the window in base pairs analyzed together
+  --confidence            run the confidence calculation and then exit
+  --prior-counts FILE     file containing query genomic counts
   --shard-gap SHARD_GAP
-                        maximum alignment gap before sharding occurs
-  --sequences SEQS      FASTA file of the target sequence for using ULTRA
-  --ultra-data FILE     text file of the output from ULTRA ran on the FASTA file
-                        of the target sequence
-  --easel-path BIN      path to the esl_scorematrix program, if necessary
-                        (assumed to be in PATH)
-  --ultra-path BIN      path to the ULTRA binary to use, if necessary (assumed
-                        to be in PATH)
-  --log-file LOG        file to store log output in, defaults to stderr
-  --log-level LEVEL     logging level to use, 'debug' is the most noisy
-  --matrix-position     produce output in terms of the matrix position
-  --output-path PATH    directory to write output files to, defaults to
-                        working directory
-  --sequence-position   produce output in terms of the target sequence
-                        position
-  --soda                write a SODA visualization file to the output
-                        directory
+                          maximum alignment gap before sharding occurs
+  --sequences SEQS        FASTA file of the target sequence for using ULTRA
+  --ultra-data FILE       text file of the output from ULTRA ran on the FASTA file
+                          of the target sequence
+  --easel-path BIN        path to the esl_scorematrix program, if necessary
+                          (assumed to be in PATH)
+  --ultra-path BIN        path to the ULTRA binary to use, if necessary (assumed
+                          to be in PATH)
+  --log-file LOG          file to store log output in, defaults to stderr
+  --log-level LEVEL       logging level to use, 'debug' is the most noisy
+  --matrix-position       produce output in terms of the matrix position
+  --output-path PATH      directory to write output files to, defaults to
+                          working directory
+  --sequence-position     produce output in terms of the target sequence
+                          position
+  --soda                  write a SODA visualization file to the output
+                          directory
+  --complexity-adjustment complexity-adjust alignment scores (scores of matches
+                          between sequence regions of biassed nucleotide
+                          composition are adjusted downwards)
 ```
 
 ### Input Formats
@@ -366,6 +369,12 @@ make check-fast check-slow
 # or
 make check
 ```
+
+### Documentation
+
+We use Sphinx for project documentation. Run `make docs` to update the
+documentation sources and build the HTML. Use `make docs-serve` to serve the
+documentation locally.
 
 ## License
 
