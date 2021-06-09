@@ -181,15 +181,20 @@ def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto):
     f_out_sto.write("//\n")
 
 
-def print_score_matrix(filename_out_matrix, score_matrix, matrix_name):
+def print_score_matrix(
+    filename_out_matrix, score_matrix, matrix_name, background_freqs
+):
     """
     print score matrix to its own output file with extension ".matrix"
     """
     f_out_matrix = open(filename_out_matrix, "w")
     f_out_matrix.write(matrix_name)
     f_out_matrix.write("\n")
+    f_out_matrix.write(f"BACKGROUND FREQS: {background_freqs}")
+    f_out_matrix.write("\n")
     f_out_matrix.write(score_matrix)
     f_out_matrix.write("//\n")
+    f_out_matrix.close()
 
 
 def main():
@@ -203,9 +208,26 @@ def main():
     matrix_name = "matrix1"
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
+    f_out_sto.write(f"# ALIGNMENT TOOL cross_match\n")
+
+    # get background freqs
+    background_freqs = re.findall(
+        r"Assumed background frequencies:.*\n.*\n.*",
+        file_contents,
+    )
+    background_freqs = background_freqs[0].splitlines()[1].split()
+    background_freqs = background_freqs[: len(background_freqs) - 2]
+    background_freqs_dict = {}
+    for i in range(0, len(background_freqs), 2):
+        char = background_freqs[i][0]
+        freq = float(background_freqs[i + 1])
+        if freq != 0:
+            background_freqs_dict[char] = freq
 
     score_matrix = get_score_matrix(file_contents)
-    print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
+    print_score_matrix(
+        filename_out_matrix, score_matrix, matrix_name, background_freqs_dict
+    )
 
     gap_init, gap_ext = get_gap_penalties(file_contents)
 

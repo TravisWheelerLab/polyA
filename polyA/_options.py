@@ -33,6 +33,7 @@ class Options:
     shard_gap: int
     sequence_file_path: str
     ultra_data_path: str
+    complexity_adjustment: bool
 
     # -------------------
     # Helper applications
@@ -170,6 +171,12 @@ class Options:
             default=False,
             help="write a SODA visualization file to the output directory",
         )
+        parser.add_argument(
+            "--complexity-adjustment",
+            action="store_true",
+            default=False,
+            help="use complexity adjusted scoring",
+        )
 
         namespace: Namespace
         if args is None:
@@ -186,6 +193,7 @@ class Options:
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
         self.ultra_data_path = namespace.ultra_data
+        self.complexity_adjustment = namespace.complexity_adjustment
 
         self.easel_path = namespace.easel_path
         self.ultra_path = namespace.ultra_path

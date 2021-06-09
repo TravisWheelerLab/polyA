@@ -180,6 +180,28 @@ def load_alignments(
             seqs.clear()
 
 
+def load_alignment_tool(file: TextIO) -> str:
+    """
+    Return alignment tool used.
+    """
+
+    while True:
+        try:
+            # skip header line
+            header_line = next(file)
+        except StopIteration:
+            return "no alignment tool"
+
+        try:
+            line = next(file)
+            if line.strip().upper().startswith("# ALIGNMENT TOOL"):
+                # get alignment tool
+                return line.split()[-1]
+            return "no alignment tool"
+        except StopIteration:
+            return "no alignment tool"
+
+
 class Shard(NamedTuple):
     start: int
     stop: int
