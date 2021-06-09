@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Tuple, Set, List
 import math
+from .constants import CROSS_MATCH_ADJUSTMENT
 
 
 def calculate_score(
@@ -205,7 +206,9 @@ def calculate_complexity_adjusted_score(
             if v != 0:
                 char_complexity_adjustments[c] /= target_char_counts[c]
                 char_complexity_adjustments[c] /= lamb
-                char_complexity_adjustments[c] += 0.999 / total_chars
+                char_complexity_adjustments[c] += (
+                    CROSS_MATCH_ADJUSTMENT / total_chars
+                )
 
     # to avoid any key errors
     for char in other_chars:

@@ -56,7 +56,7 @@ value doesn't matter, but it's here for clarity.
 
 CROSS_MATCH_ADJUSTMENT = 0.999
 """
-A constant value used in the equations from cross_match to calculate 
+A constant value given from cross_match that is used to compute 
 the complexity adjusted score of an alignment.
 """
 
