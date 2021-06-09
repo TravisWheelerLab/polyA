@@ -7,7 +7,7 @@ Welcome to PolyA's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    modules
@@ -20,3 +20,10 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+
+Readme
+======
+
+.. mdinclude:: ../../README.md
