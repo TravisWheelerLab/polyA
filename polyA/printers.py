@@ -258,7 +258,6 @@ class Printer:
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = []
         json_dict["heatmap"].append(heatmap_dict)
-        # "Tandem#Repeat/TR"
         for k in range(1, len(subfams_collapse)):
             subfam_ids[subfams_collapse[k]] = k
             subfam_subids[subfams_collapse[k]] = 1
