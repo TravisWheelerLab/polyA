@@ -46,6 +46,12 @@ class Printer:
             and self.__soda_conf_file is not None
         )
 
+    def set_soda_files(
+        self, viz_file: Optional[TextIO], conf_file: Optional[TextIO]
+    ):
+        self.__soda_viz_file = viz_file
+        self.__soda_conf_file = conf_file
+
     def print_results_header(self):
         self.__output_file.write("start\tstop\t")
 
