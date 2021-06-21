@@ -122,6 +122,7 @@ container-esl_scorematrix-push:
 .PHONY: docs
 docs:
 	${DOCS_CMD} ${DOCS_OPTS}
+	${RUN_CMD} pip freeze > requirements.txt
 	cd docs && make html
 
 .PHONY: docs-serve
