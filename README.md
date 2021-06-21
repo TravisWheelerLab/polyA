@@ -300,8 +300,6 @@ mounted as the current working directory outside the container.
 
 ## Development
 
-TODO(George): Mention flit install and the --symlink option (add a make target)
-
 This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
 installed through Homebrew for Mac users. It must be installed before the
 Makefile targets, or the other commands listed in this document will work.
@@ -310,6 +308,11 @@ In order to run a command which relies on the project virtual environment, such
 as `python foo.py`, it is necessary to either run `pipenv shell` first, which
 will put you into a shell that has the correct Python in its `PATH`, or prefix
 the command with `pipenv run` (e.g. `pipenv run python foo.py`).
+
+To build a PyPI package, use `make build-package`. To publish, use
+`make publish-package`. We use [Flit](https://flit.readthedocs.io/en/latest/) to
+handle building and publishing a package, so it is also possible to invoke Flit
+directly to do anything else it is capable of.
 
 ### Makefile
 
