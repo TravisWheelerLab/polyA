@@ -1,6 +1,8 @@
 .PHONY: help
 help:
 	@echo "help             print this message"
+	@echo "build-package    build a PyPI package"
+	@echo "publish-package  publish the package to PyPI"
 	@echo "check            run all tests and validations"
 	@echo "check-fast       run tests and validations that finish quickly"
 	@echo "check-format     verify that the code formatter has been run"
