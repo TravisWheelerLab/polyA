@@ -20,7 +20,7 @@ def fill_support_matrix(
     subfam x for all segments that overlap position i - divided by the number of
     segments.
 
-    TODO: Verify that this function works when TRs are present in the matrix
+    TODO(Audrey): Verify that this function works when the matrix contains TRs
     If TRs are condensed into a single row before this function is called then
     there might be gaps, which will cause errors here since we assume no gaps in
     a given row. If we need to deal with gaps we could do so by catching key

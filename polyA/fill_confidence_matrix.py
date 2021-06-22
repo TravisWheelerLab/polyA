@@ -37,7 +37,9 @@ def fill_confidence_matrix(
     confidence score calculated from all the alignment scores in a column of the
     alignment matrix.
 
-    TODO: Update test to reflect that real matrices have only skip state in first and last columns
+    TODO(Audrey): Update test to reflect real matrix format
+    The real matrices have only skip state in first and last columns, but the
+    test doesn't follow this pattern.
 
     >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
     >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
