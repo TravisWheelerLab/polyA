@@ -251,7 +251,7 @@ Default confidence calculations assume a uniform distribution over all
 competing queries. In the case of non uniform priors, the command line option --prior-counts prior_counts.txt includes prior
 genome counts in confidence calculations (see paper for more details). 
 
-TODO(Kaitlin): Add link to paper
+TODO(Audrey): Add link to paper
 
 Prior counts file example format:
 ```

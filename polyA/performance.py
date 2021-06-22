@@ -40,8 +40,6 @@ def timeit(name: Optional[str] = None):
     `set_timeit_file`, in which case that will be used. If a logger is passed to
     `set_timeit_logger` then that will be used for output preferentially.
 
-    TODO: Allow time units to be specified at decoration site
-
     >>> import os, io
     >>> stream = io.StringIO()
     >>> os.environ[ENV_VAR_NAME] = 'true'

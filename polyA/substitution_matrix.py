@@ -92,7 +92,7 @@ def load_substitution_matrices(
     lambda_provider: LambdaProvider,
     complexity_adjustment: bool,
     alphabet_chars: str = "AGCTYRWSKMDVHBXN",
-    ambiguity_chars: str = ".",
+    ambiguity_chars: str = "-.",
 ) -> SubMatrixCollection:
     """
     Reads a set of score matrices from a file and returns a
@@ -102,8 +102,7 @@ def load_substitution_matrices(
     Each matrix has a name, which is then specified for each
     alignment that is to be adjudicated.
 
-    TODO: Write a doctest for this
-    TODO: Add additional ambiguity codes to default value
+    TODO(Audrey): Write a doctest for this
     """
     _logger.debug(f"load_substitution_matrix({file.name})")
 
