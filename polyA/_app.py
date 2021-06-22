@@ -1,6 +1,6 @@
 import logging
-from sys import argv, stderr, stdout
-from typing import List, TextIO
+from sys import argv, stderr
+from typing import List
 
 from ._options import Options
 from ._runners import run_confidence, run_full
@@ -74,9 +74,8 @@ def run():
     # Tandem Repeat initialization
     # ----------------------------
 
-    tandem_repeats = _configure_tandem_repeats(
-        opts
-    )  # either has stuff or doesn't
+    # This will come back as an empty list if we don't need to worry about TRs.
+    tandem_repeats = _configure_tandem_repeats(opts)
 
     # -----------------
     # Sub-family counts
@@ -99,7 +98,8 @@ def run():
     with open(opts.alignments_file_path) as _align_tool_infile:
         alignment_tool: str = load_alignment_tool(_align_tool_infile)
 
-    # Note: alignments from blast or HMMER are not set-up to use complexity adjusted scoring
+    # Note: alignments from blast or HMMER are not set-up to use complexity
+    # adjusted scoring
     if opts.complexity_adjustment and alignment_tool not in [
         "cross_match",
         "RepeatMasker",
