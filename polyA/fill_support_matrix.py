@@ -128,7 +128,7 @@ def fill_support_matrix(
     # over to the left to account for the fact that the window of alignments
     # we're looking at didn't necessarily start at position 0 on its sequence.
     # See the documentation for `start` on the `Alignment` class.
-    # TODO: Here's the problem, we're not setting this yet
+    # FIXME: In some cases this may not be set correctly
     # This is a problem, the tests don't cover this and they only pass because
     # the value is zero in both cases.
     position_offset = starts[0]
