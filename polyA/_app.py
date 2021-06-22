@@ -118,7 +118,7 @@ def run():
     # Flags and parameters related to secondary outputs
     # -------------------------------------------------
 
-    outputter = Output(opts.output_path)
+    outputter = Output(opts.output_path, opts.output_to_file)
 
     # -----------------------------
     # Load alignments to operate on
