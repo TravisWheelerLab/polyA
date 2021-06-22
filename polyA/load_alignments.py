@@ -1,7 +1,7 @@
 import re
 from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
-from exceptions import FileFormatException
+from .exceptions import FileFormatException
 from .alignment import Alignment, get_skip_state
 from .constants import INFINITE_SHARD_GAP
 from .performance import timeit
