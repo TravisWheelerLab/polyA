@@ -227,7 +227,7 @@ def collapse_matrices(
         active_cells_collapse[key] = list(active_cells_collapsed_set[key])
 
     for subfam in subfams_dp:
-        dp_rows = subfams_count[subfam]
+        dp_rows = subfams_count[subfam]  # alignment rows for this subfam
         dp_active_cols: Dict[int, List[int]] = {}
 
         for dp_row_index in dp_rows:
@@ -245,15 +245,19 @@ def collapse_matrices(
         count = 0
         dp_region_rows = set()
         dp_active_rows: List[List[int]] = []
-        # TODO: Why do we skip the first one?
+
+        # start at index 1 to look back at index 0
         for dp_col_index in range(1, len(dp_non_empty_cols)):
             dp_region_rows.update(
                 dp_active_cols[dp_non_empty_cols[dp_col_index]]
             )
+
             if (
                 dp_non_empty_cols[dp_col_index]
                 != dp_non_empty_cols[dp_col_index - 1] + 1
             ):
+                # new chrom region for this subfam
+                # prev and cur active cols aren't sequential
                 dp_region_starts.append(prev_start)
                 dp_region_stops.append(dp_col_index - 1)
                 prev_start = dp_col_index
@@ -268,7 +272,6 @@ def collapse_matrices(
             region_start = dp_region_starts[region_index]
             region_stop = dp_region_stops[region_index]
             non_empty_region = dp_non_empty_cols[region_start : region_stop + 1]
-
             if len(dp_active_rows[region_index]) > 1:
                 # do dp
                 collapse_path = dp_for_collapse(
@@ -302,7 +305,9 @@ def collapse_matrices(
                     row_index = dp_active_rows[region_index][0]
 
                     consensus_pos = consensus_matrix[row_index, collapse_col]
-                    # TODO: Where does collapse_row come from on this branch?
+                    # only one row to pick from
+                    collapse_row = dp_active_rows[region_index][0]
+
                     subfam_alignments_collapse[
                         subfam, collapse_col + start_all - 1
                     ] = (collapse_row, consensus_pos)
@@ -316,7 +321,6 @@ def collapse_matrices(
                     support_matrix_collapse[
                         subfams_collapse_temp[subfam], collapse_col
                     ] = support_matrix[row_index, collapse_col]
-
     row_count_update: int = len(subfams_collapse)
 
     return CollapsedMatrices(
