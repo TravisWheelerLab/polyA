@@ -128,10 +128,31 @@ def load_alignments(
             continue
 
         if _parse_terminator_line(line):
-            # TODO: Validation and good error messages go here
-            # Verify that...
-            #   we have two sequences
-            #   all required metadata was present
+            # check for valid alignment data
+            for metadata_key in [
+                "ID",
+                "TR",
+                "SC",
+                "SD",
+                "TQ",
+                "ST",
+                "SP",
+                "CST",
+                "CSP",
+                "FL",
+                "MX",
+                "GI",
+                "GE",
+            ]:
+                if metadata_key not in meta:
+                    raise ValueError(
+                        f"metadata incomplete, missing {metadata_key}"
+                    )
+
+            if len(seqs) != 2:
+                raise ValueError(
+                    f"incorrect number of alignment sequences: {len(seqs)}"
+                )
 
             chrom_meta = _parse_chrom_meta(meta["TR"])
             if chrom_meta is not None:
