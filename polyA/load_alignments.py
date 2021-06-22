@@ -1,6 +1,7 @@
 import re
 from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
+from exceptions import FileFormatException
 from .alignment import Alignment, get_skip_state
 from .constants import INFINITE_SHARD_GAP
 from .performance import timeit
@@ -113,6 +114,8 @@ def load_alignments(
     meta = {}
     seqs = []
 
+    current_line_number = 1
+
     for line in file:
         if _parse_preamble_line(line):
             continue
@@ -132,14 +135,36 @@ def load_alignments(
             # Verify that...
             #   we have two sequences
             #   all required metadata was present
+            # Raise FileFormatException and add a message to it so that we
+            # can indicate which field was missing here
+            # Also change ValueError below to a FileFormatException
 
             chrom_meta = _parse_chrom_meta(meta["TR"])
-            if chrom_meta is not None:
+            try:
                 chrom_name, chrom_start, chrom_stop = chrom_meta
-            else:
-                raise ValueError("metadata incomplete, missing TR")
+            except TypeError:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    "missing TR field",
+                )
+            except ValueError:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    "invalid TR field",
+                )
 
-            if meta["TQ"] == "t":
+            try:
+                tq = meta["TQ"]
+            except KeyError:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    "missing TQ field",
+                )
+
+            if tq == "t":
                 yield Alignment(
                     subfamily=meta["ID"],
                     chrom_name=chrom_name,
@@ -178,6 +203,8 @@ def load_alignments(
 
             meta.clear()
             seqs.clear()
+
+        current_line_number += 1
 
 
 def load_alignment_tool(file: TextIO) -> str:

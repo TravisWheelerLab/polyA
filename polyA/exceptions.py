@@ -6,7 +6,9 @@ class FileFormatException(Exception):
 
     path: str
     line_number: int
+    message: str
 
-    def __init__(self, path: str, line_number: int):
+    def __init__(self, path: str, line_number: int, message: str = ""):
         self.path = path
-        self._line_number = line_number
+        self.line_number = line_number
+        self.message = message
