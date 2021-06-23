@@ -1,7 +1,7 @@
 from polyA.fill_align_matrix import fill_align_matrix
 from polyA.edges import edges
 from polyA.constants import SKIP_ALIGN_SCORE
-from polyA.lambda_provider import EaselLambdaProvider
+from polyA.lambda_provider import ConstantLambdaProvider
 from polyA.substitution_matrix import load_substitution_matrices, SubMatrix
 
 
@@ -27,7 +27,7 @@ def test_fill_align_matrix():
     )
     column_count = stop_all - start_all + 1 + 2
 
-    _lambda_provider = EaselLambdaProvider("")
+    _lambda_provider = ConstantLambdaProvider(0.1227)
     with open(
         f"fixtures/ultra_test_files/ex13.fa.cm.matrix", "r"
     ) as _sub_matrices_file:
@@ -99,7 +99,7 @@ def test_fill_align_matrix_complexity_adjusted():
     )
     column_count = stop_all - start_all + 1 + 2
 
-    _lambda_provider = EaselLambdaProvider("")
+    _lambda_provider = ConstantLambdaProvider(0.1227)
     with open(
         f"fixtures/ultra_test_files/ex13.fa.cm.matrix", "r"
     ) as _sub_matrices_file:
