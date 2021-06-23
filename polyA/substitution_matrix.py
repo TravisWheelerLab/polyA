@@ -2,7 +2,7 @@ import re
 import logging
 from typing import Dict, List, Optional, TextIO, Tuple
 
-from .lambda_provider import LambdaProvider
+from .lambda_provider import LambdaProvider, ConstantLambdaProvider
 
 
 _logger = logging.root.getChild(__name__)
@@ -102,7 +102,40 @@ def load_substitution_matrices(
     Each matrix has a name, which is then specified for each
     alignment that is to be adjudicated.
 
-    TODO(Audrey): Write a doctest for this
+    >>> _lamb_provider = ConstantLambdaProvider(0.1227)
+    >>> matrices_file = "fixtures/ultra_test_files/ex13.fa.cm.matrix"
+    >>> with open(matrices_file) as _sub_matrices_file:
+    ...     sub_matrices = load_substitution_matrices(_sub_matrices_file, _lamb_provider, False)
+    >>> len(sub_matrices)
+    1
+    >>> "matrix1" in sub_matrices
+    True
+    >>> matrix = sub_matrices["matrix1"]
+    >>> matrix.lamb
+    0.1227
+    >>> matrix.name
+    'matrix1'
+    >>> matrix.scores['AA']
+    8
+    >>> matrix.scores['AT']
+    -15
+    >>> matrix.scores['TT']
+    8
+    >>> matrix.scores['GA']
+    -2
+    >>> matrix.scores['GC']
+    -13
+    >>> matrix.scores['CC']
+    10
+    >>> matrix.background_freqs is None
+    True
+    >>> with open(matrices_file) as _sub_matrices_file:
+    ...     sub_matrices = load_substitution_matrices(_sub_matrices_file, _lamb_provider, True)
+    >>> matrix = sub_matrices["matrix1"]
+    >>> matrix.background_freqs is None
+    False
+    >>> matrix.background_freqs
+    {'A': 0.295, 'G': 0.205, 'C': 0.205, 'T': 0.295}
     """
     _logger.debug(f"load_substitution_matrix({file.name})")
 
