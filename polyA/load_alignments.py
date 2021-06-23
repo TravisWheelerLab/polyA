@@ -140,6 +140,13 @@ def load_alignments(
 
             try:
                 chrom_meta = _parse_chrom_meta(meta["TR"])
+                if chrom_meta is None:
+                    raise FileFormatException(
+                        file.name,
+                        current_line_number,
+                        "missing TR field",
+                    )
+
                 chrom_name, chrom_start, chrom_stop = chrom_meta
 
                 if meta["TQ"] == "t":
@@ -189,12 +196,6 @@ def load_alignments(
                     file.name,
                     current_line_number,
                     f"missing key: {e.args[0]}",
-                )
-            except TypeError:
-                raise FileFormatException(
-                    file.name,
-                    current_line_number,
-                    "missing TR field",
                 )
             except ValueError as e:
                 raise FileFormatException(
