@@ -37,26 +37,27 @@ def fill_confidence_matrix(
     confidence score calculated from all the alignment scores in a column of the
     alignment matrix.
 
-    TODO: Update test to reflect that real matrices have only skip state in first and last columns
-
-    >>> align_mat = {(0, 0): 0, (0, 1): 100, (0, 2): 99, (1, 0): 100, (1, 1): 100, (1, 2): 100}
-    >>> active = {0: [0, 1], 1: [0, 1], 2: [0, 1]}
-    >>> col_count = 3
-    >>> counts = {"s1": .33, "s2": .33, "s3": .33}
-    >>> subs = ["s1", "s2"]
+    >>> align_mat = {
+    ...     (0, 0): 10, (0, 1): 10, (0, 2): 10, (0, 3): 10, (0, 4): 10,
+    ...     (1, 1): 42, (1, 2): 41, (1, 3): 41, (2, 1): 45, (2, 2): 43, (2, 3): 39,
+    ... }
+    >>> active = {0: [0], 1: [0, 1, 2], 2: [0, 1, 2], 3: [0, 1, 2], 4: [0]}
+    >>> col_count = 5
+    >>> counts = {"skip": 0.4, "s1": .33, "s2": .33}
+    >>> subs = ["skip", "s1", "s2"]
     >>> conf_mat = fill_confidence_matrix(col_count, counts, subs, active, align_mat)
-    >>> f"{conf_mat[0,0]:.4f}"
-    '0.0100'
-    >>> f"{conf_mat[1,0]:.4f}"
-    '0.9900'
-    >>> f"{conf_mat[0,1]:.4f}"
-    '0.5000'
     >>> f"{conf_mat[1,1]:.4f}"
-    '0.5000'
-    >>> f"{conf_mat[0,2]:.4f}"
-    '0.3333'
+    '0.1100'
+    >>> f"{conf_mat[2,1]:.4f}"
+    '0.8800'
     >>> f"{conf_mat[1,2]:.4f}"
-    '0.6667'
+    '0.1980'
+    >>> f"{conf_mat[2,2]:.4f}"
+    '0.7920'
+    >>> f"{conf_mat[1,3]:.4f}"
+    '0.7920'
+    >>> f"{conf_mat[2,3]:.4f}"
+    '0.1980'
     """
     confidence_matrix: ConfidenceMatrix = {}
 

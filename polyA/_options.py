@@ -51,6 +51,7 @@ class Options:
     log_level: Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
     output_path: str
+    output_to_file: bool
     sequence_position: bool
     soda: bool
 
@@ -160,6 +161,12 @@ class Options:
             help="directory to write output files to, defaults to working directory",
         )
         parser.add_argument(
+            "--output-to-file",
+            action="store_true",
+            default=False,
+            help="write output to a file in the output path",
+        )
+        parser.add_argument(
             "--sequence-position",
             action="store_true",
             default=False,
@@ -203,5 +210,6 @@ class Options:
         self.log_level = namespace.log_level
         self.matrix_position = namespace.matrix_position
         self.output_path = namespace.output_path
+        self.output_to_file = namespace.output_to_file
         self.sequence_position = namespace.sequence_position
         self.soda = namespace.soda

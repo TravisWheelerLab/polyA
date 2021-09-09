@@ -20,13 +20,6 @@ def fill_support_matrix(
     subfam x for all segments that overlap position i - divided by the number of
     segments.
 
-    TODO: Verify that this function works when TRs are present in the matrix
-    If TRs are condensed into a single row before this function is called then
-    there might be gaps, which will cause errors here since we assume no gaps in
-    a given row. If we need to deal with gaps we could do so by catching key
-    errors and treating them as "end markers" for a given section of data in the
-    condensed row.
-
     Inputs:
 
     chunk_size - the width of the window to use when averaging confidence
@@ -55,67 +48,69 @@ def fill_support_matrix(
     the "support score".
 
     >>> conf_mat = {
-    ...     (0, 0): 0.9, (0, 1): 0.5, (0, 2): 0.5, (0, 3): 0.5,
-    ...                  (1, 1): 0.3, (1, 2): 0.1,
+    ...     (0, 0): 1.0, (0, 1): 0.1, (0, 2): 0.2, (0, 3): 0.4, (0, 4): 0.5, (0, 5): 1.0,
+    ...     (1, 1): 0.9, (1, 2): 0.5, (1, 3): 0.5, (1, 4): 0.5,
+    ...     (2, 2): 0.3, (2, 3): 0.1,
     ... }
     >>> supp_mat = fill_support_matrix(
     ...     chunk_size=3,
-    ...     starts=[0, 1],
-    ...     stops=[3, 2],
+    ...     starts=[0, 1, 2],
+    ...     stops=[5, 4, 3],
     ...     confidence_matrix=conf_mat)
     >>> len(supp_mat) == len(conf_mat)
     True
-    >>> round(supp_mat[0, 0], 4)
+    >>> round(supp_mat[1, 1], 4)
     0.7
-    >>> round(supp_mat[0, 1], 4)
-    0.6333
-    >>> round(supp_mat[0, 2], 4)
-    0.5
-    >>> round(supp_mat[0, 3], 4)
-    0.5
-    >>> (1, 0) in supp_mat
-    False
-    >>> round(supp_mat[1, 1], 4)
-    0.2
-    >>> round(supp_mat[1, 2], 4)
-    0.2
-    >>> (1, 3) in supp_mat
-    False
-    >>>
-    >>> conf_mat = {
-    ...     (0, 0): 0.9, (0, 1): 0.9, (0, 2): 0.5, (0, 3): 0.5, (0, 4): 0.1, (0, 5): 0.1,
-    ...                  (1, 1): 0.5, (1, 2): 0.7, (1, 3): 0.7, (1, 4): 0.9,
-    ... }
-    >>> supp_mat = fill_support_matrix(
-    ...     chunk_size=3,
-    ...     starts=[10, 11],
-    ...     stops=[15, 14],
-    ...     confidence_matrix=conf_mat)
-    >>> len(supp_mat) == len(conf_mat)
-    True
-    >>> supp_mat[0, 0]
-    0.9
-    >>> round(supp_mat[0, 1], 4)
-    0.7667
-    >>> round(supp_mat[0, 2], 4)
-    0.6333
-    >>> round(supp_mat[0, 3], 4)
-    0.3667
-    >>> round(supp_mat[0, 4], 4)
-    0.2333
-    >>> round(supp_mat[0, 5], 4)
-    0.1
-    >>> (1, 0) in supp_mat
-    False
-    >>> round(supp_mat[1, 1], 4)
-    0.6
     >>> round(supp_mat[1, 2], 4)
     0.6333
     >>> round(supp_mat[1, 3], 4)
-    0.7667
+    0.5
     >>> round(supp_mat[1, 4], 4)
-    0.8
-    >>> (1, 5) in supp_mat
+    0.5
+    >>> (1, 0) in supp_mat
+    False
+    >>> round(supp_mat[2, 2], 4)
+    0.2
+    >>> round(supp_mat[2, 3], 4)
+    0.2
+    >>> (2, 4) in supp_mat
+    False
+    >>>
+    >>> conf_mat = {
+    ...     (0, 0): 1.0, (0, 1): 0.1, (0, 2): 0.05, (0, 3): 0.01, (0, 4): 0.01, (0, 5): 0.01, (0, 6): 0.9, (0, 7): 1.0,
+    ...     (1, 1): 0.9, (1, 2): 0.75, (1, 3): 0.5, (1, 4): 0.39, (1, 5): 0.1, (1, 6): 0.1,
+    ...     (2, 2): 0.2, (2, 3): 0.49, (2, 4): 0.6, (2, 5): 0.89,
+    ... }
+    >>> supp_mat = fill_support_matrix(
+    ...     chunk_size=3,
+    ...     starts=[9, 10, 11],
+    ...     stops=[16, 15, 14],
+    ...     confidence_matrix=conf_mat)
+    >>> len(supp_mat) == len(conf_mat)
+    True
+    >>> supp_mat[1, 1]
+    0.825
+    >>> round(supp_mat[1, 2], 4)
+    0.7167
+    >>> round(supp_mat[1, 3], 4)
+    0.5467
+    >>> round(supp_mat[1, 4], 4)
+    0.33
+    >>> round(supp_mat[1, 5], 4)
+    0.1967
+    >>> round(supp_mat[1, 6], 4)
+    0.1
+    >>> (2, 1) in supp_mat
+    False
+    >>> round(supp_mat[2, 2], 4)
+    0.345
+    >>> round(supp_mat[2, 3], 4)
+    0.43
+    >>> round(supp_mat[2, 4], 4)
+    0.66
+    >>> round(supp_mat[2, 5], 4)
+    0.745
+    >>> (2, 6) in supp_mat
     False
     """
 
@@ -125,13 +120,13 @@ def fill_support_matrix(
     row_count = len(starts)
 
     # This is the amount by which we need to slide all the start and stop values
-    # over to the left to account for the fact that the window of alignments
-    # we're looking at didn't necessarily start at position 0 on its sequence.
+    # over to the left to match the column values in the confidence matrix for each
+    # subfamily alignment.
     # See the documentation for `start` on the `Alignment` class.
-    # TODO: Here's the problem, we're not setting this yet
+    # FIXME: In some cases this may not be set correctly - how so??
     # This is a problem, the tests don't cover this and they only pass because
     # the value is zero in both cases.
-    position_offset = starts[0]
+    position_offset = starts[0]  # start of skip state
 
     # Note: start and stop values are closed ranges, so when a stop value is
     # used in a range() call, the stop value passed to range needs to be

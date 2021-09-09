@@ -19,7 +19,6 @@ def confidence_cm(
     If command line option for subfam_counts, this is included in confidence math.
 
     input:
-    infile: test if subfam_counts infile included at command line
     region: list of scores for competing annotations
     subfam_counts: dict that maps subfam name to it's count info
     subfams: list of subfam names

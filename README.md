@@ -236,14 +236,15 @@ LTR40c#LTR/ERVL     0.001
 ### Extensions
 
 #### Visualizing annotations using SODA
-<!--
-TODO(Audrey): Add updated user explanation
-The command line option --soda will output the annotation data to a single json file 
-to be used in SODA.
-The visualization will also give information about the original alignment that each output
-family annotation belongs to.
--->
-This section is a work in progress and will be released in the coming weeks. 
+
+The command line option --soda will output the annotation data to a json file 
+(output.0.viz) that can be used for visualization in SODA (linked below).
+The json file can be submitted on the browser to view the TE annotations from PolyA
+as well as the annotations from the UCSC Genome Browser for the same region of the
+human genome (hg38). The PolyA visualization can display the confidence values for all competing 
+annotations of a selected region as well as their corresponding sequence alignments.
+
+https://sodaviz.cs.umt.edu/polya-soda.html
 
 #### Prior Counts Files
 
@@ -251,7 +252,7 @@ Default confidence calculations assume a uniform distribution over all
 competing queries. In the case of non uniform priors, the command line option --prior-counts prior_counts.txt includes prior
 genome counts in confidence calculations (see paper for more details). 
 
-TODO(Kaitlin): Add link to paper
+https://www.biorxiv.org/content/10.1101/2021.02.13.430877v1
 
 Prior counts file example format:
 ```
@@ -300,8 +301,6 @@ mounted as the current working directory outside the container.
 
 ## Development
 
-TODO(George): Mention flit install and the --symlink option (add a make target)
-
 This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
 installed through Homebrew for Mac users. It must be installed before the
 Makefile targets, or the other commands listed in this document will work.
@@ -310,6 +309,11 @@ In order to run a command which relies on the project virtual environment, such
 as `python foo.py`, it is necessary to either run `pipenv shell` first, which
 will put you into a shell that has the correct Python in its `PATH`, or prefix
 the command with `pipenv run` (e.g. `pipenv run python foo.py`).
+
+To build a PyPI package, use `make build-package`. To publish, use
+`make publish-package`. We use [Flit](https://flit.readthedocs.io/en/latest/) to
+handle building and publishing a package, so it is also possible to invoke Flit
+directly to do anything else it is capable of.
 
 ### Makefile
 

@@ -24,6 +24,8 @@ description-file = "README.md"
 exclude = [
     "test_inputs/",
     "fixtures/",
+    "conda-dist",
+    "publications",
     "Dockerfile*",
     "Makefile",
     ".gitignore",
