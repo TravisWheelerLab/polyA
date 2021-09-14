@@ -267,37 +267,64 @@ L1PA7_5end  13261
 
 The optional use of ULTRA allows polyA to include tandem repeats (TRs) in the competing annotations
 of the target sequence. Doing so removes the dependency on pre-masking TRs prior to annotation, allows 
-TRs to outcompete potentially weak fragmentary family annotation , and allows a family annotation
+TRs to outcompete potentially weak fragmentary family annotation, and allows a family annotation
 to outcompete a TR.
 The command line option --sequences seq.fasta (with --ultra-path if necessary) will
 run ULTRA with polyA or --ultra-data ultra_data.txt can be used if ULTRA was ran on seq.fasta prior.
 
 
-### Additional software
+### External software dependencies
 
-The `esl_scorematrix` utility is a part of the Easel package in the [HMMER
-software suite](http://hmmer.org). Its source code is available at
-[https://github.com/EddyRivasLab/easel/].
+#### Easel 
+PolyA internally adjusts alignment scores to account for the scale multiplier
+implicit to each score matrix (the so-called `lambda` value).
+Unless the lambda value is given in the matrix file, PolyA must compute it; this
+is done using the `esl_scorematrix` utility found in the 
+[Easel](https://github.com/EddyRivasLab/easel/) software package. 
 
-We use it to compute a `lambda` value for each score matrix, unless one is given
-in the matrix file. The easiest way to run the utility, either manually or as
-part of the PolyA pipeline is to use the [Docker
-container](https://hub.docker.com/r/traviswheelerlab/polya-esl_scorematrix) we
-provide.
-
-It is then possible to run `esl_scorematrix` with the following command (which
-just shows the help information):
-
+To prepare that tool, follow these steps:
 ```
-docker run --mount src="${PWD}",target=/data,type=bind traviswheelerlab/polya-esl_scorematrix -h
+    # get source code
+    % cd $HOME/git  # or wherever you like to place repositories
+    % git clone https://github.com/EddyRivasLab/easel
+    % cd easel
+    % autoconf
+    % ./configure
+    % make
+    % gcc -g -Wall -I. -L. -o esl_scorematrix -DeslSCOREMATRIX_EXAMPLE esl_scorematrix.c -leasel -lm
+
+
+    # add the easel directory to your path, e.g.
+    % export PATH=$HOME/git/easel:$PATH    
+    # you may wish to add this to your path permanently, e.g. 
+    #    https://opensource.com/article/17/6/set-path-linux
+
+    # alternatively, you can set the --easel-path argument to $HOME/git/easel
 ```
 
-Paths passed to the command will need to be relative to `/data`, which is
-mounted as the current working directory outside the container.
+#### ULTRA
 
-[ULTRA](https://github.com/TravisWheelerLab/ultra)
+PolyA can optionally include tandem repeat annotations from ULTRA as competitors in
+the adjudication process. Options are:
 
-  - will detect tandem repeat regions in a sequence FASTA file
+(i) If you have an ultra annotation output on hand for the sequence being annotated, reference
+the ultra output file with the --ultra-data flag, e.g. 
+```
+    % polyA --ultra-data ultra.file ALIGNMENTS MATRICES
+```
+
+(ii) If you wish to run [ULTRA](https://github.com/TravisWheelerLab/ultra) on the fly, you'll 
+need the software:
+```   
+    % cd $HOME/git  # or wherever you like to place repositories
+    % git clone https://github.com/TravisWheelerLab/ULTRA ultra
+    % cd ultra
+    % cmake .
+```
+then you'll reference ultra's binary in the PolyA command:
+```
+% polyA --ultra-path $HOME/git/ultra/ultra --sequences seq.fasta  ALIGNMENTS MATRICES
+```
 
 ## Development
 
