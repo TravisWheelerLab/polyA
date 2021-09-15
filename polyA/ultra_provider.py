@@ -1,9 +1,19 @@
 import json
 import os
 from logging import Logger
+import subprocess
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 
 from .performance import timeit
+
+
+class UltraProviderException(Exception):
+    return_code: int
+    stderr: str
+
+    def __init__(self, return_code: int, stderr: str):
+        self.return_code = return_code
+        self.stderr = stderr
 
 
 class TandemRepeat(NamedTuple):
@@ -81,10 +91,18 @@ class ApplicationUltraProvider:
     @timeit()
     def __call__(self) -> UltraOutput:
         if self._sequence_path:
-            ultra_stream = os.popen(
-                self._ultra_path + " -ss " + self._sequence_path
+            ultra_process = subprocess.run(
+                [self._ultra_path, "-ss", self._sequence_path],
+                capture_output=True,
+                text=True,
             )
-            raw_output = json.load(ultra_stream)
+
+            if ultra_process.returncode != 0:
+                raise UltraProviderException(
+                    ultra_process.returncode, ultra_process.stderr
+                )
+
+            raw_output = json.load(ultra_process.stdout)
         else:
             with open(self._ultra_output_path, "r") as output_file:
                 raw_output = json.load(output_file)

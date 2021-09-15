@@ -1,7 +1,9 @@
+from argparse import ArgumentError
 import os
 import re
+import subprocess
 from tempfile import NamedTemporaryFile
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 from .performance import timeit
 
@@ -11,6 +13,15 @@ A callback that accepts a substitution matrix name
 and returns the corresponding lambda value for that
 matrix.
 """
+
+
+class LambdaProviderException(Exception):
+    return_code: int
+    stderr: str
+
+    def __init__(self, return_code: int, stderr: str):
+        self.return_code = return_code
+        self.stderr = stderr
 
 
 class ConstantLambdaProvider:
@@ -56,10 +67,18 @@ class EaselLambdaProvider:
                 matrix_file.write(line + "\n")
 
         # Run Easel
-        esl_stream = os.popen(
-            self._path + "esl_scorematrix --dna " + temp_matrix_path
+        esl_process = subprocess.run(
+            [self._path, " --dna ", temp_matrix_path],
+            capture_output=True,
+            text=True,
         )
-        esl_output = esl_stream.read()
+
+        if esl_process.returncode != 0:
+            raise LambdaProviderException(
+                esl_process.returncode, esl_process.stderr
+            )
+
+        esl_output = esl_process.stdout
         esl_output_list = re.split(r"\n+", esl_output)
         lambda_list = re.split(r"\s+", esl_output_list[1])
 
