@@ -15,7 +15,7 @@ class Options:
     >>> o = Options()
     >>> o.log_file_path
     ''
-    >>> o = Options(["", "", "--log-file", "foo.txt"])
+    >>> o = Options(["NONE", "NONE", "--log-file", "foo.txt"])
     >>> o.log_file_path
     'foo.txt'
     """
@@ -211,7 +211,7 @@ class Options:
 
         namespace: Namespace
         if args is None:
-            namespace = parser.parse_args(args=["", ""])
+            namespace = parser.parse_args(args=["NONE", "NONE"])
         else:
             namespace = parser.parse_args(args=args)
 
