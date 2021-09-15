@@ -243,4 +243,6 @@ class Options:
 
         if not (self.cm_to_stockholm or self.rm_to_stockholm):
             if not (self.alignments_file_path and self.alignments_file_path):
-                parser.error("ALIGNMENTS and MATRICES and required unless using a converter")
+                parser.error(
+                    "ALIGNMENTS and MATRICES and required unless using a converter"
+                )

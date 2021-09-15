@@ -5,12 +5,11 @@ def read_file(filename_cm):
     """
     opens file and returns contents of file as one string
     """
-    file_contents = ''
-    with open(filename_cm, 'r') as f_cm:
+    file_contents = ""
+    with open(filename_cm, "r") as f_cm:
         file_contents = f_cm.read()
 
     return file_contents
-
 
 
 def get_info(info_array):
@@ -22,25 +21,25 @@ def get_info(info_array):
     chrom = info_array[4]
 
     # doesn't have chrom info because it's an artificial seq
-    if 'chr' not in chrom:
-        chrom = 'chr0:0000-0000'
+    if "chr" not in chrom:
+        chrom = "chr0:0000-0000"
 
     start = info_array[5]
     stop = info_array[6]
-    subfam = ''
-    consensus_start = ''
-    consensus_stop = ''
-    strand = ''
-    flank = ''
+    subfam = ""
+    consensus_start = ""
+    consensus_stop = ""
+    strand = ""
+    flank = ""
 
     # if 6 contains (), then start/stop = 7/8
     if "(" in info_array[6]:  # FIXME - shouldn't this be 5?
         start = info_array[6]
         stop = info_array[7]
 
-    #14 for cm .align files, might need to change
+    # 14 for cm .align files, might need to change
     if len(info_array) == 14:  # not compliment
-        strand = '+'
+        strand = "+"
         subfam = info_array[8]
         consensus_start = info_array[9]
         consensus_stop = info_array[10]
@@ -53,7 +52,7 @@ def get_info(info_array):
             stop = info_array[11]
 
     else:  # compliment
-        strand = '-'
+        strand = "-"
         subfam = info_array[9]
         consensus_start = info_array[10]
         consensus_stop = info_array[11]
@@ -67,7 +66,17 @@ def get_info(info_array):
     flank = flank.strip(")")
     flank = flank.strip("(")
 
-    return subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank
+    return (
+        subfam,
+        chrom,
+        score,
+        strand,
+        start,
+        stop,
+        consensus_start,
+        consensus_stop,
+        flank,
+    )
 
 
 def get_score_matrix(matrix_name):
@@ -75,7 +84,7 @@ def get_score_matrix(matrix_name):
     grabs score matrix info from original matrix file, puts it in correct format, returns string
     """
     matrix_file_contents = read_file("../fixtures/matrices/" + matrix_name)
-    matrix_file_contents = matrix_file_contents.split('\n')
+    matrix_file_contents = matrix_file_contents.split("\n")
     background_freqs_line = matrix_file_contents[0]
     # reformat background freqs
     background_freqs = background_freqs_line.split()[1:]
@@ -84,33 +93,46 @@ def get_score_matrix(matrix_name):
         char = background_freqs[i][0]
         freq = float(background_freqs[i + 1])
         background_freqs_dict[char] = freq
-    freqs_string = "BACKGROUND FREQS: "+ str(background_freqs_dict)
+    freqs_string = "BACKGROUND FREQS: " + str(background_freqs_dict)
     return "\n".join(([freqs_string] + matrix_file_contents[1:]))
 
 
-def print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto):
+def print_info(
+    C,
+    subfam,
+    chrom,
+    score,
+    strand,
+    start,
+    stop,
+    consensus_start,
+    consensus_stop,
+    flank,
+    matrix_name,
+    f_out_sto,
+):
     """
     prints all info in correct format for stockholm
     """
-    f_out_sto.write(f'#=GF ID  {subfam}\n')
-    f_out_sto.write(f'#=GF TR  {chrom}\n')
-    f_out_sto.write(f'#=GF SC  {score}\n')
-    f_out_sto.write(f'#=GF SD  {strand}\n')
+    f_out_sto.write(f"#=GF ID  {subfam}\n")
+    f_out_sto.write(f"#=GF TR  {chrom}\n")
+    f_out_sto.write(f"#=GF SC  {score}\n")
+    f_out_sto.write(f"#=GF SD  {strand}\n")
 
-    if strand == '-':
+    if strand == "-":
         if C:
-            f_out_sto.write(f'#=GF TQ  t\n')
+            f_out_sto.write(f"#=GF TQ  t\n")
         else:
-            f_out_sto.write(f'#=GF TQ  q\n')
+            f_out_sto.write(f"#=GF TQ  q\n")
     else:
-        f_out_sto.write(f'#=GF TQ  -1\n')
+        f_out_sto.write(f"#=GF TQ  -1\n")
 
-    f_out_sto.write(f'#=GF ST  {start}\n')
-    f_out_sto.write(f'#=GF SP  {stop}\n')
-    f_out_sto.write(f'#=GF CST {consensus_start}\n')
-    f_out_sto.write(f'#=GF CSP {consensus_stop}\n')
-    f_out_sto.write(f'#=GF FL  {flank}\n')
-    f_out_sto.write(f'#=GF MX  {matrix_name}\n')
+    f_out_sto.write(f"#=GF ST  {start}\n")
+    f_out_sto.write(f"#=GF SP  {stop}\n")
+    f_out_sto.write(f"#=GF CST {consensus_start}\n")
+    f_out_sto.write(f"#=GF CSP {consensus_stop}\n")
+    f_out_sto.write(f"#=GF FL  {flank}\n")
+    f_out_sto.write(f"#=GF MX  {matrix_name}\n")
 
 
 def get_alignment(alignment_array):
@@ -122,11 +144,11 @@ def get_alignment(alignment_array):
 
     # for (my $i = 0; $i < @ Alignment; $i = $i + 4){
     for i in range(0, len(alignment_array), 4):
-        m_chrom = re.search(r'.+?\s\d+\s(.+?)\s\d+', alignment_array[i])
+        m_chrom = re.search(r".+?\s\d+\s(.+?)\s\d+", alignment_array[i])
         if m_chrom:
             chrom_seq += m_chrom.group(1)
 
-        m_subfam = re.search(r'.+?\s\d+\s(.+?)\s\d+', alignment_array[i+2])
+        m_subfam = re.search(r".+?\s\d+\s(.+?)\s\d+", alignment_array[i + 2])
         if m_chrom:
             subfam_seq += m_subfam.group(1)
 
@@ -159,31 +181,36 @@ def convert(filename_rm: str):
     file_contents = read_file(filename_rm)
 
     filename_out_sto = filename_rm + ".sto"
-    f_out_sto = open(filename_out_sto, 'w')
+    f_out_sto = open(filename_out_sto, "w")
 
     filename_out_matrix = filename_rm + ".matrix"
-    f_out_matrix = open(filename_out_matrix, 'w')
+    f_out_matrix = open(filename_out_matrix, "w")
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
     f_out_sto.write(f"# ALIGNMENT TOOL RepeatMasker\n")
 
-    alignments = re.findall(r'\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions', file_contents)
+    alignments = re.findall(
+        r"\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions",
+        file_contents,
+    )
 
     for region in alignments:
-        info_line: str = ''
-        alignment: str = ''
-        matrix_name: str = ''
+        info_line: str = ""
+        alignment: str = ""
+        matrix_name: str = ""
         region = region.strip()
 
-        m_matrix = re.search(r'Matrix = (.+?)\n', region)
+        m_matrix = re.search(r"Matrix = (.+?)\n", region)
         matrix_name = m_matrix[1]
 
-        if matrix_name not in matrices:  # do not put duplicate of matrices in output file
+        if (
+            matrix_name not in matrices
+        ):  # do not put duplicate of matrices in output file
             matrices[matrix_name] = 0
             score_matrix = get_score_matrix(matrix_name)
             print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
 
-        m = re.match(r'(.+?)\n([\s\S]+)\n\nMatrix', region)
+        m = re.match(r"(.+?)\n([\s\S]+)\n\nMatrix", region)
         if m:
             info_line = m.group(1)
             alignment = m.group(2)
@@ -192,7 +219,17 @@ def convert(filename_rm: str):
 
         info_array = info_line.split()
 
-        subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank = get_info(info_array)
+        (
+            subfam,
+            chrom,
+            score,
+            strand,
+            start,
+            stop,
+            consensus_start,
+            consensus_stop,
+            flank,
+        ) = get_info(info_array)
 
         alignment_array = alignment.split("\n")
 
@@ -203,7 +240,20 @@ def convert(filename_rm: str):
 
         chrom_seq, subfam_seq = get_alignment(alignment_array)
 
-        print_info(C, subfam, chrom, score, strand, start, stop, consensus_start, consensus_stop, flank, matrix_name, f_out_sto)
+        print_info(
+            C,
+            subfam,
+            chrom,
+            score,
+            strand,
+            start,
+            stop,
+            consensus_start,
+            consensus_stop,
+            flank,
+            matrix_name,
+            f_out_sto,
+        )
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()

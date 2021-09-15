@@ -76,10 +76,12 @@ def run():
 
     if opts.cm_to_stockholm:
         from .converters.cm_to_stockholm import convert
+
         convert(opts.cm_to_stockholm)
 
     if opts.rm_to_stockholm:
         from .converters.rm_to_stockholm import convert
+
         convert(opts.rm_to_stockholm)
 
     if opts.cm_to_stockholm or opts.rm_to_stockholm:
