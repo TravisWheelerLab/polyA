@@ -1,0 +1,25 @@
+FROM ubuntu:20.04
+
+ARG easel_version=0.48
+
+RUN apt-get update
+RUN apt-get -y install \
+    autoconf \
+    build-essential \
+    wget
+
+RUN wget https://github.com/EddyRivasLab/easel/archive/easel-${easel_version}.tar.gz
+RUN tar xf easel-${easel_version}.tar.gz
+WORKDIR easel-easel-${easel_version}
+
+RUN autoconf
+RUN ./configure
+RUN make
+# Build the bit of Easel we need
+RUN gcc -g -Wall -I. -L. -o esl_scorematrix \
+    -DeslSCOREMATRIX_EXAMPLE \
+    esl_scorematrix.c -leasel -lm
+
+RUN cp esl_scorematrix /usr/local/bin/
+
+ENTRYPOINT ["/usr/local/bin/esl_scorematrix"]

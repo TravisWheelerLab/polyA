@@ -33,6 +33,7 @@ class Options:
     shard_gap: int
     sequence_file_path: str
     ultra_data_path: str
+    complexity_adjustment: bool
 
     # -------------------
     # Helper applications
@@ -45,11 +46,12 @@ class Options:
     # Output configuration
     # --------------------
 
-    heatmap: bool
+    ids: bool
     log_file_path: str
     log_level: Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
     output_path: str
+    output_to_file: bool
     sequence_position: bool
     soda: bool
 
@@ -106,13 +108,13 @@ class Options:
             "--sequences",
             metavar="SEQS",
             default="",
-            help="TODO(Audrey)",
+            help="fasta file for running ULTRA",
         )
         parser.add_argument(
             "--ultra-data",
             metavar="FILE",
             default="",
-            help="TODO(Audrey)",
+            help="file of the output from ULTRA",
         )
 
         parser.add_argument(
@@ -129,10 +131,10 @@ class Options:
         )
 
         parser.add_argument(
-            "--heatmap",
+            "--ids",
             action="store_true",
             default=False,
-            help="write a heatmap file to the output directory",
+            help="include internal (random) annotation IDs in output",
         )
         parser.add_argument(
             "--log-file",
@@ -159,6 +161,12 @@ class Options:
             help="directory to write output files to, defaults to working directory",
         )
         parser.add_argument(
+            "--output-to-file",
+            action="store_true",
+            default=False,
+            help="write output to a file in the output path",
+        )
+        parser.add_argument(
             "--sequence-position",
             action="store_true",
             default=False,
@@ -169,6 +177,12 @@ class Options:
             action="store_true",
             default=False,
             help="write a SODA visualization file to the output directory",
+        )
+        parser.add_argument(
+            "--complexity-adjustment",
+            action="store_true",
+            default=False,
+            help="use complexity adjusted scoring",
         )
 
         namespace: Namespace
@@ -186,14 +200,16 @@ class Options:
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
         self.ultra_data_path = namespace.ultra_data
+        self.complexity_adjustment = namespace.complexity_adjustment
 
         self.easel_path = namespace.easel_path
         self.ultra_path = namespace.ultra_path
 
-        self.heatmap = namespace.heatmap
+        self.ids = namespace.ids
         self.log_file_path = namespace.log_file
         self.log_level = namespace.log_level
         self.matrix_position = namespace.matrix_position
         self.output_path = namespace.output_path
+        self.output_to_file = namespace.output_to_file
         self.sequence_position = namespace.sequence_position
         self.soda = namespace.soda

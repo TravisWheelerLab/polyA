@@ -1,52 +1,42 @@
-from typing import Dict, List, Tuple
-from polyA.edges import edges
+from typing import List
 
 
 def pad_sequences(
     chunk_size: int,
-    start: List[int],
-    stop: List[int],
     subfam_seqs: List[str],
     chrom_seqs: List[str],
-) -> Tuple[int, int]:
+    padding_char: str = ".",
+) -> None:
     """
-    Pad out sequences with "." to allow regions where sequences do not all
-    have the same start and stop positions.
+    Right-pad sequences with `(chunk_size - 1) / 2` copies of ".".
 
-    pad with an extra (chunk_size-1)/2 at the end
+    The first sequence is ignored since that is the skip state.
 
-    input:
+    The `padding_char` parameter exists because the doctest doesn't "see" the
+    periods, so the test will pass no matter how many are added to each
+    sequence.
+
+    Inputs:
+
     chunk_size: size (in nucleotides) of each segment
-    start: start positions on the target sequence from the input alignment
-    stop: stop positions on the target sequence from the input alignment
-    subfam_seqs: actual subfamily/consensus sequences from alignment
-    chrom_seqs: actual target/chromosome sequences from alignment
+    subfam_seqs: actual subfamily / consensus sequences from alignment
+    chrom_seqs: actual target / chromosome sequences from alignment
+    padding_char: for testing, specifies the character to use for padding
 
-    output:
-    updates subfam_seqs and chrom_seqs with padded sequences
-    minimum and maximum start and stop positions on the chromosome/target sequences for whole alignment
+    Side effects:
 
-    >>> starts = [0, 1, 3]
-    >>> stops = [0, 1, 5]
+    Updates subfam_seqs and chrom_seqs with padded sequences
+
     >>> s_seq = ['', 'a', 'aaa']
     >>> c_seq = ['', 'a', 't-t']
-    >>> (b, e) = pad_sequences(31, starts, stops, s_seq, c_seq)
-    >>> b
-    1
-    >>> e
-    5
+    >>> pad_sequences(31, s_seq, c_seq, padding_char="-")
     >>> s_seq
-    ['', 'a.....................................', 'aaa.................................']
+    ['', 'a----------------', 'aaa----------------']
     >>> c_seq
-    ['', 'a.....................................', 't-t.................................']
+    ['', 'a----------------', 't-t----------------']
     """
-    edge_start: int
-    edge_stop: int
-
-    edge_start, edge_stop = edges(start, stop)
+    padding = padding_char * ((chunk_size + 1) // 2)
 
     for i in range(1, len(subfam_seqs)):
-        chrom_seqs[i] = f"{chrom_seqs[i]}" + ("." * chunk_size)
-        subfam_seqs[i] = f"{subfam_seqs[i]}" + ("." * chunk_size)
-
-    return edge_start, edge_stop
+        subfam_seqs[i] = subfam_seqs[i] + padding
+        chrom_seqs[i] = chrom_seqs[i] + padding

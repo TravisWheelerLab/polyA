@@ -3,87 +3,156 @@
 ![PyPI](https://img.shields.io/pypi/v/polyA)
 
 # AAAAAAAAAAAAAAAA (PolyA):
-#### a tool for adjudicating between competing annotations of biological sequences 
 
 > **A**utomatically **A**djudicate **A**ny **A**nd **A**ll **A**rbitrary
 > **A**nnotations, **A**stutely **A**djoin **A**butting **A**lignments,
-> **A**nd **A**lso **A**mputate **A**nything **A**miss.
+> **A**nd **A**lso **A**mputate **A**nything **A**miss
+
+A tool for adjudicating between competing annotations of biological sequences.
 
 ## About
 
-A common annotation process compares an unannotated sequence to a collection of known sequences.
-Sometimes, more than one of the queries shows a significant match to the target. Current 
-annotation processes choose the 'true' match based on highest alignment score. In databases
-with highly similar sequences, more than one query may match with high alignment scores, this
-method is no longer reliable because it is possible that either query is the true sequence, and 
-it falsely implies certainty in the true match. PolyA produces confidence estimates for 
-competing annotations to eliminate implying false certainty in the annotations. In addition, 
-polyA can identify instances of gene conversion and homologous recombination, and find the 
-exact genomic location of the switch between sequences. It can also clarify ambiguous boundaries
-between neighboring elements due to homologous over extension. It can also find sequence nesting,
-identifying the inserted sequence along with the original sequence that was inserted into.
+[Preprint on
+bioRxiv](https://www.biorxiv.org/content/10.1101/2021.02.13.430877v1)
 
+Annotation of a biological sequence is usually performed by aligning that
+sequence to a database of known sequence elements. When that database contains
+elements that are highly similar to each other, the proper annotation may
+be ambiguous, because several entries in the database produce high-scoring
+alignments. Typical annotation methods work by assigning a label based
+on the candidate annotation with the highest alignment score; this can
+overstate annotation certainty, mislabel boundaries, and fails to identify
+large scale rearrangements or insertions within the annotated sequence.
 
-## The Algorithm
-
-Using our confidence score analysis enables a jumping HMM approach. Allowing transitions between
-competing queries identifies switches between nucleotide elements. These switches are a result of 
-gene conversion, homologous recombination, neighboring elements or sequence nesting.
-
-Our algorithm has 3 parts: 
-
-1. Confidence calculations. This gives us the probablilites each competing query is the true 
-source of the target. 
-2. Position specific confidence creates a computationally efficient mechanism for 
-allowing for transitions between query annotations. This identifies gene conversion, homologous recombination,
-nested elements, and boundaries between adjacent elements.  
-3. Graph Algorithm finds nested sequences. 
-	
-For a more detailed description view the [poster](/publications/AlgorithmPoster.pdf)
-<!-- TODO: Kaitlin - add link to paper -->
+PolyA is a software tool that adjudicates between competing alignment-based
+annotations by computing estimates of annotation confidence, identifying a
+trace with maximal confidence, and recursively splicing/stitching inserted
+elements. PolyA communicates annotation certainty, identifies large scale
+rearrangements, and detects boundaries between neighboring elements.
 
 ## Using
 
-### Input File Format
+PolyA may be consumed as an ordinary Python package:
+
+Install using the `pip` tool:
+
+```
+pip install polyA
+```
+
+Run from the command line:
+
+```
+polyA -h
+```
+
+or
+
+```
+python -m polyA -h
+```
+
+### Command Line
+
+Command line usage is available with `polyA -h`. It is also included below for
+convenience.
+
+```
+usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
+             [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences SEQS]
+             [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
+             [--log-file LOG] [--log-level LEVEL] [--matrix-position]
+             [--output-path PATH] [--sequence-position] [--soda]
+             ALIGNMENTS MATRICES
+
+PolyA sequence adjudication tool
+
+positional arguments:
+  ALIGNMENTS              alignments file in Stockholm format
+  MATRICES                substitution matrices file in PolyA matrix format
+
+optional arguments:
+  -h, --help              show this help message and exit
+  -v, --version           show version and exit
+  --chunk-size CHUNK_SIZE
+                          size of the window in base pairs analyzed together
+  --confidence            run the confidence calculation and then exit
+  --prior-counts FILE     file containing query genomic counts
+  --shard-gap SHARD_GAP
+                          maximum alignment gap before sharding occurs
+  --sequences SEQS        FASTA file of the target sequence for using ULTRA
+  --ultra-data FILE       text file of the output from ULTRA ran on the FASTA file
+                          of the target sequence
+  --easel-path BIN        path to the esl_scorematrix program, if necessary
+                          (assumed to be in PATH)
+  --ultra-path BIN        path to the ULTRA binary to use, if necessary (assumed
+                          to be in PATH)
+  --log-file LOG          file to store log output in, defaults to stderr
+  --log-level LEVEL       logging level to use, 'debug' is the most noisy
+  --matrix-position       produce output in terms of the matrix position
+  --output-path PATH      directory to write output files to, defaults to
+                          working directory
+  --sequence-position     produce output in terms of the target sequence
+                          position
+  --soda                  write a SODA visualization file to the output
+                          directory
+  --complexity-adjustment complexity-adjust alignment scores (scores of matches
+                          between sequence regions of biassed nucleotide
+                          composition are adjusted downwards)
+```
+
+### Input Formats
+
+PolyA accepts two required inputs and several optional inputs that affect
+its behavior. The required inputs are an alignment file which must contain
+alignments for all possible queries matching the target sequence. This file
+must be in [Stockholm](https://sonnhammer.sbc.su.se/Stockholm.html) format
+with several custom metadata fields. The other required input is a set of
+substitution matrices. This file uses a custom, but extremely simple format.
 	
-#### Alignment Files
+#### Alignment File Format
 
-Alignments for all possible queries matching target sequence in single stockhold format file.
+Alignments for all possible queries matching the target sequence should be
+contained in a single file in Stockholm format.
 
-Special information fields required are:
+There are several special metadata fields that must exist for each alignment in
+this file. See the example below. An explanation is indented to the right of
+each field with additional detail as noted.
 
 ```
-#=GF ID  MERX#DNA/TcMar-Tigger              * query sequence name
-#=GF TR  chr1:11543-28567                   target sequence
-#=GF SC  1153                               alignment score
-#=GF SD  +                                  strand
-#=GF TQ  -1                                 ** see below
-#=GF ST  127                                alignment start position on target
-#=GF SP  601                                alignment stop position on target
-#=GF CST 135                                alignment start position on query
-#=GF CSP 628                                alignment stop position on query
-#=GF FL  128                                *** see below
-#=GF MX  matrix_name                        name of substritution matrix file used to create alignment
-
-* query sequence names must be in the format 'name#family/class'
-
-** TQ: 'q' if alignment is on reverse strand and the reversed sequence 
-is the query. 't' if alignment is on reverse strand and the reversed 
-sequence is the target. '-1' if alignment is on positive strand. 
-
-*** FL: flanking region of unaligned query sequence.
-Ex1: query sequence of length 100 aligns from 1-75, FL = 25. 
-Ex2: query sequence of length 100 aligns from 10-100, FL = 9. 
+#=GF ID  MERX#DNA/TcMar-Tigger    query sequence (1)
+#=GF TR  chr1:11543-28567         target sequence
+#=GF SC  1153                     alignment score
+#=GF SD  +                        strand
+#=GF TQ  -1                       (2)
+#=GF ST  127                      alignment start position on target
+#=GF SP  601                      alignment stop position on target
+#=GF CST 135                      alignment start position on query
+#=GF CSP 628                      alignment stop position on query
+#=GF FL  128                      (3)
+#=GF MX  matrix_name              (4)
+#=GF GI -25                       gap init
+#=GF GE -5                        gap extension
 ```
+
+  * (1) query sequence names must be in the format 'name#family/class'
+  * (2) valid values: 'q' if the alignment is on the reverse
+    strand and the reversed sequence is the query; 't' if the alignment
+    is on the reverse strand and the reversed sequence is the target;
+    '-1' if the alignment is on the positive strand
+  * (3) the flanking region of the unaligned query sequence
+  * (4) the name of the substitution matrix file used to create alignment
 
 #### Creating Alignment files from cross_match alignments
 
 We include a parser to convert cross_match alignment files to stockholm
-alignments. 
+alignments. This can be executed with the `cm_to_stockholm` script (installed
+with PolyA) or through the `polyA.converters` module (`python -m
+polyA.converters.cm_to_stockholm`).
 
 ```
-usage: python parser/cm_to_stockholm.py align_file.cm
-output (can be input directly into polyA): 
+usage: cm_to_stockholm align_file.cm
+outputs (can be input directly into polyA): 
     align_file.cm.sto
     align_file.cm.matrix
 ```
@@ -91,7 +160,7 @@ output (can be input directly into polyA):
 #### Substitution Matrix Files
 
 Substitution matrix file example format (can include ambiguity codes):
-* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with correspoding and matching matrix names
+* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with corresponding and matching matrix names
 * if lambda is not included polyA will use esl_scorematrix to calculate it for all matrices
 
 ```
@@ -114,28 +183,47 @@ matrix_name2 lambda2(optional)
 ...
 ```
 
-#### Sequence File
+#### Sequence File (Optional)
 
 A FASTA file of the target sequence is needed when using ULTRA.
 The target sequence must be the same genomic region that was used 
-to get the cross_match alignment file.
+to get the cross_match alignment file. This file must follow the
+format of  
+```
+>chrom:start-end
+target_sequence  
+```
+as shown in the example.
 
-### Output file format
+Sequence file example format:
+```
+>chr1:152302175-152325203
+AATAGTTTATTTTTAATTTAGATGCAGCTTACTATAATATTAATTATGTCCAAGATGATT
+TTTTGAATACAGAATACTAGAATTCCAATAGAAGGATAATAGAGAAAGATGTGCTAGCCC
+...
+```
+
+### Output Formats
 
 ```
-start   stop    IDnum*   query
-1       362     1111	L1PREC2_3end
-363     567	2345	AluJr
-568     833	3579	AluYb8
-834     964	1245	AluJr
-965     980	6047	L1MA4A_3end
-981     1497	1111	L1PREC2_3end
+start   stop    ID  name
+----------------------------------------
+11990879    11991268    eaa042dd09f944f68dba2fd4727c64e2    LTR40a#LTR/ERVL
+11991272    11991444    fb5ef5e0e2ca4e05837ddc34ca7ef9e4    MSTA1#LTR/ERVL-MaLR
+11991445    11991562    bdfc4039b7d947d0b25bf1115cc282ed    AluJr4#SINE/Alu
+11991563    11991573    4871d91441a146209b98f645feae68c8    FLAM_C#SINE/Alu
+11991574    11991818    fb5ef5e0e2ca4e05837ddc34ca7ef9e4    MSTB1#LTR/ERVL-MaLR
+11991819    11991875    eaa042dd09f944f68dba2fd4727c64e2    LTR40a#LTR/ERVL
 
 * Matching IDnums correspond to partial sequences that originate from 
 the same ancestral sequence.
 ```
 
 #### Confidence only output file format
+
+Computes confidence of a single input alignment region. Does not perform 
+annotation or adjudication, simply outputs the confidence of all competing 
+queries given in the input.
 
 ```
 query_label         confidence
@@ -146,15 +234,25 @@ LTR40c#LTR/ERVL     0.001
 ```
 
 ### Extensions
+
 #### Visualizing annotations using SODA
-<!-- TODO: Kaitlin - finish this once SODA is ready -->
-This section is a work in progress and will be released in the coming weeks. 
+
+The command line option --soda will output the annotation data to a json file 
+(output.0.viz) that can be used for visualization in SODA (linked below).
+The json file can be submitted on the browser to view the TE annotations from PolyA
+as well as the annotations from the UCSC Genome Browser for the same region of the
+human genome (hg38). The PolyA visualization can display the confidence values for all competing 
+annotations of a selected region as well as their corresponding sequence alignments.
+
+https://sodaviz.cs.umt.edu/polya-soda.html
 
 #### Prior Counts Files
 
-The command line option --priorCounts prior_counts.txt includes prior
-genome counts in confidence calculations (see paper for more details)
-<!-- TODO: Kaitlin - add link to paper -->
+Default confidence calculations assume a uniform distribution over all
+competing queries. In the case of non uniform priors, the command line option --prior-counts prior_counts.txt includes prior
+genome counts in confidence calculations (see paper for more details). 
+
+https://www.biorxiv.org/content/10.1101/2021.02.13.430877v1
 
 Prior counts file example format:
 ```
@@ -167,58 +265,83 @@ L1PA7_5end  13261
 
 #### Using ULTRA
 
-The command line options --seqFile seq.fasta with --ultraPath ultra_path 
-will include tandem repeats in the competing annotations of the sequence.
-The option --ultraOutput ultra_output.txt can also be used if ULTRA was 
-ran on seq.fasta prior.
+The optional use of ULTRA allows polyA to include tandem repeats (TRs) in the competing annotations
+of the target sequence. Doing so removes the dependency on pre-masking TRs prior to annotation, allows 
+TRs to outcompete potentially weak fragmentary family annotation, and allows a family annotation
+to outcompete a TR.
+The command line option --sequences seq.fasta (with --ultra-path if necessary) will
+run ULTRA with polyA or --ultra-data ultra_data.txt can be used if ULTRA was ran on seq.fasta prior.
 
 
-### Additional software
+### External software dependencies
 
-esl_scorematrix is a part of the esl package in the [hmmer software suite](https://github.com/EddyRivasLab/hmmer/)
+#### Easel 
+PolyA internally adjusts alignment scores to account for the scale multiplier
+implicit to each score matrix (the so-called `lambda` value).
+Unless the lambda value is given in the matrix file, PolyA must compute it; this
+is done using the `esl_scorematrix` utility found in the 
+[Easel](https://github.com/EddyRivasLab/easel/) software package. 
 
-  - will compute lambda for the input score matrix
-  - not needed if including lambda as a command line argument
-
-[ULTRA](https://github.com/TravisWheelerLab/ultra)
-
-  - will detect tandem repeat regions in a sequence FASTA file
-
-
-### Using at the command line
-
+To prepare that tool, follow these steps:
 ```
-usage: python -m polyA alignFile subMatrixFile
-    ARGUMENTS
-        --GapInit[-25]
-        --getExt[-5]
-        --lambda [will calculate from substitution matrix if not included]
-        --segmentsize (must be odd) [31]
-        --eslPath esl_path
-        --confidence - output confidence for a single annoation without running the whole algorithm
-        --priorCounts prior_counts.txt
-        --ultraPath ultra_path
-        --seqFile genomic_region.fasta
-        --ultraOutput ultra_output.txt
-        --viz outfile - prints output format for SODA visualization
-        --heatmap outfile - prints probability file for input into heatmap
-    
-    OPTIONS
-        --help - display help message
-        --matrixpos - prints output in terms of matrix position
-        --sequencepos - prints output in terms of target sequence position
+    # get source code
+    % cd $HOME/git  # or wherever you like to place repositories
+    % git clone https://github.com/EddyRivasLab/easel
+    % cd easel
+    % autoconf
+    % ./configure
+    % make
+    % gcc -g -Wall -I. -L. -o esl_scorematrix -DeslSCOREMATRIX_EXAMPLE esl_scorematrix.c -leasel -lm
+
+
+    # add the easel directory to your path, e.g.
+    % export PATH=$HOME/git/easel:$PATH    
+    # you may wish to add this to your path permanently, e.g. 
+    #    https://opensource.com/article/17/6/set-path-linux
+
+    # alternatively, you can set the --easel-path argument to $HOME/git/easel
+```
+
+#### ULTRA
+
+PolyA can optionally include tandem repeat annotations from ULTRA as competitors in
+the adjudication process. Options are:
+
+(i) If you have an ultra annotation output on hand for the sequence being annotated, reference
+the ultra output file with the --ultra-data flag, e.g. 
+```
+    % polyA --ultra-data ultra.file ALIGNMENTS MATRICES
+```
+
+(ii) If you wish to run [ULTRA](https://github.com/TravisWheelerLab/ultra) on the fly, you'll 
+need the software:
+```   
+    % cd $HOME/git  # or wherever you like to place repositories
+    % git clone https://github.com/TravisWheelerLab/ULTRA ultra
+    % cd ultra
+    % cmake .
+    % make
+```
+then you'll reference the ultra binary in the PolyA command:
+```
+% polyA --ultra-path $HOME/git/ultra/ultra --sequences seq.fasta  ALIGNMENTS MATRICES
 ```
 
 ## Development
 
 This project uses [Pipenv](https://pipenv.pypa.io/en/latest/), which can be
 installed through Homebrew for Mac users. It must be installed before the
-Makefile targets or the other commands listed in this document will work.
+Makefile targets, or the other commands listed in this document will work.
 
 In order to run a command which relies on the project virtual environment, such
 as `python foo.py`, it is necessary to either run `pipenv shell` first, which
 will put you into a shell that has the correct Python in its `PATH`, or prefix
 the command with `pipenv run` (e.g. `pipenv run python foo.py`).
+
+To build a PyPI package, use `make build-package`. To publish, use
+`make publish-package`. We use [Flit](https://flit.readthedocs.io/en/latest/) to
+handle building and publishing a package, so it is also possible to invoke Flit
+directly to do anything else it is capable of.
 
 ### Makefile
 
@@ -278,6 +401,12 @@ make check-fast check-slow
 # or
 make check
 ```
+
+### Documentation
+
+We use Sphinx for project documentation. Run `make docs` to update the
+documentation sources and build the HTML. Use `make docs-serve` to serve the
+documentation locally.
 
 ## License
 

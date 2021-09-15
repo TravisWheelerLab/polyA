@@ -1,8 +1,10 @@
 import re
 from typing import Iterable, List, NamedTuple, Optional, TextIO, Tuple
 
+from .exceptions import FileFormatException
 from .alignment import Alignment, get_skip_state
 from .constants import INFINITE_SHARD_GAP
+from .performance import timeit
 
 
 def _parse_meta_line(line: str) -> Optional[Tuple[str, str]]:
@@ -82,6 +84,7 @@ def _parse_chrom_meta(line: str) -> Optional[Tuple[str, int, int]]:
     return chrom_name, chrom_start, chrom_stop
 
 
+@timeit()
 def load_alignments(
     file: TextIO, add_skip_state: bool = False
 ) -> Iterable[Alignment]:
@@ -110,9 +113,8 @@ def load_alignments(
 
     meta = {}
     seqs = []
-    chrom_name: str = ""
-    chrom_start: int = 0
-    chrom_stop: int = 0
+
+    current_line_number = 1
 
     for line in file:
         if _parse_preamble_line(line):
@@ -129,59 +131,105 @@ def load_alignments(
             continue
 
         if _parse_terminator_line(line):
-            # TODO: Validation and good error messages go here
-            # Verify that...
-            #   we have two sequences
-            #   all required metadata was present
-
-            chrom_meta = _parse_chrom_meta(meta["TR"])
-            if chrom_meta is not None:
-                chrom_name, chrom_start, chrom_stop = chrom_meta
-            else:
-                raise ValueError("metadata incomplete, missing TR")
-
-            if meta["TQ"] == "t":
-                yield Alignment(
-                    subfamily=meta["ID"],
-                    chrom_name=chrom_name,
-                    chrom_start=chrom_start,
-                    chrom_stop=chrom_stop,
-                    score=int(meta["SC"]),
-                    start=int(meta["ST"]),
-                    stop=int(meta["SP"]),
-                    consensus_start=int(meta["CST"]),
-                    consensus_stop=int(meta["CSP"]),
-                    sequences=[seqs[0][::-1], seqs[1][::-1]],
-                    strand=meta["SD"],
-                    flank=int(meta["FL"]),
-                    sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+            if len(seqs) != 2:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    "wrong number of sequences",
                 )
-            else:
-                yield Alignment(
-                    subfamily=meta["ID"],
-                    chrom_name=chrom_name,
-                    chrom_start=chrom_start,
-                    chrom_stop=chrom_stop,
-                    score=int(meta["SC"]),
-                    start=int(meta["ST"]),
-                    stop=int(meta["SP"]),
-                    consensus_start=int(meta["CST"]),
-                    consensus_stop=int(meta["CSP"]),
-                    sequences=[seqs[0], seqs[1]],
-                    strand=meta["SD"],
-                    flank=int(meta["FL"]),
-                    sub_matrix_name=meta["MX"],
-                    gap_init=int(meta["GI"]),
-                    gap_ext=int(meta["GE"]),
+
+            try:
+                chrom_meta = _parse_chrom_meta(meta["TR"])
+                if chrom_meta is None:
+                    raise FileFormatException(
+                        file.name,
+                        current_line_number,
+                        "missing TR field",
+                    )
+
+                chrom_name, chrom_start, chrom_stop = chrom_meta
+
+                if meta["TQ"] == "t":
+                    yield Alignment(
+                        subfamily=meta["ID"],
+                        chrom_name=chrom_name,
+                        chrom_start=chrom_start,
+                        chrom_stop=chrom_stop,
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0][::-1], seqs[1][::-1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                        sub_matrix_name=meta["MX"],
+                        gap_init=float(meta["GI"]),
+                        gap_ext=float(meta["GE"]),
+                    )
+                else:
+                    yield Alignment(
+                        subfamily=meta["ID"],
+                        chrom_name=chrom_name,
+                        chrom_start=chrom_start,
+                        chrom_stop=chrom_stop,
+                        score=int(meta["SC"]),
+                        start=int(meta["ST"]),
+                        stop=int(meta["SP"]),
+                        consensus_start=int(meta["CST"]),
+                        consensus_stop=int(meta["CSP"]),
+                        sequences=[seqs[0], seqs[1]],
+                        strand=meta["SD"],
+                        flank=int(meta["FL"]),
+                        sub_matrix_name=meta["MX"],
+                        gap_init=float(meta["GI"]),
+                        gap_ext=float(meta["GE"]),
+                    )
+            except IndexError as e:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    "invalid TR field",
+                )
+            except KeyError as e:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    f"missing key: {e.args[0]}",
+                )
+            except ValueError as e:
+                raise FileFormatException(
+                    file.name,
+                    current_line_number,
+                    e.args[0],
                 )
 
             meta.clear()
             seqs.clear()
-            chrom_name = ""
-            chrom_start = 0
-            chrom_stop = 0
+
+        current_line_number += 1
+
+
+def load_alignment_tool(file: TextIO) -> str:
+    """
+    Return alignment tool used.
+    """
+
+    while True:
+        try:
+            # skip header line
+            header_line = next(file)
+        except StopIteration:
+            return "no alignment tool"
+
+        try:
+            line = next(file)
+            if line.strip().upper().startswith("# ALIGNMENT TOOL"):
+                # get alignment tool
+                return line.split()[-1]
+            return "no alignment tool"
+        except StopIteration:
+            return "no alignment tool"
 
 
 class Shard(NamedTuple):

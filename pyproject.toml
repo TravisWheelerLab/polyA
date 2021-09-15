@@ -2,6 +2,10 @@
 requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
+[tool.flit.scripts]
+polyA = "polyA.__main__:main"
+cm_to_stockholm = "polyA.converters:cm_to_stockholm"
+
 [tool.flit.metadata]
 module = "polyA"
 author = "Kaitlin Carey"
@@ -20,6 +24,8 @@ description-file = "README.md"
 exclude = [
     "test_inputs/",
     "fixtures/",
+    "conda-dist",
+    "publications",
     "Dockerfile*",
     "Makefile",
     ".gitignore",

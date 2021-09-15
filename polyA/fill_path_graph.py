@@ -1,6 +1,9 @@
 from typing import Dict, List, Tuple
 
+from polyA.performance import timeit
 
+
+@timeit()
 def fill_path_graph(
     nodes: int,
     columns: List[int],
@@ -71,12 +74,16 @@ def fill_path_graph(
             for source_node_index in range(sink_node_index - 1):
                 source_subfam: str = changes[source_node_index]
                 if source_subfam != "Tandem Repeat":
-                    sourceConf: float = node_confidence[
-                        sink_subfam, source_node_index
-                    ]  # sink subfam confidence in source node
-                    sinkConf: float = node_confidence[
-                        source_subfam, sink_node_index
-                    ]  # source subfam confidence in sink node
+                    source_conf: float = 0.0
+                    sink_conf: float = 0.0
+                    if (sink_subfam, source_node_index) in node_confidence:
+                        source_conf = node_confidence[
+                            sink_subfam, source_node_index
+                        ]  # sink subfam confidence in source node
+                    if (source_subfam, sink_node_index) in node_confidence:
+                        sink_conf = node_confidence[
+                            source_subfam, sink_node_index
+                        ]  # source subfam confidence in sink node
                     source_subfam_index = subfams_collapse_index[source_subfam]
                     source_col: int = columns[
                         changes_position[source_node_index + 1] - 1
@@ -97,7 +104,7 @@ def fill_path_graph(
                         # adds in edge if the subfam of the sink is at the source node and if it's
                         # confidence >= 20%, and if the source is before the sink in the consensus sequence
 
-                        if sourceConf >= 0.01 or sinkConf >= 0.01:
+                        if source_conf >= 0.01 or sink_conf >= 0.01:
                             if (
                                 sink_strand == "+"
                                 and sink_strand == source_strand

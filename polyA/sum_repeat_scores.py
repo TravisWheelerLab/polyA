@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-def SumRepeatScores(
+def sub_repeat_scores(
     start: int, end: int, repeat_scores: Dict[int, float]
 ) -> float:
     """

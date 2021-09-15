@@ -1,9 +1,13 @@
 import json
 import os
+from logging import Logger
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple
+
+from .performance import timeit
 
 
 class TandemRepeat(NamedTuple):
+    consensus: str
     start: int
     length: int
     stop: int
@@ -12,12 +16,29 @@ class TandemRepeat(NamedTuple):
     @staticmethod
     def from_json(json_map: Dict[str, Any]):
         raw_scores = json_map["PositionScoreDelta"].split(":")
-        position_scores = tuple([float(s) for s in raw_scores])
+        position_scores = []
+        for score in raw_scores:
+            if abs(float(score)) > 100:
+                position_scores.append(0.0)
+                Logger(__name__).warning(
+                    """
+                    Unreasonably-large score detected from ULTRA, 
+                    in sequence region {}..{}, score={}
+                    """.format(
+                        int(json_map["Start"]),
+                        int(json_map["Start"]) + int(json_map["Length"]) - 1,
+                        score,
+                    )
+                )
+            else:
+                position_scores.append(float(score))
+
         return TandemRepeat(
+            consensus=json_map["Consensus"],
             start=int(json_map["Start"]),
             length=int(json_map["Length"]),
             stop=int(json_map["Start"]) + int(json_map["Length"]) - 1,
-            position_scores=position_scores,
+            position_scores=tuple(position_scores),
         )
 
 
@@ -57,6 +78,7 @@ class ApplicationUltraProvider:
         self._ultra_output_path = ultra_output_path
         self._ultra_path = ultra_path
 
+    @timeit()
     def __call__(self) -> UltraOutput:
         if self._sequence_path:
             ultra_stream = os.popen(

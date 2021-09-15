@@ -1,5 +1,5 @@
 import logging
-from sys import argv, stderr, stdout
+from sys import argv, stderr
 from typing import List
 
 from ._options import Options
@@ -7,9 +7,11 @@ from ._runners import run_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import (
     load_alignments,
+    load_alignment_tool,
     shard_overlapping_alignments,
 )
 from .output import Output
+from .printers import Printer
 from .prior_counts import read_prior_counts
 from .substitution_matrix import load_substitution_matrices
 from .ultra_provider import ApplicationUltraProvider, TandemRepeat
@@ -72,9 +74,8 @@ def run():
     # Tandem Repeat initialization
     # ----------------------------
 
-    tandem_repeats = _configure_tandem_repeats(
-        opts
-    )  # either has stuff or doesn't
+    # This will come back as an empty list if we don't need to worry about TRs.
+    tandem_repeats = _configure_tandem_repeats(opts)
 
     # -----------------
     # Sub-family counts
@@ -94,22 +95,34 @@ def run():
     # Load the substitution matrix
     # ----------------------------
 
+    with open(opts.alignments_file_path) as _align_tool_infile:
+        alignment_tool: str = load_alignment_tool(_align_tool_infile)
+
+    # Note: alignments from blast or HMMER are not set-up to use complexity
+    # adjusted scoring
+    if opts.complexity_adjustment and alignment_tool not in [
+        "cross_match",
+        "RepeatMasker",
+    ]:
+        raise AppError(
+            f"cannot use complexity adjusted scoring with {alignment_tool}"
+        )
+
     _lambda_provider = EaselLambdaProvider(opts.easel_path)
     with open(opts.sub_matrices_path) as _sub_matrices_file:
         sub_matrices = load_substitution_matrices(
-            _sub_matrices_file, _lambda_provider
+            _sub_matrices_file, _lambda_provider, opts.complexity_adjustment
         )
 
     # -------------------------------------------------
     # Flags and parameters related to secondary outputs
     # -------------------------------------------------
 
-    outputter = Output(opts.output_path)
+    outputter = Output(opts.output_path, opts.output_to_file)
 
     # -----------------------------
     # Load alignments to operate on
     # -----------------------------
-
     with open(opts.alignments_file_path) as _infile:
         alignments = list(load_alignments(_infile))
 
@@ -126,24 +139,34 @@ def run():
         )
         exit()
 
+    # ---------------------
+    # Set up general output
+    # ---------------------
+
+    results_file = outputter.get_results()
+    printer = Printer(
+        output_file=results_file,
+        print_id=opts.ids,
+        use_matrix_position=opts.matrix_position,
+        use_sequence_position=opts.sequence_position,
+    )
+    printer.print_results_header()
+
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
 
     # FIXME: if shard gap is infinite, use all TRs (skip breaking them up)
-    stdout.write("start\tstop\tID\tname\n")
-    stdout.write("----------------------------------------\n")
     tr_start: int = 0
-    tr_end: int = 0
     _prev_start: int = -1
     _prev_stop: int = -1
+
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
         chunk_start = chunk.start
         chunk_stop = chunk.stop
         # get TRs between chunk stop and start
-        tandem_repeats_chunk: List[TandemRepeat] = []
         tr_end = tr_start
         while tr_end < len(tandem_repeats):
             tr = tandem_repeats[tr_end]
@@ -159,23 +182,19 @@ def run():
         soda_viz_file, soda_conf_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
-        heatmap_file = outputter.get_heatmap(index) if opts.heatmap else None
+        printer.set_soda_files(soda_viz_file, soda_conf_file)
 
         (_last_start, _last_stop) = run_full(
             chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
-            soda_viz_file,
-            soda_conf_file,
-            heatmap_file,
-            opts.matrix_position,
-            opts.sequence_position,
             sub_matrices,
             subfam_counts,
             chunk_start,
             chunk_stop,
             _prev_start,
             _prev_stop,
+            printer,
         )
         _prev_start, _prev_stop = (
             _last_start,
@@ -186,5 +205,3 @@ def run():
             soda_viz_file.close()
         if soda_conf_file is not None:
             soda_conf_file.close()
-        if heatmap_file is not None:
-            heatmap_file.close()

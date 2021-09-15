@@ -29,8 +29,8 @@ class Alignment(NamedTuple):
     strand: str
     flank: int
     sub_matrix_name: str
-    gap_init: int
-    gap_ext: int
+    gap_init: float
+    gap_ext: float
 
     @property
     def chrom_length(self) -> int:

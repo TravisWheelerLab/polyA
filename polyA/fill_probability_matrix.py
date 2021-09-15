@@ -2,8 +2,10 @@ from math import inf, log
 from typing import Dict, List, Tuple
 
 from polyA.matrices import CollapsedMatrices
+from polyA.performance import timeit
 
 
+@timeit()
 def fill_probability_matrix(
     same_prob_skip: float,
     same_prob: float,
@@ -13,36 +15,42 @@ def fill_probability_matrix(
     collapsed_matrices: CollapsedMatrices,
 ) -> Tuple[List[float], Dict[Tuple[int, int], int], Dict[Tuple[int, int], int]]:
     """
-    Calculates the probability score matrix to find most probable path through the support
-    matrix. Fills the origin matrix for easier backtrace.
+    Calculates the probability score matrix to find most probable path through
+    the support matrix. Fills the origin matrix for easier backtrace.
 
-    The basic algorithm is described below. All calculations happen in log space.
-    look at all i's in j-1
-        mult by confidence in current cell
-        if comes from same i, mult by higher prob
-        else - mult by lower prob /(numseqs-1) -> so sum of all probs == 1
-     return max
+    The basic algorithm is described below.
 
-     NOTE:
-        all probabilities are in log space
+    1. Look at all i's in j-1
+    2. Multiply by confidence in current cell
+    3. If it comes from same i, multiply by the higher probability
+    4. Else multiply by the lower probability divided by (numseqs-1) so sum of
+       all probs == 1
+    5. Return max
 
-    input:
-    same_prob_skip: penalty given to staying in the skip state
-    same_prob: penalty given to staying in the same row
-    change_prob: penalty given for channging rows
-    change_prob_skip: penalty given for changinr rows in or out of skip state
-    columns: list that holds all non empty columns in matrices
-    CollapsedMatrices container
+    .. note::
+        All probabilities are in log space.
 
-    output:
-    col_list: last column of prob matrix, needed to find max to know where to start the backtrace.
-    origin_matrix: Hash implementation of sparse 2D DP matrix. This is a collapsed matrix. Holds which cell in
-    previous column the probability in the DP matrix came from. Used when doing backtrace through the DP matrix.
-    same_subfam_chamge_matrix: parallel to origin_matrix, if 1 - came from same subfam, but
-    got a change probability. When doing backtrace, have to note this is same subfam name, but
-    different annotation.
+    Args:
+        same_prob_skip: penalty given to staying in the skip state
+        same_prob: penalty given to staying in the same row
+        change_prob: penalty given for changing rows
+        change_prob_skip: penalty given for changing rows in or out of skip state
+        columns: list that holds all non empty columns in matrices
+            CollapsedMatrices container
 
-    TODO: larger test needed for this function
+    Returns:
+        Tuple:
+          1. :code:`col_list`: last column of prob matrix, needed to find max to know where
+             to start the backtrace.
+          2. :code:`origin_matrix`: Hash implementation of sparse 2D DP matrix. This is a
+             collapsed matrix. Holds which cell in previous column the probability in
+             the DP matrix came from. Used when doing backtrace through the DP
+             matrix.
+          3. :code:`same_subfam_change_matrix`: parallel to origin_matrix, if 1 - came from
+             same subfam, but got a change probability. When doing backtrace, have to
+             note this is same subfam name, but different annotation.
+
+    .. todo:: Add a larger test for this function
     """
     active_cells_collapse = collapsed_matrices.active_rows
     support_matrix_collapse = collapsed_matrices.support_matrix
@@ -56,7 +64,7 @@ def fill_probability_matrix(
 
     prev_col_list: List[float] = []
     # first col of prob_matrix is 0s
-    for k in active_cells_collapse[columns[0]]:
+    for _ in active_cells_collapse[columns[0]]:
         prev_col_list.append(0.0)
 
     consensus_curr: int
@@ -70,7 +78,7 @@ def fill_probability_matrix(
         col_list.clear()
 
         for row_index in active_cells_collapse[curr_column]:
-            max: float = -inf
+            max_value: float = -inf
             max_index: int = 0
             support_log: float = log(
                 support_matrix_collapse[row_index, curr_column]
@@ -130,11 +138,11 @@ def fill_probability_matrix(
 
                 score = score + prob
 
-                if score > max:
-                    max = score
+                if score > max_value:
+                    max_value = score
                     max_index = prev_row_index
 
-            col_list.append(max)
+            col_list.append(max_value)
             origin_matrix[row_index, curr_column] = max_index
 
             if same_subfam_change == 1 and max_index == row_index:

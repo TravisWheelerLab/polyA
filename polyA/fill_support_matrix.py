@@ -1,174 +1,174 @@
 from typing import Dict, List, Tuple
 
-from polyA.matrices import ConfidenceMatrix, SupportMatrix, ConsensusMatrix
+from .matrices import ConfidenceMatrix, SupportMatrix
+from .performance import timeit
 
 
+@timeit()
 def fill_support_matrix(
-    row_num: int,
     chunk_size: int,
-    start_all: int,
-    columns: List[int],
     starts: List[int],
     stops: List[int],
-    subfams: List[str],
     confidence_matrix: ConfidenceMatrix,
-    consensus_matrix: ConsensusMatrix,
 ) -> SupportMatrix:
     """
-    Fills support_matrix using values in confidence_matrix. Average confidence values
-    for surrounding chunk_size confidence values - normalized by dividing by number of
+    Fill the support_matrix using values in `confidence_matrix`. Average
+    confidence values for surrounding `chunk_size` confidence values -
+    normalized by dividing by number of segments.
+
+    The score for subfam x at position i is the sum of all confidences for
+    subfam x for all segments that overlap position i - divided by the number of
     segments.
 
-    score for subfam x at position i is sum of all confidences for subfam x for all segments that
-    overlap position i - divided by number of segments
+    Inputs:
 
-    input:
-    row_num: number of rows in matrices
-    chunk_size: number of nucleotides that make up a chunk
-    start_all: min start position on chromosome/target sequences for whole alignment
-    columns: list of non empty columns in matrices
-    starts: chrom/target start positions of all alignments
-    stops: chrom/target stop positions of all alignments
-    subfams: list of subfam names from input alignmensts
-    confidence_matrix: Hash implementation of sparse 2D matrix that holds confidence values
-    consensus_matrix: Hash implementation of sparse 2D matrix that holds position of consensus
-    position in alignments
+    chunk_size - the width of the window to use when averaging confidence
+    scores. This is assumed to be an odd number >= 3.
 
-    output:
-    support_matrix: Hash implementation of sparse 2D matrix used in pre-DP calculations. Key is
-    tuple[row, col] to value in that matrix of cell. Rows are subfamilies in the input
-    alignment file, cols are nucleotide positions in the alignment. Each cell in matrix is
-    the support score (or average confidence value) for the surrounding chunk_size cells in
-    the confidence matrix.
+    starts - a list of start columns for each row in the confidence matrix.
+    These positions come should come directly from the alignments without any
+    offsetting. The exception is the first value, which should contain the
+    minimum of the remaining values, less one, in other words, `starts[0] ==
+    min(starts[1:]) - 1`. This is the implicit start position for the skip
+    state, which occupies the first row and is the only row that has data in the
+    first column of the confidence matrix.
 
-    >>> non_cols = [0,1,2]
-    >>> strts = [0, 0]
-    >>> stps = [0, 1]
-    >>> subs = ['subfam1', 'subfam2']
-    >>> conf_mat = {(0, 0): 0.9, (0, 1): 0.5, (0, 2): .5, (1, 0): 0.1, (1, 1): .3, (1, 2): .1}
-    >>> cons_mat = {(0, 0): 1, (0, 1): 1, (0, 2): 1, (1, 0): 1, (1, 1): 1, (1, 2): 1}
-    >>> fill_support_matrix(2, 3, 0, non_cols, strts, stps, subs, conf_mat, cons_mat)
-    {(0, 0): 0.7, (0, 1): 0.6333333333333333, (0, 2): 0.5, (1, 0): 0.1, (1, 1): 0.3, (1, 2): 0.1}
+    stops - equivalent to the starts list, but contains the last column in each
+    row that contains data. Again, the first value is special and should contain
+    the maximum of the remaining values. In other words, `stops[0] ==
+    max(stops[1:]) + 1`.
+
+    confidence_matrix - confidence values computed with fill_confidence_matrix.
+    The confidence matrix should have one contiguous run of values per row.
+
+    Outputs:
+
+    support_matrix - support values represent average confidence values over a
+    window chunk_size wide at each position in the confidence matrix. This is
+    the "support score".
+
+    >>> conf_mat = {
+    ...     (0, 0): 1.0, (0, 1): 0.1, (0, 2): 0.2, (0, 3): 0.4, (0, 4): 0.5, (0, 5): 1.0,
+    ...     (1, 1): 0.9, (1, 2): 0.5, (1, 3): 0.5, (1, 4): 0.5,
+    ...     (2, 2): 0.3, (2, 3): 0.1,
+    ... }
+    >>> supp_mat = fill_support_matrix(
+    ...     chunk_size=3,
+    ...     starts=[0, 1, 2],
+    ...     stops=[5, 4, 3],
+    ...     confidence_matrix=conf_mat)
+    >>> len(supp_mat) == len(conf_mat)
+    True
+    >>> round(supp_mat[1, 1], 4)
+    0.7
+    >>> round(supp_mat[1, 2], 4)
+    0.6333
+    >>> round(supp_mat[1, 3], 4)
+    0.5
+    >>> round(supp_mat[1, 4], 4)
+    0.5
+    >>> (1, 0) in supp_mat
+    False
+    >>> round(supp_mat[2, 2], 4)
+    0.2
+    >>> round(supp_mat[2, 3], 4)
+    0.2
+    >>> (2, 4) in supp_mat
+    False
+    >>>
+    >>> conf_mat = {
+    ...     (0, 0): 1.0, (0, 1): 0.1, (0, 2): 0.05, (0, 3): 0.01, (0, 4): 0.01, (0, 5): 0.01, (0, 6): 0.9, (0, 7): 1.0,
+    ...     (1, 1): 0.9, (1, 2): 0.75, (1, 3): 0.5, (1, 4): 0.39, (1, 5): 0.1, (1, 6): 0.1,
+    ...     (2, 2): 0.2, (2, 3): 0.49, (2, 4): 0.6, (2, 5): 0.89,
+    ... }
+    >>> supp_mat = fill_support_matrix(
+    ...     chunk_size=3,
+    ...     starts=[9, 10, 11],
+    ...     stops=[16, 15, 14],
+    ...     confidence_matrix=conf_mat)
+    >>> len(supp_mat) == len(conf_mat)
+    True
+    >>> supp_mat[1, 1]
+    0.825
+    >>> round(supp_mat[1, 2], 4)
+    0.7167
+    >>> round(supp_mat[1, 3], 4)
+    0.5467
+    >>> round(supp_mat[1, 4], 4)
+    0.33
+    >>> round(supp_mat[1, 5], 4)
+    0.1967
+    >>> round(supp_mat[1, 6], 4)
+    0.1
+    >>> (2, 1) in supp_mat
+    False
+    >>> round(supp_mat[2, 2], 4)
+    0.345
+    >>> round(supp_mat[2, 3], 4)
+    0.43
+    >>> round(supp_mat[2, 4], 4)
+    0.66
+    >>> round(supp_mat[2, 5], 4)
+    0.745
+    >>> (2, 6) in supp_mat
+    False
     """
 
     support_matrix: Dict[Tuple[int, int], float] = {}
 
     half_chunk: int = int((chunk_size - 1) / 2)
+    row_count = len(starts)
 
-    # skip state
-    for col in range(len(columns)):
-        col_index: int = columns[col]
+    # This is the amount by which we need to slide all the start and stop values
+    # over to the left to match the column values in the confidence matrix for each
+    # subfamily alignment.
+    # See the documentation for `start` on the `Alignment` class.
+    # FIXME: In some cases this may not be set correctly - how so??
+    # This is a problem, the tests don't cover this and they only pass because
+    # the value is zero in both cases.
+    position_offset = starts[0]  # start of skip state
 
-        summ: float = 0
-        num_segments: int = 0
+    # Note: start and stop values are closed ranges, so when a stop value is
+    # used in a range() call, the stop value passed to range needs to be
+    # incremented by 1. For example, range(start, stop + 1). This convention is
+    # consistent through the algorithm below.
 
-        for sum_index in range(
-            col_index - half_chunk, col_index + half_chunk + 1
-        ):
-            if (0, sum_index) in consensus_matrix:
-                num_segments += 1
-                summ += confidence_matrix[0, sum_index]
+    for row_index in range(0, row_count):
+        start: int = starts[row_index] - position_offset
+        stop: int = stops[row_index] - position_offset
 
-        support_matrix[0, col_index] = summ / num_segments
+        prev_chunk_start = start
+        prev_chunk_stop = stop
 
-    # rest of rows
-    for row_index in range(1, row_num):
+        sum_of_scores = 0.0
 
-        start: int = starts[row_index] - start_all + 1
-        stop: int = stops[row_index] - start_all + 1
+        for col_index in range(start, stop + 1):
+            chunk_start = max(col_index - half_chunk, start)
+            chunk_stop = min(col_index + half_chunk, stop)
 
-        # if the alignment is small, do it the easy way to avoid out of bound errors
-        if (stop - start + 1 < chunk_size) or subfams[
-            row_index
-        ] == "Tandem Repeat":
-            for col in range(len(columns)):
-                j = columns[col]
+            column_count = chunk_stop - chunk_start + 1
 
-                if (row_index, j) in consensus_matrix:
-                    num: int = j
-                    summ: float = 0.0
-                    numsegments: int = 0
-                    while num >= 0 and num >= j:
-                        if (row_index, num) in consensus_matrix:
-                            summ = summ + confidence_matrix[row_index, num]
-                            numsegments += 1
-                        num -= 1
+            if col_index == start:
+                # Compute the entire chunk if we're working on the first column
+                # in the row. This bootstraps our more efficient summation
+                # later.
+                sum_of_scores = 0.0
+                for sum_index in range(chunk_start, chunk_stop + 1):
+                    sum_of_scores += confidence_matrix[row_index, sum_index]
+            else:
+                # Subtract the value from the left-most column, but only if it
+                # has slipped out of our window. Add the value from the
+                # right-most column, but only if it is newly part of our window.
+                if chunk_start > prev_chunk_start:
+                    sum_of_scores -= confidence_matrix[
+                        row_index, prev_chunk_start
+                    ]
+                if chunk_stop > prev_chunk_stop:
+                    sum_of_scores += confidence_matrix[row_index, chunk_stop]
 
-                    if numsegments > 0:
-                        support_matrix[row_index, j] = summ / numsegments
+            support_matrix[row_index, col_index] = sum_of_scores / column_count
 
-        # if the alignment is large, do it the fast way
-        else:
-            # first chunk_size/2 before getting to full chunks
-            left_index: int = 0
-            for col_index in range(
-                start, starts[row_index] + 1 - start_all + half_chunk
-            ):
-                summ: float = 0.0
-                sum_index: int = col_index - left_index
-                num_segments: int = 0
-
-                while (
-                    sum_index <= col_index + half_chunk
-                    and sum_index < columns[-1]
-                ):
-                    summ += confidence_matrix[row_index, sum_index]
-                    sum_index += 1
-                    num_segments += 1
-
-                support_matrix[row_index, col_index] = summ / num_segments
-                left_index += 1
-
-            # middle part where num segments is chunk_size
-            col_index: int = start + half_chunk
-            summ: float = 0.0
-            sum_index: int = col_index - half_chunk
-            while sum_index <= col_index + half_chunk:
-                summ += confidence_matrix[row_index, sum_index]
-                sum_index += 1
-
-            support_matrix[row_index, col_index] = summ / chunk_size
-
-            # to get next bp average subtract previous confidence, add next confidence
-            for col_index in range(
-                (1 + start + half_chunk), (stop + 1) - half_chunk
-            ):
-                last_index: int = col_index - half_chunk - 1
-                next_index: int = col_index + half_chunk
-
-                summ = (
-                    summ
-                    - confidence_matrix[row_index, last_index]
-                    + confidence_matrix[row_index, next_index]
-                )
-
-                # rounding error when summ gets really small sometimes causes summ to become negative
-                # when this happen recompute sum the naiive way
-                if summ <= 0:
-                    summ = 0
-                    sum_index = last_index + 1
-                    while sum_index <= next_index:
-                        summ += confidence_matrix[row_index, sum_index]
-                        sum_index += 1
-
-                support_matrix[row_index, col_index] = summ / chunk_size
-
-            # last chunk_size/2
-            right_index: int = half_chunk
-            for col_index in range(
-                (stop + 1) - half_chunk, stops[row_index] + 1 - start_all + 1
-            ):
-
-                summ: float = 0.0
-                sum_index: int = col_index - half_chunk
-                num_segments: int = 0
-
-                while sum_index < col_index + right_index:
-                    summ += confidence_matrix[row_index, sum_index]
-                    sum_index += 1
-                    num_segments += 1
-
-                support_matrix[row_index, col_index] = summ / num_segments
-                right_index -= 1
+            prev_chunk_start = chunk_start
+            prev_chunk_stop = chunk_stop
 
     return support_matrix
