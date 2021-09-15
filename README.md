@@ -320,8 +320,9 @@ need the software:
     % git clone https://github.com/TravisWheelerLab/ULTRA ultra
     % cd ultra
     % cmake .
+    % make
 ```
-then you'll reference ultra's binary in the PolyA command:
+then you'll reference the ultra binary in the PolyA command:
 ```
 % polyA --ultra-path $HOME/git/ultra/ultra --sequences seq.fasta  ALIGNMENTS MATRICES
 ```
