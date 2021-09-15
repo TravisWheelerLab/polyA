@@ -1,4 +1,3 @@
-import sys
 import re
 
 
@@ -197,8 +196,7 @@ def print_score_matrix(
     f_out_matrix.close()
 
 
-def main():
-    filename_cm = sys.argv[1]
+def convert(filename_cm: str):
     file_contents = read_file(filename_cm)
 
     filename_out_sto = filename_cm + ".sto"
@@ -289,7 +287,3 @@ def main():
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
-
-
-if __name__ == "__main__":
-    main()

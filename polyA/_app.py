@@ -70,6 +70,22 @@ def run():
     opts = Options(argv[1:])
     _configure_logging(opts)
 
+    # ----------------
+    # File Conversions
+    # ----------------
+
+    if opts.cm_to_stockholm:
+        from .converters.cm_to_stockholm import convert
+        convert(opts.cm_to_stockholm)
+
+    if opts.rm_to_stockholm:
+        from .converters.rm_to_stockholm import convert
+        convert(opts.rm_to_stockholm)
+
+    if opts.cm_to_stockholm or opts.rm_to_stockholm:
+        if not (opts.alignments_file_path and opts.sub_matrices_path):
+            exit(0)
+
     # ----------------------------
     # Tandem Repeat initialization
     # ----------------------------

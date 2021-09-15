@@ -1,6 +1,4 @@
-import sys
 import re
-from sys import stdout
 
 
 def read_file(filename_cm):
@@ -156,9 +154,8 @@ def print_score_matrix(f_out_matrix, score_matrix, matrix_name):
     f_out_matrix.write("//\n")
 
 
-if __name__ == "__main__":
+def convert(filename_rm: str):
     matrices = {}
-    filename_rm = sys.argv[1]
     file_contents = read_file(filename_rm)
 
     filename_out_sto = filename_rm + ".sto"
