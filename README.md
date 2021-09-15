@@ -52,6 +52,12 @@ or
 python -m polyA -h
 ```
 
+### Docker
+
+A runner image can be found on
+[Docker Hub](https://hub.docker.com/repository/docker/traviswheelerlab/polya).
+To use it, see the README included alongside the image.
+
 ### Command Line
 
 Command line usage is available with `polyA -h`. It is also included below for
@@ -367,7 +373,6 @@ and, assuming sufficient permissions, pushed to Docker Hub with
 The scripts assume you are building the latest version of the image and so set
 the `latest` tag. If this is not the case, it is fairly simple to issue the
 correct Docker commands manually.
-
 ### Unit Tests
 
 Unit tests use [pytest](https://pytest.org/en/latest/). The linked
