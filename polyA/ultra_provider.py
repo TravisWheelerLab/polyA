@@ -106,7 +106,7 @@ class ApplicationUltraProvider:
                     ultra_process.stderr,
                 )
 
-            raw_output = json.load(ultra_process.stdout)
+            raw_output = json.loads(ultra_process.stdout)
         else:
             with open(self._ultra_output_path, "r") as output_file:
                 raw_output = json.load(output_file)

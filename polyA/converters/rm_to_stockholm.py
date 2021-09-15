@@ -201,6 +201,8 @@ def convert(filename_rm: str):
         region = region.strip()
 
         m_matrix = re.search(r"Matrix = (.+?)\n", region)
+        if m_matrix is None:
+            raise RuntimeError("did not find Matrix stanza")
         matrix_name = m_matrix[1]
 
         if (
