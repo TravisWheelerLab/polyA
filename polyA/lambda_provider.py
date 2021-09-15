@@ -17,10 +17,12 @@ matrix.
 
 class LambdaProviderException(Exception):
     return_code: int
+    stdout: str
     stderr: str
 
-    def __init__(self, return_code: int, stderr: str):
+    def __init__(self, return_code: int, stdout: str, stderr: str):
         self.return_code = return_code
+        self.stdout = stdout
         self.stderr = stderr
 
 
@@ -68,14 +70,14 @@ class EaselLambdaProvider:
 
         # Run Easel
         esl_process = subprocess.run(
-            [self._path, " --dna ", temp_matrix_path],
+            [self._path, "--dna", temp_matrix_path],
             capture_output=True,
             text=True,
         )
 
         if esl_process.returncode != 0:
             raise LambdaProviderException(
-                esl_process.returncode, esl_process.stderr
+                esl_process.returncode, esl_process.stdout, esl_process.stderr
             )
 
         esl_output = esl_process.stdout

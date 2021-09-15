@@ -9,10 +9,12 @@ from .performance import timeit
 
 class UltraProviderException(Exception):
     return_code: int
+    stdout: str
     stderr: str
 
-    def __init__(self, return_code: int, stderr: str):
+    def __init__(self, return_code: int, stdout: str, stderr: str):
         self.return_code = return_code
+        self.stdout = stdout
         self.stderr = stderr
 
 
@@ -99,7 +101,9 @@ class ApplicationUltraProvider:
 
             if ultra_process.returncode != 0:
                 raise UltraProviderException(
-                    ultra_process.returncode, ultra_process.stderr
+                    ultra_process.returncode,
+                    ultra_process.stdout,
+                    ultra_process.stderr,
                 )
 
             raw_output = json.load(ultra_process.stdout)
