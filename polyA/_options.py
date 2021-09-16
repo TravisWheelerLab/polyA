@@ -15,7 +15,7 @@ class Options:
     >>> o = Options()
     >>> o.log_file_path
     ''
-    >>> o = Options(["", "", "--log-file", "foo.txt"])
+    >>> o = Options(["NONE", "NONE", "--log-file", "foo.txt"])
     >>> o.log_file_path
     'foo.txt'
     """
@@ -55,6 +55,13 @@ class Options:
     sequence_position: bool
     soda: bool
 
+    # ----------------
+    # File Conversions
+    # ----------------
+
+    cm_to_stockholm: str
+    rm_to_stockholm: str
+
     def __init__(self, args: Optional[List[str]] = None) -> None:
         parser = ArgumentParser(
             description="PolyA sequence adjudication tool",
@@ -64,11 +71,15 @@ class Options:
         parser.add_argument(
             "alignments_file_path",
             metavar="ALIGNMENTS",
+            nargs="?",
+            default="",
             help="alignments file in Stockholm format",
         )
         parser.add_argument(
             "sub_matrices_path",
             metavar="MATRICES",
+            nargs="?",
+            default="",
             help="substitution matrices file in PolyA matrix format",
         )
 
@@ -120,7 +131,7 @@ class Options:
         parser.add_argument(
             "--easel-path",
             metavar="BIN",
-            default="",
+            default="esl_scorematrix",
             help="path to the esl_scorematrix program, if necessary (assumed to be in PATH)",
         )
         parser.add_argument(
@@ -185,9 +196,22 @@ class Options:
             help="use complexity adjusted scoring",
         )
 
+        parser.add_argument(
+            "--cm-to-stockholm",
+            metavar="FILE",
+            default="",
+            help="convert a file in CrossMatch format to PolyA's Stockholm format",
+        )
+        parser.add_argument(
+            "--rm-to-stockholm",
+            metavar="FILE",
+            default="",
+            help="convert a file in CrossMatch format to PolyA's Stockholm format",
+        )
+
         namespace: Namespace
         if args is None:
-            namespace = parser.parse_args(args=["", ""])
+            namespace = parser.parse_args(args=["NONE", "NONE"])
         else:
             namespace = parser.parse_args(args=args)
 
@@ -213,3 +237,12 @@ class Options:
         self.output_to_file = namespace.output_to_file
         self.sequence_position = namespace.sequence_position
         self.soda = namespace.soda
+
+        self.cm_to_stockholm = namespace.cm_to_stockholm
+        self.rm_to_stockholm = namespace.rm_to_stockholm
+
+        if not (self.cm_to_stockholm or self.rm_to_stockholm):
+            if not (self.alignments_file_path and self.alignments_file_path):
+                parser.error(
+                    "ALIGNMENTS and MATRICES and required unless using a converter"
+                )

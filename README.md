@@ -52,6 +52,12 @@ or
 python -m polyA -h
 ```
 
+### Docker
+
+A runner image can be found on
+[Docker Hub](https://hub.docker.com/repository/docker/traviswheelerlab/polya).
+To use it, see the README included alongside the image.
+
 ### Command Line
 
 Command line usage is available with `polyA -h`. It is also included below for
@@ -143,18 +149,22 @@ each field with additional detail as noted.
   * (3) the flanking region of the unaligned query sequence
   * (4) the name of the substitution matrix file used to create alignment
 
-#### Creating Alignment files from cross_match alignments
+#### Converting Alignments
 
-We include a parser to convert cross_match alignment files to stockholm
-alignments. This can be executed with the `cm_to_stockholm` script (installed
-with PolyA) or through the `polyA.converters` module (`python -m
-polyA.converters.cm_to_stockholm`).
+PolyA can convert a Cross Match or Repeat Masker alignment file to the
+particular version of Stockholm format it requires. To do this, use either the
+`--cm-to-stockholm` or `--rm-to-stockholm` options, repspectively, passing the
+path to the file to be converted.
+
+The script will produce two files in the same directory as the input, one with a
+`.sto` extension and the other with a `.matrix` extension. These can be passed
+to the PolyA command line tool as `ALIGNMENTS` and `MATRICES`, respectively (see
+`--help`).
+
+Example:
 
 ```
-usage: cm_to_stockholm align_file.cm
-outputs (can be input directly into polyA): 
-    align_file.cm.sto
-    align_file.cm.matrix
+python -m polyA --cm-to-stockholm my_alignments.cm
 ```
 
 #### Substitution Matrix Files
@@ -372,7 +382,7 @@ pipenv install <package>
 pipenv install --dev <package>
 ```
 
-### Docker Image
+### Docker Images
 
 There is a `Dockerfile` in the repo root. The image it describes is
 used for running tests in CI and can be used locally for convenience.
@@ -382,6 +392,15 @@ version pushed to Docker Hub. This can be done with `make container`
 if you have the correct permissions. Otherwise, ask a maintainer
 to do it for you.
 
+There is also a file called `Dockerfile_run`. This is a runner image that is
+available for users who prefer to run PolyA through Docker (which is often more
+convenient). The runner image can be built with `tool/build-runner-image.sh`
+and, assuming sufficient permissions, pushed to Docker Hub with
+`tool/push-runner-image.sh`.
+
+The scripts assume you are building the latest version of the image and so set
+the `latest` tag. If this is not the case, it is fairly simple to issue the
+correct Docker commands manually.
 ### Unit Tests
 
 Unit tests use [pytest](https://pytest.org/en/latest/). The linked

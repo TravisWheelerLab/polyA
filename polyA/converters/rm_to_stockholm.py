@@ -1,4 +1,3 @@
-import sys
 import re
 
 
@@ -38,7 +37,8 @@ def get_info(info_array):
         start = info_array[6]
         stop = info_array[7]
 
-    if len(info_array) == 12:  # not compliment
+    # 14 for cm .align files, might need to change
+    if len(info_array) == 14:  # not compliment
         strand = "+"
         subfam = info_array[8]
         consensus_start = info_array[9]
@@ -79,33 +79,22 @@ def get_info(info_array):
     )
 
 
-def get_score_matrix(file_contents):
+def get_score_matrix(matrix_name):
     """
-    grabs score matrix info from alignment file, puts it in correct format, returns string
+    grabs score matrix info from original matrix file, puts it in correct format, returns string
     """
-    score_matrix = ""
-    m_string = re.search(r"Score matrix.+?\n([\s\S]+?)\n\n", file_contents)
-    m_array = m_string[1].split("\n")
-
-    score_matrix += m_array[0].lstrip() + "\n"
-    for i in range(1, len(m_array)):
-        m_array[i] = m_array[i][1::]
-        score_matrix += m_array[i].lstrip() + "\n"
-
-    return score_matrix
-
-
-def get_gap_penalties(file_contents):
-    """
-    returns gap_init and gap_ext
-    """
-    m_string = re.search(
-        r"Gap penalties: gap_init: (.+?), gap_ext: (.+?),", file_contents
-    )
-    gap_init = m_string[1]
-    gap_ext = m_string[2]
-
-    return gap_init, gap_ext
+    matrix_file_contents = read_file("../fixtures/matrices/" + matrix_name)
+    matrix_file_contents = matrix_file_contents.split("\n")
+    background_freqs_line = matrix_file_contents[0]
+    # reformat background freqs
+    background_freqs = background_freqs_line.split()[1:]
+    background_freqs_dict = {}
+    for i in range(0, len(background_freqs), 2):
+        char = background_freqs[i][0]
+        freq = float(background_freqs[i + 1])
+        background_freqs_dict[char] = freq
+    freqs_string = "BACKGROUND FREQS: " + str(background_freqs_dict)
+    return "\n".join(([freqs_string] + matrix_file_contents[1:]))
 
 
 def print_info(
@@ -120,8 +109,6 @@ def print_info(
     consensus_stop,
     flank,
     matrix_name,
-    gap_init,
-    gap_ext,
     f_out_sto,
 ):
     """
@@ -146,8 +133,6 @@ def print_info(
     f_out_sto.write(f"#=GF CSP {consensus_stop}\n")
     f_out_sto.write(f"#=GF FL  {flank}\n")
     f_out_sto.write(f"#=GF MX  {matrix_name}\n")
-    f_out_sto.write(f"#=GF GI  {gap_init}\n")
-    f_out_sto.write(f"#=GF GE  {gap_ext}\n")
 
 
 def get_alignment(alignment_array):
@@ -181,55 +166,28 @@ def print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto):
     f_out_sto.write("//\n")
 
 
-def print_score_matrix(
-    filename_out_matrix, score_matrix, matrix_name, background_freqs
-):
+def print_score_matrix(f_out_matrix, score_matrix, matrix_name):
     """
-    print score matrix to its own output file with extension ".matrix"
+    print score matrix to its output file with extension ".matrix"
     """
-    f_out_matrix = open(filename_out_matrix, "w")
     f_out_matrix.write(matrix_name)
-    f_out_matrix.write("\n")
-    f_out_matrix.write(f"BACKGROUND FREQS: {background_freqs}")
     f_out_matrix.write("\n")
     f_out_matrix.write(score_matrix)
     f_out_matrix.write("//\n")
-    f_out_matrix.close()
 
 
-def main():
-    filename_cm = sys.argv[1]
-    file_contents = read_file(filename_cm)
+def convert(filename_rm: str):
+    matrices = {}
+    file_contents = read_file(filename_rm)
 
-    filename_out_sto = filename_cm + ".sto"
+    filename_out_sto = filename_rm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
 
-    filename_out_matrix = filename_cm + ".matrix"
-    matrix_name = "matrix1"
+    filename_out_matrix = filename_rm + ".matrix"
+    f_out_matrix = open(filename_out_matrix, "w")
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
-    f_out_sto.write(f"# ALIGNMENT TOOL cross_match\n")
-
-    # get background freqs
-    background_freqs = re.findall(
-        r"Assumed background frequencies:.*\n.*\n.*",
-        file_contents,
-    )
-    background_freqs = background_freqs[0].splitlines()[1].split()
-    background_freqs = background_freqs[: len(background_freqs) - 2]
-    background_freqs_dict = {}
-    for i in range(0, len(background_freqs), 2):
-        char = background_freqs[i][0]
-        freq = float(background_freqs[i + 1])
-        if freq != 0:
-            background_freqs_dict[char] = freq
-
-    score_matrix = get_score_matrix(file_contents)
-    print_score_matrix(
-        filename_out_matrix, score_matrix, matrix_name, background_freqs_dict
-    )
-
-    gap_init, gap_ext = get_gap_penalties(file_contents)
+    f_out_sto.write(f"# ALIGNMENT TOOL RepeatMasker\n")
 
     alignments = re.findall(
         r"\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions",
@@ -239,8 +197,22 @@ def main():
     for region in alignments:
         info_line: str = ""
         alignment: str = ""
+        matrix_name: str = ""
         region = region.strip()
-        m = re.match(r"(.+?)\n([\s\S]+)\n\nTransitions", region)
+
+        m_matrix = re.search(r"Matrix = (.+?)\n", region)
+        if m_matrix is None:
+            raise RuntimeError("did not find Matrix stanza")
+        matrix_name = m_matrix[1]
+
+        if (
+            matrix_name not in matrices
+        ):  # do not put duplicate of matrices in output file
+            matrices[matrix_name] = 0
+            score_matrix = get_score_matrix(matrix_name)
+            print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
+
+        m = re.match(r"(.+?)\n([\s\S]+)\n\nMatrix", region)
         if m:
             info_line = m.group(1)
             alignment = m.group(2)
@@ -282,14 +254,8 @@ def main():
             consensus_stop,
             flank,
             matrix_name,
-            gap_init,
-            gap_ext,
             f_out_sto,
         )
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
-
-
-if __name__ == "__main__":
-    main()
