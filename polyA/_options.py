@@ -48,7 +48,7 @@ class Options:
 
     ids: bool
     log_file_path: str
-    log_level: str # Literal["debug", "verbose", "normal", "quiet"]
+    log_level: str  # Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
     output_path: str
     output_to_file: bool
