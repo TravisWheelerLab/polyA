@@ -35,6 +35,11 @@ RUN cmake . && \
 
 FROM python:3.7-slim-bullseye
 
+RUN apt-get update && apt-get install -y \
+        make && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install and test esl_scorematrix
 COPY --from=easel /esl_scorematrix /usr/local/bin/
 RUN esl_scorematrix -h
