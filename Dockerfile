@@ -45,6 +45,7 @@ RUN ultra -h
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install pipenv
 
 VOLUME [ "/code" ]
 WORKDIR /code
