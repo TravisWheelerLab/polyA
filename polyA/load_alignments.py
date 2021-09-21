@@ -59,6 +59,22 @@ def _parse_preamble_line(line: str) -> bool:
     return line.strip().upper().startswith("# STOCKHOLM")
 
 
+def _parse_tool_line(line: str) -> str:
+    """
+    Return ``True`` if this line contains a tool preamble of
+    the format we add in the converter scripts.
+
+    >>> _parse_tool_line("# ALIGNMENT TOOL cross_match")
+    'cross_match'
+    >>> _parse_tool_line("# Something else")
+    ''
+    """
+    if line.strip().upper().startswith("# ALIGNMENT TOOL"):
+        return " ".join(line.strip().split()[3:])
+    else:
+        return ""
+
+
 def _parse_terminator_line(line: str) -> bool:
     """
     Return ``True`` if this line contains a terminator
@@ -118,6 +134,9 @@ def load_alignments(
 
     for line in file:
         if _parse_preamble_line(line):
+            continue
+
+        if _parse_tool_line(line):
             continue
 
         parts = _parse_meta_line(line)
@@ -212,7 +231,7 @@ def load_alignments(
 
 def load_alignment_tool(file: TextIO) -> str:
     """
-    Return alignment tool used.
+    Return tool used to produce the alignments in the input file.
     """
 
     while True:
@@ -220,16 +239,15 @@ def load_alignment_tool(file: TextIO) -> str:
             # skip header line
             header_line = next(file)
         except StopIteration:
-            return "no alignment tool"
+            return ""
 
         try:
             line = next(file)
-            if line.strip().upper().startswith("# ALIGNMENT TOOL"):
-                # get alignment tool
-                return line.split()[-1]
-            return "no alignment tool"
+            tool = _parse_tool_line(line)
+
+            return tool if tool else ""
         except StopIteration:
-            return "no alignment tool"
+            return ""
 
 
 class Shard(NamedTuple):
