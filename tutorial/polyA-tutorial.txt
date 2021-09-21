@@ -18,4 +18,4 @@ chr2_128348379_128354757.fa.cm.matrix
 or run ULTRA in advance 
 % ./ultra -ss chr2_128348379_128354757.fa > chr2_128348379_128354757.fa.ultra
 then run polyA with the following command
-% polyA --sequence-position --ultra-data chr2_128348379_128354757.fa.ultra chr2_128348379_128354757.fa.cm.sto 
+% polyA --sequence-position --ultra-data chr2_128348379_128354757.fa.ultra chr2_128348379_128354757.fa.cm.sto chr2_128348379_128354757.fa.cm.matrix
