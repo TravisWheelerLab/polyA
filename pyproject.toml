@@ -14,7 +14,9 @@ maintainer = "Audrey Shingleton"
 maintainer-email = "audrey.shingleton@umontana.edu"
 home-page = "https://github.com/TravisWheelerLab/polyA"
 classifiers = [
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "License :: OSI Approved :: BSD License",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
