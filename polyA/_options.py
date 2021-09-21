@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, Namespace
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from . import __version__
 from .constants import (
@@ -48,7 +48,7 @@ class Options:
 
     ids: bool
     log_file_path: str
-    log_level: Literal["debug", "verbose", "normal", "quiet"]
+    log_level: str  # Literal["debug", "verbose", "normal", "quiet"]
     matrix_position: bool
     output_path: str
     output_to_file: bool
