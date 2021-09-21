@@ -1,43 +1,39 @@
-FROM python:3.8 AS easel
+
+FROM python:3.7-slim-bullseye AS easel
 
 ARG easel_version=0.48
 
-RUN apt-get update
-RUN apt-get -y install \
+RUN apt-get update && apt-get -y install \
     autoconf \
+    build-essential
+ADD https://github.com/EddyRivasLab/easel/archive/easel-${easel_version}.tar.gz easel.tar.gz
+RUN tar xf easel.tar.gz
+WORKDIR /easel-easel-${easel_version}
+RUN autoconf && \
+    ./configure && \
+    make && \
+    gcc -g -Wall -I. -L. -o esl_scorematrix \
+        -DeslSCOREMATRIX_EXAMPLE \
+        esl_scorematrix.c -leasel -lm && \
+    cp esl_scorematrix /
+
+# -----------------------------------------------------------------------------
+
+FROM python:3.7-slim-bullseye as ultra
+
+RUN apt-get update && apt-get -y install \
+    git \
     build-essential \
-    wget
-
-RUN wget https://github.com/EddyRivasLab/easel/archive/easel-${easel_version}.tar.gz
-RUN tar xf easel-${easel_version}.tar.gz
-WORKDIR easel-easel-${easel_version}
-
-RUN autoconf
-RUN ./configure
-RUN make
-# Build the bit of Easel we need
-RUN gcc -g -Wall -I. -L. -o esl_scorematrix \
-    -DeslSCOREMATRIX_EXAMPLE \
-    esl_scorematrix.c -leasel -lm
-
-RUN cp esl_scorematrix /
-
-FROM python:3.8 as ultra
-
-RUN apt-get update
-RUN apt-get -y install \
-    autoconf \
-    build-essential \
-    wget
-
+    cmake
 RUN git clone https://github.com/TravisWheelerLab/ULTRA.git
 WORKDIR /ULTRA
-RUN git checkout prerelease
-RUN make
+RUN cmake . && \
+    make && \
+    cp ultra /
 
-RUN cp ultra /
+# -----------------------------------------------------------------------------
 
-FROM python:3.8
+FROM python:3.7-slim-bullseye
 
 # Install and test esl_scorematrix
 COPY --from=easel /esl_scorematrix /usr/local/bin/
@@ -47,10 +43,8 @@ RUN esl_scorematrix -h
 COPY --from=ultra /ultra /usr/local/bin/
 RUN ultra -h
 
-RUN pip install pipenv
-COPY Pipfile .
-COPY Pipfile.lock .
-RUN pipenv sync --dev
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 VOLUME [ "/code" ]
 WORKDIR /code
