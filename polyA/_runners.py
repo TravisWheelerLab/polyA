@@ -2,6 +2,7 @@ from logging import Logger
 from math import log
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
+from collections import Counter
 
 from .alignment import Alignment
 from .calc_repeat_scores import calculate_repeat_scores
@@ -61,6 +62,54 @@ def run_confidence(
     for i in range(len(subfams_copy) - 1, 0, -1):
         if confidence_list[i]:
             stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+
+
+def run_subfam_confidence(
+    alignments: List[Alignment],
+    lambs: List[float],
+) -> None:
+    # command line option to just output confidence values for
+    # single annotation instead of do whole algorithm
+    """
+    Calculate confidence values for single annotations instead of
+    running the entire algorithm.
+    Used to check the subfam confidence of seed seqs
+
+    :param alignments: list of alignments to run on
+    :param lambs: the values of lambda to use for each alignment (from Easel)
+    """
+    if len(alignments) != len(lambs):
+        raise RuntimeError(
+            "number of alignments must match number of lambda values"
+        )
+
+    subfams = []
+    scores = []
+    prev_test_seq_name = ""
+    test_seqs = 0
+    subfam_pairs = Counter()
+
+    for i, a in enumerate(alignments):
+        # determine if chrom_name has changed, then add to list
+        test_seq_name = a.chrom_name + ":" + str(a.chrom_start) + "-" + str(a.chrom_stop)
+        if test_seq_name != prev_test_seq_name and len(subfams) != 0:
+            test_seqs += 1
+            # run confidence_only on prev input
+            confidence_list = confidence_only(scores, lambs)
+            confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
+            stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
+            stdout.write(f"query_label\tconfidence\n")
+            for i in range(len(subfams_copy) - 1, 0, -1):
+                if confidence_list[i] > 0.01:
+                    stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+            # TODO: count subfam pairs that each have >10% confidence
+            # create new lists for new test seq
+            prev_test_seq_name = test_seq_name
+            subfams = []
+            scores = []
+        subfams.append(a.subfamily)
+        scores.append(a.score)
+    print("Subfam confidence done")
 
 
 def _validate_target(target: Alignment) -> None:

@@ -104,6 +104,12 @@ class Options:
             help="run the confidence calculation and then exit",
         )
         parser.add_argument(
+            "--subfam-confidence",
+            action="store_true",
+            default=False,
+            help="run the confidence calculation for subfamilies and then exit",
+        )
+        parser.add_argument(
             "--prior-counts",
             metavar="FILE",
             default="",
@@ -220,6 +226,7 @@ class Options:
 
         self.chunk_size = namespace.chunk_size
         self.confidence = namespace.confidence
+        self.subfam_confidence = namespace.subfam_confidence
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences

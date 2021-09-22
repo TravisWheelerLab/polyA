@@ -59,6 +59,14 @@ def _parse_preamble_line(line: str) -> bool:
     return line.strip().upper().startswith("# STOCKHOLM")
 
 
+def _parse_alignment_tool_line(line: str) -> bool:
+    """
+    Return ``True`` if this line contains a Stockholm format
+    preamble ("# ALIGNMENT TOOL") and ``False`` otherwise.
+    """
+    return line.strip().upper().startswith("# ALIGNMENT TOOL")
+
+
 def _parse_terminator_line(line: str) -> bool:
     """
     Return ``True`` if this line contains a terminator
@@ -118,6 +126,9 @@ def load_alignments(
 
     for line in file:
         if _parse_preamble_line(line):
+            continue
+
+        if _parse_alignment_tool_line(line):
             continue
 
         parts = _parse_meta_line(line)

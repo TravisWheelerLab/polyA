@@ -3,7 +3,7 @@ from sys import argv, stderr
 from typing import List
 
 from ._options import Options
-from ._runners import run_confidence, run_full
+from ._runners import run_confidence, run_subfam_confidence, run_full
 from .lambda_provider import EaselLambdaProvider
 from .load_alignments import (
     load_alignments,
@@ -149,6 +149,13 @@ def run():
     # --------------------------
 
     lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+
+    if opts.subfam_confidence:
+        run_subfam_confidence(
+            alignments,
+            lambs=lambda_values,
+        )
+        exit()
 
     if opts.confidence:
         run_confidence(
