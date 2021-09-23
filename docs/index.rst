@@ -14,7 +14,11 @@ Full Contents
 .. toctree::
    :maxdepth: 2
 
+   about
+   installation
+   examples
    tutorial
+   development
    modules
 
 Indices and Search

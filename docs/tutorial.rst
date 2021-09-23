@@ -1,5 +1,5 @@
-PolyA Tutorial
-==============
+Tutorial
+========
 
 This tutorial covers running PolyA against region chr2:128348374-128348687.
 
