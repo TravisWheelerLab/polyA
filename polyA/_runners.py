@@ -7,7 +7,7 @@ from collections import Counter
 from .alignment import Alignment
 from .calc_repeat_scores import calculate_repeat_scores
 from .collapse_matrices import collapse_matrices
-from .confidence_cm import confidence_only
+from .confidence_cm import confidence_only, confidence_subfam_pairs
 from .constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
 from .edges import edges
 from .extract_nodes import extract_nodes
@@ -87,7 +87,8 @@ def run_subfam_confidence(
     scores = []
     prev_test_seq_name = ""
     test_seqs = 0
-    subfam_pairs = Counter()
+    uncertain_subfam_pairs = Counter()
+    subfam_winners = Counter()
 
     for i, a in enumerate(alignments):
         # determine if chrom_name has changed, then add to list
@@ -97,30 +98,42 @@ def run_subfam_confidence(
             # run confidence_only on prev input
             confidence_list = confidence_only(scores, lambs)
             confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
+
+            # print out subfam, confidence values
             stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
             stdout.write(f"query_label\tconfidence\n")
             for i in range(len(subfams) - 1, 0, -1):
-                if confidence_list[i] > 0.01:
+                if confidence_list[i] > 0.1:
                     stdout.write(f"{subfams[i]}\t{confidence_list[i]}\n")
-            # TODO: count subfam pairs that each have >10% confidence
-            for i in range(len(subfams) - 1, 0, -1):
-                if confidence_list[i] < 0.1:
-                    break
-                for j in range(i - 1, 0, -1):
-                    if confidence_list[j] < 0.1:
+
+            # check for a clear winner
+            if confidence_list[-1] > 0.9:
+                subfam_winners[subfams[-1]] += 1
+            else:
+                # look for uncertain pairs
+                for i in range(len(subfams) - 1, 0, -1):
+                    if confidence_list[i] < 0.1:
                         break
-                    # count these
-                    sub_pair = [subfams[i], subfams[j]]
-                    sub_pair.sort()
-                    subfam_pairs[tuple(sub_pair)] += 1
+                    for j in range(i - 1, 0, -1):
+                        if confidence_list[j] < 0.1:
+                            break
+                        # otherwise count subfam pair
+                        sub_pair = [subfams[i], subfams[j]]
+                        sub_pair.sort()
+                        uncertain_subfam_pairs[tuple(sub_pair)] += 1
+
             # create new lists for new test seq
             prev_test_seq_name = test_seq_name
             subfams = []
             scores = []
         subfams.append(a.subfamily)
         scores.append(a.score)
-    print("Subfam confidence done")
-    print(subfam_pairs)
+    print("finished confidence calcs")
+    subfam_pair_confidence = confidence_subfam_pairs(uncertain_subfam_pairs, subfam_winners)
+    sorted_pairs = sorted(subfam_pair_confidence.items(), key=lambda item: item[1])
+    for item in sorted_pairs:
+        print(item)
+    # what do these values mean
 
 
 def _validate_target(target: Alignment) -> None:
