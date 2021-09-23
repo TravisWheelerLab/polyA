@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>PolyA Tutorial &#8212; PolyA 1.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="polyA" href="modules.html" />
+    <link rel="prev" title="PolyA Documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="polya-tutorial">
+<h1>PolyA Tutorial<a class="headerlink" href="#polya-tutorial" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial covers running PolyA against region chr2:128348374-128348687.</p>
+<section id="input-data">
+<h2>Input Data<a class="headerlink" href="#input-data" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Get the FASTA file for the target region (chr2_128348379_128354757.fa)</p></li>
+<li><p>Obtain the cross_match alignment file for this region (chr2_128348379_128354757.fa.cm)</p></li>
+<li><dl class="simple">
+<dt>In the polyA directory, convert the cross_match file to stockholm format and get the required substitution matrices</dt><dd><ul class="simple">
+<li><p>% polyA –cm-to-stockholm chr2_128348379_128354757.fa.cm</p></li>
+<li><dl class="simple">
+<dt>This will output the following files needed to run polyA:</dt><dd><ul>
+<li><p>chr2_128348379_128354757.fa.cm.sto</p></li>
+<li><p>chr2_128348379_128354757.fa.cm.matrix</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<p>The files used here can found in the polyA tutorial directory.</p>
+</section>
+<section id="generating-output">
+<h2>Generating Output<a class="headerlink" href="#generating-output" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>Run polyA:</dt><dd><p>% polyA –sequence-position chr2_128348379_128354757.fa.cm.sto chr2_128348379_128354757.fa.cm.matrix</p>
+</dd>
+<dt>If you wish to include tandem repeats, you can run ULTRA on the fly:</dt><dd><p>% polyA –ultra-path /path/to/ultra –sequences chr2_128348379_128354757.fa chr2_128348379_128354757.fa.cm.sto chr2_128348379_128354757.fa.cm.matrix</p>
+</dd>
+<dt>or you can run ULTRA in advance:</dt><dd><p>% ./ultra -ss chr2_128348379_128354757.fa &gt; chr2_128348379_128354757.fa.ultra</p>
+</dd>
+<dt>and then run polyA with the following command:</dt><dd><p>% polyA –sequence-position –ultra-data chr2_128348379_128354757.fa.ultra chr2_128348379_128354757.fa.cm.sto chr2_128348379_128354757.fa.cm.matrix</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PolyA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PolyA Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input-data">Input Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-output">Generating Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">polyA</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">PolyA Documentation</a></li>
+      <li>Next: <a href="modules.html" title="next chapter">polyA</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, PolyA authors.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/tutorial.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
