@@ -96,13 +96,23 @@ def run_subfam_confidence(
             test_seqs += 1
             # run confidence_only on prev input
             confidence_list = confidence_only(scores, lambs)
-            confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
+            confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
             stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
             stdout.write(f"query_label\tconfidence\n")
-            for i in range(len(subfams_copy) - 1, 0, -1):
+            for i in range(len(subfams) - 1, 0, -1):
                 if confidence_list[i] > 0.01:
-                    stdout.write(f"{subfams_copy[i]}\t{confidence_list[i]}\n")
+                    stdout.write(f"{subfams[i]}\t{confidence_list[i]}\n")
             # TODO: count subfam pairs that each have >10% confidence
+            for i in range(len(subfams) - 1, 0, -1):
+                if confidence_list[i] < 0.1:
+                    break
+                for j in range(i - 1, 0, -1):
+                    if confidence_list[j] < 0.1:
+                        break
+                    # count these
+                    sub_pair = [subfams[i], subfams[j]]
+                    sub_pair.sort()
+                    subfam_pairs[tuple(sub_pair)] += 1
             # create new lists for new test seq
             prev_test_seq_name = test_seq_name
             subfams = []
@@ -110,6 +120,7 @@ def run_subfam_confidence(
         subfams.append(a.subfamily)
         scores.append(a.score)
     print("Subfam confidence done")
+    print(subfam_pairs)
 
 
 def _validate_target(target: Alignment) -> None:
