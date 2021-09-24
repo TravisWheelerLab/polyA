@@ -16,7 +16,7 @@ Full Contents
 
    about
    installation
-   examples
+   running
    tutorial
    development
    modules

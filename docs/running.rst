@@ -1,16 +1,17 @@
-Example Commands
-================
+Running
+=======
 
-Using
---------
+Run PolyA from the command line:
 
-Run from the command line:
+::
 
-    ``polyA -h``
+    polyA -h
 
 or
 
-    ``python -m polyA -h``
+::
+
+    python -m polyA -h
 
 
 Command line usage is also included below for convenience.
@@ -60,17 +61,17 @@ Command line usage is also included below for convenience.
 
 
 Input Formats
-=================
+-------------
 
 PolyA accepts two required inputs and several optional inputs that affect
 its behavior. The required inputs are an alignment file which must contain
 alignments for all possible queries matching the target sequence. This file
-must be in [Stockholm](https://sonnhammer.sbc.su.se/Stockholm.html) format
+must be in `Stockholm <https://sonnhammer.sbc.su.se/Stockholm.html>`_ format
 with several custom metadata fields. The other required input is a set of
 substitution matrices. This file uses a custom, but extremely simple format.
 
-Alignment File Format
--------------------------
+Alignment File
+^^^^^^^^^^^^^^
 
 Alignments for all possible queries matching the target sequence should be
 contained in a single file in Stockholm format.
@@ -95,38 +96,44 @@ each field with additional detail as noted.
     #=GF GI -25                       gap init
     #=GF GE -5                        gap extension
 
-
-  * (1) query sequence names must be in the format 'name#family/class'
-  * (2) valid values: 'q' if the alignment is on the reverse
-    strand and the reversed sequence is the query; 't' if the alignment
-    is on the reverse strand and the reversed sequence is the target;
-    '-1' if the alignment is on the positive strand
-  * (3) the flanking region of the unaligned query sequence
-  * (4) the name of the substitution matrix file used to create alignment
+1. query sequence names must be in the format 'name#family/class'
+2. valid values: 'q' if the alignment is on the reverse
+   strand and the reversed sequence is the query; 't' if the alignment
+   is on the reverse strand and the reversed sequence is the target;
+   '-1' if the alignment is on the positive strand
+3. the flanking region of the unaligned query sequence
+4. the name of the substitution matrix file used to create alignment
 
 Converting Alignments
-------------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 PolyA can convert a Cross Match or Repeat Masker alignment file to the
 particular version of Stockholm format it requires. To do this, use either the
-``--cm-to-stockholm`` or ``--rm-to-stockholm`` options, repspectively, passing the
+``--cm-to-stockholm`` or ``--rm-to-stockholm`` options, respectively, passing the
 path to the file to be converted.
 
 The script will produce two files in the same directory as the input, one with a
-`.sto` extension and the other with a `.matrix` extension. These can be passed
-to the PolyA command line tool as `ALIGNMENTS` and `MATRICES`, respectively (see
+``.sto`` extension and the other with a ``.matrix`` extension. These can be passed
+to the PolyA command line tool as ``ALIGNMENTS`` and ``MATRICES``, respectively (see
 ``--help``).
 
 Example:
 
-    ``python -m polyA --cm-to-stockholm my_alignments.cm``
+::
 
-Substitution Matrix Files
-----------------------------
+    python -m polyA --cm-to-stockholm my_alignments.cm
 
-Substitution matrix file example format (can include ambiguity codes):
-* this file must include all of the matrices specified in the "#=GF MX" field of the alignment file, with corresponding and matching matrix names
-* if lambda is not included polyA will use esl_scorematrix to calculate it for all matrices
+
+Substitution Matrix File
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The substitution matrix file example format (can include ambiguity codes):
+
+* this file must include all of the matrices specified in the
+  ``#=GF MX`` field of the alignment file, with corresponding
+  and matching matrix names
+* if lambda is not included polyA will use esl_scorematrix to
+  calculate it for all matrices
 
 ::
 
@@ -149,21 +156,21 @@ Substitution matrix file example format (can include ambiguity codes):
     ...
 
 
-Sequence File (Optional)
-----------------------------
+Sequence File
+^^^^^^^^^^^^^
 
 A FASTA file of the target sequence is needed when using ULTRA.
 The target sequence must be the same genomic region that was used
 to get the cross_match alignment file. This file must follow the
 format of
+
 ::
 
     >chrom:start-end
     target_sequence
 
-as shown in the example.
+as shown in the example below.
 
-Sequence file example format:
 ::
 
     >chr1:152302175-152325203
@@ -173,7 +180,7 @@ Sequence file example format:
 
 
 Output Formats
-===================
+--------------
 
 ::
 
@@ -190,8 +197,8 @@ Output Formats
     the same ancestral sequence.
 
 
-Confidence only output file format
---------------------------------------
+Confidence Output Format
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Computes confidence of a single input alignment region. Does not perform
 annotation or adjudication, simply outputs the confidence of all competing
@@ -206,12 +213,12 @@ queries given in the input.
     ...
 
 Extensions
-==============
+----------
 
-Visualizing annotations using SODA
--------------------------------------------
+Visualizing Annotations
+^^^^^^^^^^^^^^^^^^^^^^^
 
-The command line option --soda will output the annotation data to a json file
+The command line option ``--soda`` will output the annotation data to a json file
 (output.0.viz) that can be used for visualization in SODA (linked below).
 The json file can be submitted on the browser to view the TE annotations from PolyA
 as well as the annotations from the UCSC Genome Browser for the same region of the
@@ -221,7 +228,7 @@ annotations of a selected region as well as their corresponding sequence alignme
 https://sodaviz.cs.umt.edu/polya-soda.html
 
 Prior Counts Files
---------------------
+^^^^^^^^^^^^^^^^^^
 
 Default confidence calculations assume a uniform distribution over all
 competing queries. In the case of non uniform priors, the command line option --prior-counts prior_counts.txt includes prior
@@ -230,6 +237,7 @@ genome counts in confidence calculations (see paper for more details).
 https://www.biorxiv.org/content/10.1101/2021.02.13.430877v1
 
 Prior counts file example format:
+
 ::
 
     subfamily   genome_count
@@ -239,7 +247,7 @@ Prior counts file example format:
     ...
 
 Using ULTRA
----------------
+^^^^^^^^^^^
 
 The optional use of ULTRA allows polyA to include tandem repeats (TRs) in the competing annotations
 of the target sequence. Doing so removes the dependency on pre-masking TRs prior to annotation, allows
