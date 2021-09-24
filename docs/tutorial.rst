@@ -1,8 +1,11 @@
-PolyA tutorial for region chr2:128348374-128348687
-==================================================
+Tutorial
+========
 
-PolyA Input
------------------
+This tutorial covers running PolyA against region chr2:128348374-128348687.
+
+Input Data
+----------
+
 #. Get the FASTA file for the target region (chr2_128348379_128354757.fa)
 
 #. Obtain the cross_match alignment file for this region (chr2_128348379_128354757.fa.cm)
@@ -15,8 +18,9 @@ PolyA Input
 
 The files used here can found in the polyA tutorial directory.
 
-PolyA Usage
+Generating Output
 -----------------
+
 Run polyA:
     % polyA --sequence-position chr2_128348379_128354757.fa.cm.sto chr2_128348379_128354757.fa.cm.matrix
 

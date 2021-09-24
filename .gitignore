@@ -4,6 +4,7 @@
 *.egg-info/
 dist/
 .pytest_cache/
+_build/
 
 # Anaconda
 conda-dist/
