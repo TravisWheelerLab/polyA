@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 import re
+from collections import Counter
 
 
 def confidence_cm(
@@ -157,23 +158,30 @@ def confidence_only(
 def confidence_subfam_pairs(
     subfam_pair_counts: Dict[Tuple[str, str], int],
     subfam_winner_counts: Dict[str, int],
-) -> Dict[Tuple[str, str], float]:
+) -> Tuple[Dict[Tuple[str, str], float], Dict[str, Dict[str, int]]]:
     # go through pairs
     # compute ij-pair confidence and ji-pair confidence
     subfam_pair_confidence: Dict[Tuple[str, str], int] = {}
+    zero_conf_subfams = {}
     for sub_pair, sub_pair_count in subfam_pair_counts.items():
         subfam_i = sub_pair[0]
         subfam_j = sub_pair[1]
         # ij pair
-        confidence = 0
         if subfam_i in subfam_winner_counts.keys():
             # compute pair confidence
-            confidence = subfam_winner_counts[subfam_i] / (sub_pair_count + subfam_winner_counts[subfam_i])
-        subfam_pair_confidence[(subfam_i, subfam_j)] = confidence
+            subfam_pair_confidence[(subfam_i, subfam_j)] = subfam_winner_counts[subfam_i] / (sub_pair_count + subfam_winner_counts[subfam_i])
+        else:
+            # this subfam was never a clear winner
+            if subfam_i not in zero_conf_subfams.keys():
+                zero_conf_subfams[subfam_i] = {}
+            zero_conf_subfams[subfam_i][subfam_j] = sub_pair_count
         # ji pair
-        confidence = 0
         if subfam_j in subfam_winner_counts.keys():
             # compute pair confidence
-            confidence = subfam_winner_counts[subfam_j] / (sub_pair_count + subfam_winner_counts[subfam_j])
-        subfam_pair_confidence[(subfam_j, subfam_i)] = confidence
-    return subfam_pair_confidence
+            subfam_pair_confidence[(subfam_j, subfam_i)] = subfam_winner_counts[subfam_j] / (sub_pair_count + subfam_winner_counts[subfam_j])
+        else:
+            # this subfam was never a clear winner
+            if subfam_j not in zero_conf_subfams.keys():
+                zero_conf_subfams[subfam_j] = {}
+            zero_conf_subfams[subfam_j][subfam_i] = sub_pair_count
+    return subfam_pair_confidence, zero_conf_subfams

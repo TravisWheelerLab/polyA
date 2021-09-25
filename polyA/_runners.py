@@ -100,11 +100,11 @@ def run_subfam_confidence(
             confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
 
             # print out subfam, confidence values
-            stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
-            stdout.write(f"query_label\tconfidence\n")
-            for i in range(len(subfams) - 1, 0, -1):
-                if confidence_list[i] > 0.1:
-                    stdout.write(f"{subfams[i]}\t{confidence_list[i]}\n")
+            # stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
+            # stdout.write(f"query_label\tconfidence\n")
+            # for i in range(len(subfams) - 1, 0, -1):
+            #     if confidence_list[i] > 0.1:
+            #         stdout.write(f"{subfams[i]}\t{confidence_list[i]}\n")
 
             # check for a clear winner
             if confidence_list[-1] > 0.9:
@@ -129,11 +129,15 @@ def run_subfam_confidence(
         subfams.append(a.subfamily)
         scores.append(a.score)
     print("finished confidence calcs")
-    subfam_pair_confidence = confidence_subfam_pairs(uncertain_subfam_pairs, subfam_winners)
+    subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(uncertain_subfam_pairs, subfam_winners)
     sorted_pairs = sorted(subfam_pair_confidence.items(), key=lambda item: item[1])
+    print("Subfam confidence")
     for item in sorted_pairs:
         print(item)
-    # what do these values mean
+    print("Zero confidence subfams")
+    for subfam, val in zero_conf_subfams.items():
+        print(subfam)
+        print(sorted(val.items(), key=lambda item: item[1], reverse=True))
 
 
 def _validate_target(target: Alignment) -> None:
