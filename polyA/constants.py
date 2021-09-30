@@ -38,7 +38,7 @@ About 6% of the genome is expected to be tandem repeats.
 
 SAME_PROB_LOG = 0.0
 """
-penalty for staying int he same state in the DP.
+penalty for staying in the same state in the DP.
 mathematically not exactly 0, but in python log(1-10e-45) = 0
 so set to 0 and avoid doing the math
 """
