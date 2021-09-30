@@ -20,9 +20,22 @@ def get_info(info_array):
     chrom = info_array[4]
     chrom = info_array[4]
 
-    # doesn't have chrom info because it's an artificial seq
-    if "chr" not in chrom:
+    # format chrom name to match "(.+):(\d+)-(\d+)"
+    # account for the following input formats:
+    # chr99:1-1802
+    # AluSc5__hg38_chr21:22854647-22854928
+    # chr99_1_1802 -> chr99:1-1802
+    # Chr19_1_1802 -> chr19:1-1802
+    if "chr" not in chrom.lower():
+        # doesn't have chrom info because it's an artificial seq
         chrom = "chr0:0000-0000"
+    chrom = chrom.replace("Chr", "chr")
+    chrom_start, chrom_end = chrom.split("chr")
+    chrom_end_values = chrom_end.split("_")
+    if len(chrom_end_values) == 3:
+        # reformat chrom_end
+        chrom_end = chrom_end_values[0] + ":" + chrom_end_values[1] + "-" + chrom_end_values[2]
+    chrom = chrom_start + "chr" + chrom_end
 
     start = info_array[5]
     stop = info_array[6]
