@@ -18,14 +18,8 @@ def get_info(info_array):
     """
     score = info_array[0]
     chrom = info_array[4]
-    chrom = info_array[4]
 
     # format chrom name to match "(.+):(\d+)-(\d+)"
-    # account for the following input formats:
-    # chr99:1-1802
-    # AluSc5__hg38_chr21:22854647-22854928
-    # chr99_1_1802 -> chr99:1-1802
-    # Chr19_1_1802 -> chr19:1-1802
     if "chr" not in chrom.lower():
         # doesn't have chrom info because it's an artificial seq
         chrom = "chr0:0000-0000"
