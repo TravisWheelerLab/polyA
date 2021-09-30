@@ -28,7 +28,13 @@ def get_info(info_array):
     chrom_end_values = chrom_end.split("_")
     if len(chrom_end_values) == 3:
         # reformat chrom_end
-        chrom_end = chrom_end_values[0] + ":" + chrom_end_values[1] + "-" + chrom_end_values[2]
+        chrom_end = (
+            chrom_end_values[0]
+            + ":"
+            + chrom_end_values[1]
+            + "-"
+            + chrom_end_values[2]
+        )
     chrom = chrom_start + "chr" + chrom_end
 
     start = info_array[5]
