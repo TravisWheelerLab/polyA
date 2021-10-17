@@ -7,7 +7,7 @@ from .alignment import Alignment
 from .calc_repeat_scores import calculate_repeat_scores
 from .collapse_matrices import collapse_matrices
 from .confidence_cm import confidence_only
-from .constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
+from .constants import SAME_PROB_LOG, SKIP_ALIGN_SCORE
 from .edges import edges
 from .extract_nodes import extract_nodes
 from .fill_align_matrix import fill_align_matrix
@@ -113,8 +113,12 @@ def _handle_single_alignment(
     return target.start, target.stop
 
 
-def _change_probs(seq_count: int) -> Tuple[float, float, float]:
-    change_prob_log = log(CHANGE_PROB / (seq_count - 1))
+def _change_probs(
+    seq_count: int, trans_penalty: int
+) -> Tuple[float, float, float]:
+    # base probability of changing annotations
+    change_prob = 10 ** (-1 * trans_penalty)
+    change_prob_log = log(change_prob / (seq_count - 1))
 
     # jumping in and then out of the skip state counts as 1 jump
     change_prob_skip = change_prob_log / 2
@@ -129,6 +133,7 @@ def run_full(
     alignments: List[Alignment],
     tandem_repeats: List[TandemRepeat],
     chunk_size: int,
+    trans_penalty: int,
     sub_matrix_scores: SubMatrixCollection,
     subfam_counts: Dict[str, float],
     shard_start: int,
@@ -150,7 +155,9 @@ def run_full(
             printer,
         )
 
-    change_prob_log, change_prob_skip, same_prob_skip = _change_probs(seq_count)
+    change_prob_log, change_prob_skip, same_prob_skip = _change_probs(
+        seq_count, trans_penalty
+    )
 
     # We use a whole bunch of parallel lists to store alignment data. This may
     # change in the future, but for now it is an artifact of an earlier version

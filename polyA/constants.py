@@ -1,6 +1,6 @@
-CHANGE_PROB = 10 ** -55
+DEFAULT_TRANS_PENALTY = 55
 """
-The base probability of changing annotations.
+The positive exponent value for the base probability of changing annotations.
 """
 
 DEFAULT_CHUNK_SIZE = 31
