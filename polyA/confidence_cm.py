@@ -169,7 +169,9 @@ def confidence_subfam_pairs(
         # ij pair
         if subfam_i in subfam_winner_counts.keys():
             # compute pair confidence
-            subfam_pair_confidence[(subfam_i, subfam_j)] = subfam_winner_counts[subfam_i] / (sub_pair_count + subfam_winner_counts[subfam_i])
+            subfam_pair_confidence[(subfam_i, subfam_j)] = subfam_winner_counts[
+                subfam_i
+            ] / (sub_pair_count + subfam_winner_counts[subfam_i])
         else:
             # this subfam was never a clear winner
             if subfam_i not in zero_conf_subfams.keys():
@@ -178,7 +180,9 @@ def confidence_subfam_pairs(
         # ji pair
         if subfam_j in subfam_winner_counts.keys():
             # compute pair confidence
-            subfam_pair_confidence[(subfam_j, subfam_i)] = subfam_winner_counts[subfam_j] / (sub_pair_count + subfam_winner_counts[subfam_j])
+            subfam_pair_confidence[(subfam_j, subfam_i)] = subfam_winner_counts[
+                subfam_j
+            ] / (sub_pair_count + subfam_winner_counts[subfam_j])
         else:
             # this subfam was never a clear winner
             if subfam_j not in zero_conf_subfams.keys():

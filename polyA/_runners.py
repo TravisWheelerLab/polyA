@@ -2,12 +2,11 @@ from logging import Logger
 from math import log
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
-from collections import Counter
 
 from .alignment import Alignment
 from .calc_repeat_scores import calculate_repeat_scores
 from .collapse_matrices import collapse_matrices
-from .confidence_cm import confidence_only, confidence_subfam_pairs
+from .confidence_cm import confidence_only
 from .constants import CHANGE_PROB, SAME_PROB_LOG, SKIP_ALIGN_SCORE
 from .edges import edges
 from .extract_nodes import extract_nodes
@@ -24,6 +23,7 @@ from .print_helpers import find_consensus_lengths
 from .printers import Printer
 from .substitution_matrix import SubMatrix, SubMatrixCollection
 from .ultra_provider import TandemRepeat
+from .subfam_confidence import subfam_confidence
 
 
 def run_confidence(
@@ -67,6 +67,7 @@ def run_confidence(
 def run_subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
+    msa_dir_path: str,
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -77,67 +78,19 @@ def run_subfam_confidence(
 
     :param alignments: list of alignments to run on
     :param lambs: the values of lambda to use for each alignment (from Easel)
+    :param sub_matrix_scores:
     """
-    if len(alignments) != len(lambs):
-        raise RuntimeError(
-            "number of alignments must match number of lambda values"
-        )
-
-    subfams = []
-    scores = []
-    prev_test_seq_name = ""
-    test_seqs = 0
-    uncertain_subfam_pairs = Counter()
-    subfam_winners = Counter()
-
-    for i, a in enumerate(alignments):
-        # determine if chrom_name has changed, then add to list
-        test_seq_name = a.chrom_name + ":" + str(a.chrom_start) + "-" + str(a.chrom_stop)
-        if test_seq_name != prev_test_seq_name and len(subfams) != 0:
-            test_seqs += 1
-            # run confidence_only on prev input
-            confidence_list = confidence_only(scores, lambs)
-            confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
-
-            # print out subfam, confidence values
-            # stdout.write(f"test seq {test_seqs}: {prev_test_seq_name}\n")
-            # stdout.write(f"query_label\tconfidence\n")
-            # for i in range(len(subfams) - 1, 0, -1):
-            #     if confidence_list[i] > 0.1:
-            #         stdout.write(f"{subfams[i]}\t{confidence_list[i]}\n")
-
-            # check for a clear winner
-            if confidence_list[-1] > 0.9:
-                subfam_winners[subfams[-1]] += 1
-            else:
-                # look for uncertain pairs
-                for i in range(len(subfams) - 1, 0, -1):
-                    if confidence_list[i] < 0.1:
-                        break
-                    for j in range(i - 1, 0, -1):
-                        if confidence_list[j] < 0.1:
-                            break
-                        # otherwise count subfam pair
-                        sub_pair = [subfams[i], subfams[j]]
-                        sub_pair.sort()
-                        uncertain_subfam_pairs[tuple(sub_pair)] += 1
-
-            # create new lists for new test seq
-            prev_test_seq_name = test_seq_name
-            subfams = []
-            scores = []
-        subfams.append(a.subfamily)
-        scores.append(a.score)
-    print("finished confidence calcs")
-    subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(uncertain_subfam_pairs, subfam_winners)
-    sorted_pairs = sorted(subfam_pair_confidence.items(), key=lambda item: item[1])
-    print("Subfam confidence")
-    for item in sorted_pairs:
-        print(item)
-    print("Zero confidence subfams")
-    for subfam, val in zero_conf_subfams.items():
-        print(subfam)
-        print(sorted(val.items(), key=lambda item: item[1], reverse=True))
+    consensus_seq, merged_subfam, original_subfams = subfam_confidence(
+        alignments, lambs, msa_dir_path
+    )
+    # this is the new library for cross match
+    merged_subfam_fasta = msa_dir_path + "merged_seq.fa"
+    outfile = open(merged_subfam_fasta, "w")
+    if merged_subfam != "":
+        outfile.write(">" + merged_subfam)
+        outfile.write(consensus_seq)
+        print(original_subfams[0], original_subfams[1])
+    outfile.close()
 
 
 def _validate_target(target: Alignment) -> None:

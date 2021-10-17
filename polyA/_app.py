@@ -153,7 +153,8 @@ def run():
     if opts.subfam_confidence:
         run_subfam_confidence(
             alignments,
-            lambs=lambda_values,
+            lambda_values,
+            opts.subfam_confidence,
         )
         exit()
 

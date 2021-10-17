@@ -105,9 +105,9 @@ class Options:
         )
         parser.add_argument(
             "--subfam-confidence",
-            action="store_true",
-            default=False,
-            help="run the confidence calculation for subfamilies and then exit",
+            metavar="PATH",
+            default="",
+            help="run the confidence calculation for merging subfamilies",
         )
         parser.add_argument(
             "--prior-counts",
