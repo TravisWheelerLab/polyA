@@ -173,6 +173,10 @@ def run():
     # ----------------------------------------------------------------
     # Loop through the alignment shards and process each independently
     # ----------------------------------------------------------------
+    if opts.trans_penalty < 0:
+        raise AppError(
+            f"cannot use a transition penalty of {opts.trans_penalty}"
+        )
 
     # FIXME: if shard gap is infinite, use all TRs (skip breaking them up)
     tr_start: int = 0
@@ -206,6 +210,7 @@ def run():
             chunk.alignments,
             tandem_repeats_chunk,
             opts.chunk_size,
+            opts.trans_penalty,
             sub_matrices,
             subfam_counts,
             chunk_start,

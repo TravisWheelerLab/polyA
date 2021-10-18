@@ -18,12 +18,12 @@ Command line usage is also included below for convenience.
 
 ::
 
-    usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
-                 [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences SEQS]
-                 [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
-                 [--log-file LOG] [--log-level LEVEL] [--matrix-position]
-                 [--output-path PATH] [--sequence-position] [--soda]
-                 ALIGNMENTS MATRICES
+    usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--trans-penalty TRANS_PENALTY]
+              [--confidence] [--prior-counts FILE] [--shard-gap SHARD_GAP]
+              [--sequences SEQS] [--ultra-data FILE] [--easel-path BIN]
+              [--ultra-path BIN] [--log-file LOG] [--log-level LEVEL]
+              [--matrix-position] [--output-path PATH] [--sequence-position] [--soda]
+              ALIGNMENTS MATRICES
 
     positional arguments:
       ALIGNMENTS              alignments file in Stockholm format
@@ -35,6 +35,8 @@ Command line usage is also included below for convenience.
       -v, --version           show version and exit
       --chunk-size CHUNK_SIZE
                               size of the window in base pairs analyzed together
+      --trans-penalty TRANS_PENALTY
+                              penalty for changing annotations
       --confidence            run the confidence calculation and then exit
       --prior-counts FILE     file containing query genomic counts
       --shard-gap SHARD_GAP
