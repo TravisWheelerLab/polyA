@@ -103,7 +103,7 @@ class Options:
             "--trans-penalty",
             type=int,
             default=DEFAULT_TRANS_PENALTY,
-            help="penalty for changing annotations",
+            help="positive exponent value for the probability of changing annotations",
         )
         parser.add_argument(
             "--confidence",
