@@ -1,6 +1,14 @@
 polyA package
 =============
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   polyA.converters
+
 Submodules
 ----------
 
@@ -56,6 +64,14 @@ polyA.edges module
 ------------------
 
 .. automodule:: polyA.edges
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+polyA.exceptions module
+-----------------------
+
+.. automodule:: polyA.exceptions
    :members:
    :undoc-members:
    :show-inheritance:

@@ -12,18 +12,17 @@
 #
 import os
 import sys
-from typing import List
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'PolyA'
-copyright = '2021, Audrey Shingleton, Kaitlin Carey, George Lesica, Travis Wheeler'
-author = 'Audrey Shingleton, Kaitlin Carey, George Lesica, Travis Wheeler'
+copyright = '2021, PolyA authors'
+author = 'Kaitlin Carey, Audrey Shingleton, George Lesica, Travis Wheeler'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.0'
+release = '1.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,15 +31,12 @@ release = '0.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-        'sphinx.ext.autodoc',
-        'sphinx.ext.doctest',
-        'sphinx.ext.mathjax',
-        'sphinx.ext.napoleon',
-        'sphinx.ext.todo',
-        'm2r2',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.todo',
 ]
-
-todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -48,7 +44,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns: List[str] = []
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
