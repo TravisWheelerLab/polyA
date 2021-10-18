@@ -1,6 +1,7 @@
 DEFAULT_TRANS_PENALTY = 55
 """
 The positive exponent value for the base probability of changing annotations.
+A value of 55 means the probability will be 1e-55.
 """
 
 DEFAULT_CHUNK_SIZE = 31

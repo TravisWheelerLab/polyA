@@ -64,11 +64,11 @@ Command line usage is available with `polyA -h`. It is also included below for
 convenience.
 
 ```
-usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--confidence]
-             [--prior-counts FILE] [--shard-gap SHARD_GAP] [--sequences SEQS]
-             [--ultra-data FILE] [--easel-path BIN] [--ultra-path BIN]
-             [--log-file LOG] [--log-level LEVEL] [--matrix-position]
-             [--output-path PATH] [--sequence-position] [--soda]
+usage: polyA [-h] [-v] [--chunk-size CHUNK_SIZE] [--trans-penalty TRANS_PENALTY]
+             [--confidence] [--prior-counts FILE] [--shard-gap SHARD_GAP]
+             [--sequences SEQS] [--ultra-data FILE] [--easel-path BIN]
+             [--ultra-path BIN] [--log-file LOG] [--log-level LEVEL]
+             [--matrix-position] [--output-path PATH] [--sequence-position] [--soda]
              ALIGNMENTS MATRICES
 
 PolyA sequence adjudication tool
@@ -82,7 +82,8 @@ optional arguments:
   -v, --version           show version and exit
   --chunk-size CHUNK_SIZE
                           size of the window in base pairs analyzed together
-  --confidence            run the confidence calculation and then exit
+  --trans-penalty TRANS_PENALTY
+                          penalty for changing annotations
   --prior-counts FILE     file containing query genomic counts
   --shard-gap SHARD_GAP
                           maximum alignment gap before sharding occurs
