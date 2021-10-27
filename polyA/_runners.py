@@ -67,7 +67,8 @@ def run_confidence(
 def run_subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
-    msa_dir_path: str,
+    instances_path: str,
+    merged_subfam_path: str,
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -80,12 +81,13 @@ def run_subfam_confidence(
     :param lambs: the values of lambda to use for each alignment (from Easel)
     :param sub_matrix_scores:
     """
+    # uses instances_path when merging subfams
     consensus_seq, merged_subfam, original_subfams = subfam_confidence(
-        alignments, lambs, msa_dir_path
+        alignments, lambs, instances_path
     )
-    # this is the new library for cross match
-    merged_subfam_fasta = msa_dir_path + "merged_seq.fa"
-    outfile = open(merged_subfam_fasta, "w")
+    # new library for cross match
+    merged_subfam_fasta_outfile = merged_subfam_path + "merged_subfam.consensus"
+    outfile = open(merged_subfam_fasta_outfile, "w")
     if merged_subfam != "":
         outfile.write(">" + merged_subfam)
         outfile.write(consensus_seq)

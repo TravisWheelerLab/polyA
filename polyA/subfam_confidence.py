@@ -25,8 +25,7 @@ def pick_merged_subfam_name(subfam_pair: Tuple[str, str]):
         # switch names so subfam A is always the merged one
         subfam_A, subfam_B = subfam_B, subfam_A
     else:
-        # neither have been merged yet
-        # default merged name on subfam A
+        # neither have been merged yet, default merged name for subfam A
         merged_name = subfam_A + "_merged"
     return subfam_A, subfam_B, merged_name
 
@@ -157,30 +156,29 @@ def subfam_confidence(
         )[0][1],
         reverse=True,
     )
-    # FIXME: merge zero conf first
+
     merged_consensus = ""
     merged_name = ""
     sub_pair = ()
 
-    # zero conf pairs
+    # check to merge zero confidence pairs first
     for zero_conf_item in sorted_zero:
         zero_conf_highest_pair = sorted(
             zero_conf_item[1].items(), key=lambda item: item[1], reverse=True
         )[0]
-        # neither subfams have been merged yet -> merge them
         sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
         merged_consensus, merged_name = merge_subfams(sub_pair, msa_dir_path)
         return merged_consensus, merged_name, sub_pair
 
-    # check to merge with best conf value
+    # merge if confidence value is under some threshold
     sorted_pairs = sorted(
         subfam_pair_confidence.items(), key=lambda item: item[1]
     )
     # (('AluYk2#SINE/Alu', 'AluY#SINE/Alu'), 0.00558659217877095)
-    # merge the best one first
+    # merge lowest conf pair first
     if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
         sub_pair = sorted_pairs[0][0]
         merged_consensus, merged_name = merge_subfams(sub_pair, msa_dir_path)
-    # these will be empty if sorted_pairs is empty or
+    # return values will be empty if sorted_pairs is empty or
     # >= MERGE_CONF_THRESH then don't return stuff
     return merged_consensus, merged_name, sub_pair

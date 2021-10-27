@@ -104,10 +104,16 @@ class Options:
             help="run the confidence calculation and then exit",
         )
         parser.add_argument(
-            "--subfam-confidence",
+            "--subfam-instances-path",
             metavar="PATH",
             default="",
-            help="run the confidence calculation for merging subfamilies",
+            help="dir with fasta files of the subfam instances",
+        )
+        parser.add_argument(
+            "--output-consensus-path",
+            metavar="PATH",
+            default="",
+            help="dir to output a fasta file of the merged consensus sequence",
         )
         parser.add_argument(
             "--prior-counts",
@@ -226,7 +232,8 @@ class Options:
 
         self.chunk_size = namespace.chunk_size
         self.confidence = namespace.confidence
-        self.subfam_confidence = namespace.subfam_confidence
+        self.subfam_instances_path = namespace.subfam_instances_path
+        self.output_consensus_path = namespace.output_consensus_path
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
@@ -251,5 +258,5 @@ class Options:
         if not (self.cm_to_stockholm or self.rm_to_stockholm):
             if not (self.alignments_file_path and self.alignments_file_path):
                 parser.error(
-                    "ALIGNMENTS and MATRICES and required unless using a converter"
+                    "ALIGNMENTS and MATRICES are required unless using a converter"
                 )
