@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Dict, List, Optional, TextIO, Tuple, Iterable
 from .confidence_cm import confidence_only, confidence_subfam_pairs
 from .alignment import Alignment
+from os import remove
 
 
 MERGE_CONF_THRESH = 0.5
@@ -30,13 +31,13 @@ def pick_merged_subfam_name(subfam_pair: Tuple[str, str]):
     return subfam_A, subfam_B, merged_name
 
 
-def merge_subfams(subfam_pair: Tuple[str, str], msa_dir_path):
+def merge_subfams(subfam_pair: Tuple[str, str], subfam_instances_path):
     subfam_A, subfam_B, merged_name = pick_merged_subfam_name(subfam_pair)
-    subfam_A_instances = msa_dir_path + subfam_A + ".fa"
-    subfam_B_instances = msa_dir_path + subfam_B + ".fa"
-    merged_subfam_instances = msa_dir_path + merged_name + ".fa"
+    subfam_A_instances = subfam_instances_path + subfam_A + ".fa"
+    subfam_B_instances = subfam_instances_path + subfam_B + ".fa"
+    merged_subfam_instances = subfam_instances_path + merged_name + ".fa"
 
-    # create file with all instances
+    # create file with all subfam instances
     outfile = open(merged_subfam_instances, "w")
     with open(subfam_A_instances, "r") as infile:
         outfile.write(infile.read())
@@ -44,9 +45,9 @@ def merge_subfams(subfam_pair: Tuple[str, str], msa_dir_path):
         outfile.write(infile.read())
     outfile.close()
 
-    # create MSA from the merged instances file
+    # create MSA from the instances file
     # TODO: eventually use refiner for this
-    merged_subfam_msa = msa_dir_path + merged_name + ".afa"
+    merged_subfam_msa = subfam_instances_path + merged_name + ".afa"
     with open(merged_subfam_msa, "w") as f_out_merged_msa:
         process = Popen(
             ["mafft", merged_subfam_instances],
@@ -54,10 +55,8 @@ def merge_subfams(subfam_pair: Tuple[str, str], msa_dir_path):
             stderr=PIPE,
         )
         process.communicate()
-    # should now have the msa for the new thing
-    # get a consensus from this?
-    # TODO: use a temp file for the hmm?
-    hmm_out = msa_dir_path + "merged_subfam.hmm"
+
+    hmm_out = subfam_instances_path + "merged_subfam.hmm"
     process = Popen(
         ["hmmbuild", hmm_out, merged_subfam_msa], stdout=PIPE, stderr=PIPE
     )
@@ -68,6 +67,7 @@ def merge_subfams(subfam_pair: Tuple[str, str], msa_dir_path):
         str(stdout).split("consensus")[1].replace("\\n", "\n")
     )
     merged_consensus_seq = merged_consensus_seq[: len(merged_consensus_seq) - 1]
+    remove(hmm_out)
     return merged_consensus_seq, merged_name
 
 
@@ -101,7 +101,7 @@ def test_seq_confidence(
 def subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
-    msa_dir_path: str,
+    subfam_instances_path: str,
 ):
     subfams = []
     scores = []
@@ -167,7 +167,9 @@ def subfam_confidence(
             zero_conf_item[1].items(), key=lambda item: item[1], reverse=True
         )[0]
         sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
-        merged_consensus, merged_name = merge_subfams(sub_pair, msa_dir_path)
+        merged_consensus, merged_name = merge_subfams(
+            sub_pair, subfam_instances_path
+        )
         return merged_consensus, merged_name, sub_pair
 
     # merge if confidence value is under some threshold
@@ -178,7 +180,8 @@ def subfam_confidence(
     # merge lowest conf pair first
     if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
         sub_pair = sorted_pairs[0][0]
-        merged_consensus, merged_name = merge_subfams(sub_pair, msa_dir_path)
-    # return values will be empty if sorted_pairs is empty or
-    # >= MERGE_CONF_THRESH then don't return stuff
+        merged_consensus, merged_name = merge_subfams(
+            sub_pair, subfam_instances_path
+        )
+    # return values will be empty if no pairs to merge
     return merged_consensus, merged_name, sub_pair

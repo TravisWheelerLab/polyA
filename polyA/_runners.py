@@ -67,7 +67,7 @@ def run_confidence(
 def run_subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
-    instances_path: str,
+    subfam_instances_path: str,
     merged_subfam_path: str,
 ) -> None:
     # command line option to just output confidence values for
@@ -81,11 +81,11 @@ def run_subfam_confidence(
     :param lambs: the values of lambda to use for each alignment (from Easel)
     :param sub_matrix_scores:
     """
-    # uses instances_path when merging subfams
+    # need instances_path to merge subfams
     consensus_seq, merged_subfam, original_subfams = subfam_confidence(
-        alignments, lambs, instances_path
+        alignments, lambs, subfam_instances_path
     )
-    # new library for cross match
+    # file for new library for next cross match run
     merged_subfam_fasta_outfile = merged_subfam_path + "merged_subfam.consensus"
     outfile = open(merged_subfam_fasta_outfile, "w")
     if merged_subfam != "":
