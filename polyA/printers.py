@@ -249,7 +249,8 @@ class Printer:
         confidence = []
         j: int = 0
         cur_subfam_row: int = 0
-        align_start: int = chrom_start - 1
+        # skip state starts one before the first alignment
+        align_start: int = chrom_start - 2 + start_all
         # skip state values
         while j < num_col:
             heatmap_vals.append(round(matrix[0, j], 3))
