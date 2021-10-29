@@ -5,6 +5,7 @@ from . import __version__
 from .constants import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SHARD_GAP,
+    DEFAULT_TRANS_PENALTY,
 )
 
 
@@ -28,6 +29,7 @@ class Options:
     # -----------------------
 
     chunk_size: int
+    trans_penalty: int
     confidence: bool
     prior_counts_path: str
     shard_gap: int
@@ -96,6 +98,12 @@ class Options:
             type=int,
             default=DEFAULT_CHUNK_SIZE,
             help="size of the window in base pairs analyzed together",
+        )
+        parser.add_argument(
+            "--trans-penalty",
+            type=int,
+            default=DEFAULT_TRANS_PENALTY,
+            help="penalty for changing annotations",
         )
         parser.add_argument(
             "--confidence",
@@ -219,6 +227,7 @@ class Options:
         self.sub_matrices_path = namespace.sub_matrices_path
 
         self.chunk_size = namespace.chunk_size
+        self.trans_penalty = namespace.trans_penalty
         self.confidence = namespace.confidence
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
