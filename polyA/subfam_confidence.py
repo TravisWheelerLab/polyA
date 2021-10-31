@@ -78,6 +78,7 @@ def test_seq_confidence(
     subfam_winners,
     uncertain_subfam_pairs,
 ):
+    # test_seq_confidence updates uncertain_subfam_pairs
     confidence_list = confidence_only(scores, lambs)
     confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))
 
@@ -93,15 +94,18 @@ def test_seq_confidence(
                 if confidence_list[j] < 0.1:
                     break
                 # otherwise count subfam pair
-                sub_pair = [subfams[i], subfams[j]]
-                sub_pair.sort()
-                uncertain_subfam_pairs[tuple(sub_pair)] += 1
+                # a test seq could have multiple alignments to the same subfam
+                if subfams[i] != subfams[j]:
+                    sub_pair = [subfams[i], subfams[j]]
+                    sub_pair.sort()
+                    uncertain_subfam_pairs[tuple(sub_pair)] += 1
 
 
 def subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
+    merge_conf_thresh: float,
 ):
     subfams = []
     scores = []
@@ -176,9 +180,10 @@ def subfam_confidence(
     sorted_pairs = sorted(
         subfam_pair_confidence.items(), key=lambda item: item[1]
     )
+
     # (('AluYk2#SINE/Alu', 'AluY#SINE/Alu'), 0.00558659217877095)
     # merge lowest conf pair first
-    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
+    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < merge_conf_thresh:
         sub_pair = sorted_pairs[0][0]
         merged_consensus, merged_name = merge_subfams(
             sub_pair, subfam_instances_path

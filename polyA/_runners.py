@@ -69,6 +69,7 @@ def run_subfam_confidence(
     lambs: List[float],
     subfam_instances_path: str,
     merged_subfam_path: str,
+    merge_conf_thresh: float,
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -83,7 +84,7 @@ def run_subfam_confidence(
     """
     # need instances_path to merge subfams
     consensus_seq, merged_subfam, original_subfams = subfam_confidence(
-        alignments, lambs, subfam_instances_path
+        alignments, lambs, subfam_instances_path, merge_conf_thresh
     )
     # file for new library for next cross match run
     merged_subfam_fasta_outfile = merged_subfam_path + "merged_subfam.consensus"

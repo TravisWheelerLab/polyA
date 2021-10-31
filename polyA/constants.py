@@ -9,6 +9,11 @@ The width of the "window" used to break a sequence up into segments.
 Measured in base pairs.
 """
 
+DEFAULT_MERGE_THRESH = 0.5
+"""
+Merge any unceratin subfamily pairs that are under this confidence value.
+"""
+
 INFINITE_SHARD_GAP = -1
 """
 A magic value that indicates no sharding should occur.

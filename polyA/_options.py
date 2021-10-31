@@ -5,6 +5,7 @@ from . import __version__
 from .constants import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SHARD_GAP,
+    DEFAULT_MERGE_THRESH,
 )
 
 
@@ -95,6 +96,12 @@ class Options:
             "--chunk-size",
             type=int,
             default=DEFAULT_CHUNK_SIZE,
+            help="size of the window in base pairs analyzed together",
+        )
+        parser.add_argument(
+            "--merge-thresh",
+            type=float,
+            default=DEFAULT_MERGE_THRESH,
             help="size of the window in base pairs analyzed together",
         )
         parser.add_argument(
@@ -231,6 +238,7 @@ class Options:
         self.sub_matrices_path = namespace.sub_matrices_path
 
         self.chunk_size = namespace.chunk_size
+        self.merge_thresh = namespace.merge_thresh
         self.confidence = namespace.confidence
         self.subfam_instances_path = namespace.subfam_instances_path
         self.output_consensus_path = namespace.output_consensus_path
