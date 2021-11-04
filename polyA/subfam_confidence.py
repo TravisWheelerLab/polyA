@@ -10,29 +10,8 @@ from os import remove
 MERGE_CONF_THRESH = 0.5
 
 
-def pick_merged_subfam_name(subfam_pair: Tuple[str, str]):
-    # input: ('AluSg4#SINE/Alu', 'AluSx1#SINE/Alu')
-    # output: AluSg4, AluSx1, AluSg4_merged
-    subfam_A = subfam_pair[0].split("#")[0]
-    subfam_B = subfam_pair[1].split("#")[0]
-    # pick a merged subfam name
-    merged_name = ""
-    if subfam_A.endswith("_merged"):
-        # subfam A has been merged
-        merged_name = subfam_A
-    elif subfam_B.endswith("_merged"):
-        # subfam B has been merged
-        merged_name = subfam_B
-        # switch names so subfam A is always the merged one
-        subfam_A, subfam_B = subfam_B, subfam_A
-    else:
-        # neither have been merged yet, default merged name for subfam A
-        merged_name = subfam_A + "_merged"
-    return subfam_A, subfam_B, merged_name
-
-
-def merge_subfams(subfam_pair: Tuple[str, str], subfam_instances_path):
-    subfam_A, subfam_B, merged_name = pick_merged_subfam_name(subfam_pair)
+def merge_subfams(subfam_A: str, subfam_B: str, subfam_instances_path):
+    merged_name = subfam_A + "_" + subfam_B
     subfam_A_instances = subfam_instances_path + subfam_A + ".fa"
     subfam_B_instances = subfam_instances_path + subfam_B + ".fa"
     merged_subfam_instances = subfam_instances_path + merged_name + ".fa"
@@ -107,14 +86,14 @@ def subfam_confidence(
     subfam_instances_path: str,
     merge_conf_thresh: float,
 ):
-    subfams = []
-    scores = []
-    subfam_lambs = []
+    subfams: List[str] = []
+    scores: List[int] = []
+    subfam_lambs: List[float] = []
 
-    prev_test_seq_name = ""
-    test_seqs = 0
-    uncertain_subfam_pairs = Counter()
-    subfam_winners = Counter()
+    prev_test_seq_name: str = ""
+    test_seqs: int = 0
+    uncertain_subfam_pairs: Dict[Tuple[str, str], int] = Counter()
+    subfam_winners: Dict[str, int] = Counter()
 
     for i, a in enumerate(alignments):
         # determine if chrom_name has changed, then add to list
@@ -153,6 +132,8 @@ def subfam_confidence(
     subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(
         uncertain_subfam_pairs, subfam_winners
     )
+    # sort by subfam i with highest number of uncertain pairs with j
+    # ex: AluYb8 uncertain with AluYb9 403 times
     sorted_zero = sorted(
         zero_conf_subfams.items(),
         key=lambda item: sorted(
@@ -163,7 +144,7 @@ def subfam_confidence(
 
     merged_consensus = ""
     merged_name = ""
-    sub_pair = ()
+    sub_pair: Tuple[str, str] = ("", "")
 
     # check to merge zero confidence pairs first
     for zero_conf_item in sorted_zero:
@@ -172,7 +153,7 @@ def subfam_confidence(
         )[0]
         sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
         merged_consensus, merged_name = merge_subfams(
-            sub_pair, subfam_instances_path
+            zero_conf_item[0], zero_conf_highest_pair[0], subfam_instances_path
         )
         return merged_consensus, merged_name, sub_pair
 
@@ -186,7 +167,7 @@ def subfam_confidence(
     if len(sorted_pairs) != 0 and sorted_pairs[0][1] < merge_conf_thresh:
         sub_pair = sorted_pairs[0][0]
         merged_consensus, merged_name = merge_subfams(
-            sub_pair, subfam_instances_path
+            sub_pair[0], sub_pair[1], subfam_instances_path
         )
     # return values will be empty if no pairs to merge
     return merged_consensus, merged_name, sub_pair

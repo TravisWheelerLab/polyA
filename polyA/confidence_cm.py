@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 import re
 from collections import Counter
 
@@ -158,11 +158,11 @@ def confidence_only(
 def confidence_subfam_pairs(
     subfam_pair_counts: Dict[Tuple[str, str], int],
     subfam_winner_counts: Dict[str, int],
-) -> Tuple[Dict[Tuple[str, str], float], Dict[str, Dict[str, int]]]:
+) -> Tuple[Dict[Tuple[str, str], float], Dict[Any, Any]]:
     # go through pairs
     # compute ij-pair confidence and ji-pair confidence
-    subfam_pair_confidence: Dict[Tuple[str, str], int] = {}
-    zero_conf_subfams = {}
+    subfam_pair_confidence: Dict[Tuple[str, str], float] = {}
+    zero_conf_subfams: Dict[str, Any] = {}
     for sub_pair, sub_pair_count in subfam_pair_counts.items():
         subfam_i = sub_pair[0]
         subfam_j = sub_pair[1]
