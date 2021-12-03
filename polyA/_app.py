@@ -77,16 +77,12 @@ def run():
     if opts.cm_to_stockholm:
         from .converters.cm_to_stockholm import convert
 
-        convert(
-            opts.cm_to_stockholm, opts.stockholm_filename, opts.matrix_filename
-        )
+        convert(opts.cm_to_stockholm, opts.stockholm_path, opts.matrix_path)
 
     if opts.rm_to_stockholm:
         from .converters.rm_to_stockholm import convert
 
-        convert(
-            opts.rm_to_stockholm, opts.stockholm_filename, opts.matrix_filename
-        )
+        convert(opts.rm_to_stockholm, opts.stockholm_path, opts.matrix_path)
 
     if opts.cm_to_stockholm or opts.rm_to_stockholm:
         if not (opts.alignments_file_path and opts.sub_matrices_path):
