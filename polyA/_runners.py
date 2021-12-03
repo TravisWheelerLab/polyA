@@ -64,7 +64,8 @@ def run_confidence(
 
 
 def _validate_target(target: Alignment) -> None:
-    if target.chrom_length == 0:
+    if target.chrom_length == 1:
+        # artifical seq chr0:0000-0000
         Logger(__name__).warning(
             """No chromosome position information found
             (this is OK for artificial sequences but --viz and --heatmap will fail)"""
