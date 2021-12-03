@@ -1,4 +1,4 @@
-from math import inf
+import math
 from typing import Dict, List, Tuple, Optional
 
 from .calculate_score import (
@@ -250,7 +250,7 @@ def fill_align_matrix(
                     num_nucls = temp_count2
 
                     if num_nucls <= half_chunk:
-                        align_score = -inf
+                        align_score = -math.inf
 
                 else:
                     # align_score from previous segment - prev chars score + next chars score
@@ -300,7 +300,7 @@ def fill_align_matrix(
                     align_score / num_nucls * chunk_size
                 )
 
-                if align_score == -inf:
+                if align_score == -math.inf:
                     del align_matrix[i, col_index]
                     break
                 col_index += 1

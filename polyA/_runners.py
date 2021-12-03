@@ -1,5 +1,5 @@
 from logging import Logger
-from math import log
+import math
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple
 
@@ -118,7 +118,7 @@ def _change_probs(
     seq_count: int, trans_penalty: int
 ) -> Tuple[float, float, float]:
     change_prob = 10 ** (-1 * trans_penalty)
-    change_prob_log = log(change_prob / (seq_count - 1))
+    change_prob_log = math.log(change_prob / (seq_count - 1))
 
     # jumping in and then out of the skip state counts as 1 jump
     change_prob_skip = change_prob_log / 2

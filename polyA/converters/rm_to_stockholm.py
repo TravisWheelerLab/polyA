@@ -189,14 +189,16 @@ def print_score_matrix(f_out_matrix, score_matrix, matrix_name):
     f_out_matrix.write("//\n")
 
 
-def convert(filename_rm: str):
+def convert(filename_rm: str, filename_out_sto: str, filename_out_matrix: str):
     matrices = {}
     file_contents = read_file(filename_rm)
 
-    filename_out_sto = filename_rm + ".sto"
+    if not filename_out_sto:
+        filename_out_sto = filename_rm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
 
-    filename_out_matrix = filename_rm + ".matrix"
+    if not filename_out_matrix:
+        filename_out_matrix = filename_rm + ".matrix"
     f_out_matrix = open(filename_out_matrix, "w")
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
@@ -223,7 +225,7 @@ def convert(filename_rm: str):
         ):  # do not put duplicate of matrices in output file
             matrices[matrix_name] = 0
             score_matrix = get_score_matrix(matrix_name)
-            print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
+            print_score_matrix(f_out_matrix, score_matrix, matrix_name)
 
         m = re.match(r"(.+?)\n([\s\S]+)\n\nMatrix", region)
         if m:
@@ -272,3 +274,4 @@ def convert(filename_rm: str):
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
+    f_out_matrix.close()
