@@ -263,8 +263,8 @@ class Options:
 
         self.cm_to_stockholm = namespace.cm_to_stockholm
         self.rm_to_stockholm = namespace.rm_to_stockholm
-        self.stockholm_path = namespace.stockholm_filename
-        self.matrix_path = namespace.matrix_filename
+        self.stockholm_path = namespace.stockholm_path
+        self.matrix_path = namespace.matrix_path
 
         if not (self.cm_to_stockholm or self.rm_to_stockholm):
             if not (self.alignments_file_path and self.alignments_file_path):
