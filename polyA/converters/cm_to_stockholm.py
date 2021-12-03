@@ -196,13 +196,15 @@ def print_score_matrix(
     f_out_matrix.close()
 
 
-def convert(filename_cm: str):
+def convert(filename_cm: str, filename_out_sto: str, filename_out_matrix: str):
     file_contents = read_file(filename_cm)
 
-    filename_out_sto = filename_cm + ".sto"
+    if not filename_out_sto:
+        filename_out_sto = filename_cm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
 
-    filename_out_matrix = filename_cm + ".matrix"
+    if not filename_out_matrix:
+        filename_out_matrix = filename_cm + ".matrix"
     matrix_name = "matrix1"
 
     f_out_sto.write("# STOCKHOLM 1.0\n")

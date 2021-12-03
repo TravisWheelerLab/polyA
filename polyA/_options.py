@@ -63,6 +63,8 @@ class Options:
 
     cm_to_stockholm: str
     rm_to_stockholm: str
+    stockholm_path: str
+    matrix_path: str
 
     def __init__(self, args: Optional[List[str]] = None) -> None:
         parser = ArgumentParser(
@@ -216,6 +218,18 @@ class Options:
             default="",
             help="convert a file in CrossMatch format to PolyA's Stockholm format",
         )
+        parser.add_argument(
+            "--stockholm-path",
+            metavar="FILE",
+            default="",
+            help="path to the Stockholm file to create (for converters)",
+        )
+        parser.add_argument(
+            "--matrix-path",
+            metavar="FILE",
+            default="",
+            help="path to the matrix file to create (for converters)",
+        )
 
         namespace: Namespace
         if args is None:
@@ -249,9 +263,11 @@ class Options:
 
         self.cm_to_stockholm = namespace.cm_to_stockholm
         self.rm_to_stockholm = namespace.rm_to_stockholm
+        self.stockholm_path = namespace.stockholm_filename
+        self.matrix_path = namespace.matrix_filename
 
         if not (self.cm_to_stockholm or self.rm_to_stockholm):
             if not (self.alignments_file_path and self.alignments_file_path):
                 parser.error(
-                    "ALIGNMENTS and MATRICES and required unless using a converter"
+                    "ALIGNMENTS and MATRICES are required unless using a converter"
                 )
