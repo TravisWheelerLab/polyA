@@ -145,7 +145,7 @@ def confidence_only(
 
     # alignment scores
     for index in range(len(region)):
-        converted_score = 2 ** int(region[index] * lambs[index])
+        converted_score = 2 ** (region[index] * lambs[index])
         confidence_list.append(converted_score)
         score_total += converted_score
 
