@@ -62,15 +62,16 @@ def test_seq_confidence(
     confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))
 
     # check for a clear winner
-    if confidence_list[-1] > 0.9:
+    if confidence_list[-1] > 0.75:
         subfam_winners[subfams[-1]] += 1
     else:
+        uncertainity_pair_thresh = confidence_list[-1] / 3
         # look for uncertain pairs
         for i in range(len(subfams) - 1, 0, -1):
-            if confidence_list[i] < 0.1:
+            if confidence_list[i] < uncertainity_pair_thresh:
                 break
             for j in range(i - 1, 0, -1):
-                if confidence_list[j] < 0.1:
+                if confidence_list[j] < uncertainity_pair_thresh:
                     break
                 # otherwise count subfam pair
                 # a test seq could have multiple alignments to the same subfam
@@ -132,6 +133,7 @@ def subfam_confidence(
     subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(
         uncertain_subfam_pairs, subfam_winners
     )
+
     # sort by subfam i with highest number of uncertain pairs with j
     # ex: AluYb8 uncertain with AluYb9 403 times
     sorted_zero = sorted(
