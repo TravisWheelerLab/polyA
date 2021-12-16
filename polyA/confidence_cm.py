@@ -52,15 +52,15 @@ def confidence_cm(
     >>> subs = ["s1", "s2", "s3", "Tandem Repeat"]
     >>> conf = confidence_cm([2, 1, 0.7], counts, subs, [0, 1, 3], 1, False)
     >>> f"{conf[0]:.2f}"
-    '0.65'
+    '0.63'
     >>> f"{conf[1]:.2f}"
     '0.32'
     >>> f"{conf[2]:.2f}"
-    '0.03'
+    '0.05'
     """
 
     confidence_list: List[float] = []
-    score_total: int = 0
+    score_total: float = 0.0
 
     # if command line option to include subfam_counts
     if subfam_counts:
@@ -70,7 +70,7 @@ def confidence_cm(
             m = re.search(r"(.+?)#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
-            converted_score = (2 ** int(region[index])) * subfam_counts[subfam]
+            converted_score = (2 ** region[index]) * subfam_counts[subfam]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
@@ -79,7 +79,7 @@ def confidence_cm(
             m = re.search(r"(.+?)#.+", subfams[subfam_rows[index]])
             if m:
                 subfam = m.group(1)
-            tr_score = (2 ** int(region[index])) * subfam_counts[subfam]
+            tr_score = (2 ** region[index]) * subfam_counts[subfam]
             confidence_list.append(tr_score)
             score_total += tr_score
 
@@ -87,12 +87,12 @@ def confidence_cm(
     else:
         # alignment scores
         for index in range(len(region) - repeats):
-            converted_score = 2 ** int(region[index])
+            converted_score = 2 ** region[index]
             confidence_list.append(converted_score)
             score_total += converted_score
         # TR scores
         for index in range(len(region) - repeats, len(region)):
-            tr_score = 2 ** int(region[index])
+            tr_score = 2 ** region[index]
             confidence_list.append(tr_score)
             score_total += tr_score
 
@@ -136,15 +136,16 @@ def confidence_only(
     >>> lambs = [.1227] * 3
     >>> conf = confidence_only(reg, lambs)
     >>> conf
-    [0.9843787551069454, 0.015380918048546022, 0.0002403268445085316]
+    [0.9784825167229683, 0.021301782651841357, 0.00021570062519031652]
     """
 
     confidence_list: List[float] = []
-    score_total: int = 0
+    score_total: float = 0.0
 
     # alignment scores
     for index in range(len(region)):
-        converted_score = 2 ** int(region[index] * lambs[index])
+        # FIXME: OverflowError: (34, 'Result too large') with large scores
+        converted_score = 2 ** (region[index] * lambs[index])
         confidence_list.append(converted_score)
         score_total += converted_score
 
