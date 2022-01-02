@@ -99,10 +99,10 @@ class Options:
             help="size of the window in base pairs analyzed together",
         )
         parser.add_argument(
-            "--merge-thresh",
-            type=float,
-            default=DEFAULT_MERGE_THRESH,
-            help="size of the window in base pairs analyzed together",
+            "--merge-stats-path",
+            metavar="PATH",
+            default="",
+            help="dir to output a text file of stats behind the merged subfam pair",
         )
         parser.add_argument(
             "--confidence",
@@ -238,7 +238,7 @@ class Options:
         self.sub_matrices_path = namespace.sub_matrices_path
 
         self.chunk_size = namespace.chunk_size
-        self.merge_thresh = namespace.merge_thresh
+        self.merge_stats_path = namespace.merge_stats_path
         self.confidence = namespace.confidence
         self.subfam_instances_path = namespace.subfam_instances_path
         self.output_consensus_path = namespace.output_consensus_path

@@ -85,7 +85,7 @@ def subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
-    merge_conf_thresh: float,
+    merge_stats_path: str,
 ):
     subfams: List[str] = []
     scores: List[int] = []
@@ -147,6 +147,7 @@ def subfam_confidence(
     merged_consensus = ""
     merged_name = ""
     sub_pair: Tuple[str, str] = ("", "")
+    f_stats = open(merge_stats_path, "a")
 
     # check to merge zero confidence pairs first
     for zero_conf_item in sorted_zero:
@@ -157,6 +158,11 @@ def subfam_confidence(
         merged_consensus, merged_name = merge_subfams(
             zero_conf_item[0], zero_conf_highest_pair[0], subfam_instances_path
         )
+        f_stats.write(str(sub_pair))
+        f_stats.write("\n")
+        f_stats.write("uncertain pair count: " + str(zero_conf_highest_pair[1]))
+        f_stats.write("\n")
+        f_stats.close()
         return merged_consensus, merged_name, sub_pair
 
     # merge if confidence value is under some threshold
@@ -166,10 +172,23 @@ def subfam_confidence(
 
     # (('AluYk2#SINE/Alu', 'AluY#SINE/Alu'), 0.00558659217877095)
     # merge lowest conf pair first
-    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < merge_conf_thresh:
+    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
         sub_pair = sorted_pairs[0][0]
         merged_consensus, merged_name = merge_subfams(
             sub_pair[0], sub_pair[1], subfam_instances_path
         )
+        winner_counts = ""
+        for sub in sub_pair:
+            if sub in subfam_winners:
+                winner_counts += str(sub) + ": " + str(subfam_winners[sub]) + "\n"
+        f_stats.write(str(sub_pair) + " " + str(sorted_pairs[0][1]))
+        f_stats.write("\n")
+        f_stats.write("uncertain pair count: " + str(uncertain_subfam_pairs[tuple(sorted(sub_pair))]))
+        f_stats.write("\n")
+        f_stats.write("clear winner counts")
+        f_stats.write("\n")
+        f_stats.write(winner_counts)
+        f_stats.write("\n")
+    f_stats.close()
     # return values will be empty if no pairs to merge
     return merged_consensus, merged_name, sub_pair

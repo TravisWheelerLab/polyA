@@ -156,7 +156,7 @@ def run():
             lambda_values,
             opts.subfam_instances_path,
             opts.output_consensus_path,
-            opts.merge_thresh,
+            opts.merge_stats_path,
         )
         exit()
 
