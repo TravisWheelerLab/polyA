@@ -147,7 +147,6 @@ def subfam_confidence(
     merged_consensus = ""
     merged_name = ""
     sub_pair: Tuple[str, str] = ("", "")
-    f_stats = open(merge_stats_path, "a")
 
     # check to merge zero confidence pairs first
     for zero_conf_item in sorted_zero:
@@ -158,11 +157,15 @@ def subfam_confidence(
         merged_consensus, merged_name = merge_subfams(
             zero_conf_item[0], zero_conf_highest_pair[0], subfam_instances_path
         )
-        f_stats.write(str(sub_pair))
-        f_stats.write("\n")
-        f_stats.write("uncertain pair count: " + str(zero_conf_highest_pair[1]))
-        f_stats.write("\n")
-        f_stats.close()
+        if merge_stats_path:
+            f_stats = open(merge_stats_path, "a")
+            f_stats.write(str(sub_pair))
+            f_stats.write("\n")
+            f_stats.write(
+                "uncertain pair count: " + str(zero_conf_highest_pair[1])
+            )
+            f_stats.write("\n")
+            f_stats.close()
         return merged_consensus, merged_name, sub_pair
 
     # merge if confidence value is under some threshold
@@ -180,15 +183,22 @@ def subfam_confidence(
         winner_counts = ""
         for sub in sub_pair:
             if sub in subfam_winners:
-                winner_counts += str(sub) + ": " + str(subfam_winners[sub]) + "\n"
-        f_stats.write(str(sub_pair) + " " + str(sorted_pairs[0][1]))
-        f_stats.write("\n")
-        f_stats.write("uncertain pair count: " + str(uncertain_subfam_pairs[tuple(sorted(sub_pair))]))
-        f_stats.write("\n")
-        f_stats.write("clear winner counts")
-        f_stats.write("\n")
-        f_stats.write(winner_counts)
-        f_stats.write("\n")
-    f_stats.close()
+                winner_counts += (
+                    str(sub) + ": " + str(subfam_winners[sub]) + "\n"
+                )
+        if merge_stats_path:
+            f_stats = open(merge_stats_path, "a")
+            f_stats.write(str(sub_pair) + " " + str(sorted_pairs[0][1]))
+            f_stats.write("\n")
+            f_stats.write(
+                "uncertain pair count: "
+                + str(uncertain_subfam_pairs[tuple(sorted(sub_pair))])
+            )
+            f_stats.write("\n")
+            f_stats.write("clear winner counts")
+            f_stats.write("\n")
+            f_stats.write(winner_counts)
+            f_stats.write("\n")
+            f_stats.close()
     # return values will be empty if no pairs to merge
     return merged_consensus, merged_name, sub_pair

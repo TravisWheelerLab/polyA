@@ -92,7 +92,7 @@ def run_subfam_confidence(
     if merged_subfam != "":
         outfile.write(">" + merged_subfam)
         outfile.write(consensus_seq)
-        print(original_subfams[0], original_subfams[1])
+        print(original_subfams[0], original_subfams[1], merged_subfam)
     outfile.close()
 
 
