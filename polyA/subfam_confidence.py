@@ -56,6 +56,7 @@ def test_seq_confidence(
     subfams,
     subfam_winners,
     uncertain_subfam_pairs,
+    winner_group_count,
 ):
     # test_seq_confidence updates uncertain_subfam_pairs
     confidence_list = confidence_only(scores, lambs)
@@ -64,6 +65,7 @@ def test_seq_confidence(
     # check for a clear winner
     if confidence_list[-1] > 0.75:
         subfam_winners[subfams[-1]] += 1
+        winner_group_count[subfams[-1]] += 1
     else:
         uncertainity_pair_thresh = confidence_list[-1] / 3
         # look for uncertain pairs
@@ -73,6 +75,7 @@ def test_seq_confidence(
             for j in range(i - 1, 0, -1):
                 if confidence_list[j] < uncertainity_pair_thresh:
                     break
+                winner_group_count[subfams[i]] += 1
                 # otherwise count subfam pair
                 # a test seq could have multiple alignments to the same subfam
                 if subfams[i] != subfams[j]:
@@ -95,7 +98,7 @@ def subfam_confidence(
     test_seqs: int = 0
     uncertain_subfam_pairs: Dict[Tuple[str, str], int] = Counter()
     subfam_winners: Dict[str, int] = Counter()
-
+    winner_group_count: Dict[str, int] = Counter()
     for i, a in enumerate(alignments):
         # determine if chrom_name has changed, then add to list
         test_seq_name = (
@@ -110,6 +113,7 @@ def subfam_confidence(
                 subfams,
                 subfam_winners,
                 uncertain_subfam_pairs,
+                winner_group_count,
             )
 
             # create new lists for new test seq
@@ -128,6 +132,7 @@ def subfam_confidence(
         subfams,
         subfam_winners,
         uncertain_subfam_pairs,
+        winner_group_count,
     )
 
     subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(
@@ -162,6 +167,10 @@ def subfam_confidence(
             f_stats.write(str(sub_pair))
             f_stats.write("\n")
             f_stats.write(
+                "winner group count: " + str(winner_group_count[sub_pair[0]])
+            )
+            f_stats.write("\n")
+            f_stats.write(
                 "uncertain pair count: " + str(zero_conf_highest_pair[1])
             )
             f_stats.write("\n")
@@ -180,15 +189,19 @@ def subfam_confidence(
         merged_consensus, merged_name = merge_subfams(
             sub_pair[0], sub_pair[1], subfam_instances_path
         )
-        winner_counts = ""
+        clear_winner_counts = ""
         for sub in sub_pair:
             if sub in subfam_winners:
-                winner_counts += (
+                clear_winner_counts += (
                     str(sub) + ": " + str(subfam_winners[sub]) + "\n"
                 )
         if merge_stats_path:
             f_stats = open(merge_stats_path, "a")
             f_stats.write(str(sub_pair) + " " + str(sorted_pairs[0][1]))
+            f_stats.write("\n")
+            f_stats.write(
+                "winner group count: " + str(winner_group_count[sub_pair[0]])
+            )
             f_stats.write("\n")
             f_stats.write(
                 "uncertain pair count: "
@@ -197,7 +210,7 @@ def subfam_confidence(
             f_stats.write("\n")
             f_stats.write("clear winner counts")
             f_stats.write("\n")
-            f_stats.write(winner_counts)
+            f_stats.write(clear_winner_counts)
             f_stats.write("\n")
             f_stats.close()
     # return values will be empty if no pairs to merge
