@@ -210,6 +210,8 @@ class Printer:
         chrom_alignments: List[str],
         consensus_starts: List[int],
         consensus_stops: List[int],
+        chrom_starts: List[int],
+        chrom_stops: List[int],
         alignments_matrix: SubfamAlignmentsMatrix,
         matrix: SupportMatrix,
         subfams_collapse: List[str],
@@ -311,6 +313,16 @@ class Printer:
                                 block_sub_alignment[
                                     "alignEnd"
                                 ] = consensus_stops[prev_subfam_row]
+                                block_sub_alignment["chromStart"] = (
+                                    chrom_starts[prev_subfam_row]
+                                    + chrom_start
+                                    - 1
+                                )
+                                block_sub_alignment["chromEnd"] = (
+                                    chrom_stops[prev_subfam_row]
+                                    + chrom_start
+                                    - 1
+                                )
                                 alignments.append(block_sub_alignment)
                             confidence.append(
                                 {
@@ -346,6 +358,12 @@ class Printer:
                     block_sub_alignment["alignEnd"] = consensus_stops[
                         cur_subfam_row
                     ]
+                    block_sub_alignment["chromStart"] = (
+                        chrom_starts[cur_subfam_row] + chrom_start - 1
+                    )
+                    block_sub_alignment["chromEnd"] = (
+                        chrom_stops[cur_subfam_row] + chrom_start - 1
+                    )
                     alignments.append(block_sub_alignment)
                 confidence.append(
                     {"chromStart": align_start, "values": heatmap_vals}
@@ -452,22 +470,20 @@ class Printer:
                 )
                 sub_id += 1
 
-                block_start: List[str] = []
-                block_size: List[str] = []
+                block_start: List[int] = []
+                block_size: List[int] = []
 
-                block_start.append("-1")
-                block_start.append(str(left_flank + 1))
-                block_start.append("-1")
+                block_start.append(-1)
+                block_start.append(left_flank + 1)
+                block_start.append(-1)
 
-                block_size.append(str(left_flank))
+                block_size.append(left_flank)
                 block_size.append(
-                    str(
-                        columns_orig[changes_position_orig[i + 1] - 1]
-                        - columns_orig[changes_position_orig[i]]
-                        + 1
-                    )
+                    columns_orig[changes_position_orig[i + 1] - 1]
+                    - columns_orig[changes_position_orig[i]]
+                    + 1
                 )
-                block_size.append(str(right_flank))
+                block_size.append(right_flank)
 
                 j = i + 1
                 while j < length:
@@ -502,7 +518,7 @@ class Printer:
                                 )
 
                             del block_size[-1]
-                            block_size.append("0")
+                            block_size.append(0)
 
                             align_stop = chrom_start + (
                                 columns_orig[changes_position_orig[j + 1] - 1]
@@ -511,26 +527,20 @@ class Printer:
                             feature_stop = align_stop + right_flank
 
                             block_start.append(
-                                str(
-                                    columns_orig[changes_position_orig[j]]
-                                    + 1
-                                    - block_start_matrix
-                                    + left_flank
-                                )
+                                columns_orig[changes_position_orig[j]]
+                                + 1
+                                - block_start_matrix
+                                + left_flank
                             )
-                            block_start.append("-1")
+                            block_start.append(-1)
 
                             block_size.append(
-                                str(
-                                    columns_orig[
-                                        changes_position_orig[j + 1] - 1
-                                    ]
-                                    - columns_orig[changes_position_orig[j]]
-                                    + 1
-                                )
+                                columns_orig[changes_position_orig[j + 1] - 1]
+                                - columns_orig[changes_position_orig[j]]
+                                + 1
                             )
 
-                            block_size.append(str(right_flank))
+                            block_size.append(right_flank)
 
                             block_count += 2
 
@@ -560,17 +570,17 @@ class Printer:
                     j += 1
                 json_dict_id[str(id)] = json_dict_subid
                 json_annotation: Dict[str, Any] = {
-                    "bin": "0",
+                    "bin": 0,
                     "chrom": chrom,
-                    "chromStart": str(feature_start),
-                    "chromEnd": str(feature_stop),
+                    "chromStart": feature_start,
+                    "chromEnd": feature_stop,
                     "name": subfam,
-                    "score": "0",
+                    "score": 0,
                     "strand": strand,
-                    "alignStart": str(align_start),
-                    "alignEnd": str(align_stop),
-                    "reserved": "0",
-                    "blockCount": str(block_count),
+                    "alignStart": align_start,
+                    "alignEnd": align_stop,
+                    "reserved": 0,
+                    "blockCount": block_count,
                     "blockSizes": block_size,
                     "blockStarts": block_start,
                     "id": (
