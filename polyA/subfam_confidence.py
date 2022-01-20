@@ -20,9 +20,9 @@ def merge_subfams(
     # subfam_A and/or subfam_B could be merged subfams and
     # will need to reference a merged instance file
     if subfam_A in subfam_to_merged_num.keys():
-        subfam_A = "merged_" + subfam_to_merged_num[subfam_A]
+        subfam_A = "merged_" + str(subfam_to_merged_num[subfam_A])
     if subfam_B in subfam_to_merged_num.keys():
-        subfam_B = "merged_" + subfam_to_merged_num[subfam_B]
+        subfam_B = "merged_" + str(subfam_to_merged_num[subfam_B])
 
     subfam_A_instances = subfam_instances_path + subfam_A + ".fa"
     subfam_B_instances = subfam_instances_path + subfam_B + ".fa"
