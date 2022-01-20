@@ -83,7 +83,7 @@ def run_subfam_confidence(
     :param lambs: the values of lambda to use for each alignment (from Easel)
     :param sub_matrix_scores:
     """
-    # read merged_subfams_file
+    # read in merged_subfams_file for subfam instance path look-up:
     # AluY AluYj4 AluY_AluYj4 -> (AluY_AluYj4, 1)
     subfam_to_merged_num: Dict[str, int] = {}
     merged_num: int = 1
@@ -92,8 +92,6 @@ def run_subfam_confidence(
             merged_subfam = merged_line.split()[-1]
             subfam_to_merged_num[merged_subfam] = merged_num
             merged_num += 1
-
-    # need instances_path to merge subfams
     consensus_seq, merged_subfam, original_subfams = subfam_confidence(
         alignments,
         lambs,
@@ -102,16 +100,14 @@ def run_subfam_confidence(
         subfam_to_merged_num,
     )
     # file for new library for next cross match run
-    merged_subfam_fasta_outfile = (
+    merged_subfam_consensus_file = (
         merged_consensus_path + "merged_subfam.consensus"
     )
-    outfile = open(merged_subfam_fasta_outfile, "w")
+    merged_consensus_outfile = open(merged_subfam_consensus_file, "w")
     if merged_subfam != "":
-        outfile.write(">" + merged_subfam)
-        outfile.write(consensus_seq)
-        # FIXME: formally write to file in merged_subfams_path
-        print(original_subfams[0], original_subfams[1], merged_subfam)
-    outfile.close()
+        merged_consensus_outfile.write(">" + merged_subfam)
+        merged_consensus_outfile.write(consensus_seq)
+    merged_consensus_outfile.close()
     with open(merged_subfams_path, "a") as merged_infile:
         merged_infile.write(
             original_subfams[0]
@@ -121,6 +117,7 @@ def run_subfam_confidence(
             + merged_subfam
         )
         merged_infile.write("\n")
+    print(original_subfams[0], original_subfams[1], merged_subfam)
 
 
 def _validate_target(target: Alignment) -> None:
