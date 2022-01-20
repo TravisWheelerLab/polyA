@@ -68,8 +68,9 @@ def run_subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
-    merged_subfam_path: str,
+    merged_consensus_path: str,
     merge_stats_path: str,
+    merged_subfams_path: str,
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -82,18 +83,44 @@ def run_subfam_confidence(
     :param lambs: the values of lambda to use for each alignment (from Easel)
     :param sub_matrix_scores:
     """
+    # read merged_subfams_file
+    # AluY AluYj4 AluY_AluYj4 -> (AluY_AluYj4, 1)
+    subfam_to_merged_num: Dict[str, int] = {}
+    merged_num: int = 1
+    with open(merged_subfams_path, "r") as merged_infile:
+        for merged_line in merged_infile:
+            merged_subfam = merged_line.split()[-1]
+            subfam_to_merged_num[merged_subfam] = merged_num
+            merged_num += 1
+
     # need instances_path to merge subfams
     consensus_seq, merged_subfam, original_subfams = subfam_confidence(
-        alignments, lambs, subfam_instances_path, merge_stats_path
+        alignments,
+        lambs,
+        subfam_instances_path,
+        merge_stats_path,
+        subfam_to_merged_num,
     )
     # file for new library for next cross match run
-    merged_subfam_fasta_outfile = merged_subfam_path + "merged_subfam.consensus"
+    merged_subfam_fasta_outfile = (
+        merged_consensus_path + "merged_subfam.consensus"
+    )
     outfile = open(merged_subfam_fasta_outfile, "w")
     if merged_subfam != "":
         outfile.write(">" + merged_subfam)
         outfile.write(consensus_seq)
+        # FIXME: formally write to file in merged_subfams_path
         print(original_subfams[0], original_subfams[1], merged_subfam)
     outfile.close()
+    with open(merged_subfams_path, "a") as merged_infile:
+        merged_infile.write(
+            original_subfams[0]
+            + " "
+            + original_subfams[1]
+            + " "
+            + merged_subfam
+        )
+        merged_infile.write("\n")
 
 
 def _validate_target(target: Alignment) -> None:

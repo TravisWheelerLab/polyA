@@ -10,11 +10,27 @@ from os import remove
 MERGE_CONF_THRESH = 0.5
 
 
-def merge_subfams(subfam_A: str, subfam_B: str, subfam_instances_path):
+def merge_subfams(
+    subfam_A: str,
+    subfam_B: str,
+    subfam_instances_path: str,
+    subfam_to_merged_num: Dict[str, int],
+):
     merged_name = subfam_A + "_" + subfam_B
+    # subfam_A and/or subfam_B could be merged subfams and
+    # will need to reference a merged instance file
+    if subfam_A in subfam_to_merged_num.keys():
+        subfam_A = "merged_" + subfam_to_merged_num[subfam_A]
+    if subfam_B in subfam_to_merged_num.keys():
+        subfam_B = "merged_" + subfam_to_merged_num[subfam_B]
+
     subfam_A_instances = subfam_instances_path + subfam_A + ".fa"
     subfam_B_instances = subfam_instances_path + subfam_B + ".fa"
-    merged_subfam_instances = subfam_instances_path + merged_name + ".fa"
+
+    next_merged_num = len(subfam_to_merged_num) + 1
+    merged_subfam_instances = (
+        subfam_instances_path + "merged_" + str(next_merged_num) + ".fa"
+    )
 
     # create file with all subfam instances
     outfile = open(merged_subfam_instances, "w")
@@ -72,10 +88,10 @@ def test_seq_confidence(
         for i in range(len(subfams) - 1, 0, -1):
             if confidence_list[i] < uncertainity_pair_thresh:
                 break
+            winner_group_count[subfams[i]] += 1
             for j in range(i - 1, 0, -1):
                 if confidence_list[j] < uncertainity_pair_thresh:
                     break
-                winner_group_count[subfams[i]] += 1
                 # otherwise count subfam pair
                 # a test seq could have multiple alignments to the same subfam
                 if subfams[i] != subfams[j]:
@@ -89,6 +105,7 @@ def subfam_confidence(
     lambs: List[float],
     subfam_instances_path: str,
     merge_stats_path: str,
+    subfam_to_merged_num: Dict[str, int],
 ):
     subfams: List[str] = []
     scores: List[int] = []
@@ -160,7 +177,10 @@ def subfam_confidence(
         )[0]
         sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
         merged_consensus, merged_name = merge_subfams(
-            zero_conf_item[0], zero_conf_highest_pair[0], subfam_instances_path
+            zero_conf_item[0],
+            zero_conf_highest_pair[0],
+            subfam_instances_path,
+            subfam_to_merged_num,
         )
         if merge_stats_path:
             f_stats = open(merge_stats_path, "a")
@@ -187,7 +207,10 @@ def subfam_confidence(
     if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
         sub_pair = sorted_pairs[0][0]
         merged_consensus, merged_name = merge_subfams(
-            sub_pair[0], sub_pair[1], subfam_instances_path
+            sub_pair[0],
+            sub_pair[1],
+            subfam_instances_path,
+            subfam_to_merged_num,
         )
         clear_winner_counts = ""
         for sub in sub_pair:

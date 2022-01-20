@@ -150,13 +150,18 @@ def run():
 
     lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
 
-    if opts.subfam_instances_path and opts.output_consensus_path:
+    if (
+        opts.subfam_instances_path
+        and opts.output_consensus_path
+        and opts.merged_subfams_path
+    ):
         run_subfam_confidence(
             alignments,
             lambda_values,
             opts.subfam_instances_path,
             opts.output_consensus_path,
             opts.merge_stats_path,
+            opts.merged_subfams_path,
         )
         exit()
 

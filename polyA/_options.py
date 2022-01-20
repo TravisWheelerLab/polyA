@@ -102,7 +102,13 @@ class Options:
             "--merge-stats-path",
             metavar="PATH",
             default="",
-            help="dir to output a text file of stats behind the merged subfam pair",
+            help="path to a text file of stats behind merged subfam pairs",
+        )
+        parser.add_argument(
+            "--merged-subfams-path",
+            metavar="PATH",
+            default="",
+            help="path to a text file to track the merged subfams",
         )
         parser.add_argument(
             "--confidence",
@@ -239,6 +245,7 @@ class Options:
 
         self.chunk_size = namespace.chunk_size
         self.merge_stats_path = namespace.merge_stats_path
+        self.merged_subfams_path = namespace.merged_subfams_path
         self.confidence = namespace.confidence
         self.subfam_instances_path = namespace.subfam_instances_path
         self.output_consensus_path = namespace.output_consensus_path
