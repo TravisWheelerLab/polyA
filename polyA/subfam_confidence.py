@@ -78,26 +78,26 @@ def test_seq_confidence(
     confidence_list = confidence_only(scores, lambs)
     confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))
 
-    # check for a clear winner
-    if confidence_list[-1] > 0.75:
-        subfam_winners[subfams[-1]] += 1
-        winner_group_count[subfams[-1]] += 1
-    else:
-        uncertainity_pair_thresh = confidence_list[-1] / 3
-        # look for uncertain pairs
-        for i in range(len(subfams) - 1, 0, -1):
-            if confidence_list[i] < uncertainity_pair_thresh:
+    uncertainity_pair_thresh = confidence_list[-1] / 3
+    # look for uncertain pairs
+    subfam_winner_group_count = 0
+    for i in range(len(subfams) - 1, 0, -1):
+        if confidence_list[i] < uncertainity_pair_thresh:
+            break
+        subfam_winner_group_count += 1
+        winner_group_count[subfams[i]] += 1
+        for j in range(i - 1, 0, -1):
+            if confidence_list[j] < uncertainity_pair_thresh:
                 break
-            winner_group_count[subfams[i]] += 1
-            for j in range(i - 1, 0, -1):
-                if confidence_list[j] < uncertainity_pair_thresh:
-                    break
-                # otherwise count subfam pair
-                # a test seq could have multiple alignments to the same subfam
-                if subfams[i] != subfams[j]:
-                    sub_pair = [subfams[i], subfams[j]]
-                    sub_pair.sort()
-                    uncertain_subfam_pairs[tuple(sub_pair)] += 1
+            # otherwise count subfam pair
+            # a test seq could have multiple alignments to the same subfam
+            if subfams[i] != subfams[j]:
+                sub_pair = [subfams[i], subfams[j]]
+                sub_pair.sort()
+                uncertain_subfam_pairs[tuple(sub_pair)] += 1
+    if subfam_winner_group_count == 1:
+        # only one subfam in the winner group -> clear winner
+        subfam_winners[subfams[-1]] += 1
 
 
 def subfam_confidence(
