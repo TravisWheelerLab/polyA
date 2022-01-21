@@ -30,7 +30,7 @@ def merge_subfams(
     merged_subfam_filename = "merged_" + str(len(subfam_to_merged_num) + 1)
 
     merged_subfam_instances = (
-        subfam_instances_path + "merged_" + merged_subfam_filename + ".fa"
+        subfam_instances_path + merged_subfam_filename + ".fa"
     )
 
     # create file with all subfam instances
