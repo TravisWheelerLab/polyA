@@ -18,7 +18,7 @@ def merge_subfams(
 ):
     merged_name = subfam_A + "_" + subfam_B
     # subfam_A and/or subfam_B could be merged subfams and
-    # will need to reference a merged instance file
+    # will reference a merged instance file
     if subfam_A in subfam_to_merged_num.keys():
         subfam_A = "merged_" + str(subfam_to_merged_num[subfam_A])
     if subfam_B in subfam_to_merged_num.keys():
@@ -27,9 +27,10 @@ def merge_subfams(
     subfam_A_instances = subfam_instances_path + subfam_A + ".fa"
     subfam_B_instances = subfam_instances_path + subfam_B + ".fa"
 
-    next_merged_num = len(subfam_to_merged_num) + 1
+    merged_subfam_filename = "merged_" + str(len(subfam_to_merged_num) + 1)
+
     merged_subfam_instances = (
-        subfam_instances_path + "merged_" + str(next_merged_num) + ".fa"
+        subfam_instances_path + "merged_" + merged_subfam_filename + ".fa"
     )
 
     # create file with all subfam instances
@@ -42,7 +43,7 @@ def merge_subfams(
 
     # create MSA from the instances file
     # TODO: eventually use refiner for this
-    merged_subfam_msa = subfam_instances_path + merged_name + ".afa"
+    merged_subfam_msa = subfam_instances_path + merged_subfam_filename + ".afa"
     with open(merged_subfam_msa, "w") as f_out_merged_msa:
         process = Popen(
             ["mafft", merged_subfam_instances],
