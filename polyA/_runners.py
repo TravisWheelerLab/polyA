@@ -103,21 +103,24 @@ def run_subfam_confidence(
     merged_subfam_consensus_file = (
         merged_consensus_path + "merged_subfam.consensus"
     )
-    merged_consensus_outfile = open(merged_subfam_consensus_file, "w")
     if merged_subfam != "":
-        merged_consensus_outfile.write(">" + merged_subfam)
-        merged_consensus_outfile.write(consensus_seq)
-    merged_consensus_outfile.close()
-    with open(merged_subfams_path, "a") as merged_infile:
-        merged_infile.write(
-            original_subfams[0]
-            + " "
-            + original_subfams[1]
-            + " "
-            + merged_subfam
-        )
-        merged_infile.write("\n")
-    print(original_subfams[0], original_subfams[1], merged_subfam)
+        # write to consensus file
+        with open(
+            merged_subfam_consensus_file, "w"
+        ) as merged_consensus_outfile:
+            merged_consensus_outfile.write(">" + merged_subfam)
+            merged_consensus_outfile.write(consensus_seq)
+        # write to all_merged_subfams file
+        with open(merged_subfams_path, "a") as all_merged_outfile:
+            all_merged_outfile.write(
+                original_subfams[0]
+                + " "
+                + original_subfams[1]
+                + " "
+                + merged_subfam
+            )
+            all_merged_outfile.write("\n")
+        print(original_subfams[0], original_subfams[1], merged_subfam)
 
 
 def _validate_target(target: Alignment) -> None:
