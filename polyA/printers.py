@@ -5,6 +5,19 @@ from typing import Dict, List, Optional, TextIO, Tuple, Any
 from .matrices import SupportMatrix, SubfamAlignmentsMatrix
 
 
+char_complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
+
+
+def complement(sequence: str) -> str:
+    seq_complement: str = ""
+    for seq_char in sequence:
+        if seq_char in {"A", "T", "C", "G"}:
+            seq_complement += char_complement[seq_char]
+        else:
+            seq_complement += seq_char
+    return seq_complement
+
+
 class Printer:
     __output_file: TextIO = stdout
     __print_id: bool
@@ -276,6 +289,10 @@ class Printer:
             while cur_col < num_col:
                 if (k, cur_col) in matrix:
                     # cur subfam row will be unique
+                    # alignments_matrix[subfam, collapse_col + start_all - 1] = (row_index, consensus_pos)
+                    # col val between stop_all - start_all + 1 + 2, sequence position
+                    # + start_all - 1 -> on chrom
+                    # at chrom pos on target, which consensus pos does it correspond to
                     subfam_row_consensus = alignments_matrix[
                         subfams_collapse[k], cur_col + start_all - 1
                     ]
@@ -293,32 +310,51 @@ class Printer:
                             block_sub_alignment: Dict[str, Any] = {}
                             if subfams_collapse[k] != "Tandem Repeat":
                                 block_sub_alignment["id"] = prev_subfam_row
-                                block_sub_alignment[
-                                    "chrSeq"
-                                ] = chrom_alignments[prev_subfam_row]
-                                block_sub_alignment[
-                                    "famSeq"
-                                ] = subfam_alignments[prev_subfam_row]
-                                block_sub_alignment["relativeStart"] = abs(
-                                    consensus_starts[prev_subfam_row]
-                                    - subfam_rows[0]
-                                )
-                                block_sub_alignment["relativeEnd"] = abs(
-                                    consensus_stops[prev_subfam_row]
-                                    - subfam_rows[-1]
-                                )
-                                block_sub_alignment[
-                                    "alignStart"
-                                ] = consensus_starts[prev_subfam_row]
-                                block_sub_alignment[
-                                    "alignEnd"
-                                ] = consensus_stops[prev_subfam_row]
-                                block_sub_alignment["chromStart"] = (
+                                if subfam_rows[0] > subfam_rows[-1]:
+                                    # complement and swap align start and stop
+                                    block_sub_alignment["target"] = complement(
+                                        chrom_alignments[prev_subfam_row]
+                                    )
+                                    block_sub_alignment["query"] = complement(
+                                        subfam_alignments[prev_subfam_row]
+                                    )
+                                    block_sub_alignment[
+                                        "relativeStart"
+                                    ] = subfam_rows[-1]
+                                    block_sub_alignment["relativeEnd"] = (
+                                        subfam_rows[0] - 1
+                                    )
+                                    block_sub_alignment[
+                                        "alignStart"
+                                    ] = consensus_stops[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "alignEnd"
+                                    ] = consensus_starts[prev_subfam_row]
+                                else:
+                                    block_sub_alignment[
+                                        "target"
+                                    ] = chrom_alignments[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "query"
+                                    ] = subfam_alignments[prev_subfam_row]
+                                    block_sub_alignment["relativeStart"] = (
+                                        subfam_rows[0] - 1
+                                    )
+                                    block_sub_alignment[
+                                        "relativeEnd"
+                                    ] = subfam_rows[-1]
+                                    block_sub_alignment[
+                                        "alignStart"
+                                    ] = consensus_starts[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "alignEnd"
+                                    ] = consensus_stops[prev_subfam_row]
+                                block_sub_alignment["start"] = (
                                     chrom_starts[prev_subfam_row]
                                     + chrom_start
                                     - 1
                                 )
-                                block_sub_alignment["chromEnd"] = (
+                                block_sub_alignment["end"] = (
                                     chrom_stops[prev_subfam_row]
                                     + chrom_start
                                     - 1
@@ -340,28 +376,41 @@ class Printer:
                 block_sub_alignment = {}
                 if subfams_collapse[k] != "Tandem Repeat":
                     block_sub_alignment["id"] = cur_subfam_row
-                    block_sub_alignment["chrSeq"] = chrom_alignments[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["famSeq"] = subfam_alignments[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["relativeStart"] = abs(
-                        consensus_starts[cur_subfam_row] - subfam_rows[0]
-                    )
-                    block_sub_alignment["relativeEnd"] = abs(
-                        consensus_stops[cur_subfam_row] - subfam_rows[-1]
-                    )
-                    block_sub_alignment["alignStart"] = consensus_starts[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["alignEnd"] = consensus_stops[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["chromStart"] = (
+                    if subfam_rows[0] > subfam_rows[-1]:
+                        # complement and swap
+                        block_sub_alignment["target"] = complement(
+                            chrom_alignments[cur_subfam_row]
+                        )
+                        block_sub_alignment["query"] = complement(
+                            subfam_alignments[cur_subfam_row]
+                        )
+                        block_sub_alignment["relativeStart"] = subfam_rows[-1]
+                        block_sub_alignment["relativeEnd"] = subfam_rows[0] - 1
+                        block_sub_alignment["alignStart"] = consensus_stops[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["alignEnd"] = consensus_starts[
+                            cur_subfam_row
+                        ]
+                    else:
+                        block_sub_alignment["target"] = chrom_alignments[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["query"] = subfam_alignments[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["relativeStart"] = subfam_rows[0]
+                        block_sub_alignment["relativeEnd"] = subfam_rows[-1]
+                        block_sub_alignment["alignStart"] = consensus_starts[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["alignEnd"] = consensus_stops[
+                            cur_subfam_row
+                        ]
+                    block_sub_alignment["start"] = (
                         chrom_starts[cur_subfam_row] + chrom_start - 1
                     )
-                    block_sub_alignment["chromEnd"] = (
+                    block_sub_alignment["end"] = (
                         chrom_stops[cur_subfam_row] + chrom_start - 1
                     )
                     alignments.append(block_sub_alignment)
