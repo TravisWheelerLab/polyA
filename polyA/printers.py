@@ -18,6 +18,31 @@ def complement(sequence: str) -> str:
     return seq_complement
 
 
+def calc_relative_start_and_end(
+    consensus_start: int,
+    consensus_start_slice: int,
+    consensus_stop_slice: int,
+    query_seq: str,
+):
+    relative_start = 0
+    relative_end = 0
+    cur_consensus_pos = consensus_start
+    query_index = 0
+    while cur_consensus_pos <= consensus_stop_slice:
+        if cur_consensus_pos == consensus_start_slice:
+            relative_start = query_index
+        # find end
+        elif cur_consensus_pos == consensus_stop_slice:
+            relative_end = query_index
+        if query_seq[query_index] != "-":
+            # move forward
+            cur_consensus_pos += 1
+        query_index += 1
+    relative_end += 1
+    # query slice with conf values is query_seq[relative_start:relative_end]
+    return relative_start, relative_end
+
+
 class Printer:
     __output_file: TextIO = stdout
     __print_id: bool
@@ -270,7 +295,7 @@ class Printer:
         while j < num_col:
             heatmap_vals.append(round(matrix[0, j], 3))
             j += 1
-        confidence.append({"chromStart": align_start, "values": heatmap_vals})
+        confidence.append({"start": align_start, "values": heatmap_vals})
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = []
         json_dict["heatmap"].append(heatmap_dict)
@@ -312,16 +337,23 @@ class Printer:
                                 block_sub_alignment["id"] = prev_subfam_row
                                 if subfam_rows[0] > subfam_rows[-1]:
                                     # complement and swap align start and stop positions
-                                    relative_start = (
-                                        subfam_rows[-1]
-                                        - consensus_stops[prev_subfam_row]
+                                    (
+                                        relative_start,
+                                        relative_end,
+                                    ) = calc_relative_start_and_end(
+                                        consensus_stops[prev_subfam_row],
+                                        subfam_rows[-1],
+                                        subfam_rows[0],
+                                        subfam_alignments[prev_subfam_row][
+                                            ::-1
+                                        ],
                                     )
                                     block_sub_alignment[
                                         "relativeStart"
                                     ] = relative_start
                                     block_sub_alignment[
                                         "relativeEnd"
-                                    ] = relative_start + len(subfam_rows)
+                                    ] = relative_end
                                     block_sub_alignment["target"] = complement(
                                         chrom_alignments[prev_subfam_row]
                                     )
@@ -335,16 +367,21 @@ class Printer:
                                         "alignEnd"
                                     ] = consensus_starts[prev_subfam_row]
                                 else:
-                                    relative_start = (
-                                        subfam_rows[0]
-                                        - consensus_starts[prev_subfam_row]
+                                    (
+                                        relative_start,
+                                        relative_end,
+                                    ) = calc_relative_start_and_end(
+                                        consensus_starts[prev_subfam_row],
+                                        subfam_rows[0],
+                                        subfam_rows[-1],
+                                        subfam_alignments[prev_subfam_row],
                                     )
                                     block_sub_alignment[
                                         "relativeStart"
                                     ] = relative_start
                                     block_sub_alignment[
                                         "relativeEnd"
-                                    ] = relative_start + len(subfam_rows)
+                                    ] = relative_end
                                     block_sub_alignment[
                                         "target"
                                     ] = chrom_alignments[prev_subfam_row]
@@ -370,7 +407,7 @@ class Printer:
                                 alignments.append(block_sub_alignment)
                             confidence.append(
                                 {
-                                    "chromStart": align_start,
+                                    "start": align_start,
                                     "values": heatmap_vals,
                                 }
                             )
@@ -385,7 +422,16 @@ class Printer:
                 if subfams_collapse[k] != "Tandem Repeat":
                     block_sub_alignment["id"] = cur_subfam_row
                     if subfam_rows[0] > subfam_rows[-1]:
-                        # complement and swap
+                        # complement and swap align start and end
+                        (
+                            relative_start,
+                            relative_end,
+                        ) = calc_relative_start_and_end(
+                            consensus_stops[cur_subfam_row],
+                            subfam_rows[-1],
+                            subfam_rows[0],
+                            subfam_alignments[cur_subfam_row][::-1],
+                        )
                         relative_start = (
                             subfam_rows[-1] - consensus_stops[cur_subfam_row]
                         )
@@ -406,13 +452,17 @@ class Printer:
                             cur_subfam_row
                         ]
                     else:
-                        relative_start = (
-                            subfam_rows[0] - consensus_starts[cur_subfam_row]
+                        (
+                            relative_start,
+                            relative_end,
+                        ) = calc_relative_start_and_end(
+                            consensus_starts[cur_subfam_row],
+                            subfam_rows[0],
+                            subfam_rows[-1],
+                            subfam_alignments[cur_subfam_row],
                         )
                         block_sub_alignment["relativeStart"] = relative_start
-                        block_sub_alignment[
-                            "relativeEnd"
-                        ] = relative_start + len(subfam_rows)
+                        block_sub_alignment["relativeEnd"] = relative_end
                         block_sub_alignment["target"] = chrom_alignments[
                             cur_subfam_row
                         ]
@@ -433,7 +483,7 @@ class Printer:
                     )
                     alignments.append(block_sub_alignment)
                 confidence.append(
-                    {"chromStart": align_start, "values": heatmap_vals}
+                    {"start": align_start, "values": heatmap_vals}
                 )
             heatmap_dict["confidence"] = confidence
             heatmap_dict["alignments"] = alignments
@@ -667,8 +717,8 @@ class Printer:
             used[i] = 0
             i += 1
 
-        json_dict["chrStart"] = min_align_start
-        json_dict["chrEnd"] = max_align_end
+        json_dict["start"] = min_align_start
+        json_dict["end"] = max_align_end
 
         # prints  outfile for SODA viz
         self.__soda_viz_file.write(json.dumps(json_dict))
