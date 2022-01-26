@@ -348,12 +348,20 @@ class Printer:
                                             ::-1
                                         ],
                                     )
+                                    reverse_relative_start = (
+                                        len(subfam_alignments[prev_subfam_row])
+                                        - relative_end
+                                    )
+                                    reverse_relative_end = (
+                                        len(subfam_alignments[prev_subfam_row])
+                                        - relative_start
+                                    )
                                     block_sub_alignment[
                                         "relativeStart"
-                                    ] = relative_start
+                                    ] = reverse_relative_start
                                     block_sub_alignment[
                                         "relativeEnd"
-                                    ] = relative_end
+                                    ] = reverse_relative_end
                                     block_sub_alignment["target"] = complement(
                                         chrom_alignments[prev_subfam_row]
                                     )
@@ -432,13 +440,20 @@ class Printer:
                             subfam_rows[0],
                             subfam_alignments[cur_subfam_row][::-1],
                         )
-                        relative_start = (
-                            subfam_rows[-1] - consensus_stops[cur_subfam_row]
+                        reverse_relative_start = (
+                            len(subfam_alignments[prev_subfam_row])
+                            - relative_end
                         )
-                        block_sub_alignment["relativeStart"] = relative_start
+                        reverse_relative_end = (
+                            len(subfam_alignments[prev_subfam_row])
+                            - relative_start
+                        )
+                        block_sub_alignment[
+                            "relativeStart"
+                        ] = reverse_relative_start
                         block_sub_alignment[
                             "relativeEnd"
-                        ] = relative_start + len(subfam_rows)
+                        ] = reverse_relative_end
                         block_sub_alignment["target"] = complement(
                             chrom_alignments[cur_subfam_row]
                         )
