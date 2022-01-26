@@ -311,18 +311,22 @@ class Printer:
                             if subfams_collapse[k] != "Tandem Repeat":
                                 block_sub_alignment["id"] = prev_subfam_row
                                 if subfam_rows[0] > subfam_rows[-1]:
-                                    # complement and swap align start and stop
+                                    # complement and swap align start and stop positions
+                                    relative_start = (
+                                        subfam_rows[-1]
+                                        - consensus_stops[prev_subfam_row]
+                                    )
+                                    block_sub_alignment[
+                                        "relativeStart"
+                                    ] = relative_start
+                                    block_sub_alignment[
+                                        "relativeEnd"
+                                    ] = relative_start + len(subfam_rows)
                                     block_sub_alignment["target"] = complement(
                                         chrom_alignments[prev_subfam_row]
                                     )
                                     block_sub_alignment["query"] = complement(
                                         subfam_alignments[prev_subfam_row]
-                                    )
-                                    block_sub_alignment[
-                                        "relativeStart"
-                                    ] = subfam_rows[-1]
-                                    block_sub_alignment["relativeEnd"] = (
-                                        subfam_rows[0] - 1
                                     )
                                     block_sub_alignment[
                                         "alignStart"
@@ -331,18 +335,22 @@ class Printer:
                                         "alignEnd"
                                     ] = consensus_starts[prev_subfam_row]
                                 else:
+                                    relative_start = (
+                                        subfam_rows[0]
+                                        - consensus_starts[prev_subfam_row]
+                                    )
+                                    block_sub_alignment[
+                                        "relativeStart"
+                                    ] = relative_start
+                                    block_sub_alignment[
+                                        "relativeEnd"
+                                    ] = relative_start + len(subfam_rows)
                                     block_sub_alignment[
                                         "target"
                                     ] = chrom_alignments[prev_subfam_row]
                                     block_sub_alignment[
                                         "query"
                                     ] = subfam_alignments[prev_subfam_row]
-                                    block_sub_alignment["relativeStart"] = (
-                                        subfam_rows[0] - 1
-                                    )
-                                    block_sub_alignment[
-                                        "relativeEnd"
-                                    ] = subfam_rows[-1]
                                     block_sub_alignment[
                                         "alignStart"
                                     ] = consensus_starts[prev_subfam_row]
@@ -378,14 +386,19 @@ class Printer:
                     block_sub_alignment["id"] = cur_subfam_row
                     if subfam_rows[0] > subfam_rows[-1]:
                         # complement and swap
+                        relative_start = (
+                            subfam_rows[-1] - consensus_stops[cur_subfam_row]
+                        )
+                        block_sub_alignment["relativeStart"] = relative_start
+                        block_sub_alignment[
+                            "relativeEnd"
+                        ] = relative_start + len(subfam_rows)
                         block_sub_alignment["target"] = complement(
                             chrom_alignments[cur_subfam_row]
                         )
                         block_sub_alignment["query"] = complement(
                             subfam_alignments[cur_subfam_row]
                         )
-                        block_sub_alignment["relativeStart"] = subfam_rows[-1]
-                        block_sub_alignment["relativeEnd"] = subfam_rows[0] - 1
                         block_sub_alignment["alignStart"] = consensus_stops[
                             cur_subfam_row
                         ]
@@ -393,14 +406,19 @@ class Printer:
                             cur_subfam_row
                         ]
                     else:
+                        relative_start = (
+                            subfam_rows[0] - consensus_starts[cur_subfam_row]
+                        )
+                        block_sub_alignment["relativeStart"] = relative_start
+                        block_sub_alignment[
+                            "relativeEnd"
+                        ] = relative_start + len(subfam_rows)
                         block_sub_alignment["target"] = chrom_alignments[
                             cur_subfam_row
                         ]
                         block_sub_alignment["query"] = subfam_alignments[
                             cur_subfam_row
                         ]
-                        block_sub_alignment["relativeStart"] = subfam_rows[0]
-                        block_sub_alignment["relativeEnd"] = subfam_rows[-1]
                         block_sub_alignment["alignStart"] = consensus_starts[
                             cur_subfam_row
                         ]
