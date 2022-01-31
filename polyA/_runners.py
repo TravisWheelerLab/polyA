@@ -72,19 +72,8 @@ def run_subfam_confidence(
     merge_stats_path: str,
     merged_subfams_path: str,
 ) -> None:
-    # command line option to just output confidence values for
-    # single annotation instead of do whole algorithm
-    """
-    Calculate confidence values for single annotations instead of
-    running the entire algorithm.
-    Used to check the subfam confidence of seed seqs
-
-    :param alignments: list of alignments to run on
-    :param lambs: the values of lambda to use for each alignment (from Easel)
-    :param sub_matrix_scores:
-    """
     # read in merged_subfams_file for subfam instance path look-up:
-    # AluY AluYj4 AluY_AluYj4 -> (AluY_AluYj4, 1)
+    # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
     subfam_to_merged_num: Dict[str, int] = {}
     merged_num: int = 1
     with open(merged_subfams_path, "r") as merged_infile:
