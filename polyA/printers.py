@@ -19,27 +19,34 @@ def complement(sequence: str) -> str:
 
 
 def calc_relative_start_and_end(
-    consensus_start: int,
-    consensus_start_slice: int,
-    consensus_stop_slice: int,
-    query_seq: str,
+    confidence_start: int,
+    alignment_start: int,
+    confidence_length: int,
+    target_seq: str,
 ):
-    relative_start = 0
-    relative_end = 0
-    cur_consensus_pos = consensus_start
-    query_index = 0
-    while cur_consensus_pos <= consensus_stop_slice:
-        if cur_consensus_pos == consensus_start_slice:
-            relative_start = query_index
-        # find end
-        elif cur_consensus_pos == consensus_stop_slice:
-            relative_end = query_index
-        if query_seq[query_index] != "-":
-            # move forward
-            cur_consensus_pos += 1
-        query_index += 1
-    relative_end += 1
-    # query slice with conf values is query_seq[relative_start:relative_end]
+    # starts relative to chrom position
+    confidence_offset = confidence_start - alignment_start
+    relative_start = -1
+    relative_end = -1
+
+    # find relative start position
+    non_gap_count = 0
+    for i, char in enumerate(target_seq):
+        if non_gap_count == confidence_offset:
+            relative_start = i
+            break
+        if char != "-":
+            non_gap_count += 1
+
+    # find relative end position
+    non_gap_count = 0
+    for i, char in enumerate(target_seq[relative_start:]):
+        if char != "-":
+            non_gap_count += 1
+        if non_gap_count == confidence_length:
+            relative_end = relative_start + i + 1
+            break
+
     return relative_start, relative_end
 
 
@@ -290,12 +297,12 @@ class Printer:
         j: int = 0
         cur_subfam_row: int = 0
         # skip state starts one before the first alignment
-        align_start: int = chrom_start - 2 + start_all
+        conf_chrom_start: int = chrom_start - 2 + start_all
         # skip state values
         while j < num_col:
             heatmap_vals.append(round(matrix[0, j], 3))
             j += 1
-        confidence.append({"start": align_start, "values": heatmap_vals})
+        confidence.append({"start": conf_chrom_start, "values": heatmap_vals})
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = []
         json_dict["heatmap"].append(heatmap_dict)
@@ -308,9 +315,11 @@ class Printer:
             confidence = []
             alignments = []
             cur_col = 1
-            prev_col = 0
+            next_expected_col = 0
             prev_subfam_row = 0
-            align_start = chrom_start
+            conf_chrom_start = (
+                chrom_start  # chrom position for start of conf values
+            )
             while cur_col < num_col:
                 if (k, cur_col) in matrix:
                     # cur subfam row will be unique
@@ -323,45 +332,38 @@ class Printer:
                     ]
                     cur_subfam_row = subfam_row_consensus[0]
                     if (
-                        cur_col == prev_col
+                        cur_col == next_expected_col
                         and cur_subfam_row == prev_subfam_row
                     ):
                         # continue to add values
                         heatmap_vals.append(round(matrix[k, cur_col], 3))
                         subfam_rows.append(subfam_row_consensus[1])
-                        prev_col += 1
+                        next_expected_col += 1
                     else:
                         if len(heatmap_vals) > 0:
                             block_sub_alignment: Dict[str, Any] = {}
                             if subfams_collapse[k] != "Tandem Repeat":
                                 block_sub_alignment["id"] = prev_subfam_row
+
+                                (
+                                    relative_start,
+                                    relative_end,
+                                ) = calc_relative_start_and_end(
+                                    conf_chrom_start,
+                                    chrom_starts[prev_subfam_row]
+                                    + chrom_start
+                                    - 1,
+                                    len(heatmap_vals),
+                                    chrom_alignments[prev_subfam_row],
+                                )
+                                block_sub_alignment[
+                                    "relativeStart"
+                                ] = relative_start
+                                block_sub_alignment[
+                                    "relativeEnd"
+                                ] = relative_end
                                 if subfam_rows[0] > subfam_rows[-1]:
                                     # complement and swap align start and stop positions
-                                    (
-                                        relative_start,
-                                        relative_end,
-                                    ) = calc_relative_start_and_end(
-                                        consensus_stops[prev_subfam_row],
-                                        subfam_rows[-1],
-                                        subfam_rows[0],
-                                        subfam_alignments[prev_subfam_row][
-                                            ::-1
-                                        ],
-                                    )
-                                    reverse_relative_start = (
-                                        len(subfam_alignments[prev_subfam_row])
-                                        - relative_end
-                                    )
-                                    reverse_relative_end = (
-                                        len(subfam_alignments[prev_subfam_row])
-                                        - relative_start
-                                    )
-                                    block_sub_alignment[
-                                        "relativeStart"
-                                    ] = reverse_relative_start
-                                    block_sub_alignment[
-                                        "relativeEnd"
-                                    ] = reverse_relative_end
                                     block_sub_alignment["target"] = complement(
                                         chrom_alignments[prev_subfam_row]
                                     )
@@ -375,21 +377,6 @@ class Printer:
                                         "alignEnd"
                                     ] = consensus_starts[prev_subfam_row]
                                 else:
-                                    (
-                                        relative_start,
-                                        relative_end,
-                                    ) = calc_relative_start_and_end(
-                                        consensus_starts[prev_subfam_row],
-                                        subfam_rows[0],
-                                        subfam_rows[-1],
-                                        subfam_alignments[prev_subfam_row],
-                                    )
-                                    block_sub_alignment[
-                                        "relativeStart"
-                                    ] = relative_start
-                                    block_sub_alignment[
-                                        "relativeEnd"
-                                    ] = relative_end
                                     block_sub_alignment[
                                         "target"
                                     ] = chrom_alignments[prev_subfam_row]
@@ -415,45 +402,33 @@ class Printer:
                                 alignments.append(block_sub_alignment)
                             confidence.append(
                                 {
-                                    "start": align_start,
+                                    "start": conf_chrom_start,
                                     "values": heatmap_vals,
                                 }
                             )
                         heatmap_vals = [round(matrix[k, cur_col], 3)]
                         subfam_rows = [subfam_row_consensus[1]]
-                        align_start = chrom_start + cur_col + start_all - 2
-                        prev_col = cur_col + 1
+                        conf_chrom_start = chrom_start + cur_col + start_all - 2
+                        next_expected_col = cur_col + 1
                         prev_subfam_row = cur_subfam_row
                 cur_col += 1
             if len(heatmap_vals) > 0:
                 block_sub_alignment = {}
                 if subfams_collapse[k] != "Tandem Repeat":
                     block_sub_alignment["id"] = cur_subfam_row
+                    (
+                        relative_start,
+                        relative_end,
+                    ) = calc_relative_start_and_end(
+                        conf_chrom_start,
+                        chrom_starts[cur_subfam_row] + chrom_start - 1,
+                        len(heatmap_vals),
+                        chrom_alignments[cur_subfam_row],
+                    )
+                    block_sub_alignment["relativeStart"] = relative_start
+                    block_sub_alignment["relativeEnd"] = relative_end
                     if subfam_rows[0] > subfam_rows[-1]:
                         # complement and swap align start and end
-                        (
-                            relative_start,
-                            relative_end,
-                        ) = calc_relative_start_and_end(
-                            consensus_stops[cur_subfam_row],
-                            subfam_rows[-1],
-                            subfam_rows[0],
-                            subfam_alignments[cur_subfam_row][::-1],
-                        )
-                        reverse_relative_start = (
-                            len(subfam_alignments[prev_subfam_row])
-                            - relative_end
-                        )
-                        reverse_relative_end = (
-                            len(subfam_alignments[prev_subfam_row])
-                            - relative_start
-                        )
-                        block_sub_alignment[
-                            "relativeStart"
-                        ] = reverse_relative_start
-                        block_sub_alignment[
-                            "relativeEnd"
-                        ] = reverse_relative_end
                         block_sub_alignment["target"] = complement(
                             chrom_alignments[cur_subfam_row]
                         )
@@ -467,17 +442,6 @@ class Printer:
                             cur_subfam_row
                         ]
                     else:
-                        (
-                            relative_start,
-                            relative_end,
-                        ) = calc_relative_start_and_end(
-                            consensus_starts[cur_subfam_row],
-                            subfam_rows[0],
-                            subfam_rows[-1],
-                            subfam_alignments[cur_subfam_row],
-                        )
-                        block_sub_alignment["relativeStart"] = relative_start
-                        block_sub_alignment["relativeEnd"] = relative_end
                         block_sub_alignment["target"] = chrom_alignments[
                             cur_subfam_row
                         ]
@@ -498,7 +462,7 @@ class Printer:
                     )
                     alignments.append(block_sub_alignment)
                 confidence.append(
-                    {"start": align_start, "values": heatmap_vals}
+                    {"start": conf_chrom_start, "values": heatmap_vals}
                 )
             heatmap_dict["confidence"] = confidence
             heatmap_dict["alignments"] = alignments
