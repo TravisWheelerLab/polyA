@@ -68,7 +68,6 @@ def run_subfam_confidence(
     alignments: List[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
-    merged_consensus_path: str,
     merge_stats_path: str,
     merged_subfams_path: str,
 ) -> None:
@@ -76,12 +75,20 @@ def run_subfam_confidence(
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
     subfam_to_merged_num: Dict[str, int] = {}
     merged_num: int = 1
-    with open(merged_subfams_path, "r") as merged_infile:
-        for merged_line in merged_infile:
+    merged_subfams_file = merged_subfams_path + "merged_subfams.txt"
+    all_merged_subfams_file = merged_subfams_path + "all_merged_subfams.txt"
+
+    # clear file
+    with open(merged_subfams_file, "a") as merged_outfile:
+        merged_outfile.truncate(0)
+
+    # read in file
+    with open(all_merged_subfams_file, "r") as all_merged_infile:
+        for merged_line in all_merged_infile:
             merged_subfam = merged_line.split()[-1]
             subfam_to_merged_num[merged_subfam] = merged_num
             merged_num += 1
-    consensus_seq, merged_subfam, original_subfams = subfam_confidence(
+    merged_msa_file, merged_subfam, original_subfams = subfam_confidence(
         alignments,
         lambs,
         subfam_instances_path,
@@ -89,8 +96,9 @@ def run_subfam_confidence(
         subfam_to_merged_num,
     )
     # file for new library for next cross match run
+    # isn't this the same path?
     merged_subfam_consensus_file = (
-        merged_consensus_path + "merged_subfam.consensus"
+        merged_subfams_path + "merged_subfam.consensus"
     )
     if merged_subfam != "":
         # write to consensus file
@@ -100,7 +108,7 @@ def run_subfam_confidence(
             merged_consensus_outfile.write(">" + merged_subfam)
             merged_consensus_outfile.write(consensus_seq)
         # write to all_merged_subfams file
-        with open(merged_subfams_path, "a") as all_merged_outfile:
+        with open(all_merged_subfams_file, "a") as all_merged_outfile:
             all_merged_outfile.write(
                 original_subfams[0]
                 + " "
@@ -109,7 +117,18 @@ def run_subfam_confidence(
                 + merged_subfam
             )
             all_merged_outfile.write("\n")
-        print(original_subfams[0], original_subfams[1], merged_subfam)
+        # write to merged_subfams file
+        with open(merged_subfams_file, "a") as merged_outfile:
+            merged_outfile.write(
+                original_subfams[0]
+                + " "
+                + original_subfams[1]
+                + " "
+                + merged_subfam
+            )
+            all_merged_outfile.write("\n")
+        # use this for /RepeatModeler/util/linup
+        print(merged_msa_file)
 
 
 def _validate_target(target: Alignment) -> None:

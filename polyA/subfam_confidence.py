@@ -183,22 +183,8 @@ def merge_subfams(
             stderr=PIPE,
         )
         process.communicate()
-
-    # create HMM of the MSA to output a merged consensus seq
-    hmm_out = subfam_instances_path + "merged_subfam.hmm"
-    process = Popen(
-        ["hmmbuild", hmm_out, merged_subfam_msa], stdout=PIPE, stderr=PIPE
-    )
-    process.communicate()
-    process = Popen(["hmmemit", "-c", hmm_out], stdout=PIPE, stderr=PIPE)
-    stdout, stderr = process.communicate()
-    merged_consensus_seq = (
-        str(stdout).split("consensus")[1].replace("\\n", "\n")
-    )
-    merged_consensus_seq = merged_consensus_seq[: len(merged_consensus_seq) - 1]
-    remove(hmm_out)
-
-    return merged_consensus_seq, merged_subfam_name
+    # return msa filename to get the consensus from RepeatModeler
+    return merged_subfam_filename + ".afa", merged_subfam_name
 
 
 def subfam_confidence(
@@ -287,7 +273,7 @@ def subfam_confidence(
     )
 
     # return values will stay empty if no subfams should be merged
-    merged_consensus: str = ""
+    merged_msa_file: str = ""
     merged_name: str = ""
     sub_pair: Tuple[str, str] = ("", "")
 
@@ -297,7 +283,7 @@ def subfam_confidence(
             zero_conf_item[1].items(), key=lambda item: item[1], reverse=True
         )[0]
         sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
-        merged_consensus, merged_name = merge_subfams(
+        merged_msa_file, merged_name = merge_subfams(
             zero_conf_item[0],
             zero_conf_highest_pair[0],
             subfam_instances_path,
@@ -317,7 +303,7 @@ def subfam_confidence(
             )
             f_stats.write("\n")
             f_stats.close()
-        return merged_consensus, merged_name, sub_pair
+        return merged_msa_file, merged_name, sub_pair
 
     # sort uncertain subfamily pairs by confidence values
     # sorted_pairs = [((subfam_i,subfam_j),conf),((subfam_i, subfam_j),conf),...]
@@ -328,7 +314,7 @@ def subfam_confidence(
     # check to merge subfam pair with the lowest confidence
     if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
         sub_pair = sorted_pairs[0][0]
-        merged_consensus, merged_name = merge_subfams(
+        merged_msa_file, merged_name = merge_subfams(
             sub_pair[0],
             sub_pair[1],
             subfam_instances_path,
@@ -360,4 +346,4 @@ def subfam_confidence(
             f_stats.write("\n")
             f_stats.close()
 
-    return merged_consensus, merged_name, sub_pair
+    return merged_msa_file, merged_name, sub_pair
