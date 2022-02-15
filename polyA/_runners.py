@@ -95,8 +95,7 @@ def run_subfam_confidence(
         merge_stats_path,
         subfam_to_merged_num,
     )
-    # file for new library for next cross match run
-    # isn't this the same path?
+    # library file for new alignments
     merged_subfam_consensus_file = (
         merged_subfams_path + "merged_subfam.consensus"
     )
@@ -105,8 +104,10 @@ def run_subfam_confidence(
         with open(
             merged_subfam_consensus_file, "w"
         ) as merged_consensus_outfile:
+            # just write the merged name
             merged_consensus_outfile.write(">" + merged_subfam)
-            merged_consensus_outfile.write(consensus_seq)
+            merged_consensus_outfile.write("\n")
+
         # write to all_merged_subfams file
         with open(all_merged_subfams_file, "a") as all_merged_outfile:
             all_merged_outfile.write(
