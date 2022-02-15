@@ -127,7 +127,7 @@ def run_subfam_confidence(
                 + " "
                 + merged_subfam
             )
-            all_merged_outfile.write("\n")
+            merged_outfile.write("\n")
         # use this for /RepeatModeler/util/linup
         print(merged_msa_file)
 
