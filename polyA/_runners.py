@@ -75,8 +75,8 @@ def run_subfam_confidence(
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
     subfam_to_merged_num: Dict[str, int] = {}
     merged_num: int = 1
-    merged_subfams_file = merged_subfams_path + "merged_subfams.txt"
-    all_merged_subfams_file = merged_subfams_path + "all_merged_subfams.txt"
+    merged_subfams_file = merged_subfams_path + "/merged_subfams.txt"
+    all_merged_subfams_file = merged_subfams_path + "/all_merged_subfams.txt"
 
     # clear file
     with open(merged_subfams_file, "a") as merged_outfile:
@@ -97,7 +97,7 @@ def run_subfam_confidence(
     )
     # library file for new alignments
     merged_subfam_consensus_file = (
-        merged_subfams_path + "merged_subfam.consensus"
+        merged_subfams_path + "/merged_subfam.consensus"
     )
     if merged_subfam != "":
         # write to consensus file
