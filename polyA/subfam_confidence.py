@@ -184,7 +184,7 @@ def merge_subfams(
         )
         process.communicate()
     # return msa filename to get the consensus from RepeatModeler
-    return merged_subfam_filename + ".afa", merged_subfam_name
+    return merged_subfam_filename, merged_subfam_name
 
 
 def subfam_confidence(
