@@ -16,6 +16,7 @@ def test_seq_confidence(
     subfam_winners: Dict[str, int],
     uncertain_subfam_pairs: Dict[Tuple[str, str], int],
     winner_group_count: Dict[str, int],
+    winner_group_thresh: float,
 ):
     """
     Finds subfamilies that are a potential winner of a test sequence.
@@ -37,9 +38,9 @@ def test_seq_confidence(
     confidence_list = confidence_only(scores, lambs)
     confidence_list, subfams = zip(*sorted(zip(confidence_list, subfams)))
 
-    # subfams with conf values >= to max conf / 3
+    # subfams with conf values >= to max conf * winner_group_thresh
     # are potential winners of this test seq
-    potential_winner_thresh = confidence_list[-1] / 3
+    potential_winner_thresh = confidence_list[-1] * winner_group_thresh
 
     # search for subfams above the potential winner threshold
     subfam_winner_group_count = 0
@@ -193,6 +194,7 @@ def subfam_confidence(
     subfam_instances_path: str,
     merge_stats_path: str,
     subfam_to_merged_num: Dict[str, int],
+    winner_group_thresh: float,
 ) -> Tuple[str, str, Tuple[str, str]]:
     """
     Finds and selects a subfamily pair to merge based
@@ -237,6 +239,7 @@ def subfam_confidence(
                 subfam_winners,
                 uncertain_subfam_pairs,
                 winner_group_count,
+                winner_group_thresh,
             )
             # clear inputs for new test seq
             subfams = []
@@ -255,6 +258,7 @@ def subfam_confidence(
         subfam_winners,
         uncertain_subfam_pairs,
         winner_group_count,
+        winner_group_thresh,
     )
 
     # calc conf values of all uncertain subfam pairs

@@ -9,9 +9,9 @@ The width of the "window" used to break a sequence up into segments.
 Measured in base pairs.
 """
 
-DEFAULT_MERGE_THRESH = 0.5
+DEFAULT_WINNER_THRESH = 1 / 3
 """
-Merge any unceratin subfamily pairs that are under this confidence value.
+Max subfam confidence value * k sets the winner group threshold.
 """
 
 INFINITE_SHARD_GAP = -1

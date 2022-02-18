@@ -70,6 +70,7 @@ def run_subfam_confidence(
     subfam_instances_path: str,
     merge_stats_path: str,
     merged_subfams_path: str,
+    winner_group_thresh: float,
 ) -> None:
     # read in merged_subfams_file for subfam instance path look-up:
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
@@ -94,6 +95,7 @@ def run_subfam_confidence(
         subfam_instances_path,
         merge_stats_path,
         subfam_to_merged_num,
+        winner_group_thresh,
     )
 
     if merged_subfam != "":

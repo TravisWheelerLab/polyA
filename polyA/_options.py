@@ -5,7 +5,7 @@ from . import __version__
 from .constants import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SHARD_GAP,
-    DEFAULT_MERGE_THRESH,
+    DEFAULT_WINNER_THRESH,
 )
 
 
@@ -123,10 +123,10 @@ class Options:
             help="dir with fasta files of the subfam instances",
         )
         parser.add_argument(
-            "--output-consensus-path",
-            metavar="PATH",
-            default="",
-            help="dir to output a fasta file of the merged consensus sequence",
+            "--winner-thresh",
+            metavar=float,
+            default=DEFAULT_WINNER_THRESH,
+            help="value to be multiplied by top conf value to set the winner group thresh",
         )
         parser.add_argument(
             "--prior-counts",
