@@ -157,7 +157,7 @@ def run():
             opts.subfam_instances_path,
             opts.merge_stats_path,
             opts.merged_subfams_path,
-            opts.winner_thresh,
+            float(opts.winner_thresh),
         )
         exit()
 
