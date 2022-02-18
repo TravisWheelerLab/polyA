@@ -248,7 +248,7 @@ class Options:
         self.merged_subfams_path = namespace.merged_subfams_path
         self.confidence = namespace.confidence
         self.subfam_instances_path = namespace.subfam_instances_path
-        self.output_consensus_path = namespace.output_consensus_path
+        self.winner_thresh = namespace.winner_thresh
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
