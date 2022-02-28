@@ -1,4 +1,6 @@
 import re
+import mmap
+import os
 
 
 def read_file(filename_cm):
@@ -83,7 +85,10 @@ def get_score_matrix(file_contents):
     grabs score matrix info from alignment file, puts it in correct format, returns string
     """
     score_matrix = ""
-    m_string = re.search(r"Score matrix.+?\n([\s\S]+?)\n\n", file_contents)
+    score_matrix_pattern = r"Score matrix.+?\n([\s\S]+?)\n\n"
+    m_string = re.search(score_matrix_pattern.encode("utf-8"), file_contents)
+    m_string = m_string.group()
+    m_string = m_string.decode("utf-8")
     m_array = m_string[1].split("\n")
 
     score_matrix += m_array[0].lstrip() + "\n"
@@ -98,11 +103,10 @@ def get_gap_penalties(file_contents):
     """
     returns gap_init and gap_ext
     """
-    m_string = re.search(
-        r"Gap penalties: gap_init: (.+?), gap_ext: (.+?),", file_contents
-    )
-    gap_init = m_string[1]
-    gap_ext = m_string[2]
+    gap_pattern = r"Gap penalties: gap_init: (.+?), gap_ext: (.+?),"
+    m_string = re.search(gap_pattern.encode("utf-8"), file_contents)
+    gap_init = m_string[1].decode("utf-8")
+    gap_ext = m_string[2].decode("utf-8")
 
     return gap_init, gap_ext
 
@@ -197,7 +201,10 @@ def print_score_matrix(
 
 
 def convert(filename_cm: str):
-    file_contents = read_file(filename_cm)
+    fp = open(filename_cm, encoding="utf-8")
+    contents = mmap.mmap(
+        fp.fileno(), os.stat(filename_cm).st_size, access=mmap.ACCESS_READ
+    )
 
     filename_out_sto = filename_cm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
@@ -209,9 +216,10 @@ def convert(filename_cm: str):
     f_out_sto.write(f"# ALIGNMENT TOOL cross_match\n")
 
     # get background freqs
+    background_freqs_pattern = r"Assumed background frequencies:.*\n.*\n.*"
     background_freqs = re.findall(
-        r"Assumed background frequencies:.*\n.*\n.*",
-        file_contents,
+        background_freqs_pattern.encode("utf-8"),
+        contents,
     )
     background_freqs = background_freqs[0].splitlines()[1].split()
     background_freqs = background_freqs[: len(background_freqs) - 2]
@@ -222,22 +230,22 @@ def convert(filename_cm: str):
         if freq != 0:
             background_freqs_dict[char] = freq
 
-    score_matrix = get_score_matrix(file_contents)
+    score_matrix = get_score_matrix(contents)
     print_score_matrix(
         filename_out_matrix, score_matrix, matrix_name, background_freqs_dict
     )
 
-    gap_init, gap_ext = get_gap_penalties(file_contents)
+    gap_init, gap_ext = get_gap_penalties(contents)
 
-    alignments = re.findall(
-        r"\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions",
-        file_contents,
-    )
+    pattern = r"\s*?\d+\s+[0-9]+\.[0-9]+\s+[0-9.]+\s+[0-9.]+\s+.+?\n\n[\s\S]+?Transitions"
+    pattern = pattern.encode("utf-8")
 
-    for region in alignments:
+    for region in re.finditer(pattern, contents):
+        region = region.group()
+        region = region.decode("utf-8")
+        region = region.strip()
         info_line: str = ""
         alignment: str = ""
-        region = region.strip()
         m = re.match(r"(.+?)\n([\s\S]+)\n\nTransitions", region)
         if m:
             info_line = m.group(1)
