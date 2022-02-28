@@ -3,7 +3,6 @@ from collections import Counter
 from typing import Dict, List, Tuple, Any
 from .confidence_cm import confidence_only
 from .alignment import Alignment
-from os import remove
 
 
 MERGE_CONF_THRESH = 0.5
@@ -148,13 +147,7 @@ def merge_subfams(
     merged_consensus_seq: consensus sequence of the merged subfam
     merged_subfam_name: name of the merged subfam
     """
-    merged_subfam_name = subfam_i + "_" + subfam_j
-
-    # check if subfams i and j are merged subfams
-    if subfam_i in subfam_to_merged_num.keys():
-        subfam_i = "merged_" + str(subfam_to_merged_num[subfam_i])
-    if subfam_j in subfam_to_merged_num.keys():
-        subfam_j = "merged_" + str(subfam_to_merged_num[subfam_j])
+    merged_subfam_name = subfam_i + "," + subfam_j
 
     # paths to subfam i and j instance files
     subfam_i_instances = subfam_instances_path + subfam_i + ".fa"
