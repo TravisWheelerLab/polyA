@@ -84,12 +84,13 @@ def get_score_matrix(file_contents):
     """
     grabs score matrix info from alignment file, puts it in correct format, returns string
     """
+    # FIXME
     score_matrix = ""
     score_matrix_pattern = r"Score matrix.+?\n([\s\S]+?)\n\n"
     m_string = re.search(score_matrix_pattern.encode("utf-8"), file_contents)
     m_string = m_string.group()
     m_string = m_string.decode("utf-8")
-    m_array = m_string[1].split("\n")
+    m_array = m_string.split("\n")[1:-2]
 
     score_matrix += m_array[0].lstrip() + "\n"
     for i in range(1, len(m_array)):
@@ -217,11 +218,11 @@ def convert(filename_cm: str):
 
     # get background freqs
     background_freqs_pattern = r"Assumed background frequencies:.*\n.*\n.*"
-    background_freqs = re.findall(
-        background_freqs_pattern.encode("utf-8"),
-        contents,
-    )
-    background_freqs = background_freqs[0].splitlines()[1].split()
+    background_freqs_pattern = background_freqs_pattern.encode("utf-8")
+    background_freqs = re.search(background_freqs_pattern, contents)
+    background_freqs = background_freqs.group()
+    background_freqs = background_freqs.decode("utf-8")
+    background_freqs = background_freqs.splitlines()[1].split()
     background_freqs = background_freqs[: len(background_freqs) - 2]
     background_freqs_dict = {}
     for i in range(0, len(background_freqs), 2):
