@@ -1,7 +1,7 @@
 from logging import Logger
 from math import log
 from sys import stdout
-from typing import Dict, List, Optional, TextIO, Tuple
+from typing import Dict, List, Optional, TextIO, Tuple, Iterable
 
 from .alignment import Alignment
 from .calc_repeat_scores import calculate_repeat_scores
@@ -27,8 +27,8 @@ from .subfam_confidence import subfam_confidence
 
 
 def run_confidence(
-    alignments: List[Alignment],
-    lambs: List[float],
+    alignments: Iterable[Alignment],
+    lambda_values: List[float],
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -37,23 +37,16 @@ def run_confidence(
     running the entire algorithm.
 
     :param alignments: list of alignments to run on
-    :param lambs: the values of lambda to use for each alignment (from Easel)
+    :param lambda_values: the values of lambda to use for each alignment (from Easel)
     """
-    if len(alignments) != len(lambs):
-        raise RuntimeError(
-            "number of alignments must match number of lambda values"
-        )
-
     subfams = []
-    subfam_rows = []
     scores = []
 
     for i, a in enumerate(alignments):
         subfams.append(a.subfamily)
-        subfam_rows.append(i)
         scores.append(a.score)
 
-    confidence_list = confidence_only(scores, lambs)
+    confidence_list = confidence_only(scores, lambda_values)
 
     # ignore this because the types work, but mypy doesn't know that
     confidence_list, subfams_copy = zip(*sorted(zip(confidence_list, subfams)))  # type: ignore
@@ -65,7 +58,7 @@ def run_confidence(
 
 
 def run_subfam_confidence(
-    alignments: List[Alignment],
+    alignments: Iterable[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
     merge_stats_path: str,

@@ -1,6 +1,6 @@
 from subprocess import Popen, PIPE
 from collections import Counter
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Iterable
 from .confidence_cm import confidence_only
 from .alignment import Alignment
 
@@ -182,7 +182,7 @@ def merge_subfams(
 
 
 def subfam_confidence(
-    alignments: List[Alignment],
+    alignments: Iterable[Alignment],
     lambs: List[float],
     subfam_instances_path: str,
     merge_stats_path: str,

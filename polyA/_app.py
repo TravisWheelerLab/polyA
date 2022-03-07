@@ -142,15 +142,18 @@ def run():
     # Load alignments to operate on
     # -----------------------------
     with open(opts.alignments_file_path) as _infile:
-        alignments = list(load_alignments(_infile))
+        alignments = load_alignments(_infile)
+
+    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
 
     # --------------------------
     # Run confidence calculation
     # --------------------------
 
-    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
-
     if opts.subfam_instances_path and opts.merged_subfams_path:
+        with open(opts.alignments_file_path) as _infile:
+            alignments = load_alignments(_infile)
+
         run_subfam_confidence(
             alignments,
             lambda_values,
@@ -162,9 +165,12 @@ def run():
         exit()
 
     if opts.confidence:
+        with open(opts.alignments_file_path) as _infile:
+            alignments = load_alignments(_infile)
+
         run_confidence(
             alignments,
-            lambs=lambda_values,
+            lambda_values=lambda_values,
         )
         exit()
 
@@ -189,6 +195,9 @@ def run():
     tr_start: int = 0
     _prev_start: int = -1
     _prev_stop: int = -1
+
+    with open(opts.alignments_file_path) as _infile:
+        alignments = load_alignments(_infile)
 
     for index, chunk in enumerate(
         shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
