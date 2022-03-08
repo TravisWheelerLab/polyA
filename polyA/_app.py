@@ -138,13 +138,14 @@ def run():
 
     outputter = Output(opts.output_path, opts.output_to_file)
 
-    # -----------------------------
-    # Load alignments to operate on
-    # -----------------------------
+    # -------------------------
+    # Compute the lambda values
+    # -------------------------
     with open(opts.alignments_file_path) as _infile:
         alignments = load_alignments(_infile)
-
-    lambda_values = [sub_matrices[a.sub_matrix_name].lamb for a in alignments]
+        lambda_values = [
+            sub_matrices[a.sub_matrix_name].lamb for a in alignments
+        ]
 
     # --------------------------
     # Run confidence calculation
@@ -153,25 +154,25 @@ def run():
     if opts.subfam_instances_path and opts.merged_subfams_path:
         with open(opts.alignments_file_path) as _infile:
             alignments = load_alignments(_infile)
+            run_subfam_confidence(
+                alignments,
+                lambda_values,
+                opts.subfam_instances_path,
+                opts.merge_stats_path,
+                opts.merged_subfams_path,
+                float(opts.winner_thresh),
+            )
 
-        run_subfam_confidence(
-            alignments,
-            lambda_values,
-            opts.subfam_instances_path,
-            opts.merge_stats_path,
-            opts.merged_subfams_path,
-            float(opts.winner_thresh),
-        )
         exit()
 
     if opts.confidence:
         with open(opts.alignments_file_path) as _infile:
             alignments = load_alignments(_infile)
+            run_confidence(
+                alignments,
+                lambda_values=lambda_values,
+            )
 
-        run_confidence(
-            alignments,
-            lambda_values=lambda_values,
-        )
         exit()
 
     # ---------------------
@@ -198,48 +199,50 @@ def run():
 
     with open(opts.alignments_file_path) as _infile:
         alignments = load_alignments(_infile)
-
-    for index, chunk in enumerate(
-        shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
-    ):
-        chunk_start = chunk.start
-        chunk_stop = chunk.stop
-        # get TRs between chunk stop and start
-        tr_end = tr_start
-        while tr_end < len(tandem_repeats):
-            tr = tandem_repeats[tr_end]
-            if tr.start <= chunk_stop:
-                tr_end += 1
-            else:
-                break
-        tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
-        tr_start = tr_end
-        if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
-            tr_start -= 1
-
-        soda_viz_file, soda_conf_file = (
-            outputter.get_soda(index) if opts.soda else (None, None)
-        )
-        printer.set_soda_files(soda_viz_file, soda_conf_file)
-
-        (_last_start, _last_stop) = run_full(
-            chunk.alignments,
-            tandem_repeats_chunk,
-            opts.chunk_size,
-            sub_matrices,
-            subfam_counts,
-            chunk_start,
-            chunk_stop,
-            _prev_start,
-            _prev_stop,
-            printer,
-        )
-        _prev_start, _prev_stop = (
-            _last_start,
-            _last_stop,
+        overlapping_shards = shard_overlapping_alignments(
+            alignments,
+            shard_gap=opts.shard_gap,
         )
 
-        if soda_viz_file is not None:
-            soda_viz_file.close()
-        if soda_conf_file is not None:
-            soda_conf_file.close()
+        for index, chunk in enumerate(overlapping_shards):
+            chunk_start = chunk.start
+            chunk_stop = chunk.stop
+            # get TRs between chunk stop and start
+            tr_end = tr_start
+            while tr_end < len(tandem_repeats):
+                tr = tandem_repeats[tr_end]
+                if tr.start <= chunk_stop:
+                    tr_end += 1
+                else:
+                    break
+            tandem_repeats_chunk = tandem_repeats[tr_start:tr_end]
+            tr_start = tr_end
+            if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
+                tr_start -= 1
+
+            soda_viz_file, soda_conf_file = (
+                outputter.get_soda(index) if opts.soda else (None, None)
+            )
+            printer.set_soda_files(soda_viz_file, soda_conf_file)
+
+            (_last_start, _last_stop) = run_full(
+                chunk.alignments,
+                tandem_repeats_chunk,
+                opts.chunk_size,
+                sub_matrices,
+                subfam_counts,
+                chunk_start,
+                chunk_stop,
+                _prev_start,
+                _prev_stop,
+                printer,
+            )
+            _prev_start, _prev_stop = (
+                _last_start,
+                _last_stop,
+            )
+
+            if soda_viz_file is not None:
+                soda_viz_file.close()
+            if soda_conf_file is not None:
+                soda_conf_file.close()
