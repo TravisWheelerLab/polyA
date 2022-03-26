@@ -161,6 +161,7 @@ def run():
                 opts.merge_stats_path,
                 opts.merged_subfams_path,
                 float(opts.winner_thresh),
+                opts.ignore_CG,
             )
 
         exit()
@@ -169,8 +170,10 @@ def run():
         with open(opts.alignments_file_path) as _infile:
             alignments = load_alignments(_infile)
             run_confidence(
-                alignments,
+                alignments=alignments,
                 lambda_values=lambda_values,
+                ignore_cg_content=opts.ignore_CG,
+                sub_matrix_scores=sub_matrices,
             )
 
         exit()

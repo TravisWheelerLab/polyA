@@ -35,6 +35,7 @@ class Options:
     sequence_file_path: str
     ultra_data_path: str
     complexity_adjustment: bool
+    ignore_CG: bool
 
     # -------------------
     # Helper applications
@@ -220,6 +221,12 @@ class Options:
             default=False,
             help="use complexity adjusted scoring",
         )
+        parser.add_argument(
+            "--ignore-CG",
+            action="store_true",
+            default=False,
+            help="ignore alignment scores from CG content",
+        )
 
         parser.add_argument(
             "--cm-to-stockholm",
@@ -254,6 +261,7 @@ class Options:
         self.sequence_file_path = namespace.sequences
         self.ultra_data_path = namespace.ultra_data
         self.complexity_adjustment = namespace.complexity_adjustment
+        self.ignore_CG = namespace.ignore_CG
 
         self.easel_path = namespace.easel_path
         self.ultra_path = namespace.ultra_path

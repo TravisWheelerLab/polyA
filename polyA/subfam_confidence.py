@@ -188,6 +188,7 @@ def subfam_confidence(
     merge_stats_path: str,
     subfam_to_merged_num: Dict[str, int],
     winner_group_thresh: float,
+    ignore_cg_content: bool,
 ) -> Tuple[str, str, Tuple[str, str]]:
     """
     Finds and selects a subfamily pair to merge based
@@ -240,6 +241,7 @@ def subfam_confidence(
             subfam_lambs = []
         prev_test_seq_name = cur_test_seq_name
         subfams.append(a.subfamily)
+        # FIXME: might need to change for CG content
         scores.append(a.score)
         subfam_lambs.append(lambs[i])
 

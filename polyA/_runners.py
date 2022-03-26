@@ -24,11 +24,14 @@ from .printers import Printer
 from .substitution_matrix import SubMatrix, SubMatrixCollection
 from .ultra_provider import TandemRepeat
 from .subfam_confidence import subfam_confidence
+from .remove_cg_scores import remove_cg_scores
 
 
 def run_confidence(
     alignments: Iterable[Alignment],
     lambda_values: List[float],
+    ignore_cg_content: bool,
+    sub_matrix_scores: SubMatrixCollection,
 ) -> None:
     # command line option to just output confidence values for
     # single annotation instead of do whole algorithm
@@ -42,9 +45,18 @@ def run_confidence(
     subfams = []
     scores = []
 
-    for i, a in enumerate(alignments):
-        subfams.append(a.subfamily)
-        scores.append(a.score)
+    if ignore_cg_content:
+        for i, a in enumerate(alignments):
+            # check if a.sub_matrix_name in sub_matrix_scores?
+            modified_score = remove_cg_scores(
+                a, sub_matrix_scores[a.sub_matrix_name].scores
+            )
+            subfams.append(a.subfamily)
+            scores.append(modified_score)
+    else:
+        for i, a in enumerate(alignments):
+            subfams.append(a.subfamily)
+            scores.append(a.score)
 
     confidence_list = confidence_only(scores, lambda_values)
 
@@ -64,6 +76,7 @@ def run_subfam_confidence(
     merge_stats_path: str,
     merged_subfams_path: str,
     winner_group_thresh: float,
+    ignore_cg_content: bool,
 ) -> None:
     # read in merged_subfams_file for subfam instance path look-up:
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
@@ -89,6 +102,7 @@ def run_subfam_confidence(
         merge_stats_path,
         subfam_to_merged_num,
         winner_group_thresh,
+        ignore_cg_content,
     )
 
     if merged_subfam != "":
