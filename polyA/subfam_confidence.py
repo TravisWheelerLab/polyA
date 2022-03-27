@@ -3,6 +3,8 @@ from collections import Counter
 from typing import Dict, List, Tuple, Any, Iterable
 from .confidence_cm import confidence_only
 from .alignment import Alignment
+from .remove_cg_scores import remove_cg_scores
+from .substitution_matrix import SubMatrixCollection
 
 
 MERGE_CONF_THRESH = 0.5
@@ -189,6 +191,7 @@ def subfam_confidence(
     subfam_to_merged_num: Dict[str, int],
     winner_group_thresh: float,
     ignore_cg_content: bool,
+    sub_matrix_scores: SubMatrixCollection,
 ) -> Tuple[str, str, Tuple[str, str]]:
     """
     Finds and selects a subfamily pair to merge based
@@ -241,8 +244,12 @@ def subfam_confidence(
             subfam_lambs = []
         prev_test_seq_name = cur_test_seq_name
         subfams.append(a.subfamily)
-        # FIXME: might need to change for CG content
-        scores.append(a.score)
+        score = a.score
+        if ignore_cg_content:
+            score = remove_cg_scores(
+                a, sub_matrix_scores[a.sub_matrix_name].scores
+            )
+        scores.append(score)
         subfam_lambs.append(lambs[i])
 
     # confidence values for last test seq

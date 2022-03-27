@@ -162,6 +162,7 @@ def run():
                 opts.merged_subfams_path,
                 float(opts.winner_thresh),
                 opts.ignore_CG,
+                sub_matrices,
             )
 
         exit()

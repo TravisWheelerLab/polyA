@@ -51,6 +51,7 @@ def run_confidence(
             modified_score = remove_cg_scores(
                 a, sub_matrix_scores[a.sub_matrix_name].scores
             )
+            print(a.score, modified_score)
             subfams.append(a.subfamily)
             scores.append(modified_score)
     else:
@@ -77,6 +78,7 @@ def run_subfam_confidence(
     merged_subfams_path: str,
     winner_group_thresh: float,
     ignore_cg_content: bool,
+    sub_matrix_scores: SubMatrixCollection,
 ) -> None:
     # read in merged_subfams_file for subfam instance path look-up:
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
@@ -103,6 +105,7 @@ def run_subfam_confidence(
         subfam_to_merged_num,
         winner_group_thresh,
         ignore_cg_content,
+        sub_matrix_scores,
     )
 
     if merged_subfam != "":
