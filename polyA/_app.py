@@ -160,7 +160,7 @@ def run():
                 opts.subfam_instances_path,
                 opts.merge_stats_path,
                 opts.merged_subfams_path,
-                float(opts.winner_thresh),
+                float(opts.k_thresh),
                 opts.ignore_CG,
                 sub_matrices,
             )

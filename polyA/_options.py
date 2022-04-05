@@ -36,6 +36,8 @@ class Options:
     ultra_data_path: str
     complexity_adjustment: bool
     ignore_CG: bool
+    k_thresh: float
+    merge_thresh: float
 
     # -------------------
     # Helper applications
@@ -100,34 +102,10 @@ class Options:
             help="size of the window in base pairs analyzed together",
         )
         parser.add_argument(
-            "--merge-stats-path",
-            metavar="PATH",
-            default="",
-            help="path to a text file of stats behind merged subfam pairs",
-        )
-        parser.add_argument(
-            "--merged-subfams-path",
-            metavar="PATH",
-            default="",
-            help="path to a text file to track the merged subfams",
-        )
-        parser.add_argument(
             "--confidence",
             action="store_true",
             default=False,
             help="run the confidence calculation and then exit",
-        )
-        parser.add_argument(
-            "--subfam-instances-path",
-            metavar="PATH",
-            default="",
-            help="dir with fasta files of the subfam instances",
-        )
-        parser.add_argument(
-            "--winner-thresh",
-            metavar=float,
-            default=DEFAULT_WINNER_THRESH,
-            help="value to be multiplied by top conf value to set the winner group thresh",
         )
         parser.add_argument(
             "--prior-counts",
@@ -221,11 +199,43 @@ class Options:
             default=False,
             help="use complexity adjusted scoring",
         )
+
+        # subfam confidence opts
+        parser.add_argument(
+            "--merged-subfams-path",
+            metavar="PATH",
+            default="",
+            help="path to a text file to track the merged subfams",
+        )
+        parser.add_argument(
+            "--subfam-instances-path",
+            metavar="PATH",
+            default="",
+            help="dir with fasta files of the subfam instances",
+        )
+        parser.add_argument(
+            "--merge-stats-path",
+            metavar="PATH",
+            default="",
+            help="path to a text file of stats behind merged subfam pairs",
+        )
         parser.add_argument(
             "--ignore-CG",
             action="store_true",
             default=False,
             help="ignore alignment scores from CG content",
+        )
+        parser.add_argument(
+            "--k-thresh",
+            type=float,
+            default=DEFAULT_WINNER_THRESH,
+            help="value to be multiplied by top conf value to set the winner group thresh",
+        )
+        parser.add_argument(
+            "--merge-thresh",
+            type=float,
+            default=0.5,
+            help="upper bound independence value for merging subfamily pairs",
         )
 
         parser.add_argument(
@@ -251,16 +261,18 @@ class Options:
         self.sub_matrices_path = namespace.sub_matrices_path
 
         self.chunk_size = namespace.chunk_size
-        self.merge_stats_path = namespace.merge_stats_path
-        self.merged_subfams_path = namespace.merged_subfams_path
         self.confidence = namespace.confidence
-        self.subfam_instances_path = namespace.subfam_instances_path
-        self.winner_thresh = namespace.winner_thresh
         self.prior_counts_path = namespace.prior_counts
         self.shard_gap = namespace.shard_gap
         self.sequence_file_path = namespace.sequences
         self.ultra_data_path = namespace.ultra_data
         self.complexity_adjustment = namespace.complexity_adjustment
+        # subfam confidence opts
+        self.merged_subfams_path = namespace.merged_subfams_path
+        self.subfam_instances_path = namespace.subfam_instances_path
+        self.merge_stats_path = namespace.merge_stats_path
+        self.k_thresh = namespace.k_thresh
+        self.merge_thresh = namespace.merge_thresh
         self.ignore_CG = namespace.ignore_CG
 
         self.easel_path = namespace.easel_path
