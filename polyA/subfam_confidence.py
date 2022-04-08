@@ -1,6 +1,6 @@
 from subprocess import Popen, PIPE
 from collections import Counter
-from typing import Dict, List, Tuple, Any, Iterable
+from typing import Dict, List, Tuple, Any, Iterable, TextIO
 from .confidence_cm import confidence_only
 from .alignment import Alignment
 from .remove_cg_scores import remove_cg_scores
@@ -58,9 +58,9 @@ def test_seq_confidence(
                 break
             # single test seq could have 1+ alignments with the same subfam
             if subfams[i] != subfams[j]:
-                sub_pair = [subfams[i], subfams[j]]
-                sub_pair.sort()
-                uncertain_subfam_pairs[tuple(sub_pair)] += 1
+                subfam_pair = [subfams[i], subfams[j]]
+                subfam_pair.sort()
+                uncertain_subfam_pairs[tuple(subfam_pair)] += 1
 
     if subfam_winner_group_count == 1:
         # single subfam found above winner thresh is a clear
@@ -98,9 +98,9 @@ def confidence_subfam_pairs(
     zero_conf_subfams: Dict[str, Any] = {}
 
     # compute subfam ij- and ji-pair confidence
-    for sub_pair, sub_pair_count in uncertain_subfam_pair_counts.items():
-        subfam_i = sub_pair[0]
-        subfam_j = sub_pair[1]
+    for subfam_pair, sub_pair_count in uncertain_subfam_pair_counts.items():
+        subfam_i = subfam_pair[0]
+        subfam_j = subfam_pair[1]
         # subfam ij-pair
         if subfam_i in subfam_winner_counts.keys():
             # compute subfam pair confidence
@@ -131,8 +131,8 @@ def merge_subfams(
     subfam_i: str,
     subfam_j: str,
     subfam_instances_path: str,
-    subfam_to_merged_num: Dict[str, int],
-) -> Tuple[str, str]:
+    total_merged_subfams: int,
+) -> str:
     """
     Merges subfamilies i and j and creates a new
     instance file and consensus sequence for the
@@ -142,8 +142,7 @@ def merge_subfams(
     subfam_i: name of subfam i
     subfam_j: name of subfam j
     subfam_instances_path: path to a dir of subfam instances
-    subfam_to_merged_num: dictionary that maps names of prior
-    merged subfamilies to a number for instance file look up
+    total_subfams: int
 
     output:
     merged_consensus_seq: consensus sequence of the merged subfam
@@ -156,10 +155,8 @@ def merge_subfams(
     subfam_j_instances = subfam_instances_path + subfam_j + ".fa"
 
     # path to merged instance file
-    merged_subfam_filename = "merged_" + str(len(subfam_to_merged_num) + 1)
-    merged_subfam_instances = (
-        subfam_instances_path + merged_subfam_filename + ".fa"
-    )
+    merged_subfam_name = "merged_" + str(total_merged_subfams)
+    merged_subfam_instances = subfam_instances_path + merged_subfam_name + ".fa"
 
     # output fasta file with all subfam i and j instances
     outfile = open(merged_subfam_instances, "w")
@@ -171,7 +168,7 @@ def merge_subfams(
 
     # output MSA
     # TODO: use refiner in place of mafft when available
-    merged_subfam_msa = subfam_instances_path + merged_subfam_filename + ".afa"
+    merged_subfam_msa = subfam_instances_path + merged_subfam_name + ".afa"
     with open(merged_subfam_msa, "w") as f_out_merged_msa:
         process = Popen(
             ["mafft", merged_subfam_instances],
@@ -179,8 +176,7 @@ def merge_subfams(
             stderr=PIPE,
         )
         process.communicate()
-    # return msa filename to get the consensus from RepeatModeler
-    return merged_subfam_filename, merged_subfam_name
+    return merged_subfam_name
 
 
 def subfam_confidence(
@@ -188,11 +184,13 @@ def subfam_confidence(
     lambs: List[float],
     subfam_instances_path: str,
     merge_stats_path: str,
-    subfam_to_merged_num: Dict[str, int],
+    total_merged_subfams: int,
     winner_group_thresh: float,
     ignore_cg_content: bool,
     sub_matrix_scores: SubMatrixCollection,
-) -> Tuple[str, str, Tuple[str, str]]:
+    all_merged_file: TextIO,
+    cur_merged_file: TextIO,
+) -> None:
     """
     Finds and selects a subfamily pair to merge based
     on confidence values from subfamily alignments to
@@ -203,13 +201,8 @@ def subfam_confidence(
     lambs: list of lambda values for each alignment (from Easel)
     subfam_instances_path: path to a dir of subfam instances
     merge_stats_path: path to a file to output stats from a subfam merge
-    subfam_to_merged_num: dictionary that maps names of prior
+    total_merged_subfams: number of subfams that have been merged
     merged subfamilies to a number for instance file look up
-
-    output:
-    merged_consensus: consensus sequence of the merged subfam
-    merged_name: name of the merged subfam
-    sub_pair: names of the subfams that were selected for merging
     """
     subfams: List[str] = []
     scores: List[int] = []
@@ -279,37 +272,62 @@ def subfam_confidence(
     )
 
     # return values will stay empty if no subfams should be merged
-    merged_msa_file: str = ""
-    merged_name: str = ""
-    sub_pair: Tuple[str, str] = ("", "")
+    merged_num: str = ""
+    subfam_pair: Tuple[str, str] = ("", "")
+    merged_subs = set()
 
     # check to merge a subfam pair with zero confidence first
     for zero_conf_item in sorted_zero:
         zero_conf_highest_pair = sorted(
             zero_conf_item[1].items(), key=lambda item: item[1], reverse=True
         )[0]
-        sub_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
-        merged_msa_file, merged_name = merge_subfams(
-            zero_conf_item[0],
-            zero_conf_highest_pair[0],
-            subfam_instances_path,
-            subfam_to_merged_num,
-        )
-        # output stats from merge
-        if merge_stats_path:
-            f_stats = open(merge_stats_path, "a")
-            f_stats.write(str(sub_pair))
-            f_stats.write("\n")
-            f_stats.write(
-                "winner group count: " + str(winner_group_count[sub_pair[0]])
+        subfam_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
+        # FIXME: check subfams haven't been merged in this iteration before merging
+        if (
+            subfam_pair[0] not in merged_subs
+            and subfam_pair[1] not in merged_subs
+        ):
+            total_merged_subfams += 1
+            merged_num = merge_subfams(
+                zero_conf_item[0],
+                zero_conf_highest_pair[0],
+                subfam_instances_path,
+                total_merged_subfams,
             )
-            f_stats.write("\n")
-            f_stats.write(
-                "uncertain pair count: " + str(zero_conf_highest_pair[1])
+            # write to all merged subfams file
+            all_merged_file.write(
+                # FIXME: used to output final set, could probably clean this up
+                subfam_pair[0]
+                + " "
+                + subfam_pair[1]
+                + " "
+                + subfam_pair[0]
+                + ","
+                + subfam_pair[1]
             )
-            f_stats.write("\n")
-            f_stats.close()
-        return merged_msa_file, merged_name, sub_pair
+            all_merged_file.write("\n")
+
+            # write to cur merged subfams file
+            cur_merged_file.write(
+                subfam_pair[0] + " " + subfam_pair[1] + " " + merged_num
+            )
+            cur_merged_file.write("\n")
+
+            # output stats from merge
+            if merge_stats_path:
+                f_stats = open(merge_stats_path, "a")
+                f_stats.write(str(subfam_pair))
+                f_stats.write("\n")
+                f_stats.write(
+                    "winner group count: "
+                    + str(winner_group_count[subfam_pair[0]])
+                )
+                f_stats.write("\n")
+                f_stats.write(
+                    "uncertain pair count: " + str(zero_conf_highest_pair[1])
+                )
+                f_stats.write("\n")
+                f_stats.close()
 
     # sort uncertain subfamily pairs by confidence values
     # sorted_pairs = [((subfam_i,subfam_j),conf),((subfam_i, subfam_j),conf),...]
@@ -317,39 +335,72 @@ def subfam_confidence(
         subfam_pair_confidence.items(), key=lambda item: item[1]
     )
 
-    # check to merge subfam pair with the lowest confidence
-    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
-        sub_pair = sorted_pairs[0][0]
-        merged_msa_file, merged_name = merge_subfams(
-            sub_pair[0],
-            sub_pair[1],
-            subfam_instances_path,
-            subfam_to_merged_num,
-        )
-        clear_winner_counts = ""
-        for sub in sub_pair:
-            if sub in subfam_winners:
-                clear_winner_counts += (
-                    str(sub) + ": " + str(subfam_winners[sub]) + "\n"
+    # merge subfam pairs with conf < thresh
+    for pair in sorted_pairs:
+        conf = pair[1]
+        if conf < MERGE_CONF_THRESH:
+            # could be more pairs under thresh that have not been merged
+            subfam_pair = pair[0]
+            if (
+                subfam_pair[0] not in merged_subs
+                and subfam_pair[1] not in merged_subs
+            ):
+                total_merged_subfams += 1
+                merged_num = merge_subfams(
+                    subfam_pair[0],
+                    subfam_pair[1],
+                    subfam_instances_path,
+                    total_merged_subfams,
                 )
-        # output stats from merge
-        if merge_stats_path:
-            f_stats = open(merge_stats_path, "a")
-            f_stats.write(str(sub_pair) + " " + str(sorted_pairs[0][1]))
-            f_stats.write("\n")
-            f_stats.write(
-                "winner group count: " + str(winner_group_count[sub_pair[0]])
-            )
-            f_stats.write("\n")
-            f_stats.write(
-                "uncertain pair count: "
-                + str(uncertain_subfam_pairs[tuple(sorted(sub_pair))])
-            )
-            f_stats.write("\n")
-            f_stats.write("clear winner counts")
-            f_stats.write("\n")
-            f_stats.write(clear_winner_counts)
-            f_stats.write("\n")
-            f_stats.close()
+                # write to all merged subfams file
+                all_merged_file.write(
+                    # FIXME: used to output final set, could probably clean this up
+                    subfam_pair[0]
+                    + " "
+                    + subfam_pair[1]
+                    + " "
+                    + +subfam_pair[0]
+                    + ","
+                    + subfam_pair[1]
+                )
+                all_merged_file.write("\n")
 
-    return merged_msa_file, merged_name, sub_pair
+                # write to cur merged subfams file
+                cur_merged_file.write(
+                    subfam_pair[0] + " " + subfam_pair[1] + " " + merged_num
+                )
+                cur_merged_file.write("\n")
+
+                clear_winner_counts = ""
+                for sub in subfam_pair:
+                    if sub in subfam_winners:
+                        clear_winner_counts += (
+                            str(sub) + ": " + str(subfam_winners[sub]) + "\n"
+                        )
+                # output stats from merge
+                if merge_stats_path:
+                    f_stats = open(merge_stats_path, "a")
+                    f_stats.write(
+                        str(subfam_pair) + " " + str(sorted_pairs[0][1])
+                    )
+                    f_stats.write("\n")
+                    f_stats.write(
+                        "winner group count: "
+                        + str(winner_group_count[subfam_pair[0]])
+                    )
+                    f_stats.write("\n")
+                    f_stats.write(
+                        "uncertain pair count: "
+                        + str(
+                            uncertain_subfam_pairs[tuple(sorted(subfam_pair))]
+                        )
+                    )
+                    f_stats.write("\n")
+                    f_stats.write("clear winner counts")
+                    f_stats.write("\n")
+                    f_stats.write(clear_winner_counts)
+                    f_stats.write("\n")
+                    f_stats.close()
+        else:
+            # no more pairs < thresh
+            break

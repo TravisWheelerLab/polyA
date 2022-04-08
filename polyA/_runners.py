@@ -82,55 +82,34 @@ def run_subfam_confidence(
 ) -> None:
     # read in merged_subfams_file for subfam instance path look-up:
     # ex: AluY AluYj4 AluY_AluYj4 -> AluY_AluYj4, 1
-    subfam_to_merged_num: Dict[str, int] = {}
-    merged_num: int = 1
     merged_subfams_file = merged_subfams_path + "/merged_subfams.txt"
     all_merged_subfams_file = merged_subfams_path + "/all_merged_subfams.txt"
 
     # clear file
-    with open(merged_subfams_file, "a") as merged_outfile:
-        merged_outfile.truncate(0)
+    cur_merged_outfile = open(merged_subfams_file)
+    cur_merged_outfile.truncate(0)
 
-    # read in file
-    with open(all_merged_subfams_file, "r") as all_merged_infile:
-        for merged_line in all_merged_infile:
-            merged_subfam = merged_line.split()[-1]
-            subfam_to_merged_num[merged_subfam] = merged_num
-            merged_num += 1
-    merged_msa_file, merged_subfam, original_subfams = subfam_confidence(
+    # read in file to get subfam count
+    all_merged_infile = open(all_merged_subfams_file)
+    total_merged_subfams = 0
+    for _ in all_merged_infile:
+        total_merged_subfams += 1
+
+    subfam_confidence(
         alignments,
         lambs,
         subfam_instances_path,
         merge_stats_path,
-        subfam_to_merged_num,
+        total_merged_subfams,
         winner_group_thresh,
         ignore_cg_content,
         sub_matrix_scores,
+        all_merged_infile,
+        cur_merged_outfile,
     )
 
-    if merged_subfam != "":
-        # write to all_merged_subfams file
-        with open(all_merged_subfams_file, "a") as all_merged_outfile:
-            all_merged_outfile.write(
-                original_subfams[0]
-                + " "
-                + original_subfams[1]
-                + " "
-                + merged_subfam
-            )
-            all_merged_outfile.write("\n")
-        # write to merged_subfams file
-        with open(merged_subfams_file, "a") as merged_outfile:
-            merged_outfile.write(
-                original_subfams[0]
-                + " "
-                + original_subfams[1]
-                + " "
-                + merged_subfam
-            )
-            merged_outfile.write("\n")
-        # use this for /RepeatModeler/util/linup
-        print(merged_msa_file)
+    all_merged_infile.close()
+    cur_merged_outfile.close()
 
 
 def _validate_target(target: Alignment) -> None:
