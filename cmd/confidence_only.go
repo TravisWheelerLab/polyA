@@ -13,7 +13,13 @@ func main() {
 	}
 
 	count := 0
-	for _ = range polyA.LoadAlignments(stoFile, true) {
+	//for _ = range polyA.LoadAlignments(stoFile, true) {
+	//	count += 1
+	//}
+
+	loader := polyA.NewLoader(stoFile, true)
+	a := &polyA.Alignment{}
+	for loader.Load(a) {
 		count += 1
 	}
 

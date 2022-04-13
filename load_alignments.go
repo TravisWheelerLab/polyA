@@ -79,6 +79,172 @@ func parseChromMeta(line string) (name string, start int, stop int, found bool) 
 	return chromName, chromStart, chromStop, true
 }
 
+type Loader struct {
+	addSkipState bool
+	done         bool
+	loadedCount  int
+	scanner      *bufio.Scanner
+}
+
+func NewLoader(file io.Reader, addSkipState bool) *Loader {
+	return &Loader{
+		addSkipState: addSkipState,
+		scanner:      bufio.NewScanner(file),
+	}
+}
+
+func (l *Loader) Load(a *Alignment) bool {
+	if l.done {
+		return false
+	}
+
+	if l.loadedCount == 0 && l.addSkipState {
+		a.Subfamily = skipState.Subfamily
+		a.ChromName = skipState.ChromName
+		a.ChromStart = skipState.ChromStart
+		a.ChromStop = skipState.ChromStop
+		a.Score = skipState.Score
+		a.Start = skipState.Start
+		a.Stop = skipState.Stop
+		a.ConsensusStart = skipState.ConsensusStart
+		a.ConsensusStop = skipState.ConsensusStop
+		a.Sequence = skipState.Sequence
+		a.SubfamilySequence = skipState.SubfamilySequence
+		a.Strand = skipState.Strand
+		a.Flank = skipState.Flank
+		a.SubMatrixName = skipState.SubMatrixName
+		a.GapInit = skipState.GapInit
+		a.GapExt = skipState.GapExt
+
+		l.loadedCount += 1
+		return true
+	}
+
+	meta := make(map[string]string)
+	var seqs []string
+
+	for {
+		more := l.scanner.Scan()
+		line := l.scanner.Text()
+
+		if parsePreambleLine(line) {
+			continue
+		}
+
+		if parseToolLine(line) != "" {
+			continue
+		}
+
+		key, value, found := parseMetaLine(line)
+		if found {
+			meta[key] = value
+			continue
+		}
+
+		_, seq, found := parseAlignmentLine(line)
+		if found {
+			seqs = append(seqs, seq)
+			continue
+		}
+
+		if parseTerminatorLine(line) {
+			if len(seqs) != 2 {
+				panic("file format error - wrong number of sequences")
+			}
+
+			chromName, chromStart, chromStop, found := parseChromMeta(meta["TR"])
+			if !found {
+				panic("file format error - missing TR field")
+			}
+
+			// TODO: Write helper(s) to check for presence of key and then get the value
+
+			score, err := strconv.Atoi(meta["SC"])
+			if err != nil {
+				panic("file format error - invalid SC field")
+			}
+
+			start, err := strconv.Atoi(meta["ST"])
+			if err != nil {
+				panic("file format error - invalid ST field")
+			}
+
+			stop, err := strconv.Atoi(meta["SP"])
+			if err != nil {
+				panic("file format error - invalid SP field")
+			}
+
+			consensusStart, err := strconv.Atoi(meta["CST"])
+			if err != nil {
+				panic("file format error - invalid CST field")
+			}
+
+			consensusStop, err := strconv.Atoi(meta["CSP"])
+			if err != nil {
+				panic("file format error - invalid CSP field")
+			}
+
+			var sequence string
+			var subfamilySequence string
+			if meta["TQ"] == "t" {
+				sequence = reverse(seqs[0])
+				subfamilySequence = reverse(seqs[1])
+			} else {
+				sequence = seqs[0]
+				subfamilySequence = seqs[1]
+			}
+
+			flank, err := strconv.Atoi(meta["FL"])
+			if err != nil {
+				panic("file format error - invalid FL field")
+			}
+
+			gapInit, err := strconv.ParseFloat(meta["GI"], 64)
+			if err != nil {
+				panic("file format error - invalid GI field")
+			}
+
+			gapExt, err := strconv.ParseFloat(meta["GE"], 64)
+			if err != nil {
+				panic("file format error - invalid GE field")
+			}
+
+			a.Subfamily = meta["ID"]
+			a.ChromName = chromName
+			a.ChromStart = chromStart
+			a.ChromStop = chromStop
+			a.Score = score
+			a.Start = start
+			a.Stop = stop
+			a.ConsensusStart = consensusStart
+			a.ConsensusStop = consensusStop
+			a.Sequence = sequence
+			a.SubfamilySequence = subfamilySequence
+			a.Strand = meta["SD"]
+			a.Flank = flank
+			a.SubMatrixName = meta["MX"]
+			a.GapInit = gapInit
+			a.GapExt = gapExt
+
+			l.loadedCount += 1
+
+			if !more {
+				l.done = true
+				l.scanner = nil
+			}
+
+			return true
+		}
+
+		if !more {
+			l.done = true
+			l.scanner = nil
+
+			return false
+		}
+	}
+}
+
 func LoadAlignments(file io.Reader, addSkipState bool) <-chan *Alignment {
 	loaded := make(chan *Alignment)
 
