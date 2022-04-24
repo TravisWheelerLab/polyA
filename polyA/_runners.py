@@ -77,6 +77,7 @@ def run_subfam_confidence(
     merge_stats_path: str,
     merged_subfams_path: str,
     winner_group_thresh: float,
+    merge_thresh: float,
     ignore_cg_content: bool,
     sub_matrix_scores: SubMatrixCollection,
 ) -> None:
@@ -104,6 +105,7 @@ def run_subfam_confidence(
         merge_stats_path,
         subfam_to_merged_num,
         winner_group_thresh,
+        merge_thresh,
         ignore_cg_content,
         sub_matrix_scores,
     )

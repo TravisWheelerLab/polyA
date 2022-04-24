@@ -7,9 +7,6 @@ from .remove_cg_scores import remove_cg_scores
 from .substitution_matrix import SubMatrixCollection
 
 
-MERGE_CONF_THRESH = 0.5
-
-
 def test_seq_confidence(
     scores: List[int],
     lambs: List[float],
@@ -190,6 +187,7 @@ def subfam_confidence(
     merge_stats_path: str,
     subfam_to_merged_num: Dict[str, int],
     winner_group_thresh: float,
+    merge_thresh: float,
     ignore_cg_content: bool,
     sub_matrix_scores: SubMatrixCollection,
 ) -> Tuple[str, str, Tuple[str, str]]:
@@ -318,7 +316,7 @@ def subfam_confidence(
     )
 
     # check to merge subfam pair with the lowest confidence
-    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < MERGE_CONF_THRESH:
+    if len(sorted_pairs) != 0 and sorted_pairs[0][1] < merge_thresh:
         sub_pair = sorted_pairs[0][0]
         merged_msa_file, merged_name = merge_subfams(
             sub_pair[0],

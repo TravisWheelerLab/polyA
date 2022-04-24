@@ -161,6 +161,7 @@ def run():
                 opts.merge_stats_path,
                 opts.merged_subfams_path,
                 float(opts.k_thresh),
+                float(opts.merge_thresh),
                 opts.ignore_CG,
                 sub_matrices,
             )
