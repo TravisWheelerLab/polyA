@@ -7,9 +7,6 @@ from .remove_cg_scores import remove_cg_scores
 from .substitution_matrix import SubMatrixCollection
 
 
-MERGE_CONF_THRESH = 0.5
-
-
 def test_seq_confidence(
     scores: List[int],
     lambs: List[float],
@@ -186,6 +183,7 @@ def subfam_confidence(
     merge_stats_path: str,
     total_merged_subfams: int,
     winner_group_thresh: float,
+    merge_thresh: float,
     ignore_cg_content: bool,
     sub_matrix_scores: SubMatrixCollection,
     all_merged_file: TextIO,
@@ -338,7 +336,7 @@ def subfam_confidence(
     # merge subfam pairs with conf < thresh
     for pair in sorted_pairs:
         conf = pair[1]
-        if conf < MERGE_CONF_THRESH:
+        if conf < merge_thresh:
             # could be more pairs under thresh that have not been merged
             subfam_pair = pair[0]
             if (
@@ -401,6 +399,5 @@ def subfam_confidence(
                     f_stats.write(clear_winner_counts)
                     f_stats.write("\n")
                     f_stats.close()
-        else:
-            # no more pairs < thresh
-            break
+        # no more pairs < thresh
+        break
