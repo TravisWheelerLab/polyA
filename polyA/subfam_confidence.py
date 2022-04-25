@@ -295,13 +295,13 @@ def subfam_confidence(
             # write to all merged subfams file
             all_merged_file.write(
                 # FIXME: used to output final set, could probably clean this up
-                subfam_pair[0]
+                str(subfam_pair[0])
                 + " "
-                + subfam_pair[1]
+                + str(subfam_pair[1])
                 + " "
-                + subfam_pair[0]
+                + str(subfam_pair[0])
                 + ","
-                + subfam_pair[1]
+                + str(subfam_pair[1])
             )
             all_merged_file.write("\n")
 
@@ -353,19 +353,23 @@ def subfam_confidence(
                 # write to all merged subfams file
                 all_merged_file.write(
                     # FIXME: used to output final set, could probably clean this up
-                    subfam_pair[0]
+                    str(subfam_pair[0])
                     + " "
-                    + subfam_pair[1]
+                    + str(subfam_pair[1])
                     + " "
-                    + +subfam_pair[0]
+                    + str(subfam_pair[0])
                     + ","
-                    + subfam_pair[1]
+                    + str(subfam_pair[1])
                 )
                 all_merged_file.write("\n")
 
                 # write to cur merged subfams file
                 cur_merged_file.write(
-                    subfam_pair[0] + " " + subfam_pair[1] + " " + merged_num
+                    str(subfam_pair[0])
+                    + " "
+                    + str(subfam_pair[1])
+                    + " "
+                    + str(merged_num)
                 )
                 cur_merged_file.write("\n")
 
@@ -399,5 +403,5 @@ def subfam_confidence(
                     f_stats.write(clear_winner_counts)
                     f_stats.write("\n")
                     f_stats.close()
-        # no more pairs < thresh
-        break
+        else:  # no more pairs < thresh
+            break

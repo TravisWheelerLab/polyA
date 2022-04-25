@@ -87,11 +87,11 @@ def run_subfam_confidence(
     all_merged_subfams_file = merged_subfams_path + "/all_merged_subfams.txt"
 
     # clear file
-    cur_merged_outfile = open(merged_subfams_file)
+    cur_merged_outfile = open(merged_subfams_file, "r+")
     cur_merged_outfile.truncate(0)
 
     # read in file to get subfam count
-    all_merged_infile = open(all_merged_subfams_file)
+    all_merged_infile = open(all_merged_subfams_file, "r+")
     total_merged_subfams = 0
     for _ in all_merged_infile:
         total_merged_subfams += 1
