@@ -285,6 +285,8 @@ def subfam_confidence(
             subfam_pair[0] not in merged_subs
             and subfam_pair[1] not in merged_subs
         ):
+            merged_subs.add(subfam_pair[0])
+            merged_subs.add(subfam_pair[1])
             total_merged_subfams += 1
             merged_num = merge_subfams(
                 zero_conf_item[0],
@@ -343,6 +345,8 @@ def subfam_confidence(
                 subfam_pair[0] not in merged_subs
                 and subfam_pair[1] not in merged_subs
             ):
+                merged_subs.add(subfam_pair[0])
+                merged_subs.add(subfam_pair[1])
                 total_merged_subfams += 1
                 merged_num = merge_subfams(
                     subfam_pair[0],
