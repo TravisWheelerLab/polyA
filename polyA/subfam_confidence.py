@@ -363,12 +363,12 @@ def subfam_confidence(
                 f_stats.write("\n")
                 f_stats.write(
                     "winner group dist subfam i: "
-                    + str(sorted(winner_group_dist[subfam_i]))
+                    + str(sorted(winner_group_dist[subfam_i].items()))
                 )
                 f_stats.write("\n")
                 f_stats.write(
                     "winner group dist subfam j: "
-                    + str(sorted(winner_group_dist[subfam_j]))
+                    + str(sorted(winner_group_dist[subfam_j].items()))
                 )
                 f_stats.write("\n")
                 # same both directions, u_ij
@@ -467,12 +467,12 @@ def subfam_confidence(
                     f_stats.write("\n")
                     f_stats.write(
                         "winner group dist subfam i: "
-                        + str(sorted(winner_group_dist[subfam_i]))
+                        + str(sorted(winner_group_dist[subfam_i].items()))
                     )
                     f_stats.write("\n")
                     f_stats.write(
                         "winner group dist subfam j: "
-                        + str(sorted(winner_group_dist[subfam_j]))
+                        + str(sorted(winner_group_dist[subfam_j].items()))
                     )
                     f_stats.write("\n")
                     # same both directions, u_ij
