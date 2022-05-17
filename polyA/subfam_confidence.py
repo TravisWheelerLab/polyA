@@ -363,12 +363,12 @@ def subfam_confidence(
                 f_stats.write("\n")
                 f_stats.write(
                     "winner group dist subfam i: "
-                    + str(winner_group_dist[subfam_i])
+                    + str(sorted(winner_group_dist[subfam_i]))
                 )
                 f_stats.write("\n")
                 f_stats.write(
                     "winner group dist subfam j: "
-                    + str(winner_group_dist[subfam_j])
+                    + str(sorted(winner_group_dist[subfam_j]))
                 )
                 f_stats.write("\n")
                 # same both directions, u_ij
@@ -378,9 +378,15 @@ def subfam_confidence(
                 )
                 f_stats.write("\n")
                 # w_i, w_j
-                f_stats.write("clear winner count subfam i: " + str(subfam_winners[subfam_i]))
+                f_stats.write(
+                    "clear winner count subfam i: "
+                    + str(subfam_winners[subfam_i])
+                )
                 f_stats.write("\n")
-                f_stats.write("clear winner count subfam j: " + str(subfam_winners[subfam_j]))
+                f_stats.write(
+                    "clear winner count subfam j: "
+                    + str(subfam_winners[subfam_j])
+                )
                 f_stats.write("\n")
                 f_stats.close()
 
@@ -461,12 +467,12 @@ def subfam_confidence(
                     f_stats.write("\n")
                     f_stats.write(
                         "winner group dist subfam i: "
-                        + str(winner_group_dist[subfam_i])
+                        + str(sorted(winner_group_dist[subfam_i]))
                     )
                     f_stats.write("\n")
                     f_stats.write(
                         "winner group dist subfam j: "
-                        + str(winner_group_dist[subfam_j])
+                        + str(sorted(winner_group_dist[subfam_j]))
                     )
                     f_stats.write("\n")
                     # same both directions, u_ij
@@ -478,9 +484,15 @@ def subfam_confidence(
                     )
                     f_stats.write("\n")
                     # w_i, w_j
-                    f_stats.write("clear winner count subfam i: " + str(subfam_winners[subfam_i]))
+                    f_stats.write(
+                        "clear winner count subfam i: "
+                        + str(subfam_winners[subfam_i])
+                    )
                     f_stats.write("\n")
-                    f_stats.write("clear winner count subfam j: " + str(subfam_winners[subfam_j]))
+                    f_stats.write(
+                        "clear winner count subfam j: "
+                        + str(subfam_winners[subfam_j])
+                    )
                     f_stats.write("\n")
                     f_stats.close()
         else:  # no more pairs < thresh
