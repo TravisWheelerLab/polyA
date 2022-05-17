@@ -14,6 +14,7 @@ def test_seq_confidence(
     subfam_winners: Dict[str, int],
     uncertain_subfam_pairs: Dict[Tuple[str, str], int],
     winner_group_count: Dict[str, int],
+    winner_group_dist: Dict[str, Dict[int, int]],
     winner_group_thresh: float,
 ):
     """
@@ -42,17 +43,20 @@ def test_seq_confidence(
 
     # search for subfams above the potential winner threshold
     subfam_winner_group_count = 0
+    winner_subs = set()
     for i in range(len(subfams) - 1, 0, -1):
         if confidence_list[i] < potential_winner_thresh:
             break
         # track count of potential subfam winners
         subfam_winner_group_count += 1
         winner_group_count[subfams[i]] += 1
+        winner_subs.add(subfams[i])
         # create pairs of subfams that are both potential winners for the test seq
         # these are considered to be uncertain pairs
         for j in range(i - 1, 0, -1):
             if confidence_list[j] < potential_winner_thresh:
                 break
+            winner_subs.add(subfams[j])
             # single test seq could have 1+ alignments with the same subfam
             if subfams[i] != subfams[j]:
                 subfam_pair = [subfams[i], subfams[j]]
@@ -63,9 +67,15 @@ def test_seq_confidence(
         # single subfam found above winner thresh is a clear
         # winner of this test seq
         subfam_winners[subfams[-1]] += 1
+    # create dist
+    # clear winner will have dist of 1
+    for sub in winner_subs:
+        if sub not in winner_group_dist:
+            winner_group_dist[sub] = Counter()
+        winner_group_dist[sub][subfam_winner_group_count] += 1
 
 
-def confidence_subfam_pairs(
+def calc_subfam_pair_independence(
     uncertain_subfam_pair_counts: Dict[Tuple[str, str], int],
     subfam_winner_counts: Dict[str, int],
 ) -> Tuple[Dict[Tuple[str, str], float], Dict[Any, Any]]:
@@ -91,7 +101,7 @@ def confidence_subfam_pairs(
     zero_conf_subfams: dictionary that maps a subfam to subfams
     it had zero confidence with and the number of occurrences
     """
-    subfam_pair_confidence: Dict[Tuple[str, str], float] = {}
+    subfam_pair_independence: Dict[Tuple[str, str], float] = {}
     zero_conf_subfams: Dict[str, Any] = {}
 
     # compute subfam ij- and ji-pair confidence
@@ -101,27 +111,33 @@ def confidence_subfam_pairs(
         # subfam ij-pair
         if subfam_i in subfam_winner_counts.keys():
             # compute subfam pair confidence
-            subfam_pair_confidence[(subfam_i, subfam_j)] = subfam_winner_counts[
-                subfam_i
-            ] / (sub_pair_count + subfam_winner_counts[subfam_i])
+            subfam_pair_independence[
+                (subfam_i, subfam_j)
+            ] = subfam_winner_counts[subfam_i] / (
+                sub_pair_count + subfam_winner_counts[subfam_i]
+            )
         else:
             # subfam i was never a clear winner
+            subfam_pair_independence[(subfam_i, subfam_j)] = 0
             if subfam_i not in zero_conf_subfams.keys():
                 zero_conf_subfams[subfam_i] = {}
             zero_conf_subfams[subfam_i][subfam_j] = sub_pair_count
         # subfam ji-pair
         if subfam_j in subfam_winner_counts.keys():
             # compute subfam pair confidence
-            subfam_pair_confidence[(subfam_j, subfam_i)] = subfam_winner_counts[
-                subfam_j
-            ] / (sub_pair_count + subfam_winner_counts[subfam_j])
+            subfam_pair_independence[
+                (subfam_j, subfam_i)
+            ] = subfam_winner_counts[subfam_j] / (
+                sub_pair_count + subfam_winner_counts[subfam_j]
+            )
         else:
             # subfam j was never a clear winner
+            subfam_pair_independence[(subfam_j, subfam_i)] = 0
             if subfam_j not in zero_conf_subfams.keys():
                 zero_conf_subfams[subfam_j] = {}
             zero_conf_subfams[subfam_j][subfam_i] = sub_pair_count
 
-    return subfam_pair_confidence, zero_conf_subfams
+    return subfam_pair_independence, zero_conf_subfams
 
 
 def merge_subfams(
@@ -211,6 +227,7 @@ def subfam_confidence(
     subfam_winners: Dict[str, int] = Counter()
     uncertain_subfam_pairs: Dict[Tuple[str, str], int] = Counter()
     winner_group_count: Dict[str, int] = Counter()
+    winner_group_dist: Dict[str, Dict[int, int]] = {}
 
     for i, a in enumerate(alignments):
         cur_test_seq_name = (
@@ -227,6 +244,7 @@ def subfam_confidence(
                 subfam_winners,
                 uncertain_subfam_pairs,
                 winner_group_count,
+                winner_group_dist,
                 winner_group_thresh,
             )
             # clear inputs for new test seq
@@ -251,11 +269,12 @@ def subfam_confidence(
         subfam_winners,
         uncertain_subfam_pairs,
         winner_group_count,
+        winner_group_dist,
         winner_group_thresh,
     )
 
     # calc conf values of all uncertain subfam pairs
-    subfam_pair_confidence, zero_conf_subfams = confidence_subfam_pairs(
+    subfam_pair_independence, zero_conf_subfams = calc_subfam_pair_independence(
         uncertain_subfam_pairs, subfam_winners
     )
 
@@ -280,59 +299,96 @@ def subfam_confidence(
             zero_conf_item[1].items(), key=lambda item: item[1], reverse=True
         )[0]
         subfam_pair = (zero_conf_item[0], zero_conf_highest_pair[0])
+        subfam_i, subfam_j = subfam_pair[0], subfam_pair[1]
         # FIXME: check subfams haven't been merged in this iteration before merging
-        if (
-            subfam_pair[0] not in merged_subs
-            and subfam_pair[1] not in merged_subs
-        ):
-            merged_subs.add(subfam_pair[0])
-            merged_subs.add(subfam_pair[1])
+        if subfam_i not in merged_subs and subfam_j not in merged_subs:
+            merged_subs.add(subfam_i)
+            merged_subs.add(subfam_j)
             total_merged_subfams += 1
             merged_num = merge_subfams(
-                zero_conf_item[0],
-                zero_conf_highest_pair[0],
+                subfam_i,
+                subfam_j,
                 subfam_instances_path,
                 total_merged_subfams,
             )
             # write to all merged subfams file
             all_merged_file.write(
                 # FIXME: used to output final set, could probably clean this up
-                str(subfam_pair[0])
+                str(subfam_i)
                 + " "
-                + str(subfam_pair[1])
+                + str(subfam_j)
                 + " "
-                + str(subfam_pair[0])
+                + str(subfam_i)
                 + ","
-                + str(subfam_pair[1])
+                + str(subfam_j)
             )
             all_merged_file.write("\n")
 
             # write to cur merged subfams file
-            cur_merged_file.write(
-                subfam_pair[0] + " " + subfam_pair[1] + " " + merged_num
-            )
+            cur_merged_file.write(subfam_i + " " + subfam_j + " " + merged_num)
             cur_merged_file.write("\n")
 
             # output stats from merge
             if merge_stats_path:
+                for sub in subfam_pair:
+                    if sub not in subfam_winners:
+                        subfam_winners[sub] = 0
+                    if sub not in winner_group_count:
+                        winner_group_count[sub] = 0
+                        winner_group_dist[sub] = {}
+
                 f_stats = open(merge_stats_path, "a")
-                f_stats.write(str(subfam_pair))
-                f_stats.write("\n")
                 f_stats.write(
-                    "winner group count: "
-                    + str(winner_group_count[subfam_pair[0]])
+                    str(subfam_pair)
+                    + " "
+                    + str(subfam_pair_independence[subfam_pair])
+                )
+                f_stats.write("\n")
+                reverse_pair = (subfam_j, subfam_i)
+                f_stats.write(
+                    str(reverse_pair)
+                    + " "
+                    + str(subfam_pair_independence[reverse_pair])
                 )
                 f_stats.write("\n")
                 f_stats.write(
-                    "uncertain pair count: " + str(zero_conf_highest_pair[1])
+                    "winner group count subfam i: "
+                    + str(winner_group_count[subfam_i])
                 )
+                f_stats.write("\n")
+                f_stats.write(
+                    "winner group count subfam j: "
+                    + str(winner_group_count[subfam_j])
+                )
+                f_stats.write(
+                    "winner group dist subfam i: "
+                    + str(winner_group_dist[subfam_i])
+                )
+                f_stats.write("\n")
+                f_stats.write(
+                    "winner group dist subfam j: "
+                    + str(winner_group_dist[subfam_j])
+                )
+                f_stats.write("\n")
+                # same both directions, u_ij
+                f_stats.write(
+                    "uncertain pair count: "
+                    + str(uncertain_subfam_pairs[tuple(sorted(subfam_pair))])
+                )
+                f_stats.write("\n")
+                # w_ij, w_ji
+                f_stats.write("clear winner counts")
+                f_stats.write("\n")
+                f_stats.write(str(subfam_winners[subfam_i]))
+                f_stats.write("\n")
+                f_stats.write(str(subfam_winners[subfam_j]))
                 f_stats.write("\n")
                 f_stats.close()
 
     # sort uncertain subfamily pairs by confidence values
     # sorted_pairs = [((subfam_i,subfam_j),conf),((subfam_i, subfam_j),conf),...]
     sorted_pairs = sorted(
-        subfam_pair_confidence.items(), key=lambda item: item[1]
+        subfam_pair_independence.items(), key=lambda item: item[1]
     )
 
     # merge subfam pairs with conf < thresh
@@ -341,60 +397,79 @@ def subfam_confidence(
         if conf < merge_thresh:
             # could be more pairs under thresh that have not been merged
             subfam_pair = pair[0]
-            if (
-                subfam_pair[0] not in merged_subs
-                and subfam_pair[1] not in merged_subs
-            ):
-                merged_subs.add(subfam_pair[0])
-                merged_subs.add(subfam_pair[1])
+            subfam_i, subfam_j = subfam_pair[0], subfam_pair[1]
+            if subfam_i not in merged_subs and subfam_j not in merged_subs:
+                merged_subs.add(subfam_i)
+                merged_subs.add(subfam_j)
                 total_merged_subfams += 1
                 merged_num = merge_subfams(
-                    subfam_pair[0],
-                    subfam_pair[1],
+                    subfam_i,
+                    subfam_j,
                     subfam_instances_path,
                     total_merged_subfams,
                 )
                 # write to all merged subfams file
                 all_merged_file.write(
                     # FIXME: used to output final set, could probably clean this up
-                    str(subfam_pair[0])
+                    str(subfam_i)
                     + " "
-                    + str(subfam_pair[1])
+                    + str(subfam_j)
                     + " "
-                    + str(subfam_pair[0])
+                    + str(subfam_i)
                     + ","
-                    + str(subfam_pair[1])
+                    + str(subfam_j)
                 )
                 all_merged_file.write("\n")
 
                 # write to cur merged subfams file
                 cur_merged_file.write(
-                    str(subfam_pair[0])
-                    + " "
-                    + str(subfam_pair[1])
-                    + " "
-                    + str(merged_num)
+                    str(subfam_i) + " " + str(subfam_j) + " " + str(merged_num)
                 )
                 cur_merged_file.write("\n")
 
-                clear_winner_counts = ""
-                for sub in subfam_pair:
-                    if sub in subfam_winners:
-                        clear_winner_counts += (
-                            str(sub) + ": " + str(subfam_winners[sub]) + "\n"
-                        )
                 # output stats from merge
                 if merge_stats_path:
+                    for sub in subfam_pair:
+                        if sub not in subfam_winners:
+                            subfam_winners[sub] = 0
+                        if sub not in winner_group_count:
+                            winner_group_count[sub] = 0
+                            winner_group_dist[sub] = {}
+
                     f_stats = open(merge_stats_path, "a")
                     f_stats.write(
-                        str(subfam_pair) + " " + str(sorted_pairs[0][1])
+                        str(subfam_pair)
+                        + " "
+                        + str(subfam_pair_independence[subfam_pair])
+                    )
+                    f_stats.write("\n")
+                    reverse_pair = (subfam_j, subfam_i)
+                    f_stats.write(
+                        str(reverse_pair)
+                        + " "
+                        + str(subfam_pair_independence[reverse_pair])
                     )
                     f_stats.write("\n")
                     f_stats.write(
-                        "winner group count: "
-                        + str(winner_group_count[subfam_pair[0]])
+                        "winner group count subfam i: "
+                        + str(winner_group_count[subfam_i])
                     )
                     f_stats.write("\n")
+                    f_stats.write(
+                        "winner group count subfam j: "
+                        + str(winner_group_count[subfam_j])
+                    )
+                    f_stats.write(
+                        "winner group dist subfam i: "
+                        + str(winner_group_dist[subfam_i])
+                    )
+                    f_stats.write("\n")
+                    f_stats.write(
+                        "winner group dist subfam j: "
+                        + str(winner_group_dist[subfam_j])
+                    )
+                    f_stats.write("\n")
+                    # same both directions, u_ij
                     f_stats.write(
                         "uncertain pair count: "
                         + str(
@@ -402,9 +477,12 @@ def subfam_confidence(
                         )
                     )
                     f_stats.write("\n")
+                    # w_ij, w_ji
                     f_stats.write("clear winner counts")
                     f_stats.write("\n")
-                    f_stats.write(clear_winner_counts)
+                    f_stats.write(str(subfam_winners[subfam_i]))
+                    f_stats.write("\n")
+                    f_stats.write(str(subfam_winners[subfam_j]))
                     f_stats.write("\n")
                     f_stats.close()
         else:  # no more pairs < thresh
