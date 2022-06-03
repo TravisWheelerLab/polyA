@@ -38,7 +38,7 @@ def read_prior_counts(
 
         current_line_number += 1
 
-    for key in subfam_counts:
+    for key in subfam_counts.keys():
         subfam_counts[key] = (1 - prob_skip) * subfam_counts[key] / total_count
 
     return subfam_counts

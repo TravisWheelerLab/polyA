@@ -1,6 +1,6 @@
 import logging
 from sys import argv, stderr
-from typing import List
+from typing import List, IO
 
 from ._options import Options
 from ._runners import run_confidence, run_full
@@ -22,8 +22,9 @@ class AppError(RuntimeError):
 
 
 def _configure_logging(opts: Options) -> None:
+    log_file: IO[str]
     if opts.log_file_path != "":
-        log_file = open(opts.log_file_path, "w")
+        log_file = open(opts.log_file_path, "wt")
     else:
         log_file = stderr
     handler = logging.StreamHandler(log_file)
