@@ -32,7 +32,7 @@ mccabe==0.7.0
 more-itertools==8.13.0
 mypy==0.960
 mypy-extensions==0.4.3
-numpy==1.21.6
+numpy==1.22.0
 nvidia-ml-py==11.515.48
 packaging==21.3
 parso==0.8.3
