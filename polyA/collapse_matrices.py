@@ -1,5 +1,5 @@
+import math
 from typing import Dict, List, Tuple, Set
-from math import inf, log
 
 from .matrices import (
     CollapsedMatrices,
@@ -38,8 +38,8 @@ def dp_for_collapse(
     >>> p
     [2, 2, 2]
     """
-    change: float = log(0.000000001)
-    stay: float = log(1 - change)
+    change: float = math.log(0.000000001)
+    stay: float = math.log(1 - change)
 
     path: List[int] = []
 
@@ -64,9 +64,9 @@ def dp_for_collapse(
         for row0 in active[curr_col]:
             row = map_rows[row0]
 
-            max_value: float = -inf
+            max_value: float = -math.inf
             max_index: int = -1
-            support_log: float = log(support_matrix[row0, curr_col])
+            support_log: float = math.log(support_matrix[row0, curr_col])
 
             for row1 in active[prev_col]:
                 prev_row = map_rows[row1]
@@ -87,7 +87,7 @@ def dp_for_collapse(
 
     # get path from origin matrix
     # which row to start backtrace
-    max_value = -inf
+    max_value = -math.inf
     max_row_index = 0
     for i in active[non_empty[-1]]:
         if max_value < dp[i, non_empty[-1]]:

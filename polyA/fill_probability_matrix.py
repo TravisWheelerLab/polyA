@@ -1,4 +1,4 @@
-from math import inf, log
+import math
 from typing import Dict, List, Tuple
 
 from polyA.matrices import CollapsedMatrices
@@ -78,9 +78,9 @@ def fill_probability_matrix(
         col_list.clear()
 
         for row_index in active_cells_collapse[curr_column]:
-            max_value: float = -inf
+            max_value: float = -math.inf
             max_index: int = 0
-            support_log: float = log(
+            support_log: float = math.log(
                 support_matrix_collapse[row_index, curr_column]
             )
             same_subfam_change: int = 0  # if 1 - comes from the same row, but gets change prob - add to same_subfam_change_matrix and use later in GetPath()

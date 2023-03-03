@@ -18,11 +18,24 @@ def get_info(info_array):
     """
     score = info_array[0]
     chrom = info_array[4]
-    chrom = info_array[4]
 
-    # doesn't have chrom info because it's an artificial seq
-    if "chr" not in chrom:
+    # format chrom name to match "(.+):(\d+)-(\d+)"
+    if "chr" not in chrom.lower():
+        # doesn't have chrom info because it's an artificial seq
         chrom = "chr0:0000-0000"
+    chrom = chrom.replace("Chr", "chr")
+    chrom_start, chrom_end = chrom.split("chr")
+    chrom_end_values = chrom_end.split("_")
+    if len(chrom_end_values) == 3:
+        # reformat chrom_end
+        chrom_end = (
+            chrom_end_values[0]
+            + ":"
+            + chrom_end_values[1]
+            + "-"
+            + chrom_end_values[2]
+        )
+    chrom = chrom_start + "chr" + chrom_end
 
     start = info_array[5]
     stop = info_array[6]
@@ -176,14 +189,16 @@ def print_score_matrix(f_out_matrix, score_matrix, matrix_name):
     f_out_matrix.write("//\n")
 
 
-def convert(filename_rm: str):
+def convert(filename_rm: str, filename_out_sto: str, filename_out_matrix: str):
     matrices = {}
     file_contents = read_file(filename_rm)
 
-    filename_out_sto = filename_rm + ".sto"
+    if not filename_out_sto:
+        filename_out_sto = filename_rm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
 
-    filename_out_matrix = filename_rm + ".matrix"
+    if not filename_out_matrix:
+        filename_out_matrix = filename_rm + ".matrix"
     f_out_matrix = open(filename_out_matrix, "w")
 
     f_out_sto.write("# STOCKHOLM 1.0\n")
@@ -210,7 +225,7 @@ def convert(filename_rm: str):
         ):  # do not put duplicate of matrices in output file
             matrices[matrix_name] = 0
             score_matrix = get_score_matrix(matrix_name)
-            print_score_matrix(filename_out_matrix, score_matrix, matrix_name)
+            print_score_matrix(f_out_matrix, score_matrix, matrix_name)
 
         m = re.match(r"(.+?)\n([\s\S]+)\n\nMatrix", region)
         if m:
@@ -259,3 +274,4 @@ def convert(filename_rm: str):
         print_alignment(chrom_seq, subfam_seq, chrom, subfam, f_out_sto)
 
     f_out_sto.close()
+    f_out_matrix.close()

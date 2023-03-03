@@ -18,11 +18,24 @@ def get_info(info_array):
     """
     score = info_array[0]
     chrom = info_array[4]
-    chrom = info_array[4]
 
-    # doesn't have chrom info because it's an artificial seq
-    if "chr" not in chrom:
+    # format chrom name to match "(.+):(\d+)-(\d+)"
+    if "chr" not in chrom.lower():
+        # doesn't have chrom info because it's an artificial seq
         chrom = "chr0:0000-0000"
+    chrom = chrom.replace("Chr", "chr")
+    chrom_start, chrom_end = chrom.split("chr")
+    chrom_end_values = chrom_end.split("_")
+    if len(chrom_end_values) == 3:
+        # reformat chrom_end
+        chrom_end = (
+            chrom_end_values[0]
+            + ":"
+            + chrom_end_values[1]
+            + "-"
+            + chrom_end_values[2]
+        )
+    chrom = chrom_start + "chr" + chrom_end
 
     start = info_array[5]
     stop = info_array[6]
@@ -196,13 +209,15 @@ def print_score_matrix(
     f_out_matrix.close()
 
 
-def convert(filename_cm: str):
+def convert(filename_cm: str, filename_out_sto: str, filename_out_matrix: str):
     file_contents = read_file(filename_cm)
 
-    filename_out_sto = filename_cm + ".sto"
+    if not filename_out_sto:
+        filename_out_sto = filename_cm + ".sto"
     f_out_sto = open(filename_out_sto, "w")
 
-    filename_out_matrix = filename_cm + ".matrix"
+    if not filename_out_matrix:
+        filename_out_matrix = filename_cm + ".matrix"
     matrix_name = "matrix1"
 
     f_out_sto.write("# STOCKHOLM 1.0\n")

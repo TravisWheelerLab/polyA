@@ -1,4 +1,4 @@
-from math import inf
+import math
 from uuid import uuid4
 from typing import Dict, List, Tuple
 
@@ -64,7 +64,7 @@ def get_path(
     True
     """
 
-    maxxx: float = -inf
+    maxxx: float = -math.inf
     max_row_index: int = 0
 
     changes_position: List[int] = []
