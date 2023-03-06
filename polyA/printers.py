@@ -5,6 +5,51 @@ from typing import Dict, List, Optional, TextIO, Tuple, Any
 from .matrices import SupportMatrix, SubfamAlignmentsMatrix
 
 
+char_complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
+
+
+def complement(sequence: str) -> str:
+    seq_complement: str = ""
+    for seq_char in sequence:
+        if seq_char in {"A", "T", "C", "G"}:
+            seq_complement += char_complement[seq_char]
+        else:
+            seq_complement += seq_char
+    return seq_complement
+
+
+def calc_relative_start_and_end(
+    confidence_start: int,
+    alignment_start: int,
+    confidence_length: int,
+    target_seq: str,
+):
+    # starts relative to chrom position
+    confidence_offset = confidence_start - alignment_start
+    relative_start = -1
+    relative_end = -1
+
+    # find relative start position
+    non_gap_count = 0
+    for i, char in enumerate(target_seq):
+        if non_gap_count == confidence_offset:
+            relative_start = i
+            break
+        if char != "-":
+            non_gap_count += 1
+
+    # find relative end position
+    non_gap_count = 0
+    for i, char in enumerate(target_seq[relative_start:]):
+        if char != "-":
+            non_gap_count += 1
+        if non_gap_count == confidence_length:
+            relative_end = relative_start + i + 1
+            break
+
+    return relative_start, relative_end
+
+
 class Printer:
     __output_file: TextIO = stdout
     __print_id: bool
@@ -43,14 +88,14 @@ class Printer:
     def use_soda_output(self) -> bool:
         return (
             self.__soda_viz_file is not None
-            and self.__soda_conf_file is not None
+            # and self.__soda_conf_file is not None
         )
 
     def set_soda_files(
-        self, viz_file: Optional[TextIO], conf_file: Optional[TextIO]
+        self, viz_file: Optional[TextIO]
     ):
         self.__soda_viz_file = viz_file
-        self.__soda_conf_file = conf_file
+        # self.__soda_conf_file = conf_file
 
     def print_results_header(self):
         self.__output_file.write("start\tstop\t")
@@ -210,6 +255,8 @@ class Printer:
         chrom_alignments: List[str],
         consensus_starts: List[int],
         consensus_stops: List[int],
+        chrom_starts: List[int],
+        chrom_stops: List[int],
         alignments_matrix: SubfamAlignmentsMatrix,
         matrix: SupportMatrix,
         subfams_collapse: List[str],
@@ -222,7 +269,8 @@ class Printer:
         The output format is described here:
         https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
         """
-        if self.__soda_conf_file is None or self.__soda_viz_file is None:
+        # if self.__soda_conf_file is None or self.__soda_viz_file is None:
+        if self.__soda_viz_file is None:
             return
 
         current_id: int = 0
@@ -250,12 +298,12 @@ class Printer:
         j: int = 0
         cur_subfam_row: int = 0
         # skip state starts one before the first alignment
-        align_start: int = chrom_start - 2 + start_all
+        conf_chrom_start: int = chrom_start - 2 + start_all
         # skip state values
         while j < num_col:
             heatmap_vals.append(round(matrix[0, j], 3))
             j += 1
-        confidence.append({"chromStart": align_start, "values": heatmap_vals})
+        confidence.append({"start": conf_chrom_start, "values": heatmap_vals})
         heatmap_dict["confidence"] = confidence
         heatmap_dict["alignments"] = []
         json_dict["heatmap"].append(heatmap_dict)
@@ -268,87 +316,154 @@ class Printer:
             confidence = []
             alignments = []
             cur_col = 1
-            prev_col = 0
+            next_expected_col = 0
             prev_subfam_row = 0
-            align_start = chrom_start
+            conf_chrom_start = (
+                chrom_start  # chrom position for start of conf values
+            )
             while cur_col < num_col:
                 if (k, cur_col) in matrix:
                     # cur subfam row will be unique
+                    # alignments_matrix[subfam, collapse_col + start_all - 1] = (row_index, consensus_pos)
+                    # col val between stop_all - start_all + 1 + 2, sequence position
+                    # + start_all - 1 -> on chrom
+                    # at chrom pos on target, which consensus pos does it correspond to
                     subfam_row_consensus = alignments_matrix[
                         subfams_collapse[k], cur_col + start_all - 1
                     ]
                     cur_subfam_row = subfam_row_consensus[0]
                     if (
-                        cur_col == prev_col
+                        cur_col == next_expected_col
                         and cur_subfam_row == prev_subfam_row
                     ):
                         # continue to add values
                         heatmap_vals.append(round(matrix[k, cur_col], 3))
                         subfam_rows.append(subfam_row_consensus[1])
-                        prev_col += 1
+                        next_expected_col += 1
                     else:
                         if len(heatmap_vals) > 0:
                             block_sub_alignment: Dict[str, Any] = {}
                             if subfams_collapse[k] != "Tandem Repeat":
                                 block_sub_alignment["id"] = prev_subfam_row
-                                block_sub_alignment[
-                                    "chrSeq"
-                                ] = chrom_alignments[prev_subfam_row]
-                                block_sub_alignment[
-                                    "famSeq"
-                                ] = subfam_alignments[prev_subfam_row]
-                                block_sub_alignment["relativeStart"] = abs(
-                                    consensus_starts[prev_subfam_row]
-                                    - subfam_rows[0]
-                                )
-                                block_sub_alignment["relativeEnd"] = abs(
-                                    consensus_stops[prev_subfam_row]
-                                    - subfam_rows[-1]
+
+                                (
+                                    relative_start,
+                                    relative_end,
+                                ) = calc_relative_start_and_end(
+                                    conf_chrom_start,
+                                    chrom_starts[prev_subfam_row]
+                                    + chrom_start
+                                    - 1,
+                                    len(heatmap_vals),
+                                    chrom_alignments[prev_subfam_row],
                                 )
                                 block_sub_alignment[
-                                    "alignStart"
-                                ] = consensus_starts[prev_subfam_row]
+                                    "relativeStart"
+                                ] = relative_start
                                 block_sub_alignment[
-                                    "alignEnd"
-                                ] = consensus_stops[prev_subfam_row]
+                                    "relativeEnd"
+                                ] = relative_end
+                                if subfam_rows[0] > subfam_rows[-1]:
+                                    # complement and swap align start and stop positions
+                                    block_sub_alignment["target"] = complement(
+                                        chrom_alignments[prev_subfam_row]
+                                    )
+                                    block_sub_alignment["query"] = complement(
+                                        subfam_alignments[prev_subfam_row]
+                                    )
+                                    block_sub_alignment[
+                                        "alignStart"
+                                    ] = consensus_stops[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "alignEnd"
+                                    ] = consensus_starts[prev_subfam_row]
+                                else:
+                                    block_sub_alignment[
+                                        "target"
+                                    ] = chrom_alignments[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "query"
+                                    ] = subfam_alignments[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "alignStart"
+                                    ] = consensus_starts[prev_subfam_row]
+                                    block_sub_alignment[
+                                        "alignEnd"
+                                    ] = consensus_stops[prev_subfam_row]
+                                block_sub_alignment["start"] = (
+                                    chrom_starts[prev_subfam_row]
+                                    + chrom_start
+                                    - 1
+                                )
+                                block_sub_alignment["end"] = (
+                                    chrom_stops[prev_subfam_row]
+                                    + chrom_start
+                                    - 1
+                                )
                                 alignments.append(block_sub_alignment)
                             confidence.append(
                                 {
-                                    "chromStart": align_start,
+                                    "start": conf_chrom_start,
                                     "values": heatmap_vals,
                                 }
                             )
                         heatmap_vals = [round(matrix[k, cur_col], 3)]
                         subfam_rows = [subfam_row_consensus[1]]
-                        align_start = chrom_start + cur_col + start_all - 2
-                        prev_col = cur_col + 1
+                        conf_chrom_start = chrom_start + cur_col + start_all - 2
+                        next_expected_col = cur_col + 1
                         prev_subfam_row = cur_subfam_row
                 cur_col += 1
             if len(heatmap_vals) > 0:
                 block_sub_alignment = {}
                 if subfams_collapse[k] != "Tandem Repeat":
                     block_sub_alignment["id"] = cur_subfam_row
-                    block_sub_alignment["chrSeq"] = chrom_alignments[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["famSeq"] = subfam_alignments[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["relativeStart"] = abs(
-                        consensus_starts[cur_subfam_row] - subfam_rows[0]
+                    (
+                        relative_start,
+                        relative_end,
+                    ) = calc_relative_start_and_end(
+                        conf_chrom_start,
+                        chrom_starts[cur_subfam_row] + chrom_start - 1,
+                        len(heatmap_vals),
+                        chrom_alignments[cur_subfam_row],
                     )
-                    block_sub_alignment["relativeEnd"] = abs(
-                        consensus_stops[cur_subfam_row] - subfam_rows[-1]
+                    block_sub_alignment["relativeStart"] = relative_start
+                    block_sub_alignment["relativeEnd"] = relative_end
+                    if subfam_rows[0] > subfam_rows[-1]:
+                        # complement and swap align start and end
+                        block_sub_alignment["target"] = complement(
+                            chrom_alignments[cur_subfam_row]
+                        )
+                        block_sub_alignment["query"] = complement(
+                            subfam_alignments[cur_subfam_row]
+                        )
+                        block_sub_alignment["alignStart"] = consensus_stops[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["alignEnd"] = consensus_starts[
+                            cur_subfam_row
+                        ]
+                    else:
+                        block_sub_alignment["target"] = chrom_alignments[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["query"] = subfam_alignments[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["alignStart"] = consensus_starts[
+                            cur_subfam_row
+                        ]
+                        block_sub_alignment["alignEnd"] = consensus_stops[
+                            cur_subfam_row
+                        ]
+                    block_sub_alignment["start"] = (
+                        chrom_starts[cur_subfam_row] + chrom_start - 1
                     )
-                    block_sub_alignment["alignStart"] = consensus_starts[
-                        cur_subfam_row
-                    ]
-                    block_sub_alignment["alignEnd"] = consensus_stops[
-                        cur_subfam_row
-                    ]
+                    block_sub_alignment["end"] = (
+                        chrom_stops[cur_subfam_row] + chrom_start - 1
+                    )
                     alignments.append(block_sub_alignment)
                 confidence.append(
-                    {"chromStart": align_start, "values": heatmap_vals}
+                    {"start": conf_chrom_start, "values": heatmap_vals}
                 )
             heatmap_dict["confidence"] = confidence
             heatmap_dict["alignments"] = alignments
@@ -452,22 +567,20 @@ class Printer:
                 )
                 sub_id += 1
 
-                block_start: List[str] = []
-                block_size: List[str] = []
+                block_start: List[int] = []
+                block_size: List[int] = []
 
-                block_start.append("-1")
-                block_start.append(str(left_flank + 1))
-                block_start.append("-1")
+                block_start.append(-1)
+                block_start.append(left_flank + 1)
+                block_start.append(-1)
 
-                block_size.append(str(left_flank))
+                block_size.append(left_flank)
                 block_size.append(
-                    str(
-                        columns_orig[changes_position_orig[i + 1] - 1]
-                        - columns_orig[changes_position_orig[i]]
-                        + 1
-                    )
+                    columns_orig[changes_position_orig[i + 1] - 1]
+                    - columns_orig[changes_position_orig[i]]
+                    + 1
                 )
-                block_size.append(str(right_flank))
+                block_size.append(right_flank)
 
                 j = i + 1
                 while j < length:
@@ -502,7 +615,7 @@ class Printer:
                                 )
 
                             del block_size[-1]
-                            block_size.append("0")
+                            block_size.append(0)
 
                             align_stop = chrom_start + (
                                 columns_orig[changes_position_orig[j + 1] - 1]
@@ -511,26 +624,20 @@ class Printer:
                             feature_stop = align_stop + right_flank
 
                             block_start.append(
-                                str(
-                                    columns_orig[changes_position_orig[j]]
-                                    + 1
-                                    - block_start_matrix
-                                    + left_flank
-                                )
+                                columns_orig[changes_position_orig[j]]
+                                + 1
+                                - block_start_matrix
+                                + left_flank
                             )
-                            block_start.append("-1")
+                            block_start.append(-1)
 
                             block_size.append(
-                                str(
-                                    columns_orig[
-                                        changes_position_orig[j + 1] - 1
-                                    ]
-                                    - columns_orig[changes_position_orig[j]]
-                                    + 1
-                                )
+                                columns_orig[changes_position_orig[j + 1] - 1]
+                                - columns_orig[changes_position_orig[j]]
+                                + 1
                             )
 
-                            block_size.append(str(right_flank))
+                            block_size.append(right_flank)
 
                             block_count += 2
 
@@ -560,17 +667,17 @@ class Printer:
                     j += 1
                 json_dict_id[str(id)] = json_dict_subid
                 json_annotation: Dict[str, Any] = {
-                    "bin": "0",
+                    "bin": 0,
                     "chrom": chrom,
-                    "chromStart": str(feature_start),
-                    "chromEnd": str(feature_stop),
+                    "chromStart": feature_start,
+                    "chromEnd": feature_stop,
                     "name": subfam,
-                    "score": "0",
+                    "score": 0,
                     "strand": strand,
-                    "alignStart": str(align_start),
-                    "alignEnd": str(align_stop),
-                    "reserved": "0",
-                    "blockCount": str(block_count),
+                    "alignStart": align_start,
+                    "alignEnd": align_stop,
+                    "reserved": 0,
+                    "blockCount": block_count,
                     "blockSizes": block_size,
                     "blockStarts": block_start,
                     "id": (
@@ -590,11 +697,11 @@ class Printer:
             used[i] = 0
             i += 1
 
-        json_dict["chrStart"] = min_align_start
-        json_dict["chrEnd"] = max_align_end
+        json_dict["start"] = min_align_start
+        json_dict["end"] = max_align_end
 
         # prints  outfile for SODA viz
         self.__soda_viz_file.write(json.dumps(json_dict))
 
         # prints json file with confidence values for each annotation
-        self.__soda_conf_file.write(json.dumps(json_dict_id))
+        #self.__soda_conf_file.write(json.dumps(json_dict_id))
