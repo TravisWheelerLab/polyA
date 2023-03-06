@@ -204,7 +204,7 @@ def run():
 
         
         soda_viz_file = (
-            outputter.get_soda(index) if opts.soda else (None, None)
+            outputter.get_soda(index) if opts.soda else None
         )
         printer.set_soda_files(soda_viz_file)
 
