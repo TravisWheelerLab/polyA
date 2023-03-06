@@ -202,10 +202,11 @@ def run():
         if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
             tr_start -= 1
 
-        soda_viz_file, soda_conf_file = (
+        
+        soda_viz_file = (
             outputter.get_soda(index) if opts.soda else (None, None)
         )
-        printer.set_soda_files(soda_viz_file, soda_conf_file)
+        printer.set_soda_files(soda_viz_file)
 
         (_last_start, _last_stop) = run_full(
             chunk.alignments,
@@ -227,5 +228,6 @@ def run():
 
         if soda_viz_file is not None:
             soda_viz_file.close()
-        if soda_conf_file is not None:
-            soda_conf_file.close()
+
+        # if soda_conf_file is not None:
+        #     soda_conf_file.close()

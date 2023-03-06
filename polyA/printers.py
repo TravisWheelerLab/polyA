@@ -88,14 +88,14 @@ class Printer:
     def use_soda_output(self) -> bool:
         return (
             self.__soda_viz_file is not None
-            and self.__soda_conf_file is not None
+            # and self.__soda_conf_file is not None
         )
 
     def set_soda_files(
-        self, viz_file: Optional[TextIO], conf_file: Optional[TextIO]
+        self, viz_file: Optional[TextIO]
     ):
         self.__soda_viz_file = viz_file
-        self.__soda_conf_file = conf_file
+        # self.__soda_conf_file = conf_file
 
     def print_results_header(self):
         self.__output_file.write("start\tstop\t")
@@ -269,7 +269,8 @@ class Printer:
         The output format is described here:
         https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
         """
-        if self.__soda_conf_file is None or self.__soda_viz_file is None:
+        # if self.__soda_conf_file is None or self.__soda_viz_file is None:
+        if self.__soda_viz_file is None:
             return
 
         current_id: int = 0
@@ -703,4 +704,4 @@ class Printer:
         self.__soda_viz_file.write(json.dumps(json_dict))
 
         # prints json file with confidence values for each annotation
-        self.__soda_conf_file.write(json.dumps(json_dict_id))
+        #self.__soda_conf_file.write(json.dumps(json_dict_id))

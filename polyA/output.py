@@ -38,7 +38,9 @@ class Output:
         return results_file
 
     def get_soda(self, index: int) -> Tuple[TextIO, TextIO]:
-        viz_file = open(f"{self.__base_filename}.{index}.viz", "w")
-        conf_file = open(f"{self.__base_filename}.{index}.viz.json", "w")
+        viz_file = open(f"{self.__base_filename}.{index}.soda.json", "w")
 
-        return viz_file, conf_file
+        # i don't think this file is used anymore
+        # conf_file = open(f"{self.__base_filename}.{index}.viz.json", "w")
+
+        return viz_file
