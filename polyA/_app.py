@@ -185,7 +185,7 @@ def run():
     _prev_stop: int = -1
 
     for index, chunk in enumerate(
-        shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
+            shard_overlapping_alignments(alignments, shard_gap=opts.shard_gap)
     ):
         chunk_start = chunk.start
         chunk_stop = chunk.stop
@@ -202,7 +202,6 @@ def run():
         if tr_start > 0 and tandem_repeats[tr_start - 1].stop > chunk_stop:
             tr_start -= 1
 
-        
         soda_viz_file = (
             outputter.get_soda(index) if opts.soda else None
         )

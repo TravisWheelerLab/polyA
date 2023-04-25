@@ -1,9 +1,13 @@
 import json
+import importlib.resources
+import requests
 from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Any
 
 from .matrices import SupportMatrix, SubfamAlignmentsMatrix
+from . import soda
 
+polya_soda = importlib.resources.read_text(soda, 'polya-soda.js')
 
 char_complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
 
@@ -19,10 +23,10 @@ def complement(sequence: str) -> str:
 
 
 def calc_relative_start_and_end(
-    confidence_start: int,
-    alignment_start: int,
-    confidence_length: int,
-    target_seq: str,
+        confidence_start: int,
+        alignment_start: int,
+        confidence_length: int,
+        target_seq: str,
 ):
     # starts relative to chrom position
     confidence_offset = confidence_start - alignment_start
@@ -53,25 +57,22 @@ def calc_relative_start_and_end(
 class Printer:
     __output_file: TextIO = stdout
     __print_id: bool
-    __soda_conf_file: Optional[TextIO]
     __soda_viz_file: Optional[TextIO]
     __use_matrix_position: bool
     __use_sequence_position: bool
 
     def __init__(
-        self,
-        output_file: Optional[TextIO] = None,
-        print_id: bool = False,
-        soda_conf_file: Optional[TextIO] = None,
-        soda_viz_file: Optional[TextIO] = None,
-        use_matrix_position: bool = False,
-        use_sequence_position: bool = False,
+            self,
+            output_file: Optional[TextIO] = None,
+            print_id: bool = False,
+            soda_viz_file: Optional[TextIO] = None,
+            use_matrix_position: bool = False,
+            use_sequence_position: bool = False,
     ) -> None:
         if output_file is not None:
             self.__output_file = output_file
 
         self.__print_id = print_id
-        self.__soda_conf_file = soda_conf_file
         self.__soda_viz_file = soda_viz_file
         self.__use_matrix_position = use_matrix_position
         self.__use_sequence_position = use_sequence_position
@@ -87,15 +88,13 @@ class Printer:
     @property
     def use_soda_output(self) -> bool:
         return (
-            self.__soda_viz_file is not None
-            # and self.__soda_conf_file is not None
+                self.__soda_viz_file is not None
         )
 
     def set_soda_files(
-        self, viz_file: Optional[TextIO]
+            self, viz_file: Optional[TextIO]
     ):
         self.__soda_viz_file = viz_file
-        # self.__soda_conf_file = conf_file
 
     def print_results_header(self):
         self.__output_file.write("start\tstop\t")
@@ -106,11 +105,11 @@ class Printer:
         self.__output_file.write("name\n")
 
     def print_results_simple(
-        self,
-        start: int,
-        stop: int,
-        node_id: str,
-        node_name: str,
+            self,
+            start: int,
+            stop: int,
+            node_id: str,
+            node_name: str,
     ) -> None:
         """
         A version of the output printer that takes the exact values to output.
@@ -123,12 +122,12 @@ class Printer:
         self.__output_file.write(f"{node_name}\n")
 
     def print_results_matrix(
-        self,
-        changes: List[str],
-        tr_changes: Dict[int, str],
-        position_changes: List[int],
-        columns: List[int],
-        ids: List[str],
+            self,
+            changes: List[str],
+            tr_changes: Dict[int, str],
+            position_changes: List[int],
+            columns: List[int],
+            ids: List[str],
     ) -> None:
         """
         Print final results. Start and stop are in terms of matrix position.
@@ -158,13 +157,13 @@ class Printer:
             self.__output_file.write("\n")
 
     def print_results_sequence(
-        self,
-        start_all: int,
-        changes: List[str],
-        tr_changes: Dict[int, str],
-        position_changes: List[int],
-        columns: List[int],
-        ids: List[str],
+            self,
+            start_all: int,
+            changes: List[str],
+            tr_changes: Dict[int, str],
+            position_changes: List[int],
+            columns: List[int],
+            ids: List[str],
     ) -> None:
         """
         Print final results. Start and stop are in terms of the target sequence.
@@ -194,14 +193,14 @@ class Printer:
             self.__output_file.write("\n")
 
     def print_results_chrom(
-        self,
-        start_all: int,
-        chrom_start: int,
-        changes: List[str],
-        tr_changes: Dict[int, str],
-        position_changes: List[int],
-        columns: List[int],
-        ids: List[str],
+            self,
+            start_all: int,
+            chrom_start: int,
+            changes: List[str],
+            tr_changes: Dict[int, str],
+            position_changes: List[int],
+            columns: List[int],
+            ids: List[str],
     ) -> None:
         """
         Print final results. Start and stop are in terms of the chromosome /
@@ -217,7 +216,7 @@ class Printer:
 
             start = columns[position_change] + start_all + chrom_start - 2
             stop = (
-                columns[position_change_next - 1] + start_all + chrom_start - 2
+                    columns[position_change_next - 1] + start_all + chrom_start - 2
             )
 
             self.__output_file.write(f"{start}\t")
@@ -235,41 +234,37 @@ class Printer:
             self.__output_file.write("\n")
 
     def print_results_soda(
-        self,
-        start_all: int,
-        chrom: str,
-        chrom_start: int,
-        chrom_end: int,
-        subfams: List[str],
-        changes_orig: List[str],
-        tr_consensus_changes: Dict[int, str],
-        changes_position_orig: List[int],
-        columns_orig: List[int],
-        consensus_lengths: Dict[str, int],
-        strand_matrix_collapse: Dict[Tuple[int, int], str],
-        consensus_matrix_collapse: Dict[Tuple[int, int], int],
-        subfams_collapse_index: Dict[str, int],
-        node_confidence_orig: Dict[Tuple[str, int], float],
-        ids: List[str],
-        subfam_alignments: List[str],
-        chrom_alignments: List[str],
-        consensus_starts: List[int],
-        consensus_stops: List[int],
-        chrom_starts: List[int],
-        chrom_stops: List[int],
-        alignments_matrix: SubfamAlignmentsMatrix,
-        matrix: SupportMatrix,
-        subfams_collapse: List[str],
-        num_col: int,
+            self,
+            start_all: int,
+            chrom: str,
+            chrom_start: int,
+            chrom_end: int,
+            subfams: List[str],
+            changes_orig: List[str],
+            tr_consensus_changes: Dict[int, str],
+            changes_position_orig: List[int],
+            columns_orig: List[int],
+            consensus_lengths: Dict[str, int],
+            strand_matrix_collapse: Dict[Tuple[int, int], str],
+            consensus_matrix_collapse: Dict[Tuple[int, int], int],
+            subfams_collapse_index: Dict[str, int],
+            node_confidence_orig: Dict[Tuple[str, int], float],
+            ids: List[str],
+            subfam_alignments: List[str],
+            chrom_alignments: List[str],
+            consensus_starts: List[int],
+            consensus_stops: List[int],
+            chrom_starts: List[int],
+            chrom_stops: List[int],
+            alignments_matrix: SubfamAlignmentsMatrix,
+            matrix: SupportMatrix,
+            subfams_collapse: List[str],
+            num_col: int,
     ) -> None:
         """
-        Prints the results in the proper format to input into the SODA visualization
-        tool.
+        Produce a polya-soda html file with the results.
 
-        The output format is described here:
-        https://genome.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=rep&hgta_track=joinedRmsk&hgta_table=rmskJoinedCurrent&hgta_doSchema=describe+table+schema
         """
-        # if self.__soda_conf_file is None or self.__soda_viz_file is None:
         if self.__soda_viz_file is None:
             return
 
@@ -333,8 +328,8 @@ class Printer:
                     ]
                     cur_subfam_row = subfam_row_consensus[0]
                     if (
-                        cur_col == next_expected_col
-                        and cur_subfam_row == prev_subfam_row
+                            cur_col == next_expected_col
+                            and cur_subfam_row == prev_subfam_row
                     ):
                         # continue to add values
                         heatmap_vals.append(round(matrix[k, cur_col], 3))
@@ -391,14 +386,14 @@ class Printer:
                                         "alignEnd"
                                     ] = consensus_stops[prev_subfam_row]
                                 block_sub_alignment["start"] = (
-                                    chrom_starts[prev_subfam_row]
-                                    + chrom_start
-                                    - 1
+                                        chrom_starts[prev_subfam_row]
+                                        + chrom_start
+                                        - 1
                                 )
                                 block_sub_alignment["end"] = (
-                                    chrom_stops[prev_subfam_row]
-                                    + chrom_start
-                                    - 1
+                                        chrom_stops[prev_subfam_row]
+                                        + chrom_start
+                                        - 1
                                 )
                                 alignments.append(block_sub_alignment)
                             confidence.append(
@@ -456,10 +451,10 @@ class Printer:
                             cur_subfam_row
                         ]
                     block_sub_alignment["start"] = (
-                        chrom_starts[cur_subfam_row] + chrom_start - 1
+                            chrom_starts[cur_subfam_row] + chrom_start - 1
                     )
                     block_sub_alignment["end"] = (
-                        chrom_stops[cur_subfam_row] + chrom_start - 1
+                            chrom_stops[cur_subfam_row] + chrom_start - 1
                     )
                     alignments.append(block_sub_alignment)
                 confidence.append(
@@ -498,48 +493,48 @@ class Printer:
                 else:
                     if strand == "-":
                         left_flank = (
-                            consensus_lengths[subfam]
-                            - consensus_matrix_collapse[
-                                subfams_collapse_index[subfam],
-                                columns_orig[changes_position_orig[i]],
-                            ]
+                                consensus_lengths[subfam]
+                                - consensus_matrix_collapse[
+                                    subfams_collapse_index[subfam],
+                                    columns_orig[changes_position_orig[i]],
+                                ]
                         )
                         right_flank = (
-                            consensus_matrix_collapse[
-                                subfams_collapse_index[subfam],
-                                columns_orig[changes_position_orig[i + 1] - 1],
-                            ]
-                            - 1
+                                consensus_matrix_collapse[
+                                    subfams_collapse_index[subfam],
+                                    columns_orig[changes_position_orig[i + 1] - 1],
+                                ]
+                                - 1
                         )
                     else:
                         left_flank = (
-                            consensus_matrix_collapse[
-                                subfams_collapse_index[subfam],
-                                columns_orig[changes_position_orig[i]],
-                            ]
-                            - 1
+                                consensus_matrix_collapse[
+                                    subfams_collapse_index[subfam],
+                                    columns_orig[changes_position_orig[i]],
+                                ]
+                                - 1
                         )
                         right_flank = (
-                            consensus_lengths[subfam]
-                            - consensus_matrix_collapse[
-                                subfams_collapse_index[subfam],
-                                columns_orig[changes_position_orig[i + 1] - 1],
-                            ]
+                                consensus_lengths[subfam]
+                                - consensus_matrix_collapse[
+                                    subfams_collapse_index[subfam],
+                                    columns_orig[changes_position_orig[i + 1] - 1],
+                                ]
                         )
 
                 align_start = (
-                    chrom_start
-                    + (columns_orig[changes_position_orig[i]] + start_all)
-                    - 2
+                        chrom_start
+                        + (columns_orig[changes_position_orig[i]] + start_all)
+                        - 2
                 )
                 feature_start: int = align_start - left_flank
                 align_stop: int = (
-                    chrom_start
-                    + (
-                        columns_orig[changes_position_orig[i + 1] - 1]
-                        + start_all
-                    )
-                    - 2
+                        chrom_start
+                        + (
+                                columns_orig[changes_position_orig[i + 1] - 1]
+                                + start_all
+                        )
+                        - 2
                 )
                 feature_stop: int = align_stop + right_flank
 
@@ -553,8 +548,8 @@ class Printer:
                 for subfam_i in range(1, len(subfams)):
                     subfamm = subfams[subfam_i]
                     if (
-                        subfamm,
-                        i,
+                            subfamm,
+                            i,
                     ) in node_confidence_orig and node_confidence_orig[
                         subfamm, i
                     ] > 0.001:
@@ -585,41 +580,41 @@ class Printer:
                 j = i + 1
                 while j < length:
                     if (
-                        changes_orig[j] != "skip"
-                        and orig_subfam != "Tandem Repeat"
+                            changes_orig[j] != "skip"
+                            and orig_subfam != "Tandem Repeat"
                     ):
 
                         if (
-                            ids[columns_orig[changes_position_orig[i]]]
-                            == ids[columns_orig[changes_position_orig[j]]]
+                                ids[columns_orig[changes_position_orig[i]]]
+                                == ids[columns_orig[changes_position_orig[j]]]
                         ):
                             if strand == "-":
                                 right_flank = (
-                                    consensus_matrix_collapse[
-                                        subfams_collapse_index[changes_orig[j]],
-                                        columns_orig[
-                                            changes_position_orig[j + 1] - 1
-                                        ],
-                                    ]
-                                    - 1
+                                        consensus_matrix_collapse[
+                                            subfams_collapse_index[changes_orig[j]],
+                                            columns_orig[
+                                                changes_position_orig[j + 1] - 1
+                                                ],
+                                        ]
+                                        - 1
                                 )
                             else:
                                 right_flank = (
-                                    consensus_lengths[subfam]
-                                    - consensus_matrix_collapse[
-                                        subfams_collapse_index[changes_orig[j]],
-                                        columns_orig[
-                                            changes_position_orig[j + 1] - 1
-                                        ],
-                                    ]
+                                        consensus_lengths[subfam]
+                                        - consensus_matrix_collapse[
+                                            subfams_collapse_index[changes_orig[j]],
+                                            columns_orig[
+                                                changes_position_orig[j + 1] - 1
+                                                ],
+                                        ]
                                 )
 
                             del block_size[-1]
                             block_size.append(0)
 
                             align_stop = chrom_start + (
-                                columns_orig[changes_position_orig[j + 1] - 1]
-                                + start_all
+                                    columns_orig[changes_position_orig[j + 1] - 1]
+                                    + start_all
                             )
                             feature_stop = align_stop + right_flank
 
@@ -648,8 +643,8 @@ class Printer:
                             for subfam_i in range(1, len(subfams)):
                                 subfamm = subfams[subfam_i]
                                 if (
-                                    (subfamm, j) in node_confidence_orig
-                                    and node_confidence_orig[subfamm, j] > 0.001
+                                        (subfamm, j) in node_confidence_orig
+                                        and node_confidence_orig[subfamm, j] > 0.001
                                 ):
                                     json_dict_subfam_j[
                                         subfamm
@@ -657,7 +652,7 @@ class Printer:
 
                             json_dict_subid[
                                 str(id) + "-" + str(sub_id)
-                            ] = sorted(
+                                ] = sorted(
                                 json_dict_subfam_j.items(),
                                 key=lambda x: x[1],
                                 reverse=True,
@@ -681,9 +676,9 @@ class Printer:
                     "blockSizes": block_size,
                     "blockStarts": block_start,
                     "id": (
-                        str(subfam_ids[orig_subfam])
-                        + "-"
-                        + str(subfam_subids[orig_subfam])
+                            str(subfam_ids[orig_subfam])
+                            + "-"
+                            + str(subfam_subids[orig_subfam])
                     ),
                 }
                 subfam_subids[orig_subfam] += 1
@@ -700,8 +695,56 @@ class Printer:
         json_dict["start"] = min_align_start
         json_dict["end"] = max_align_end
 
-        # prints  outfile for SODA viz
-        self.__soda_viz_file.write(json.dumps(json_dict))
+        genome_url = f"https://sodaviz.org/data/hg38/{chrom}/{min_align_start}/{max_align_end}"
+        ucsc_url = f"https://sodaviz.org/data/rmsk/{chrom}/{min_align_start}/{max_align_end}"
 
-        # prints json file with confidence values for each annotation
-        #self.__soda_conf_file.write(json.dumps(json_dict_id))
+        genome_seq_response = requests.get(genome_url)
+        ucsc_annotations_response = requests.get(ucsc_url)
+
+        if genome_seq_response.status_code == 200:
+            genome_seq = genome_seq_response.text
+        else:
+            print(f"failed to perform genome get request: {genome_url}")
+            print("genome will be missing from the visualization")
+            genome_seq = ""
+
+        if ucsc_annotations_response.status_code == 200:
+            ucsc_annotations = ucsc_annotations_response.json()
+        else:
+            print(f"failed to perform ucsc get request: {ucsc_url}")
+            print("ucsc annotations will be missing from the visualization")
+            ucsc_annotations = []
+
+        json_dict["genomeSeq"] = genome_seq
+        json_dict["ucscAnnotations"] = ucsc_annotations
+
+        data_json_string = json.dumps(json_dict)
+        bundle = importlib.resources.read_text(soda, 'polya-soda.js')
+        title = f"{chrom}: {min_align_start} - {max_align_end}"
+        html_blob = f"""<!DOCTYPE html>
+         <html>
+         <head>
+           <title>{title}</title>
+         </head>
+         <body>
+         <h1>{title}</h1>
+         <div id="charts"></div>
+         <div class="controls">
+           <button class="button" id="toggle-confidence">toggle confidence</button>
+           <button class="button" id="toggle-alignments">toggle alignments</button>
+         </div>
+         <script>
+           {bundle}
+           let data = {data_json_string};
+         </script>
+         <script>
+           let container = new ps.PolyaContainer({{selector: "#charts"}});
+           document.getElementById("toggle-confidence").addEventListener("click", () => container.toggleConfidence());
+           document.getElementById("toggle-alignments").addEventListener("click", () => container.toggleAlignments());
+           container.render(data);
+         </script>
+         </body>
+         </html>"""
+
+        # prints  outfile for SODA viz
+        self.__soda_viz_file.write(html_blob)
