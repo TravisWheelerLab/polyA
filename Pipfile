@@ -14,6 +14,7 @@ scalene = "*"
 sphinx = "*"
 
 [packages]
+requests = "*"
 
 [pipenv]
 allow_prereleases = true

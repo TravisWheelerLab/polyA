@@ -5,9 +5,6 @@ from sys import stdout
 from typing import Dict, List, Optional, TextIO, Tuple, Any
 
 from .matrices import SupportMatrix, SubfamAlignmentsMatrix
-from . import soda
-
-polya_soda = importlib.resources.read_text(soda, 'polya-soda.js')
 
 char_complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
 
@@ -719,7 +716,7 @@ class Printer:
         json_dict["ucscAnnotations"] = ucsc_annotations
 
         data_json_string = json.dumps(json_dict)
-        bundle = importlib.resources.read_text(soda, 'polya-soda.js')
+        bundle = importlib.resources.read_text("polyA", 'polya-soda.js')
         title = f"{chrom}: {min_align_start} - {max_align_end}"
         html_blob = f"""<!DOCTYPE html>
          <html>

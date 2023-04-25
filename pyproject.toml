@@ -10,8 +10,8 @@ cm_to_stockholm = "polyA.converters:cm_to_stockholm"
 module = "polyA"
 author = "Kaitlin Carey"
 author-email = "kaitlin1.carey@umontana.edu"
-maintainer = "Audrey Shingleton"
-maintainer-email = "audrey.shingleton@umontana.edu"
+maintainer = "Jack Roddy"
+maintainer-email = "jroddy@arizona.edu"
 home-page = "https://github.com/TravisWheelerLab/polyA"
 classifiers = [
     "Programming Language :: Python :: 3.7",
@@ -21,6 +21,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 description-file = "README.md"
+requires = [ "requests >= 2.27.1" ]
 
 [tool.flit.sdist]
 exclude = [
