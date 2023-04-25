@@ -27,7 +27,7 @@ class TandemRepeat(NamedTuple):
 
     @staticmethod
     def from_json(json_map: Dict[str, Any]):
-        raw_scores = json_map["PositionScoreDelta"].split(":")
+        raw_scores = json_map["PositionScoreDeltas"]
         position_scores = []
         for score in raw_scores:
             if abs(float(score)) > 100:
@@ -94,7 +94,7 @@ class ApplicationUltraProvider:
     def __call__(self) -> UltraOutput:
         if self._sequence_path:
             ultra_process = subprocess.run(
-                [self._ultra_path, "-ss", self._sequence_path],
+                [self._ultra_path, "--hs", "-j", "--showdelta", self._sequence_path],
                 capture_output=True,
                 text=True,
             )
