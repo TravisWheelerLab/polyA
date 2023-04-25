@@ -1,3 +1,6 @@
+# one-off scripts that don't need to be in the repo
+scripts/
+
 # Python
 *.pyc
 .mypy_cache
@@ -20,4 +23,4 @@ conda-dist/
 
 # Test artifacts
 foo.txt
-
+*.html
