@@ -10,6 +10,9 @@
 
 A tool for adjudicating between competing annotations of biological sequences.
 
+**--> NOTE: PolyA is deprecated, in favor of a re-implementation of the underlying methods: [AURORA](https://github.com/TravisWheelerLab/aurora)  <--**
+
+
 ## About
 
 PolyA is a software tool that adjudicates between competing alignment-based
